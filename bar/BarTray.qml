@@ -14,6 +14,7 @@ Item {
         height: width
         anchors.centerIn: parent
         icon: "more_horiz"
+        iconSize: 20
         accessibleName: qsTr("Open Tray")
         activeFocusOnTab: false
         browseIndicatorVisible: false

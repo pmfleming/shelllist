@@ -140,10 +140,13 @@ padding and gaps have no action. Native pointer/accessibility route and density
 coverage lives in `tst_media_chip.qml`; its rounded-artwork pixel check additionally
 requires an RHI renderer.
 
-The balanced bar uses fixed-size icon-only category tiles (Shell, Browser, Code,
-Media, Text for workspaces 1–5), never active-workspace labels or focused-app icon
-substitution. Acknowledged selection paints immediately; occupancy and static
-urgency remain distinct.
+The chromatic bar uses fixed-size icon-only category targets (Shell, Browser,
+Code, Media, Text for workspaces 1–5), never active-workspace labels or focused-app
+icon substitution. Acknowledged selection paints the accent glyph immediately
+at 22px rather than 20px, without a resting tile or lower dot/dash. Occupancy uses
+regular/semibold glyph weight and neutral/muted foregrounds; it is not a disabled
+state. Existing static urgency outlines and upper-right marks remain distinct.
+These visual changes add no focus targets or new keyboard behaviour.
 Workspaces stay left, system status right, and Media is centered when space permits,
 clamped between the measured edge groups otherwise. Narrow widths reduce gaps and
 omit the numerical date, not actions; below the full strip's minimum width the

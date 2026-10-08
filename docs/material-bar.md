@@ -1,32 +1,46 @@
-# Balanced icon-only bar
+# Chromatic icon-only bar
 
-The accepted balanced-dashboard revision keeps one continuous rounded surface
+The chromatic refinement keeps one continuous rounded surface
 inside the existing **51px exclusive zone**. It does not introduce floating pods,
 hover tooltips, new backend operations or a different panel-navigation model.
 The [interaction contract](chooser-keyboard-workflow.md) remains normative.
 
 ## Composition and responsive geometry
 
-- **Workspaces left:** fixed 32px category targets, with a quiet rounded selected
-  tile. Shell, Browser, Code, Media and Text map to workspaces 1–5. The shared
+- **Workspaces left:** fixed 32px category targets, without a resting selected
+  tile or lower occupancy dot/dash. Current workspace glyphs use the theme accent
+  at 22px; other glyphs use 20px. Occupied glyphs use normal text colour and the
+  packaged Material Symbols' semibold weight; empty glyphs use muted text and
+  regular weight. Selection overrides colour/size, not occupancy weight, so an
+  empty current workspace stays selected and actionable. Static danger outlines
+  and upper-right urgency marks remain independent. Shell, Browser, Code, Media
+  and Text map to workspaces 1–5. The shared
   `Core/WorkspaceCategories.js` also supplies Applications' category setting;
   labels, icons and routing cannot drift between the two consumers. The bar
   renders only category glyphs, not names or the focused application's icon.
   Higher workspace IDs retain numeric fallback.
-- **Media centered:** artwork plus Back, Play/Pause and Forward in a passive tonal
-  pill. Media uses the screen center while it fits; otherwise its position is
+- **Media centered:** 30px circular artwork inside its unchanged 34px opener,
+  plus Back, Play/Pause and Forward in the existing 38px passive tonal pill.
+  Side controls retain 30px targets / 20px glyphs; Play/Pause retains its 36px
+  target / 24px glyph and existing colours. Media uses the screen center while
+  it fits; otherwise its position is
   clamped between the measured workspace and status edges. It never overlaps
   either edge group, including during metadata or clock changes.
-- **Status right:** Network, Bluetooth, Battery, Notifications, Tray, Clock/date.
-  Passive separators distinguish radios from power and the clock. Healthy
-  status uses theme foregrounds; daemon warning/critical and notification urgency
-  remain visible. Only the numeric time/date appears as text in the bar.
+- **Status right:** Network, Bluetooth | Battery | Notifications, Tray, Clock/date.
+  Status/tray glyphs use 20px inside unchanged 32px targets. Two 1 × 18px passive
+  rules isolate power, with 8px on each side (4px compact); items within groups
+  have 4px gaps (2px compact). A 12px gap (8px compact), not another rule,
+  separates the clock. Healthy status uses theme foregrounds; daemon
+  warning/critical and notification urgency remain visible. Only the numeric
+  time/date appears as text in the bar.
 
 There are no workspace/category/track labels or persistent battery/notification
 numbers. Full descriptions remain in accessible names and the existing choosers.
 All colors use shared theme roles; no proposal palette is hard-coded.
 
-Selection, occupancy dots and urgency outlines/marks are distinct and immediate.
+Selection colour/size, occupancy weight and urgency outlines/marks are distinct
+and immediate; none animates or moves a neighbouring target. The 20/22px size cue
+and regular/semibold weights supplement colour, including in greyscale.
 Workspaces remain independently scrollable, reveal the active workspace, and
 retain an aggregate urgency indicator when a workspace is clipped. Selection
 changes only on compositor snapshots, never on request admission or restoration.
@@ -57,9 +71,13 @@ See [Media](media.md) for panel presentation, metadata and routing policy.
 
 ## Battery: charge inside, state outside
 
-Battery remains one action opening the existing Battery chooser. Its upright
-silhouette has an inset, clipped continuous bottom-up fill. Charge never fills
-the terminal, border or reserved external mark slot.
+Battery remains one 42 × 32px action opening the existing Battery chooser, with
+unchanged colour roles and state logic. Its upright body box is 18 × 26px, with
+an inset 8 × 15px clipped continuous bottom-up fill. The combined 36 × 26px unit
+is centred in the action and reserves a 4px gap plus 14px external state-mark
+slot even when the mark is absent. Charge never fills the terminal, border or
+reserved external mark slot. The body geometry is redrawn at this size, not a
+scale transform on the whole control; the 1.5px outline and mark font remain.
 
 - A static **bolt** means charging.
 - A **plug** means connected but not charging; 80% holding stays 80%, not full.
@@ -82,8 +100,8 @@ animation invents telemetry. Rendering/inspection never writes a power setting.
 
 ## Clock, routes and compositor boundaries
 
-Time and date are one direct Time & Weather action: `HH:mm` with quieter `MM-dd`
-at comfortable density, time only at compact density. The separate trailing
+Time and date are one direct Time & Weather action: 14px semibold `HH:mm` with
+quieter 11px `MM-dd` at comfortable density, time only at compact density. The separate trailing
 clock icon is removed. The full date and timezone remain in the accessible name.
 Updates remain aligned to minute boundaries.
 
@@ -107,12 +125,14 @@ layer-shell focus behavior changes in this revision.
 
 - `tst_balanced_dashboard.qml`: real workspace pointer/key routes and snapshot
   acknowledgement, stable category identity, numeric fallback, workspace reveal,
-  urgency, center/collision bounds at 3440/1200/760/600/300px, actual overflow and
-  combined-clock activation, battery state/unknown boundaries, external-mark
-  pointer/accessibility activation, light/dark fill pixels and snapshot bindings.
+  urgency, chromatic state/contrast and actual glyph-weight rendering in light
+  and dark themes, center/collision bounds at 3440/1200/760/600/300px, section
+  spacing, actual overflow and combined-clock activation, battery state/unknown
+  boundaries, geometry, preserved fill colours and external-mark pointer/
+  accessibility activation.
 - `tst_media_chip.qml`: direct artwork and tracks/seek routes at comfortable and
   compact widths, unchanged geometry on artwork/player loss, disabled actions,
-  passive padding, local feedback and rounded-artwork rendering. The last pixel
+  circular artwork geometry and rendering. The last pixel
   check additionally needs an RHI renderer.
 - `tst_bar_material.qml`: no panel browsing caret or new Tab traversal, tray
   inventory isolation and native action routes. Applications' settings tests

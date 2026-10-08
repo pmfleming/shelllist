@@ -42,9 +42,9 @@ Item {
         onClicked: root.controller.openSurface("media")
         Rectangle {
             id: artworkMask
-            width: 24
-            height: 24
-            radius: 5
+            width: 30
+            height: 30
+            radius: width / 2
             color: "white"
             visible: false
             layer.enabled: true

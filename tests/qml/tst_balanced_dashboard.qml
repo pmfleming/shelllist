@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Bar as Bar
 import Shelllist.Io as Io
+import Shelllist.Ui as Ui
+import "ColorContrast.js" as Contrast
 import "../../bar/BarApi.js" as BarApi
 
 DaemonTestCase {
@@ -11,6 +13,7 @@ DaemonTestCase {
     visible: true
     width: 1200
     height: 90
+    property int previousScheme
     Component {
         id: factory
         Bar.BarContent {
@@ -39,7 +42,12 @@ DaemonTestCase {
     }
     function init(): void {
         calls = [];
+        previousScheme = Ui.Theme.previewColorScheme;
         failOnWarning(/.*/);
+    }
+    function cleanup(): void {
+        Ui.Theme.previewColorScheme = previousScheme;
+        width = 1200;
     }
     function acknowledge(bar, call): void {
         Io.DaemonSessions.sessions[bar.controller.backend.daemonName].client.response(call.id,
@@ -93,9 +101,127 @@ DaemonTestCase {
         compare(calls.length, 2, "shared action-control keyboard route survives");
         compare(calls[1].params.workspace_id, 4);
     }
+    function test_chromaticStates_data(): var {
+        return [{tag: "dark", scheme: Qt.Dark}, {tag: "light", scheme: Qt.Light}];
+    }
+    function test_chromaticStates(data): void {
+        Ui.Theme.previewColorScheme = data.scheme;
+        const bar = fixture();
+        const shell = findChild(bar, "barWorkspace:1");
+        const tile = findChild(shell, "workspaceTile");
+        const glyph = findChild(shell, "workspaceCategoryGlyph");
+        compare(tile.color, Qt.color("transparent"));
+        compare(findChild(shell, "workspaceOccupancy"), null, "no lower marker remains");
+        compare(glyph.color, Ui.Theme.accent);
+        compare(glyph.font.pixelSize, 22);
+        compare(glyph.font.weight, Ui.Theme.fontWeightDemiBold);
+        verify(shell.Accessible.checked);
+        const occupiedGlyph = findChild(findChild(bar, "barWorkspace:3"), "workspaceCategoryGlyph");
+        const emptyGlyph = findChild(findChild(bar, "barWorkspace:4"), "workspaceCategoryGlyph");
+        compare(occupiedGlyph.color, Ui.Theme.text);
+        compare(occupiedGlyph.font.pixelSize, 20);
+        compare(occupiedGlyph.font.weight, Ui.Theme.fontWeightDemiBold);
+        compare(emptyGlyph.color, Ui.Theme.mutedText);
+        compare(emptyGlyph.font.pixelSize, 20);
+        compare(emptyGlyph.font.weight, Ui.Theme.fontWeightRegular);
+        for (const color of [glyph.color, occupiedGlyph.color, emptyGlyph.color])
+            verify(Contrast.ratio(color, Ui.Theme.surface) >= 3, "workspace foreground remains legible");
+        verify(waitForRendering(tile));
+        const occupiedPixels = grabImage(tile);
+        bar.controller.workspaces = Object.assign({}, bar.controller.workspaces, {
+            workspaces: [{id: 1, monitor: "test", windows: 0, urgent: true}]
+        });
+        compare(glyph.color, Ui.Theme.accent, "empty and urgent do not erase selection");
+        compare(glyph.font.pixelSize, 22);
+        compare(glyph.font.weight, Ui.Theme.fontWeightRegular);
+        verify(shell.enabled && shell.Accessible.checked);
+        compare(tile.border.color, Ui.Theme.danger);
+        compare(tile.border.width, 1);
+        verify(findChild(shell, "workspaceUrgency").visible);
+        // Compare only the central glyph region, excluding urgency decoration.
+        verify(waitForRendering(tile));
+        const emptyPixels = grabImage(tile);
+        let changed = 0;
+        for (let y = 7; y < 27; ++y)
+            for (let x = 6; x < 26; ++x)
+                if (String(occupiedPixels.pixel(x, y)) !== String(emptyPixels.pixel(x, y))) ++changed;
+        verify(changed > 0, "occupancy changes actual glyph rendering, not just its colour");
+        compare(calls.length, 0, "presentation changes never dispatch commands");
+    }
+    function test_layoutSectioningAndOverflow(): void {
+        const bar = fixture();
+        for (const size of [3440, 1200, 760, 600, 300]) {
+            testCase.width = size;
+            bar.width = size;
+            verify(waitForPolish(bar.Window.window));
+            const workspaces = findChild(bar, "barWorkspaces");
+            const media = findChild(bar, "barMedia");
+            const status = findChild(bar, "barStatusGroup");
+            verify(media.x >= workspaces.x + workspaces.width + bar.groupGap);
+            verify(media.x + media.width + bar.groupGap <= status.x);
+            if (size >= 1200)
+                compare(media.mapToItem(bar, media.width / 2, 0).x, size / 2, "media remains screen-centred");
+            for (const name of ["network", "bluetooth", "notifications"])
+                compare(findChild(bar, "bar:" + name).iconSize, 20);
+            compare(findChild(bar, "barTrayButton").iconSize, 20);
+            for (const name of ["battery", "notifications"]) {
+                const section = findChild(bar, "barSection:" + name);
+                const rule = section.children[0];
+                verify(section.visible);
+                compare(rule.height, 18);
+                compare(rule.x + bar.statusItemGap, bar.statusSectionGap);
+                compare(section.width - rule.x - rule.width, bar.statusSectionGap);
+            }
+            const tray = findChild(bar, "barTray");
+            const clock = findChild(bar, "barClockAction");
+            compare(clock.x - tray.x - tray.width, bar.clockGroupGap);
+            compare(findChild(clock, "barClock").font.pixelSize, 14);
+            compare(findChild(clock, "barClock").font.weight, Ui.Theme.fontWeightDemiBold);
+            compare(findChild(clock, "barClockDate").visible, bar.layoutDensity < 2);
+            compare(findChild(bar, "barOverflowButton").visible, bar.overflow);
+            if (size === 300) {
+                verify(bar.overflow);
+                const viewport = findChild(bar, "barOverflowViewport");
+                click(findChild(bar, "barOverflowButton"));
+                verify(viewport.contentX > 0, "overflow reveals the unchanged full control strip");
+            }
+        }
+        compare(calls.length, 0, "layout and scrolling never activate modules");
+        bar.width = testCase.width = 1200;
+        verify(waitForPolish(bar.Window.window));
+        click(findChild(bar, "barClockAction"));
+        compare(bar.registry.timeTab, "time");
+    }
+    function test_workspaceRevealAndMonitorLocalSelection(): void {
+        const bar = fixture();
+        bar.width = 300;
+        bar.controller.workspaces = {
+            monitors: [{name: "test", active_workspace_id: 12}, {name: "other", active_workspace_id: 2}],
+            focused_monitor: "other", workspaces: [
+                {id: 1, monitor: "test", windows: 1, urgent: true},
+                {id: 12, monitor: "test", windows: 1}, {id: 2, monitor: "other", windows: 1}]
+        };
+        verify(waitForPolish(bar.Window.window));
+        const selected = findChild(bar, "barWorkspace:12");
+        verify(selected.active && selected.Accessible.checked);
+        compare(findChild(selected, "workspaceCategoryGlyph").glyph, "12");
+        verify(!findChild(bar, "barWorkspace:2").active, "selection is local to this output, not the focused monitor");
+        const viewport = findChild(bar, "workspaceViewport");
+        tryVerify(() => viewport.contentX > 0);
+        const point = selected.mapToItem(viewport, 0, 0);
+        verify(point.x >= 0 && point.x + selected.width <= viewport.width);
+        verify(findChild(bar, "workspaceUrgencyAggregate").visible, "offscreen urgency is retained");
+        compare(calls.length, 0);
+    }
     function test_batteryReadingAndExternalMark_data(): var {
         return [
             {tag: "empty", state: {available: true, percentage: 0, critical: true}, fraction: 0, mark: "priority_high", word: "Critical"},
+            {tag: "one-percent", state: {available: true, percentage: 1}, fraction: .01, mark: "", word: "1%"},
+            {tag: "low", state: {available: true, percentage: 10, warning: true}, fraction: .1, mark: "priority_high", word: "Low battery"},
+            {tag: "half", state: {available: true, percentage: 50}, fraction: .5, mark: "", word: "50%"},
+            {tag: "charging", state: {available: true, percentage: 80, charging: true, plugged: true}, fraction: .8, mark: "bolt", word: "Charging"},
+            {tag: "holding", state: {available: true, percentage: 80, plugged: true}, fraction: .8, mark: "power", word: "not charging"},
+            {tag: "full", state: {available: true, percentage: 100, plugged: true}, fraction: 1, mark: "check", word: "Fully charged"},
             {tag: "null-reading", state: {available: true, percentage: null}, fraction: 0, mark: "help_outline", word: "unavailable"},
         ];
     }
@@ -109,7 +235,17 @@ DaemonTestCase {
         const fill = findChild(gauge, "barBatteryFill");
         const interior = findChild(gauge, "barBatteryInterior");
         compare(gauge.fraction, data.fraction);
+        compare(gauge.width, 36);
+        compare(gauge.height, 26);
+        compare(body.width, 18);
+        compare(body.height, 26);
+        compare(mark.width, 14);
+        compare(gauge.x + gauge.width / 2, gauge.parent.width / 2);
+        verify(mark.x + mark.width <= gauge.width);
+        verify(interior.x > 0 && interior.x + interior.width < body.width);
+        verify(interior.y > 0 && interior.y + interior.height < body.height);
         tryCompare(fill, "height", interior.height * data.fraction);
+        compare(fill.color, data.state.critical ? Ui.Theme.danger : data.state.warning ? Ui.Theme.warning : Ui.Theme.accent);
         compare(gauge.stateMark, data.mark);
         compare(mark.symbol, data.mark);
         verify(mark.x >= body.x + body.width + 4, "state mark has a real gap outside the battery body");

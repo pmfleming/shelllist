@@ -36,29 +36,21 @@ Ui.ActionControl {
         width: 32
         height: 34
         radius: 9
-        // Selection is immediate. Category identity and hit geometry never
-        // change with the focused app, and occupancy is not a disabled state.
-        color: button.active ? Ui.Theme.selected : "transparent"
+        // Selection is chromatic, with a size cue independent of hue. Occupancy
+        // uses glyph weight; neither state changes category identity or hit geometry.
+        color: "transparent"
         border.width: button.urgent ? 1 : 0
         border.color: Ui.Theme.danger
         Ui.GlyphLabel {
             objectName: "workspaceCategoryGlyph"
             anchors.centerIn: parent
             glyph: button.category ? button.category.icon : String(button.workspaceId)
-            color: button.active ? Ui.Theme.selectedText : Ui.Theme.text
-            font.pixelSize: 18
+            color: button.active ? Ui.Theme.accent : button.occupied ? Ui.Theme.text : Ui.Theme.mutedText
+            font.pixelSize: button.active ? 22 : 20
+            // Packaged Material Symbols supports regular and semibold weights;
+            // the numeric fallback uses the same occupancy distinction.
+            font.weight: button.occupied ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
             Accessible.ignored: true
-        }
-        Rectangle {
-            objectName: "workspaceOccupancy"
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 1
-            width: button.active ? 8 : 3
-            height: button.active ? 2 : 3
-            radius: height / 2
-            visible: button.active || button.occupied
-            color: button.active ? Ui.Theme.selectedText : Ui.Theme.mutedText
         }
         Rectangle {
             objectName: "workspaceUrgency"

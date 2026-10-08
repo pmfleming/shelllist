@@ -14,18 +14,18 @@ Item {
     readonly property real fraction: Presentation.batteryFraction(battery)
     readonly property string stateMark: Presentation.batteryStateMark(battery)
     readonly property bool warning: !!battery && (!!battery.warning || !!battery.critical)
-    implicitWidth: 38
-    implicitHeight: 30
+    implicitWidth: 36
+    implicitHeight: 26
     Accessible.ignored: true
 
     Item {
         id: body
         objectName: "barBatteryBody"
-        width: 20
-        height: 30
+        width: 18
+        height: 26
         Rectangle {
-            x: 7; y: 1
-            width: 6; height: 3
+            x: 6; y: 1
+            width: 6; height: 2
             radius: 1
             color: gauge.foreground
         }
@@ -37,14 +37,14 @@ Item {
                 strokeWidth: 1.5
                 strokeStyle: gauge.known ? ShapePath.SolidLine : ShapePath.DashLine
                 dashPattern: [2, 2]
-                PathSvg { path: "M5 5 H15 Q18 5 18 8 V25 Q18 28 15 28 H5 Q2 28 2 25 V8 Q2 5 5 5 Z" }
+                PathSvg { path: "M5 4 H13 Q16 4 16 7 V22 Q16 25 13 25 H5 Q2 25 2 22 V7 Q2 4 5 4 Z" }
             }
         }
         Rectangle {
             id: interior
             objectName: "barBatteryInterior"
-            x: 5; y: 8
-            width: 10; height: 17
+            x: 5; y: 7
+            width: 8; height: 15
             radius: 1
             color: Ui.Theme.withAlpha(gauge.foreground, 0.12)
             clip: true

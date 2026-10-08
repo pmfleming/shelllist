@@ -21,6 +21,7 @@ BarAction {
             anchors.verticalCenter: parent.verticalCenter
             text: Qt.formatDateTime(clock.now, "HH:mm")
             font.pixelSize: Ui.Theme.fontSizeLabel
+            font.weight: Ui.Theme.fontWeightDemiBold
             Accessible.ignored: true
         }
         Ui.ThemeText {

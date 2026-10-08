@@ -12,6 +12,9 @@ Item {
     readonly property alias visualSurface: barSurface
     readonly property int layoutDensity: Presentation.layoutDensity(width)
     readonly property int groupGap: layoutDensity >= 2 ? 8 : 16
+    readonly property int statusItemGap: layoutDensity >= 2 ? 2 : 4
+    readonly property int statusSectionGap: layoutDensity >= 2 ? 4 : 8
+    readonly property int clockGroupGap: layoutDensity >= 2 ? 8 : 12
     readonly property real minimumContentWidth: workspaces.width + media.implicitWidth + status.implicitWidth + groupGap * 2
     readonly property bool overflow: minimumContentWidth > barSurface.width - 16
     readonly property var statusDescriptors: controller.statusModules(now).filter(module => module.id !== "clock")
@@ -74,7 +77,7 @@ Item {
                     objectName: "barStatusGroup"
                     x: groups.width - width
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: root.layoutDensity >= 2 ? 2 : 4
+                    spacing: root.statusItemGap
                     Repeater {
                         model: Core.KeyedListModel {
                             values: root.statusDescriptors
@@ -83,14 +86,22 @@ Item {
                         delegate: Row {
                             id: statusItem
                             required property var resultData
-                            spacing: 6
+                            spacing: 0
                             height: 32
-                            Rectangle {
-                                width: 1
-                                height: 18
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: Ui.Theme.border
-                                visible: statusItem.resultData.id === "battery"
+                            // Radios | power | attention. Account for the outer
+                            // Row gap so both sides of each rule have equal space.
+                            Item {
+                                objectName: "barSection:" + statusItem.resultData.id
+                                width: root.statusSectionGap * 2 + 1 - root.statusItemGap
+                                height: 32
+                                visible: statusItem.resultData.id === "battery" || statusItem.resultData.id === "notifications"
+                                Rectangle {
+                                    x: root.statusSectionGap - root.statusItemGap
+                                    width: 1
+                                    height: 18
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: Ui.Theme.border
+                                }
                             }
                             BarAction {
                                 id: action
@@ -98,7 +109,7 @@ Item {
                                 width: statusItem.resultData.id === "battery" ? 42 : 32
                                 height: 32
                                 radius: 9
-                                iconSize: 18
+                                iconSize: 20
                                 text: statusItem.resultData.id === "battery" ? "" : statusItem.resultData.text
                                 accessibleName: (statusItem.resultData.id === "battery" && Presentation.batteryKnown(root.controller.battery)
                                     ? qsTr("Battery") + ". " : "") + statusItem.resultData.tooltip
@@ -123,11 +134,10 @@ Item {
                         height: 32
                         controller: root.controller
                     }
-                    Rectangle {
-                        width: 1
-                        height: 18
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: Ui.Theme.border
+                    // Time is separated by whitespace, not a third divider.
+                    Item {
+                        width: root.clockGroupGap - root.statusItemGap * 2
+                        height: 32
                     }
                     BarClockButton {
                         objectName: "barClockAction"

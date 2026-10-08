@@ -36,10 +36,13 @@ development shell after changing `flake.nix`.
   and native tray-menu lifetime. Media artwork clearing, plain-text metadata and
   passive enrichment remain.
 - `tst_balanced_dashboard.qml` covers stable category identity, acknowledged
-  workspace activation and unavailable versus zero battery readings.
-  `tst_media_chip.qml` samples narrow seek transport and keeps missing-player
-  controls visible but disabled; system choosers exercise panel transport. Its RHI-only artwork pixel check
-  remains an explicit existing skip under the software runner.
+  workspace activation, chromatic state/contrast and rendered occupancy weight,
+  monitor-local selection/reveal, responsive grouping/overflow and battery
+  geometry/colours/state marks (including unavailable versus zero readings).
+  `tst_media_chip.qml` samples narrow seek transport, circular artwork geometry,
+  and keeps missing-player controls visible but disabled; system choosers exercise
+  panel transport. Its RHI-only artwork pixel check remains an explicit existing
+  skip under the software runner.
 - Daemon/session and model suites retain protocol/generation boundaries,
   request churn, stable identities, queued-update cancellation and
   progressive/native list updates. Wi-Fi retains cancellation acknowledgement.

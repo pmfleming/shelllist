@@ -112,6 +112,13 @@ DaemonTestCase {
         const backdrop = findChild(chip, "mediaArtworkBackdrop");
         const transport = findChild(chip, "mediaTransportControls");
         const expandedWidth = chip.implicitWidth;
+        compare(backdrop.width, 30);
+        compare(backdrop.height, 30);
+        compare(backdrop.radius, 15, "artwork is circular inside the unchanged opener");
+        compare(opener.width, 34);
+        compare(opener.height, 34);
+        compare(findChild(chip, "mediaGroupBackground").height, 38);
+        compare(findChild(chip, "mediaPlayPauseButton").width, 36);
         setPlayer(bar, player({art_url: ""}));
         tryCompare(image, "status", Image.Null);
         verify(!backdrop.visible && opener.icon.length > 0);
@@ -158,12 +165,25 @@ DaemonTestCase {
         verify(waitForPolish(bar.Window.window));
         bar.Window.window.requestUpdate();
         verify(waitForRendering(backdrop));
-        const pixels = grabImage(testCase);
-        const origin = backdrop.mapToItem(testCase, 0, 0);
+        const origin = backdrop.mapToItem(bar, 0, 0);
         const x = Math.round(origin.x), y = Math.round(origin.y);
-        compare(pixels.pixel(x + 12, y + 12), Qt.color("white"), "image is still visible at its center");
-        for (const corner of [[0, 0], [23, 0], [0, 23], [23, 23]])
-            compare(pixels.pixel(x + corner[0], y + corner[1]), Ui.Theme.surfaceContainer, "bright cover corners are masked, not just the backing");
+        const center = Math.floor(backdrop.width / 2);
+        const edge = backdrop.width - 1;
+        // Image.Ready precedes the effect's first rendered texture on RHI.
+        let pixels;
+        tryVerify(() => {
+            bar.Window.window.requestUpdate();
+            pixels = grabImage(bar);
+            return String(pixels.pixel(x + center, y + center)) === "#ffffff";
+        }, 5000, "image is still visible at its center");
+        // The larger circle reaches the pill's antialiased cap. Compare against
+        // the actual uncovered surface rather than assuming a flat corner colour.
+        backdrop.visible = false;
+        bar.Window.window.requestUpdate();
+        verify(waitForRendering(bar));
+        const uncovered = grabImage(bar);
+        for (const corner of [[0, 0], [edge, 0], [0, edge], [edge, edge], [5, 0], [edge - 5, 0]])
+            compare(pixels.pixel(x + corner[0], y + corner[1]), uncovered.pixel(x + corner[0], y + corner[1]), "bright cover is circular, not just a rounded backing");
         compare(calls.length, 0);
     }
 }
