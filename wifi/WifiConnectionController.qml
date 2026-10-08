@@ -1,6 +1,5 @@
 import QtQuick
 import "WifiPresentation.js" as Presentation
-import "WifiFlow.js" as Flow
 import "NmApiClient.js" as Api
 import "NmApi.js" as NmApi
 

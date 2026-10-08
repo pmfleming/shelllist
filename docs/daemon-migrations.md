@@ -13,7 +13,8 @@ refresh the projection. No draft, command or field-transaction policy changes.
 
 Validation: native activity tests (including 23/25-hour days and exclusive
 all-day ends), and Qt pointer/Enter day commands consuming native membership.
-Full native library suite and Qt suite: 315 passed, one existing RHI skip.
+Native library suite passed. At this stage the Qt suite had 315 passes and one
+existing RHI skip.
 
 ## Bluetooth apply-and-remember
 
@@ -104,3 +105,47 @@ recovery policy. Existing native target/credential validation is unchanged.
 
 Validation: native descriptor policy and contract tests; Qt missing-descriptor,
 conditional requirements, F6/Escape, and native-only recovery prompt coverage.
+
+## Commits and final validation
+
+| Migration | Owning daemon commit | Shelllist commit |
+| --- | --- | --- |
+| Calendar days | bar `b7f04f3` | `7b85c58` |
+| Audio apply-and-remember | bt `cfe37d1` | `54599c9` |
+| Display baselines | bar `efa406a` | `6bac648` |
+| Resource projection | app `3b25e89` | `009b35b` |
+| Close observation | app `41901d0` | `223b514` |
+| Commit-and-prepare-paste | clip `fa5ef3c` | `8eeac19` |
+| Canonical locations | bar `1f663ee` | `f08ca09` |
+| Wi-Fi descriptors | nm `a38dfbe` | `f042f7e` |
+
+Test follow-ups: `7b77bd2` waits for calendar expansion before pointer input;
+`a9e5d99` updates chart-geometry fixtures to native availability flags.
+
+Final local working-tree validation:
+
+- Qt: **322 passed, 0 failed, 1 existing RHI-only skip**.
+- Native libraries: bar 227 passed/1 ignored; bt 66 passed; app 64 passed;
+  clip 42 passed; nm 154 passed/3 ignored. Additional app/clip integration tests
+  passed (14 and 7 respectively); three app manual tests remain ignored.
+- Freshly built binaries passed all five daemon/consumer fixture and registry
+  checks, including the separate app-resource fixture comparison.
+- QML lint, runtime smoke, TypeScript generated-output checks, source-tree import
+  resolution, daemon boundaries, chart intervals/availability, application
+  history/lifecycle, Bluetooth lifecycle and display-model checks passed.
+- Incoming Git indexes were compared byte-for-byte with saved index patches:
+  unchanged in all six repositories, including 76 staged Shelllist paths.
+
+Local logs and initial-worktree snapshots are under
+`/tmp/shelllist-daemon-migrations/` (ephemeral, not release artifacts). Native
+changes are committed separately from unrelated work; existing Shelllist and
+nm-daemon changes remain outside these commits.
+
+The separately conditional **adapter-setting batch API was not implemented**.
+The review marked it "only if needed"; the existing shared field-save model and
+submitted adapter-setting sequence are unchanged. This is not claimed as a ninth
+completed migration.
+
+No services were restarted and no pins or deployment configuration were updated.
+The full pinned/Nix release gate and live hardware/compositor/focus acceptance
+remain unverified. Deploy matching daemon and frontend revisions together.
