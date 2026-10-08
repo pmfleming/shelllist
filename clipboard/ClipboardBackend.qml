@@ -51,7 +51,7 @@ Io.DaemonBackend {
                 session: controller.applySession,
                 entry: function (value) {
                     if (id === "edit-commit")
-                        controller.detailState.applyEditCommit(value);
+                        controller.detailState.applyEditCommit(value, data.paste);
                     else
                         controller.detailState.applyDetails(id, value);
                 },
@@ -130,10 +130,11 @@ Io.DaemonBackend {
             revision: entry.revision
         });
     }
-    function commitEdit(editId: string, value: string): bool {
+    function commitEdit(editId: string, value: string, pasteSessionId: string): bool {
         return call("edit-commit", ClipApi.methods.editCommit, {
             edit_id: editId,
-            value: value
+            value: value,
+            paste_session_id: pasteSessionId || null
         });
     }
     function cancelEdit(editId: string): bool {

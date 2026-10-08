@@ -156,6 +156,7 @@ Item {
         committedDraft = editDraft;
         savingDirectEdit = editIsDirect;
         pendingCommit = {
+            pasteSessionId: pasteAfterSave ? controller.sessionId : "",
             target: editTarget,
             preview: editPreview,
             draft: committedDraft,
@@ -167,7 +168,7 @@ Item {
         controller.activeAction = "edit";
         if (savingDirectEdit)
             controller.status = pasteAfterSave ? "Saving clipboard text before pasting…" : "Saving clipboard text…";
-        if (daemonBackend.commitEdit(editId, committedDraft))
+        if (daemonBackend.commitEdit(editId, committedDraft, pendingCommit.pasteSessionId))
             return true;
         controller.actionInFlight = false;
         controller.activeAction = "";
@@ -253,7 +254,7 @@ Item {
                 detailsController.beginEdit(entry);
             });
     }
-    function applyEditCommit(nextValue: var): void {
+    function applyEditCommit(nextValue: var, paste: var): void {
         clearCache();
         const sent = pendingCommit;
         pendingCommit = null;
@@ -274,7 +275,21 @@ Item {
         editError = "";
         resetCommitState();
         if (wasDirect && entry) {
-            applyDirectEditCommit(nextValue, entry, sourceEntryId, shouldPaste);
+            const nativePaste = !!sent?.pasteSessionId;
+            if (nativePaste)
+                editorFocused = false;
+            applyDirectEditCommit(nextValue, entry, sourceEntryId, shouldPaste && !nativePaste);
+            if (nativePaste) {
+                // A late reply cannot paste into a reopened session or retarget
+                // the committed edit. No fallback write on missing/failed outcome.
+                editorFocused = false;
+                if (paste && paste.session_id === sent.pasteSessionId
+                        && controller.sessionId === sent.pasteSessionId && controller.uiActive) {
+                    controller.status = paste.message || "Paste preparation unconfirmed";
+                    if (paste.prepared === true)
+                        daemonBackend.hideSession(sent.pasteSessionId);
+                }
+            }
             return;
         }
         value = null;

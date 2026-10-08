@@ -66,3 +66,18 @@ or polls those results to manufacture completion.
 Validation: native disappeared/replaced/still-open/unavailable/dispatch-failure
 cases and cancellation retention; real Qt row commands, native outcome rendering
 and focus recovery. No automatic replay and no live compositor acceptance run.
+
+## Clipboard commit-and-prepare
+
+Edit commit accepts optional `paste_session_id`, validates it before mutation,
+consumes its edit lease once, and arms it only after successful publication.
+The response separates saved entry/publication from paste preparation. Input
+injection remains exclusively behind the existing session-hidden handshake.
+Late replies cannot hide/paste into a reopened session; publication failure does
+not cause a second commit or publication. A separately requested Paste arriving
+after an ordinary save was already submitted retains its existing post-save
+request path (not a replay of the edit).
+
+Validation: native publication failure, stale session, lease consumption and
+revision-conflict tests; actual Qt Enter/Paste with success, partial failure and
+reopened-session cases. No live focus/input-injection test was run.

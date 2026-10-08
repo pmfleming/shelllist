@@ -654,6 +654,16 @@ changes do not retarget it. Partial persistence failure is reported without
 replaying the applied hardware change; disconnects never trigger automatic
 retries. The shared choice control still owns its local save/discard transaction.
 
+## Submitted clipboard save-and-paste
+
+When Paste submits a dirty edit, the commit includes the captured paste session.
+The daemon saves and prepares that session only after publication succeeds. The
+client still acknowledges the existing hidden-session handshake, only for the
+same active session; it never retries a saved edit for failed paste preparation.
+A new Paste intent arriving after an unrelated save was already submitted still
+waits for that save before requesting paste; it cannot amend an in-flight write.
+Field-local drafts and Enter/Tab/Escape behavior are unchanged.
+
 ## Observed application Close
 
 Close commands target the daemon-captured window identities. Admission and close

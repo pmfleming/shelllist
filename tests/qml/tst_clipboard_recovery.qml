@@ -15,6 +15,7 @@ DaemonTestCase {
         id: controllerFactory
         Clip.ClipboardController {}
     }
+    Component { id: contentFactory; Clip.ClipboardContent {} }
     Component {
         id: cardsFactory
         Clip.ClipboardDetailCards {}
@@ -52,7 +53,7 @@ DaemonTestCase {
         keyClick(Qt.Key_X);
         compare(editor.text, "Originalx");
         wait(900); // Longer than the domain's former per-keystroke debounce.
-        verify(!calls.some(call => call.id === "edit-commit"));
+        verify(!calls.some(call => call.method === "clipboard.entry.edit.commit"));
         compare(controller.detailState.editDraft, "Original");
         keyClick(Qt.Key_Return);
         verify(panel.detailsNavigation.browsing);
@@ -406,6 +407,37 @@ DaemonTestCase {
             return historyCalls().length === 2;
         });
         compare(historyCalls()[1].params.cursor, null);
+    }
+
+    function test_saveAndPasteUsesOneWriteAndKeepsHiddenHandshake_data() {
+        return [{tag: "prepared", prepared: true, stale: false},
+            {tag: "publication-failed", prepared: false, stale: false},
+            {tag: "reopened-session", prepared: true, stale: true}];
+    }
+    function test_saveAndPasteUsesOneWriteAndKeepsHiddenHandshake(data) {
+        const controller = makeController();
+        controller.sessionId = "paste-session";
+        const panel = createTemporaryObject(contentFactory, testCase, {controller: controller, width: 650, height: 900});
+        views = views.concat([panel]);
+        const details = controller.detailState;
+        verify(details.beginEdit());
+        reply(controller, "edit-begin", {edit: {id: "paste-lease", value: "Original"}});
+        details.updateEditDraft("Saved before paste");
+        tryVerify(() => panel.listItem !== null);
+        panel.listItem.focusList();
+        keyClick(Qt.Key_Return);
+        const commit = calls.find(call => call.method === "clipboard.entry.edit.commit");
+        verify(!!commit, JSON.stringify(calls) + " / " + details.editing + " / " + details.editDirty + " / " + details.entryId);
+        compare(commit.params.paste_session_id, "paste-session");
+        if (data.stale) controller.sessionId = "reopened";
+        reply(controller, "edit-commit", {
+            entry: {entry: {id: "replacement", revision: 2, kind: "text"}, text: "Saved before paste", files: []},
+            paste: {session_id: "paste-session", prepared: data.prepared, message: "Native outcome"}
+        });
+        compare(calls.filter(call => call.method === "clipboard.entry.action").length, 0, "no chained publication or replay");
+        compare(calls.filter(call => call.method === "clipboard.session.hidden").length, data.prepared && !data.stale ? 1 : 0);
+        compare(details.editError, "", "saved edits are not retried for paste-preparation failure");
+        verify(!details.saveInFlight);
     }
 
     function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft() {
