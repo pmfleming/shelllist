@@ -12,6 +12,15 @@ ListView {
     property bool scrollSuspended: false
     property bool tearingDown: false
 
+    function firstVisibleIndex(): int {
+        // The viewport edge can land in delegate spacing after ListView refines
+        // variable-height estimates. Find an actual visible row, not that gap.
+        for (let y = Math.max(originY, contentY); y < contentY + height; y += Math.max(1, spacing + 1)) {
+            const index = indexAt(width / 2, y);
+            if (index >= 0) return index;
+        }
+        return -1;
+    }
     function restoreScroll(): void {
         if (tearingDown || scrollSuspended || !visible || !count || !viewMemory || !viewMemory.current || memoryTab !== viewMemory.activeTab) return;
         // Unlike a Column, ListView refines height/origin estimates while
@@ -39,6 +48,10 @@ ListView {
         target: page.viewMemory
         function onContextRestored(): void { Qt.callLater(page.restoreScroll); }
     }
+    // Detail rows are not result selection. Otherwise an inserted recent row
+    // can make ListView reveal its implicit currentIndex=0 over our viewport.
+    currentIndex: -1
+    highlightFollowsCurrentItem: false
     clip: true
     boundsBehavior: Flickable.StopAtBounds
 }

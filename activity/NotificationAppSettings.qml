@@ -65,11 +65,4 @@ Ui.DetailFlickable {
         color: page.controller.appBusy ? Ui.Theme.mutedText : Ui.Theme.danger
         wrapMode: Text.WordWrap
     }
-    Ui.LabeledAction {
-        width: parent.width
-        icon: "refresh"; label: qsTr("Reset app defaults"); accessKey: "E"
-        uiScale: Ui.Theme.expandedSecondaryActionScale
-        enabled: page.settingsAvailable
-        onClicked: page.save({silent: false, until_unix_ms: null, group_similar: true, bypass_dnd: false})
-    }
 }

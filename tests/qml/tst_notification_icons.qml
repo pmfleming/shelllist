@@ -20,6 +20,14 @@ TestCase {
             width: 40; height: 40
         }
     }
+    Component { id: commandGlyph; Ui.GlyphLabel { glyph: "notifications_off" } }
+    function test_silenceUsesMaterialSymbolInsteadOfLiteralText() {
+        const glyph = createTemporaryObject(commandGlyph, testCase);
+        compare(glyph.symbol, "notifications_off");
+        compare(glyph.font.family, Ui.Theme.symbolFontFamily);
+        glyph.glyph = "notifications";
+        compare(glyph.symbol, "notifications");
+    }
     function cleanup() { Quickshell.themeIcons = ({}); }
     function test_centerPreviewRetainsSenderArtwork_data() {
         return [

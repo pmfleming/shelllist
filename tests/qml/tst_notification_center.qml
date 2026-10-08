@@ -13,7 +13,7 @@ DaemonTestCase {
     function make() {
         const state = createTemporaryObject(stateFactory, tests, {uiActive: true});
         state.applySummary({available: true, backend: "native", history_revision: 1, app_policies: {}});
-        const controller = createTemporaryObject(controllerFactory, state, {notificationState: state, uiActive: true});
+        const controller = createTemporaryObject(controllerFactory, state, {notificationState: state, uiActive: true, width: 1100, height: 650});
         controller.catalog.apps = ["named:Chat", "named:Mail"].map((key, i) => ({key: key, count: 3, total_count: 3, latest: preview(100 - i, key)}));
         controller.rebuildRecords();
         const content = createTemporaryObject(contentFactory, controller, {controller: controller, width: 1100, height: 650});
@@ -23,6 +23,20 @@ DaemonTestCase {
     }
     function request(state, prefix) { return Object.keys(state.backend.requests).find(id => id.startsWith(prefix + "-")); }
     function policyCalls() { return calls.filter(c => c.method === "notifications.setAppPolicy"); }
+    function showRow(list, index, mode) {
+        // A delegate may exist before its nested Loader has any geometry.
+        tryVerify(() => {
+            list.positionViewAtIndex(index, mode);
+            list.forceLayout();
+            const row = list.itemAtIndex(index);
+            return row !== null && row.height > 0;
+        });
+        verify(waitForPolish(list.Window.window));
+        list.cancelFlick();
+        list.positionViewAtIndex(index, mode);
+        list.forceLayout();
+        verify(waitForPolish(list.Window.window));
+    }
     function test_listSilenceAcknowledgesAndAppControlsUseDraftTransactions() {
         const {state, controller, content} = make();
         keyClick(Qt.Key_Q, Qt.AltModifier);
@@ -96,44 +110,100 @@ DaemonTestCase {
         content.destroy();
     }
     function timelinePage(offset, ids, next) {
-        return {view: "timeline", epoch: "epoch", revision: "1", query: "", app_key: "named:Chat", date: "1970-01-01", dates: [{key: "1970-01-01", count: 40}], count: 40, total_rows: 40, offset: offset, next_offset: next, anchor_reached: true,
+        return {view: "timeline", epoch: "epoch", revision: "1", query: "", app_key: "named:Chat", date: "older", period_day: "2026-10-08", recent: [1000,999,998].map(id => preview(id, "named:Chat")), dates: ["today", "week", "month", "older"].map(key => ({key: key, count: key === "older" ? 40 : 0})), count: 40, total_rows: 40, offset: offset, next_offset: next, anchor_reached: true,
             entries: ids.map(id => ({key: id + ":" + id * 1000, preview: preview(id, "named:Chat"), members: [{id: id, created: id * 1000}]}))};
+    }
+    function test_recentThreeThenClosedPeriodsAndPrimarySecondaryActions() {
+        const {state, controller, content} = make();
+        controller.openDetails();
+        const timeline = controller.timeline;
+        const context = () => ({view: "timeline", generation: timeline.generation, appKey: timeline.appKey, query: timeline.query, date: timeline.requestedDate, grouping: timeline.grouping, offset: 0, replacing: true, revision: state.observedHistoryRevision});
+        const value = timelinePage(0, [], null);
+        value.date = ""; value.count = 0; value.total_rows = 0;
+        timeline.receive(context(), value, "", "");
+        compare(timeline.error, "");
+        tryVerify(() => findChild(content, "notificationTimelineList") !== null);
+        const list = findChild(content, "notificationTimelineList");
+        tryCompare(list, "count", 7);
+        verify(list.height > 300, "exercise a real clipped detail viewport");
+        compare(list.rows.map(row => row.kind), ["message", "message", "message", "date", "date", "date", "date"]);
+        compare(list.rows.slice(3).map(row => row.key), ["today", "week", "month", "older"]);
+        verify(timeline.collapsed);
+        const actions = findChild(content, "surfaceActionRow");
+        compare(actions.primaryActions.map(action => action.id), ["silence"]);
+        compare(actions.secondaryActions.map(action => action.id), ["reset", "delete"]);
+        const primary = findChild(content, "detailAction:silence");
+        const reset = findChild(content, "detailAction:reset");
+        verify(primary.width > reset.width);
+        verify(primary.mapToItem(content, 0, 0).y < reset.mapToItem(content, 0, 0).y);
+        verify(!content.detailsNavigation.targets.includes(primary) && !content.detailsNavigation.targets.includes(reset));
+        tryCompare(controller, "detailsExpansionProgress", 1);
+        showRow(list, 6, ListView.Contain);
+        const older = findChild(content, "notificationDate-older");
+        verify(older !== null);
+        mouseClick(older.button);
+        compare(timeline.requestedDate, "older");
+        compare(list.rows.filter(row => row.kind === "message").length, 3, "recent cards stay visible while another period loads");
+        const period = timelinePage(0, [100,99], null);
+        period.count = 2; period.total_rows = 2; period.dates[3].count = 2;
+        timeline.receive(context(), period, "", "");
+        compare(timeline.error, "");
+        tryCompare(list, "count", 9);
+        showRow(list, 6, ListView.Contain);
+        mouseClick(findChild(content, "notificationDate-older").button);
+        tryCompare(list, "count", 7);
+        controller.setDetailsTab("controls");
+        tryVerify(() => findChild(content, "notificationAppDelivery") !== null);
+        compare(findChild(content, "surfaceActionRow").primaryActions[0].id, "silence");
+        state.notifications = Object.assign({}, state.notifications, {app_policies: {"named:Chat": {silent: true, group_similar: false, bypass_dnd: true}}});
+        keyClick(Qt.Key_E, Qt.AltModifier);
+        compare(policyCalls().length, 1);
+        compare(policyCalls()[0].params.policy, {silent: false, until_unix_ms: null, group_similar: true, bypass_dnd: false});
+        content.destroy();
     }
     function test_timelineRefreshStagesThroughAnchorAndKeepsViewport() {
         const {state, controller, content} = make();
         controller.openDetails();
         const timeline = controller.timeline;
+        timeline.requestedDate = "older"; timeline.collapsed = false;
         const context = offset => ({view: "timeline", generation: timeline.generation, appKey: timeline.appKey, query: timeline.query, date: timeline.requestedDate, grouping: timeline.grouping, offset: offset, replacing: true, revision: state.observedHistoryRevision});
         const ids = Array.from({length: 20}, (_, i) => 100 - i);
         timeline.receive(context(0), timelinePage(0, ids, 20), "", "");
         tryVerify(() => findChild(content, "notificationTimelineList") !== null);
         const list = findChild(content, "notificationTimelineList");
         tryVerify(() => list.count > 10);
-        wait(20);
-        list.positionViewAtIndex(5, ListView.Beginning); wait(20);
-        const index = list.indexAt(1, list.contentY + list.spacing + 1);
-        const key = list.model[index].key;
+        tryCompare(controller, "detailsExpansionProgress", 1);
+        showRow(list, 10, ListView.Beginning);
+        const index = list.firstVisibleIndex();
+        verify(index >= 0);
+        const key = list.model.get(index).resultKey;
         const offset = list.itemAtIndex(index).y - list.contentY;
         timeline.staging = [];
         const first = timelinePage(0, [101].concat(ids.slice(0, 19)), 20);
-        first.count = 21; first.total_rows = 21; first.dates[0].count = 21; first.anchor_reached = false;
+        first.count = 21; first.total_rows = 21; first.dates[3].count = 21; first.anchor_reached = false;
+        first.recent = [1001,1000,999].map(id => preview(id, "named:Chat"));
         timeline.receive(context(0), first, "", "");
         compare(timeline.entries[0].preview.id, 100, "an incomplete refreshed window remains private");
+        compare(timeline.snapshot.recent[0].id, 1000, "recent previews and period rows publish atomically");
         const second = timelinePage(20, [81], null);
-        second.count = 21; second.total_rows = 21; second.dates[0].count = 21;
+        second.count = 21; second.total_rows = 21; second.dates[3].count = 21;
+        second.recent = first.recent;
         timeline.receive(context(20), second, "", "");
         tryCompare(timeline, "busy", false);
-        wait(30);
-        const restored = list.indexAt(1, list.contentY + list.spacing + 1);
-        compare(list.model[restored].key, key);
+        tryVerify(() => !list.scrollSuspended && list.firstVisibleIndex() >= 0 && list.model.get(list.firstVisibleIndex()).resultKey === key);
+        const restored = list.firstVisibleIndex();
+        verify(restored >= 0);
+        compare(list.model.get(restored).resultKey, key);
         verify(Math.abs(list.itemAtIndex(restored).y - list.contentY - offset) < 2);
         compare(timeline.entries.length, 21);
+        compare(timeline.snapshot.recent[0].id, 1001);
         content.destroy();
     }
     function test_timelineAtomicWindowsRejectDuplicateAndStaleReplies() {
         const {state, controller, content} = make();
         controller.openDetails();
         const timeline = controller.timeline;
+        timeline.requestedDate = "older"; timeline.collapsed = false;
         const context = offset => ({view: "timeline", generation: timeline.generation, appKey: timeline.appKey, query: timeline.query, date: timeline.requestedDate, grouping: timeline.grouping, offset: offset, replacing: offset === 0, revision: state.observedHistoryRevision});
         const ids = Array.from({length: 20}, (_, i) => 100 - i);
         timeline.receive(context(0), timelinePage(0, ids, 20), "", "");
@@ -142,12 +212,21 @@ DaemonTestCase {
         timeline.receive(context(20), timelinePage(20, ids, null), "", "");
         verify(timeline.error.length > 0); compare(JSON.stringify(timeline.entries), good);
         timeline.error = "";
+        const midnight = timelinePage(20, ids.map(id => id - 20), null);
+        midnight.period_day = "2026-10-09";
+        timeline.receive(context(20), midnight, "", "");
+        compare(JSON.stringify(timeline.entries), good); verify(timeline.dirty, "calendar snapshots cannot be mixed");
+        const duplicateRecent = timelinePage(0, [1000].concat(ids.slice(1)), 20);
+        timeline.receive(context(0), duplicateRecent, "", "");
+        verify(timeline.error.length > 0, "recent previews cannot duplicate a period record");
+        compare(JSON.stringify(timeline.entries), good);
+        timeline.error = "";
         const stale = context(20);
         state.applySummary({available: true, history_revision: 2, app_policies: {}});
         timeline.receive(stale, timelinePage(20, ids.map(id => id - 20), null), "", "");
         compare(JSON.stringify(timeline.entries), good); verify(timeline.dirty);
         const generation = timeline.generation;
-        timeline.requestedDate = "1970-01-02";
+        timeline.requestedDate = "week";
         timeline.receive(Object.assign({}, stale, {generation: generation}), timelinePage(20, ids, null), "", "");
         compare(timeline.entries.length, 0, "superseded dates cannot repopulate the viewport");
         content.destroy();

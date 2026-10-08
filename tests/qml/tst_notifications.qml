@@ -115,8 +115,10 @@ DaemonTestCase {
     }
     function projectTimeline(controller, previews) {
         controller.timeline.busy = false;
-        controller.timeline.snapshot = {dates: [{key: "1970-01-01", count: previews.length}], date: "1970-01-01", next_offset: null};
-        controller.timeline.entries = previews.map(p => ({key: p.id + ":" + p.created_unix_ms, preview: p, members: [{id: p.id, created: p.created_unix_ms}]}));
+        controller.timeline.requestedDate = previews.length > 3 ? "older" : "";
+        controller.timeline.collapsed = previews.length <= 3;
+        controller.timeline.snapshot = {recent: previews.slice(0, 3), dates: ["today", "week", "month", "older"].map(key => ({key: key, count: key === "older" ? Math.max(0, previews.length - 3) : 0})), date: controller.timeline.requestedDate, next_offset: null};
+        controller.timeline.entries = previews.slice(3).map(p => ({key: p.id + ":" + p.created_unix_ms, preview: p, members: [{id: p.id, created: p.created_unix_ms}]}));
     }
     function startCenter() {
         const controller = makeController(makeState());
@@ -155,9 +157,13 @@ DaemonTestCase {
         for (const tab of ["notifications"]) {
             controller.setDetailsTab(tab);
             verify(waitForRendering(content));
-            const label = descendants(content.listItem).find(item => typeof item.subtitle === "string" && item.subtitle.includes(savedFile));
-            verify(label !== undefined);
-            compare(label.subtitle.split(savedFile).length, 2, "the body-only app preview must not duplicate its content");
+            const label = findChild(content, "notificationAppLabel-Chat");
+            verify(label !== null);
+            compare(label.title, savedFile, "the latest notification's content is primary, without a repeated app-name heading");
+            verify(!label.subtitle.includes(savedFile), "content must not repeat on the metadata line");
+            verify(label.subtitle.endsWith(" · Chat · 3 notifications"));
+            verify(label.titlePixelSize > label.subtitlePixelSize);
+            verify(label.titleColor !== label.subtitleColor);
             const first = findChild(content, "notificationPreview-100:100000");
             const next = findChild(content, "notificationPreview-3:3000");
             const title = findChild(content, "notificationPreviewTitle-3:3000");
@@ -184,6 +190,31 @@ DaemonTestCase {
         mouseClick(findChild(content, "notificationCard-100:100000:read"));
         tryCompare(controller, "selectedKey", "100:100000");
         compare(controller.detailsTab, "message");
+        content.destroy(); wait(0);
+    }
+    function test_appRowUsesLatestContentThenTimeAppAndTotalCount() {
+        const controller = makeController(makeState());
+        controller.uiActive = true;
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller});
+        const latest = Object.assign(preview(100, "Chat"), {created_unix_ms: controller.nowMs - 300000, summary: "Build finished", body: "All tests passed."});
+        projectApps(controller, [{key: "Chat", count: 2, total_count: 47, latest: latest}]);
+        tryVerify(() => findChild(content, "notificationAppLabel-Chat") !== null);
+        const label = findChild(content, "notificationAppLabel-Chat");
+        compare(label.title, "Build finished · All tests passed.");
+        compare(label.subtitle, "5m · Chat · 47 notifications", "show total notifications, not just the filtered count");
+        compare(findChild(content, "notificationAppRow-Chat").accessibleName, label.title + " · " + label.subtitle + " · 2 matching");
+        verify(findChild(content, "notificationSilence-Chat") !== null);
+        verify(findChild(content, "notificationDelete-Chat") !== null);
+        for (const data of [
+            {summary: "Chat", body: "Copied to clipboard.", expected: "Copied to clipboard."},
+            {summary: "Done", body: "Done", expected: "Done"},
+            {summary: "", body: "", expected: "Notification"}
+        ]) {
+            projectApps(controller, [{key: "Chat", count: 2, total_count: 47, latest: Object.assign({}, latest, {summary: data.summary, body: data.body})}]);
+            tryCompare(label, "title", data.expected);
+            compare(label.subtitle, "5m · Chat · 47 notifications");
+            compare(controller.selectedAppKey, "Chat", "preview updates do not change row identity or command scope");
+        }
         content.destroy(); wait(0);
     }
     function test_dndAcknowledgementAndRetry() {
@@ -363,10 +394,13 @@ DaemonTestCase {
         projectTimeline(controller, Array.from({length: 100}, (_, i) => preview(1000 - i)));
         verify(!findChild(content, "notificationPage"), "transport windows do not create page fields");
         const list = findChild(content, "notificationTimelineList");
-        tryCompare(list, "count", 101);
+        tryCompare(list, "count", 104);
+        tryCompare(controller, "detailsExpansionProgress", 1);
+        wait(50);
         content.listItem.focusList(); keyClick(Qt.Key_Tab);
+        const beforeScroll = list.contentY - list.originY;
         keyClick(Qt.Key_PageDown);
-        tryVerify(() => list.contentY > 0, 1000, "shared non-highlighted scrolling fallback handles PageDown");
+        tryVerify(() => list.contentY - list.originY > beforeScroll, 1000, "shared non-highlighted scrolling fallback handles PageDown relative to ListView's origin");
         const rendered = descendants(list.contentItem).filter(item => String(item.objectName || "").startsWith("notificationPreview-")).length;
         verify(rendered < 25, "virtualization does not instantiate the entire date");
         keyClick(Qt.Key_Tab, Qt.ControlModifier);

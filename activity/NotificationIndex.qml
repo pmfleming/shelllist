@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
+import Shelllist.Core as Core
 
 Item {
     id: page
@@ -10,25 +11,49 @@ Item {
     property string anchorKey: ""
     property real anchorOffset: 0
     property bool restoring: false
+    property int restoreAttempts: 0
+    property int stablePasses: 0
     property bool tearingDown: false
     Component.onDestruction: tearingDown = true
+    Timer { id: restoreRetry; interval: 16; onTriggered: page.restoreAnchor() }
     function captureAnchor(): void {
-        const index = history.indexAt(1, Math.max(history.originY, history.contentY) + history.spacing + 1);
+        if (restoring) return;
+        restoreAttempts = 0; stablePasses = 0;
+        const index = history.firstVisibleIndex();
         const row = index >= 0 ? history.itemAtIndex(index) : null;
-        anchorKey = index >= 0 ? history.model[index]?.key || "" : "";
+        anchorKey = index >= 0 ? history.model.get(index).resultKey : "";
         anchorOffset = row ? row.y - history.contentY : 0;
         restoring = true;
     }
     function restoreAnchor(): void {
+        restoreRetry.stop();
+        if (!restoring) return;
         if (tearingDown || !history || !page.visible) { restoring = false; return; }
-        const index = history.model.findIndex(row => row.key === anchorKey);
+        // A bounds/flick animation must not undo the restored row offset.
+        history.cancelFlick();
+        history.forceLayout();
+        const index = history.model.currentKeys().indexOf(anchorKey);
         if (index >= 0) {
-            history.positionViewAtIndex(index, ListView.Beginning);
-            const item = history.itemAtIndex(index);
-            if (item) history.contentY = Math.max(history.originY, Math.min(history.originY + Math.max(0, history.contentHeight - history.height), item.y - anchorOffset));
+            let item = history.itemAtIndex(index);
+            if (!item || item.height <= 0) {
+                history.positionViewAtIndex(index, ListView.Beginning);
+                history.forceLayout();
+                item = history.itemAtIndex(index);
+            }
+            // Incubation and variable-height layout can settle over successive
+            // frames. Hold the same key/offset until two passes agree; never
+            // replace that anchor with an intermediate gap or first-row offset.
+            const ready = item && item.height > 0;
+            stablePasses = ready && Math.abs(item.y - history.contentY - anchorOffset) < 1 ? stablePasses + 1 : 0;
+            if (ready) history.contentY = Math.max(history.originY, Math.min(history.originY + Math.max(0, history.contentHeight - history.height), item.y - anchorOffset));
+            if (stablePasses < 2 && restoreAttempts++ < 32) { restoreRetry.restart(); return; }
         }
         restoring = false;
         history.rememberScroll();
+    }
+    Connections {
+        target: page.controller
+        function onNavigationInteracted(): void { restoreRetry.stop(); page.restoring = false; }
     }
     Connections {
         target: page.timeline
@@ -36,16 +61,13 @@ Item {
         function onViewChanged(): void { Qt.callLater(page.restoreAnchor); }
     }
     function dateLabel(key: string): string {
-        const today = new Date(page.controller.nowMs);
-        const yesterday = new Date(page.controller.nowMs); yesterday.setDate(yesterday.getDate() - 1);
-        const value = new Date(key + "T12:00:00");
-        return value.toDateString() === today.toDateString() ? qsTr("Today") : value.toDateString() === yesterday.toDateString() ? qsTr("Yesterday") : value.toLocaleDateString();
+        return ({today: qsTr("Today"), week: qsTr("This week"), month: qsTr("This month"), older: qsTr("Older")})[key] || key;
     }
     function rows(): var {
-        const result = [];
+        const result = (timeline.snapshot.recent || []).map(preview => ({kind: "message", key: Ui.NotificationPresentation.recordKey(preview), preview: preview, count: 1, stack: false}));
         for (const date of timeline.snapshot.dates || []) {
             result.push({kind: "date", key: date.key, count: date.count});
-            if (date.key !== timeline.snapshot.date || timeline.collapsed) continue;
+            if (date.key !== timeline.requestedDate || date.key !== timeline.snapshot.date || timeline.collapsed) continue;
             for (const entry of timeline.entries) {
                 const expanded = timeline.expandedStacks[entry.key] === true;
                 result.push({kind: "message", key: entry.key, preview: entry.preview, count: entry.members.length, stack: entry.members.length > 1, expanded: expanded});
@@ -75,7 +97,7 @@ Item {
         }
         Ui.ContentState {
             width: parent.width
-            visible: !(page.timeline.snapshot.dates || []).length
+            visible: page.timeline.totalCount === 0
             icon: "notifications_none"
             kind: page.timeline.error ? "unavailable" : page.timeline.busy ? "loading" : page.controller.catalog.query ? "filtered" : "empty"
             text: page.timeline.error || (kind === "loading" ? qsTr("Loading notifications…") : kind === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
@@ -89,14 +111,24 @@ Item {
         viewMemory: page.controller.viewMemory
         memoryTab: "notifications"
         scrollSuspended: page.restoring
+        onMovementStarted: { restoreRetry.stop(); page.restoring = false; }
         spacing: Ui.Theme.spacingSm
         cacheBuffer: 200
-        model: page.rows()
+        readonly property var rows: page.rows()
+        model: Core.SerializedListModel {
+            rows: history.rows.map(row => ({key: row.key, payload: row}))
+        }
         delegate: Ui.CommandGroup {
             id: row
-            required property var modelData
+            required property var resultData
+            readonly property var modelData: JSON.parse(resultData.payload)
             width: history.width
+            // Column's implicit height settles a positioning pass later. Feed
+            // the loader height directly to ListView so it never estimates a
+            // newly created message as a zero-height row.
+            height: rowContent.height
             Loader {
+                id: rowContent
                 width: parent.width
                 sourceComponent: row.modelData.kind === "date" ? dateHeader : row.modelData.kind === "more" ? more : message
             }
@@ -107,7 +139,8 @@ Item {
                     uiScale: Ui.Theme.expandedSecondaryActionScale
                     objectName: "notificationDate-" + row.modelData.key
                     label: page.dateLabel(row.modelData.key) + " · " + row.modelData.count
-                    icon: page.timeline.snapshot.date === row.modelData.key && !page.timeline.collapsed ? "expand_less" : "expand_more"
+                    icon: page.timeline.requestedDate === row.modelData.key && !page.timeline.collapsed ? "expand_less" : "expand_more"
+                    enabled: row.modelData.count > 0
                     onClicked: page.timeline.chooseDate(row.modelData.key)
                 }
             }

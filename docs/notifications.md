@@ -2,12 +2,19 @@
 
 The notification center uses the shared chooser, identity header, circular actions,
 compact settings fields and bottom tabs. The left list always contains applications.
-There is one notification collection, not separate All/Live modes.
+There is one notification collection, not separate All/Live modes. Each app row
+leads with the newest notification's content (subject/body without duplicate text).
+Its secondary line is time · app · total notifications, with Silent appended when
+applicable. Search-match counts remain available in the accessible name; they do
+not replace the total. This presentation does not change app-row command scope.
 
 ## Actions and settings
 
 - Each application row has **Silence** and **Delete**. Alt+Q/Alt+D target the selected
   app, including while details are collapsed. Pointer commands target their own row.
+- Expanded app headers promote **Silence/Unsilence** to their single filled
+  primary. **Reset app defaults** (Alt+E) and **Delete** are secondary circles;
+  reset is no longer a standalone row below the settings.
 - Silence suppresses popups while retaining notifications. App controls support
   indefinite/30-minute/one-hour silence, exact-repeat grouping, DND bypass and reset.
   These policies are daemon-owned, persisted and published only after storage ack.
@@ -27,12 +34,16 @@ There is one notification collection, not separate All/Live modes.
 
 ## History, keyboard and rendering
 
-Notifications is a virtualized date accordion. The newest date starts expanded;
-opening another date collapses the preceding date. Date buckets/counts come from
-`notifications.queryCenter` over its documented recent search scope. Transport
-windows contain at most 20 entries and append when their boundary becomes visible;
-they are not user-facing pages. Expanding a distant date seeks directly, rather
-than requiring the user to walk through earlier messages.
+Notifications shows the **three newest matching notifications** individually,
+then **Today**, **This week**, **This month**, and **Older**, initially closed.
+The previews are excluded from these four mutually exclusive groups. The daemon
+uses local calendar dates: today first, then the week beginning Monday, then the
+remaining month, then older records. Empty groups retain disabled headers. Only
+one period opens at a time; opening it seeks directly to that period.
+
+Counts and previews come from `notifications.queryCenter` with `period_groups:
+true` over its documented recent search scope, not from the loaded slice. Windows
+contain at most 20 entries and append on scroll; they are not user-facing pages.
 
 Only exact, fully represented, action-free summary/body/category/urgency matches
 within an application and date stack, in groups of at most 50 records. Long or
@@ -46,8 +57,10 @@ navigation. Read opens Message without invoking an app or changing read state.
 Message alone owns guarded sender actions and explicit reply sending. App controls
 use ordinary Enter/Tab save and Escape discard transactions.
 
-Native continuation reads are revision/epoch fenced. Replacements stage through
-the old window before publication; partial failures leave the previous snapshot.
+Native continuation reads are revision/epoch/local-calendar-day fenced. Midnight
+refreshes the period counts even without arrivals. Replacements stage through
+the old window before publishing recent previews and period entries together;
+partial failures leave the previous snapshot.
 Deletion invalidates readers to prevent old responses from restoring removed
 records. The record identity is always `(id, created_unix_ms)`.
 

@@ -43,6 +43,7 @@ Ui.ProviderChooserSurface {
     Connections {
         target: content.controller.timeline
         function onEntriesChanged(): void { content.detailsNavigation.closeCommandMenu(); }
+        function onSnapshotChanged(): void { content.detailsNavigation.closeCommandMenu(); }
     }
     Connections {
         target: content.controller.catalog
@@ -85,14 +86,18 @@ Ui.ProviderChooserSurface {
             id: row
             required property var resultData
             readonly property var app: JSON.parse(resultData.payload)
+            readonly property string latestText: [Ui.NotificationPresentation.previewHeading(app.latest), Ui.NotificationPresentation.previewBody(app.latest)].filter(Boolean).join(" · ") || qsTr("Notification")
+            readonly property string metadata: [Ui.NotificationPresentation.timeLabel(app.latest.created_unix_ms, content.controller.nowMs), app.latest.app_name || qsTr("Unknown app"), qsTr("%1 notifications").arg(app.total_count), content.controller.notificationState.appPolicy(app.key).silent ? qsTr("Silent") : ""].filter(Boolean).join(" · ")
+            objectName: "notificationAppRow-" + app.key
             listPane: pane
             rowHeight: pane.delegateHeight
             leadingIcon: Ui.NotificationIconSource.fallback(row.app.latest)
             leadingIconSource: Ui.NotificationIconSource.resolve(row.app.latest)
-            accessibleName: (app.latest.app_name || qsTr("Notification")) + qsTr(" · %1 matching of %2 recent notifications · ").arg(app.count).arg(app.total_count) + app.latest.summary
+            accessibleName: latestText + " · " + metadata + (app.count !== app.total_count ? qsTr(" · %1 matching").arg(app.count) : "")
             Ui.ResultLabel {
-                title: (row.app.latest.app_name || qsTr("Notification")) + " · " + row.app.count
-                subtitle: [content.controller.notificationState.appPolicy(row.app.key).silent ? qsTr("Silent") : "", Ui.NotificationPresentation.timeLabel(row.app.latest.created_unix_ms, content.controller.nowMs), Ui.NotificationPresentation.previewHeading(row.app.latest), Ui.NotificationPresentation.previewBody(row.app.latest)].filter(Boolean).join(" · ")
+                objectName: "notificationAppLabel-" + row.app.key
+                title: row.latestText
+                subtitle: row.metadata
             }
             RowLayout {
                 spacing: 2

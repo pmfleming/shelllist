@@ -298,18 +298,31 @@ chosen. App changes preserve surface expansion and restore app/query-local date,
 tab and selected record identity. No lifecycle filter, status badge, or separate
 archive is presented: counts always describe notifications.
 
+App rows lead with the latest notification's content. Time, application name and
+total notification count are secondary metadata, followed by Silent when relevant.
+Duplicate app-name summaries/body text are suppressed; full content and matching
+counts remain accessible even when the row elides. Identity, selection and command
+scope still belong to the application, not the previewed record.
+
 App rows expose Silence and Delete as separate shared circular commands. Their
 pointer scope is that row, not an implicit newest message or a selection change.
 Alt+Q / Alt+D target the selected app in collapsed results and expanded app pages.
-Silence suppresses interruptions, not collection. App controls use shared deferred
+Expanded app headers have one filled primary, Silence/Unsilence (Alt+Q), beside
+identity; Reset app defaults (Alt+E) and Delete (Alt+D) are secondary circles below.
+Reset is not a separate settings-content row. Result Enter still opens the list,
+never silently changes delivery. Silence suppresses interruptions, not collection. App controls use shared deferred
 popup/duration dropdowns and immediate grouping/DND-bypass switches; acknowledged
 policies persist across daemon restarts. Sound playback and retention-policy
 editors are not exposed without supporting backend capabilities.
 
-Notifications is a virtualized date accordion, opening the newest date by default.
-One date is expanded at a time; exact action-free repetitions become bounded
-stacks with individually addressable records. Counts, grouping and search belong
-to the native catalog, not the loaded transport slice. Windows append on scroll;
+Notifications starts with up to three newest matching records, individually
+visible, followed by **Today / This week / This month / Older**, initially closed.
+These four native periods exclude the three previews and are mutually exclusive:
+local today first, then the calendar week beginning Monday, then the calendar
+month, then everything older. Empty groups stay visible but disabled. One period
+opens at a time; exact action-free repetitions on the same local date become
+bounded stacks with individually addressable records. Counts, grouping and search
+belong to the native catalog, not the loaded transport slice. Windows append on scroll;
 there is no Page field or next/previous-page command. Date/stack expansion, Read
 and individual Delete are commands (also in Alt+J), never field Tab stops or
 row-wide sender actions. Read selects `(id, created_unix_ms)` and opens Message
@@ -334,7 +347,8 @@ Tab changes discard only uncommitted edits. Removed selected records remain an
 unavailable Message, never silently retarget another notification.
 
 Native windows stage refreshes atomically and fence stale revisions, epochs,
-queries and date changes. `tst_notifications.qml` and `tst_notification_center.qml`
+queries, period changes and local-midnight rollover. Recent previews and period
+windows publish atomically, without duplicated records. `tst_notifications.qml` and `tst_notification_center.qml`
 cover actual primary/Read/menu routes, shared scrolling, policy transactions,
 confirmation/cancel, stale responses, bounded rendering and draft preservation.
 Daemon tests cover persistence, grouped dates/stacks, exact deletion scope,
