@@ -680,6 +680,13 @@ availability; formatting and graph layout remain local. Missing projections fail
 closed. Range identity and finite/nonnegative-value checks still reject stale or
 malformed results. Resource cards introduce no additional field stops.
 
+## Native time/weather locations
+
+Location IDs and cross-source merging come from bar-daemon. The client retains
+locale sorting, filtering, focus and selection; list rebuilds retain the previous
+native ID even when labels or ordering change. Browsing arrows and detail-entry
+commands continue through the shared chooser surface.
+
 ## Native domain projections
 
 Activity day membership and busy-day markers come from the daemon's calendar

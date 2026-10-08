@@ -81,3 +81,14 @@ request path (not a replay of the edit).
 Validation: native publication failure, stale session, lease consumption and
 revision-conflict tests; actual Qt Enter/Paste with success, partial failure and
 reopened-session cases. No live focus/input-injection test was run.
+
+## Canonical time/weather locations
+
+Activity snapshots now carry native location records. Stable weather IDs and
+index-independent local/clock IDs survive ordering changes; duplicate clocks
+resolve deterministically, while distinct weather places sharing a timezone are
+preserved. Timezone events refresh the projection without another weather fetch.
+The frontend retains locale sorting/filtering and restores selection by native ID.
+
+Validation: native duplicate/order/same-timezone tests, a generated native fixture,
+and actual Qt list browsing/detail entry with reorder-safe selection.
