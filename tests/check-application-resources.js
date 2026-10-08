@@ -19,7 +19,7 @@ const cases = ["cpu_percent_of_machine", "memory_bytes", "gpu_busy_percent",
     "referenced_file_disk_bytes", "gpu_memory_allocated_bytes", "attributed_fraction"]
     .map(metric => [metric, {...history, [metric]: null}, false]);
 for (const metric of ["network_receive_bytes_per_second", "network_transmit_bytes_per_second"])
-    cases.push([metric, {...history, availability: {...history.availability, network_bytes: true}}, true]);
+    cases.push([metric, {...history, metric_availability: {...history.metric_availability, [metric]: true}}, true]);
 for (const [metric, point, available] of cases)
     assert.equal(resources.historicalMetricAvailable(point, metric), available, metric);
 for (const metric of ["memory_bytes", "gpu_memory_allocated_bytes", "cpu_percent_of_machine", "disk_space_total_bytes", "referenced_file_disk_bytes", "disk_read_bytes_per_second"]) {
@@ -34,34 +34,34 @@ for (const [label, actual, expected] of [
     ["connection support is not byte support", resources.currentMetricAvailable(current, "network_receive_bytes_per_second"), false],
     ["zero power is not a fallback", resources.currentValue({...current, estimated_app_power_watts: 0, power_watts: 99}, "average_power_watts"), 0],
     ["missing power", resources.currentMetricAvailable({...current, estimated_app_power_watts: null, power_watts: null}, "average_power_watts"), false],
-    ["battery discharge is not application power", resources.historicalMetricAvailable({...history, energy_source: "battery"}, "average_power_watts"), false],
-    ["empty confidence", resources.rangeEnergyConfidence([]), "unknown"],
-    ["lowest confidence wins", resources.rangeEnergyConfidence([{...history, energy_confidence: "high"}, {...history, energy_confidence: "low"}]), "low"],
-    ["unknown confidence", resources.rangeEnergyConfidence([{...history, energy_confidence: "unknown"}]), "unknown"],
-    ["unavailable samples do not lower confidence", resources.rangeEnergyConfidence([{...history, energy_confidence: "high"}, {...history, energy_confidence: "low", availability: {energy: false}}]), "high"]
+    ["native unavailability", resources.historicalMetricAvailable({...history, metric_availability: {average_power_watts: false}}, "average_power_watts"), false],
+    ["missing projection is not reconstructed", resources.currentMetricAvailable({...current, metric_availability: undefined}, "memory_bytes"), false],
+    ["empty confidence", resources.rangeEnergyConfidence(null), "unknown"],
+    ["native confidence", resources.rangeEnergyConfidence({energy_confidence: "low"}), "low"],
+    ["unknown confidence", resources.rangeEnergyConfidence({energy_confidence: "unrecognized"}), "unknown"]
 ])
     assert.equal(actual, expected, label);
 
-// Integrate the daemon's observed duration, not missing time or lifetime counters.
+// Consume native totals verbatim, never integrate rates in the frontend.
 const summary = {
     window_start_ms: 1000, window_end_ms: 1801000, weighting: "observed-duration",
     metrics: {
-        average_power_watts: {available: true, mean: 0.62, peak: 2.1, observed_ms: 1800000},
-        disk_read_bytes_per_second: {available: true, mean: 100, peak: 400, observed_ms: 900000},
-        disk_write_bytes_per_second: {available: true, mean: 0, peak: 0, observed_ms: 15000},
+        average_power_watts: {available: true, mean: 0.62, peak: 2.1, observed_ms: 1800000, observed_total: 311, total_unit: "mWh"},
+        disk_read_bytes_per_second: {available: true, mean: 100, peak: 400, observed_ms: 900000, observed_total: 90001, total_unit: "bytes"},
+        disk_write_bytes_per_second: {available: true, mean: 0, peak: 0, observed_ms: 15000, observed_total: 0, total_unit: "bytes"},
         network_receive_bytes_per_second: {available: false, mean: 0, peak: 0, observed_ms: 0}
     }
 };
 const validated = resources.windowSummary(summary, 1000, 1801000);
-for (const [metric, expected] of Object.entries({average_power_watts: 310,
-    disk_read_bytes_per_second: 90000, disk_write_bytes_per_second: 0, network_receive_bytes_per_second: null}))
+for (const [metric, expected] of Object.entries({average_power_watts: 311,
+    disk_read_bytes_per_second: 90001, disk_write_bytes_per_second: 0, network_receive_bytes_per_second: null}))
     assert.equal(resources.periodEstimate(validated, metric), expected, metric);
 const invalid = [
     ["stale range", resources.windowSummary(summary, 1000, 2000000)],
     ["unknown weighting", resources.windowSummary({...summary, weighting: "sample-count"}, 1000, 1801000)],
     ["non-rate metric", {...summary, metrics: {memory_bytes: {available: true, mean: 100, observed_ms: 10}}}, "memory_bytes"]
 ];
-for (const stats of [{mean: null}, {mean: Infinity}, {mean: -2}, {observed_ms: 0},
+for (const stats of [{observed_total: null}, {observed_total: -1}, {observed_total: Infinity}, {total_unit: "unknown"}, {mean: null}, {mean: Infinity}, {mean: -2}, {observed_ms: 0},
     {observed_ms: -1}, {observed_ms: 1800001}, {observed_ms: NaN}, {available: false}])
     invalid.push([JSON.stringify(stats), {...summary, metrics: {average_power_watts: {...summary.metrics.average_power_watts, ...stats}}}]);
 for (const [label, value, metric] of invalid)

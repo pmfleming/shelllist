@@ -50,6 +50,11 @@ DaemonTestCase {
         return {
             id: "resources-test", name: "Resource test", kind: "desktop-application", revision: 1,
             running: true, focused: false, instances: [], desktop_actions: [], category: "shell",
+            metric_availability: {cpu_percent_of_machine: true, memory_bytes: true, memory_swap_bytes: true,
+                gpu_busy_percent: true, gpu_memory_resident_bytes: true, gpu_memory_allocated_bytes: true,
+                disk_space_total_bytes: true, disk_space_permanent_bytes: true, disk_space_temporary_bytes: true,
+                referenced_file_disk_bytes: true, referenced_file_temporary_bytes: true,
+                disk_read_bytes_per_second: true, disk_write_bytes_per_second: true, average_power_watts: true},
             cpu_percent_of_machine: 0, memory_bytes: 78852915, memory_swap_bytes: 0,
             gpu_busy_percent: 0, gpu_memory_resident_bytes: 276824064, gpu_memory_allocated_bytes: 276824064,
             disk_space_total_bytes: 6400000, disk_space_permanent_bytes: 6300000, disk_space_temporary_bytes: 100000,
@@ -91,16 +96,16 @@ DaemonTestCase {
             memory_bytes: Object.assign({}, metric, {mean: 78852915, peak: 79000000}),
             gpu_busy_percent: metric,
             gpu_memory_resident_bytes: Object.assign({}, metric, {mean: 276824064, peak: 280000000}),
-            disk_read_bytes_per_second: Object.assign({}, metric, {mean: 100, peak: 400, observed_ms: (end - start) / 2}),
-            disk_write_bytes_per_second: metric,
-            average_power_watts: Object.assign({}, metric, {mean: 0.01, peak: 0.38})
+            disk_read_bytes_per_second: Object.assign({}, metric, {mean: 100, peak: 400, observed_ms: (end - start) / 2, observed_total: 100 * (end - start) / 2000, total_unit: "bytes"}),
+            disk_write_bytes_per_second: Object.assign({}, metric, {observed_total: 0, total_unit: "bytes"}),
+            average_power_watts: Object.assign({}, metric, {mean: 0.01, peak: 0.38, observed_total: 0.01 * (end - start) / 3600, total_unit: "mWh"})
         };
         const point = Object.assign(fixture(), {timestamp_ms: end - 15000, duration_ms: 15000,
             average_power_watts: 0.01, coverage: 1, sample_count: 7,
             availability: {cpu: true, memory: true, gpu: true, energy: true, disk_space: true, referenced_files: true, storage: true, network_bytes: false}});
         controller.applyResourceHistory(controller.activeHistoryRequestId, {
             target_id: controller.selectedResult.id, points: [point], has_more: false, next_cursor: "fixture",
-            summary: {window_start_ms: start, window_end_ms: end, revision: "fixture", weighting: "observed-duration", metrics: metrics}
+            summary: {energy_confidence: "low", window_start_ms: start, window_end_ms: end, revision: "fixture", weighting: "observed-duration", metrics: metrics}
         });
     }
     function field(panel) { return findChild(panel, "applicationHistoryRange"); }
@@ -253,9 +258,9 @@ DaemonTestCase {
         const start = c.historyWindowStartMs;
         const duration = (c.historyWindowEndMs - start) / 3;
         c.resourceHistory = [
-            {timestamp_ms: start + duration, duration_ms: duration, cpu_percent_of_machine: 0, gpu_busy_percent: 20, availability: {cpu: true, gpu: true}},
-            {timestamp_ms: start + duration * 2, duration_ms: duration, cpu_percent_of_machine: 10, gpu_busy_percent: null, availability: {cpu: true, gpu: true}},
-            {timestamp_ms: start + duration * 3, duration_ms: duration, cpu_percent_of_machine: 20, gpu_busy_percent: 30, availability: {cpu: true, gpu: true}}
+            {timestamp_ms: start + duration, duration_ms: duration, cpu_percent_of_machine: 0, gpu_busy_percent: 20, metric_availability: {cpu_percent_of_machine: true, gpu_busy_percent: true}},
+            {timestamp_ms: start + duration * 2, duration_ms: duration, cpu_percent_of_machine: 10, gpu_busy_percent: null, metric_availability: {cpu_percent_of_machine: true, gpu_busy_percent: true}},
+            {timestamp_ms: start + duration * 3, duration_ms: duration, cpu_percent_of_machine: 20, gpu_busy_percent: 30, metric_availability: {cpu_percent_of_machine: true, gpu_busy_percent: true}}
         ];
         const plot = card(panel, "resourcePlot_activity");
         compare(plot.segments[0].length, 1);

@@ -75,10 +75,8 @@ function summaryMetric(summary, metric) {
 }
 function periodEstimate(summary, metric) {
     const stats = summaryMetric(summary, metric);
-    if (!stats.available || !metric.endsWith("_bytes_per_second") && metric !== "average_power_watts")
-        return null;
-    const result = Number(stats.mean) * Number(stats.observed_ms) / (metric === "average_power_watts" ? 3600 : 1000);
-    return measured(result) ? result : null;
+    return stats.available && ["bytes", "mWh"].includes(String(stats.total_unit)) && measured(stats.observed_total)
+        ? stats.observed_total : null;
 }
 function periodText(summary, metric) {
     const estimate = periodEstimate(summary, metric);
@@ -147,14 +145,8 @@ function missingIntervals(segments, start, end) {
         gaps.push({ start: cursor, end });
     return gaps;
 }
-function rangeEnergyConfidence(points) {
-    const confidences = points.filter(point => historicalMetricAvailable(point, "average_power_watts"))
-        .map(point => text(point.energy_confidence, "unknown").toLowerCase());
-    if (confidences.includes("low"))
-        return "low";
-    if (confidences.length === 0 || confidences.some(value => !["high", "medium"].includes(value)))
-        return "unknown";
-    return confidences.includes("medium") ? "medium" : "high";
+function rangeEnergyConfidence(summary) {
+    return ["low", "medium", "high"].includes(String(summary?.energy_confidence)) ? String(summary?.energy_confidence) : "unknown";
 }
 function currentValue(resource, metric) {
     if (metric !== "average_power_watts")
@@ -166,42 +158,9 @@ function text(value, fallback) {
     const result = String(value === undefined || value === null ? "" : value).trim();
     return result || fallback || "Unavailable";
 }
-function metricCapability(metric) {
-    if (metric.startsWith("gpu_"))
-        return "gpu";
-    if (metric.startsWith("memory_"))
-        return "memory";
-    if (metric.startsWith("cpu_") || ["process_count", "thread_count", "major_faults_per_second"].includes(metric))
-        return "cpu";
-    if (metric.startsWith("disk_space_"))
-        return "disk_space";
-    if (metric.startsWith("referenced_file_") || metric === "open_file_disk_bytes")
-        return "referenced_files";
-    if (metric === "network_connection_count")
-        return "network_connections";
-    if (metric.startsWith("network_"))
-        return "network_bytes";
-    if (metric.includes("power_watts") || ["energy_mwh", "battery_percent", "attributed_fraction"].includes(metric))
-        return "energy";
-    return "storage";
-}
 function historicalMetricAvailable(point, metric) {
-    const capability = metricCapability(metric);
-    // Legacy-record normalization belongs to app-daemon, not the chart.
-    const value = point ? point[metric] : undefined;
-    return !!point && measured(value)
-        && !!point.availability && point.availability[capability] === true
-        && (capability !== "energy" || point.energy_source === "rapl");
+    return !!point && point.metric_availability?.[metric] === true && measured(point[metric]);
 }
 function currentMetricAvailable(resource, metric) {
-    if (!measured(currentValue(resource, metric)))
-        return false;
-    const measurement = resource.measurement || ({});
-    switch (metricCapability(metric)) {
-        case "cpu": return Number(measurement.coverage) > 0;
-        case "memory": return ["pss", "rss-fallback"].includes(String(measurement.memory_source));
-        case "disk_space": return measurement.disk_space_scope === "identified-app-directories";
-        case "energy": return resource.energy_source === "rapl";
-        default: return measurement[metricCapability(metric) + "_available"] === true;
-    }
+    return resource.metric_availability?.[metric] === true && measured(currentValue(resource, metric));
 }

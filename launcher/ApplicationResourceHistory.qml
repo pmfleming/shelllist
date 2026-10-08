@@ -65,7 +65,7 @@ ColumnLayout {
         if (metric === "gpu_busy_percent") detail += qsTr(". Engine activity; not summed with CPU.");
         if (metric === "memory_bytes") detail += qsTr(". RAM source: %1").arg(memorySource);
         if (kind === "power") detail += qsTr(". RAPL CPU-package attribution; confidence %1; period confidence %2.")
-            .arg(Resources.text(current.energy_confidence, "unknown")).arg(Resources.rangeEnergyConfidence(points));
+            .arg(Resources.text(current.energy_confidence, "unknown")).arg(Resources.rangeEnergyConfidence(summary));
         if (kind === "rate" || kind === "power") detail += qsTr(". %1: %2").arg(controller.historyRange).arg(controller.historyInFlight ? qsTr("Loading…") : Resources.periodText(summary, metric));
         return {metric: metric, label: label, shortLabel: shortLabel, icon: icon, color: color, kind: kind, objectName: objectName, direction: direction,
             available: currentHas(metric), valueText: currentText(metric, kind), mean: stats.mean, peak: stats.peak, detailText: detail,

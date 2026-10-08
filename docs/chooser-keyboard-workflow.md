@@ -654,6 +654,14 @@ changes do not retarget it. Partial persistence failure is reported without
 replaying the applied hardware change; disconnects never trigger automatic
 retries. The shared choice control still owns its local save/discard transaction.
 
+## Native resource statistics
+
+Resource range selection remains a shared local field transaction. Saved range
+queries consume native observed totals, whole-window confidence and per-metric
+availability; formatting and graph layout remain local. Missing projections fail
+closed. Range identity and finite/nonnegative-value checks still reject stale or
+malformed results. Resource cards introduce no additional field stops.
+
 ## Native domain projections
 
 Activity day membership and busy-day markers come from the daemon's calendar

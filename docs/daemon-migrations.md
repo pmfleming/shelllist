@@ -39,3 +39,16 @@ fingerprints remain conservative early hints; they are no longer the sole guard.
 Validation: stale previews make zero writes; catalog/policy changes invalidate
 tokens, mode ordering/focus do not. Native rollback/mirroring tests and Qt display
 interaction tests remain in the gate. Deploy the daemon and consumer together.
+
+## Resource projection
+
+`app-daemon` publishes `metric_availability`, summary `observed_total`/`total_unit`
+and full-window `energy_confidence`. Totals use only clipped observed durations;
+unavailable intervals and non-RAPL energy are excluded. History pages share the
+same canonical summary. Consumer checks retain window identity, units, finite
+values and missing-metadata rejection; formatting and graph geometry remain local.
+
+The native resource fixture is regenerated with
+`APP_DAEMON_UPDATE_RESOURCE_FIXTURE=1 cargo test --lib resource_projection_fixture_is_current`
+and copied into Shelllist. Tests cover zero, unavailable capabilities, confidence,
+clipped energy totals and Qt range-field transactions/read-only card traversal.
