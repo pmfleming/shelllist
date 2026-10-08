@@ -17,6 +17,8 @@ DaemonTestCase {
             days: {"2026-03-29": {event_ids: ["native"], todo_ids: []}, "2026-03-30": {event_ids: [], todo_ids: []}}});
         const content = createTemporaryObject(contentFactory, testCase, {controller: owner, width: width, height: height});
         owner.openSection("schedule");
+        tryCompare(owner, "detailsExpansionProgress", 1);
+        verify(waitForPolish(testCase.Window.window));
         tryVerify(() => findChild(content, "activityNextDay") !== null);
         compare(owner.selectedEvents.length, 1, "membership belongs to the daemon, not JS timestamps");
         mouseClick(findChild(content, "activityNextDay"));
