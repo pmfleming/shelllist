@@ -52,3 +52,17 @@ The native resource fixture is regenerated with
 `APP_DAEMON_UPDATE_RESOURCE_FIXTURE=1 cargo test --lib resource_projection_fixture_is_current`
 and copied into Shelllist. Tests cover zero, unavailable capabilities, confidence,
 clipped energy totals and Qt range-field transactions/read-only card traversal.
+
+## Observed application Close
+
+The operation captures actual compositor window IDs and process identities before
+close dispatch. Owned running/status results retain targeted and dispatched IDs;
+a bounded observation reports remaining IDs and closed/still-open/unknown.
+Dispatch failures preserve partial outcomes. Cancellation stops observation, not
+already-dispatched compositor requests. New/unrelated windows do not prevent
+confirmation. Shelllist no longer infers closure from filtered/paginated results
+or polls those results to manufacture completion.
+
+Validation: native disappeared/replaced/still-open/unavailable/dispatch-failure
+cases and cancellation retention; real Qt row commands, native outcome rendering
+and focus recovery. No automatic replay and no live compositor acceptance run.

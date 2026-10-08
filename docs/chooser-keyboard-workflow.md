@@ -654,6 +654,14 @@ changes do not retarget it. Partial persistence failure is reported without
 replaying the applied hardware change; disconnects never trigger automatic
 retries. The shared choice control still owns its local save/discard transaction.
 
+## Observed application Close
+
+Close commands target the daemon-captured window identities. Admission and close
+IPC dispatch are not completion evidence; the daemon reports closed, still-open
+or unknown after bounded observation. Filtered catalogs only update presentation
+and cannot infer the outcome. Still-open windows retain focus/save-prompt access.
+Cancelling observation never claims the dispatched closes were rolled back.
+
 ## Native resource statistics
 
 Resource range selection remains a shared local field transaction. Saved range

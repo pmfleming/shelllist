@@ -263,7 +263,6 @@ Ui.ProviderChooserController {
         catalogError = "";
         resultsAboutToChange(true);
         applyProviderQuery(id, applicationProvider.resultsFor(page.applications));
-        operations.reconcile(page.applications);
         resultsChanged();
         if (detailsOpen && detailsTab === "resources" && selectedResult && selectedResult.id !== historyTargetId)
             requestResourceHistory();
@@ -352,13 +351,6 @@ Ui.ProviderChooserController {
     onSelectedResultChanged: {
         if (viewMemory.current && resourcesVisible && availableDetailsTabs().includes(detailsTab))
             requestResourceHistory();
-    }
-
-    Timer {
-        interval: 2000
-        running: controller.uiActive && Object.values(controller.operations.feedback).some(record => record.awaitingWindows && record.windowChecks < 3)
-        repeat: true
-        onTriggered: if (!controller.refreshInFlight) controller.refresh(false)
     }
 
     Timer {

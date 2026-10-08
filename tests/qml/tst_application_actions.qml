@@ -143,7 +143,7 @@ DaemonTestCase {
         compare(panel.dismissals, 1);
         compare(calls.filter(c => c.method === Api.methods.execute).length, 1, "Placement recovery never replays launch");
     }
-    function test_close_reconcilesWindowsAndRestoresCommandFocus() {
+    function test_close_usesNativeObservationAndRestoresCommandFocus() {
         const panel = makePanel();
         const c = panel.controller;
         expand(panel);
@@ -157,15 +157,17 @@ DaemonTestCase {
         mouseClick(findChild(panel, "closeWindow-w1"));
         mouseClick(findChild(panel, "focusWindow-w1"));
         compare(calls.filter(c => c.method === Api.methods.execute).length, 1, "Pending close blocks conflicting pointer commands");
-        event(call, "completed");
+        event(call, "completed", {message: "Close requested; 1 window still open. Focus it to check for a save prompt.",
+            close: {status: "still-open", targeted_window_ids: ["w1"], remaining_window_ids: ["w1"]}});
         compare(panel.dismissals, 0);
-        compare(c.selectedApplication.instances.length, 2, "Dispatch acknowledgement must not remove a window");
+        compare(c.selectedApplication.instances.length, 2, "Native observation must not rewrite the catalog");
         snapshot(panel, ["w1", "w2"]);
         verify(c.selectedActionMessage.indexOf("still open") >= 0);
         verify(findChild(panel, "focusWindow-w1").enabled, "Can reach a save prompt");
         // Put real native focus on the row command before removing that row.
         findChild(panel, "closeWindow-w1").forceActiveFocus();
         snapshot(panel, ["w2"]);
+        verify(c.selectedActionMessage.indexOf("still open") >= 0, "filtered catalog changes must not rewrite the native outcome");
         compare(c.selectedApplication.instances.length, 1);
         verify(panel.detailsNavigation.activeFocus, "Removed command returns to shared browsing");
         compare(c.selectedResult.id, "Alpha");
@@ -174,7 +176,8 @@ DaemonTestCase {
         compare(all.params.action, "close");
         compare(c.detailActions.find(a => a.id === "close").label, "Close all windows (1)");
         accept(all);
-        event(all, "completed");
+        event(all, "completed", {message: "Requested windows closed",
+            close: {status: "closed", targeted_window_ids: ["w2"], remaining_window_ids: []}});
         snapshot(panel, [], true);
         verify(c.selectedApplication.running, "Background processes may survive closing all windows");
         compare(c.detailActions.find(a => a.id === "activate").label, "Launch");

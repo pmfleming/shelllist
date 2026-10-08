@@ -51,7 +51,7 @@ Item {
             operationId: "", statusRequestId: "", status: "", checks: 0,
             generation: controller.uiGeneration, viewEpoch: controller.actionViewEpoch, handedOff: false,
             windowIds: windowId ? [windowId] : windows.map(window => window.id),
-            message: request.action.label + "…", awaitingWindows: false, windowChecks: 0
+            message: request.action.label + "…"
         };
         store(record);
         if (!backend.execute(request.id, params)) {
@@ -77,7 +77,9 @@ Item {
         if (!transition)
             return;
         const record = Object.assign({}, original, {operationId: operation.id, status: transition.status,
-            placement: operation.placement || null, checks: original.operationId ? original.checks : 0});
+            placement: operation.placement || null, close: operation.close || null,
+            windowIds: Array.isArray(operation.close?.targeted_window_ids) ? operation.close.targeted_window_ids : original.windowIds,
+            checks: original.operationId ? original.checks : 0});
         const closing = Presentation.isCloseAction(record.request.actionId);
         if (transition.stage === "active") {
             record.message = record.request.action.label + (record.checks >= 3 ? ": still waiting for confirmation" : "…");
@@ -94,15 +96,17 @@ Item {
         const placementWarning = completed
             && ["activate", "launch", "desktop-action"].includes(Lifecycle.expectedOperationAction(record.request.actionId))
             && ["unavailable", "failed"].includes(record.placement?.status);
-        record.awaitingWindows = completed && closing;
-        record.message = record.awaitingWindows ? "Close requested; waiting for windows to close" : (operation.message || "Application action " + transition.status);
+        const closeWarning = completed && closing && record.close?.status !== "closed";
+        record.message = completed && closing && !record.close
+            ? "Close outcome unconfirmed; check windows before trying again"
+            : (operation.message || "Application action " + transition.status);
         // Placement is daemon-owned. A launched app must not be replayed because
         // its move could not be confirmed; retain/show the partial-success warning
         // even when checked handoff already dismissed the chooser.
         if (completed && !closing && !placementWarning)
             handOff(record);
         retire(record);
-        if (!completed || placementWarning)
+        if (!completed || placementWarning || closeWarning)
             reportFailure(record);
         if (closing && controller.uiActive)
             controller.refresh(false);
@@ -163,27 +167,6 @@ Item {
         if (!error && operation?.id === record.operationId)
             apply(record.request.id, operation);
         return true;
-    }
-    function reconcile(applications: var): void {
-        const next = Object.assign(Object.create(null), feedback);
-        for (const targetId of Object.keys(next)) {
-            const record = next[targetId];
-            if (!record.awaitingWindows || busy(targetId))
-                continue;
-            const application = applications.find(app => app.id === targetId);
-            // A filtered/paginated catalog does not prove an absent app closed.
-            if (!application) {
-                next[targetId] = Object.assign({}, record, {windowChecks: record.windowChecks + 1});
-                continue;
-            }
-            const remaining = (application.instances || []).filter(window => record.windowIds.includes(window.id));
-            next[targetId] = Object.assign({}, record, {
-                awaitingWindows: remaining.length > 0,
-                windowChecks: record.windowChecks + 1,
-                message: remaining.length > 0 ? "Close requested; " + remaining.length + (remaining.length === 1 ? " window is still open. Focus it to check for a save prompt." : " windows are still open. Focus a window to check for a save prompt.") : "Requested windows closed"
-            });
-        }
-        feedback = next;
     }
     function transportLost(message: string): void {
         for (const id of Object.keys(pending))
