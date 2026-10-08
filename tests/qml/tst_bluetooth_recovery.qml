@@ -298,7 +298,7 @@ DaemonTestCase {
         ]);
         return findChild(panel.page, "currentAudioProfile");
     }
-    function test_audioProfileAppliesThenRemembersOriginalDevice() {
+    function test_audioProfileSingleNativeOperationPreservesPartialSuccess() {
         const panel = makePanel();
         const profile = setupAudioProfile(panel);
         const backend = findChild(panel.controller, "bluetoothBackend");
@@ -315,11 +315,20 @@ DaemonTestCase {
         compare(profile.value, "sbc");
         verify(profile.interactive);
         calls = [];
-        profile.selected("aac");
+        profile.forceActiveFocus();
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        compare(calls.length, 0, "choice drafts must not write");
+        keyClick(Qt.Key_Escape);
+        compare(calls.length, 0, "discard must not write");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Return);
         compare(calls.length, 1);
         compare(calls[0].method, "bluetooth.audio.setProfile");
         compare(calls[0].params.device_key, "buds");
         compare(calls[0].params.profile_key, "aac");
+        compare(calls[0].params.remember, true);
         verify(!profile.interactive);
         panel.controller.applySnapshot({
             radio: panel.controller.radio,
@@ -342,20 +351,11 @@ DaemonTestCase {
                         device_key: "buds",
                         active_profile_key: "aac"
                     }
-                ]
+                ],
+                profile_outcome: {applied: true, remembered: false, persistence_error: "Permission denied"}
             }
         }, "");
-        compare(calls.length, 2);
-        compare(calls[1].method, "bluetooth.device.policy.update");
-        compare(calls[1].params.key, "buds");
-        compare(calls[1].params.preferred_audio_profile_key, "aac");
-        verify(backend.requestRunning);
-        backend.acceptSharedResponse("audio-profile-policy", {
-            protocol: "bt-api",
-            version: 1,
-            ok: false,
-            error: {message: "Permission denied"}
-        }, "");
+        compare(calls.length, 1, "selection changes and partial success must not trigger another write");
         verify(!backend.requestRunning);
         compare(panel.controller.status, "Audio profile applied, but could not remember it: Permission denied");
     }

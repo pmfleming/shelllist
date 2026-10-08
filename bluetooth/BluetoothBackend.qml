@@ -9,7 +9,6 @@ Io.DaemonBackend {
     property var operations: ({})
     property var finishedOperations: ({})
     property string nameRequestKey: ""
-    property var pendingAudioProfile: null
     property var adapterRequestKeys: ({})
 
     daemonName: "bt-daemon"
@@ -47,7 +46,6 @@ Io.DaemonBackend {
         })
 
     function resetTransportState() {
-        pendingAudioProfile = null;
         nameRequestKey = "";
         adapterRequestKeys = ({});
         pending = ({});
@@ -79,30 +77,15 @@ Io.DaemonBackend {
         if (id === "pairing-response")
             controller.finishPairingResponse(error.length === 0);
     }
-    function rememberAudioProfile(id: string, audioProfile: var): void {
-        if (audioProfile) {
-            controller.status = "Remembering Bluetooth audio profile…";
-            if (!call("audio-profile-policy", BtApi.methods.devicePolicyUpdate, {
-                key: audioProfile.deviceKey,
-                preferred_audio_profile_key: audioProfile.profileKey
-            }))
-                controller.status = "Audio profile applied, but could not remember it";
-        } else if (id === "audio-profile-policy") {
-            controller.status = "Bluetooth audio profile updated and remembered";
-        }
-    }
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Bluetooth operation failed");
-        const audioProfile = id === "audio-set-profile" ? pendingAudioProfile : null;
-        if (id === "audio-set-profile")
-            pendingAudioProfile = null;
         finishDeviceRequest(id, error);
         if (error.length > 0) {
             if (id === "snapshot" || id === "scan-start")
                 controller.listError = error;
             finishAdapterRequest(id, error);
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
-            controller.status = id === "audio-profile-policy" ? "Audio profile applied, but could not remember it: " + error : error;
+            controller.status = error;
             return;
         }
         if (id.startsWith("cancel-operation-")) {
@@ -112,7 +95,14 @@ Io.DaemonBackend {
         }
         try {
             applyResponse(id, envelope.data || ({}));
-            rememberAudioProfile(id, audioProfile);
+            if (id === "audio-set-profile") {
+                const outcome = (envelope.data || {}).profile_outcome;
+                controller.status = outcome && outcome.applied && outcome.remembered
+                    ? "Bluetooth audio profile updated and remembered"
+                    : outcome && outcome.applied
+                        ? "Audio profile applied, but could not remember it: " + (outcome.persistence_error || "Persistence unconfirmed")
+                        : "Audio profile outcome unconfirmed; refresh before retrying";
+            }
             finishAdapterRequest(id, "");
             console.info("shelllist bluetooth request completed id=" + id);
         } catch (applyError) {
@@ -227,20 +217,13 @@ Io.DaemonBackend {
         });
     }
     function setAudioProfile(deviceKey, profileKey) {
-        if (isPending("audio-set-profile") || isPending("audio-profile-policy"))
+        if (isPending("audio-set-profile"))
             return false;
-        // Capture the device now: selection can change before the reply arrives.
-        pendingAudioProfile = {
-            deviceKey: deviceKey,
-            profileKey: profileKey
-        };
-        const sent = call("audio-set-profile", BtApi.methods.audioSetProfile, {
+        return call("audio-set-profile", BtApi.methods.audioSetProfile, {
             device_key: deviceKey,
-            profile_key: profileKey
+            profile_key: profileKey,
+            remember: true
         });
-        if (!sent)
-            pendingAudioProfile = null;
-        return sent;
     }
     function recoverRequests() {
         if (isPending("requests"))

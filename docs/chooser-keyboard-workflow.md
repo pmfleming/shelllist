@@ -639,6 +639,13 @@ reading adapter: replacements update values, availability and accessible names
 without adding fields or interrupting the range draft. Native Wi-Fi tab and
 resource-arrival tests cover these shared-layout/data paths.
 
+## Submitted Bluetooth profile changes
+
+Saving an audio profile submits one native apply-and-remember request. Selection
+changes do not retarget it. Partial persistence failure is reported without
+replaying the applied hardware change; disconnects never trigger automatic
+retries. The shared choice control still owns its local save/discard transaction.
+
 ## Native domain projections
 
 Activity day membership and busy-day markers come from the daemon's calendar
