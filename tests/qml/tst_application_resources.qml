@@ -16,6 +16,9 @@ DaemonTestCase {
     Component {
         id: factory
         Ui.ProviderChooserSurface {
+            id: surface
+            property bool fullDetails: false
+            property real resourceScale: 1
             width: tests.width
             height: tests.height
             chooserController: Apps.ApplicationController { id: controller }
@@ -25,10 +28,21 @@ DaemonTestCase {
                 resultModel: controller.filteredResultsModel
                 rowDelegate: Rectangle { implicitWidth: 300; implicitHeight: 40 }
             }
-            detailsComponent: Apps.ApplicationResourcesPage {
-                controller: controller
-                application: controller.selectedApplication || ({})
-                uiScale: 1
+            detailsComponent: fullDetails ? completeDetails : resourcesOnly
+            Component {
+                id: resourcesOnly
+                Apps.ApplicationResourcesPage {
+                    controller: controller
+                    application: controller.selectedApplication || ({})
+                    uiScale: surface.resourceScale
+                }
+            }
+            Component {
+                id: completeDetails
+                Apps.ApplicationDetails {
+                    controller: controller
+                    uiScale: surface.resourceScale
+                }
             }
         }
     }
@@ -51,8 +65,8 @@ DaemonTestCase {
     }
     function init() { failOnWarning(/.*/); calls = []; width = 1250; height = 900; }
     function historyCalls() { return calls.filter(call => call.method === Api.methods.history).length; }
-    function make() {
-        const panel = createTemporaryObject(factory, tests);
+    function make(properties) {
+        const panel = createTemporaryObject(factory, tests, properties || ({}));
         verify(panel !== null);
         const controller = panel.chooserController;
         controller.activateUiState("1");
@@ -64,6 +78,7 @@ DaemonTestCase {
         wait(0);
         controller.detailsTab = "resources";
         tryVerify(() => controller.historyInFlight);
+        tryVerify(() => field(panel) !== null);
         seedHistory(controller);
         return panel;
     }
@@ -151,16 +166,130 @@ DaemonTestCase {
         compare(c.historyRange, "30m");
         compare(historyCalls(), before);
         verify(card(panel, "applicationDiskFootprint").available, "Valid footprint survives a missing component and read rate");
-        compare(card(panel, "resourceBar_persistent").fraction, 0);
-        verify(card(panel, "resourceBar_temporary").fraction > 0);
-        const read = card(panel, "applicationIo_disk_read_bytes_per_second");
-        verify(!read.available);
-        compare(findChild(read, "resourceValue").text, "—");
-        verify(read.Accessible.name.includes("Disk read: Unavailable"));
-        verify(card(panel, "applicationIo_disk_write_bytes_per_second").available);
+        verify(card(panel, "applicationDiskFootprint").detailText.includes("Persistent Unavailable. Temporary 97.7 KiB"));
+        const read = card(panel, "resourceTotal_disk_read_bytes_per_second");
+        verify(read.available, "Canonical period total survives an unavailable latest read rate");
+        verify(read.detailText.includes("Current Unavailable"));
+        verify(card(panel, "resourceTotal_disk_write_bytes_per_second").available);
+        const receive = card(panel, "resourceTotal_network_receive_bytes_per_second");
+        verify(!receive.available);
+        compare(findChild(receive, "resourceValue").text, "—");
+        verify(receive.Accessible.name.includes("Unavailable"));
         compare(card(panel, "applicationRam").valueText, "123 GiB", "Descriptor replacement updates the existing reading");
         keyClick(Qt.Key_Escape);
         compare(field(panel).displayedValue, "30m");
-        compare(card(panel, "applicationResourceOverview").cards.length, 4);
+        compare(card(panel, "applicationResourceOverview").cards.length, 5);
+    }
+    function test_expandedMicrocardsFillViewport_data() {
+        return [
+            {tag: "expanded", w: 1040, h: 638, scale: 1},
+            {tag: "short-dense", w: 1040, h: 540, scale: 0.82},
+            {tag: "large", w: 1250, h: 900, scale: 1.12}
+        ];
+    }
+    function test_expandedMicrocardsFillViewport(data) {
+        width = data.w;
+        height = data.h;
+        const panel = make({fullDetails: true, resourceScale: data.scale});
+        const page = card(panel, "applicationResourcesPage");
+        const overview = card(panel, "applicationResourceOverview");
+        tryVerify(() => overview.height > 100);
+        wait(20);
+        verify(page.contentHeight <= page.height + 1, "Page fits beneath the real header and above bottom tabs");
+        verify(!page.interactive, "No scrollable resource content");
+        const grid = card(panel, "applicationResourceCards");
+        verify(Math.abs(grid.height - overview.height) < 1, "Grid fills all remaining height");
+        for (const id of ["activity", "memory", "storage", "network", "energy"]) {
+            const micro = card(panel, "resourceCard_" + id);
+            const plot = card(panel, "resourcePlot_" + id);
+            const point = micro.mapToItem(page, 0, 0);
+            verify(point.y >= 0 && point.y + micro.height <= page.height + 1, id + " fits viewport");
+            verify(plot.width > 25 && plot.height > 25, id + " keeps useful plot space");
+            compare(plot.chartStyle, id === "energy" ? "columns" : "paired-columns");
+            for (const reading of micro.readings) {
+                const value = card(micro, reading.objectName);
+                const position = value.mapToItem(micro, 0, 0);
+                verify(position.y >= 0 && position.y + value.height <= micro.height + 1, id + " readings remain inside card");
+            }
+        }
+        compare(panel.detailsNavigation.availableFields().length, 1);
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_PageDown);
+        compare(page.contentY, 0);
+        const previous = card(panel, "resourceCard_activity").height;
+        height += 100;
+        tryVerify(() => card(panel, "resourceCard_activity").height > previous + 20, 5000, "Cards grow with the available viewport");
+        verify(page.contentHeight <= page.height + 1);
+    }
+    function test_exceptionStatesStayVisibleWithoutScrolling() {
+        width = 1040;
+        height = 638;
+        const panel = make({fullDetails: true});
+        const c = panel.chooserController;
+        const changed = fixture();
+        changed.memory_swap_bytes = 1024 * 1024;
+        changed.measurement.coverage = 0.5;
+        changed.measurement.resources_shared = true;
+        c.replaceProviderResults([c.provider.resultFor(changed)], false);
+        const page = card(panel, "applicationResourcesPage");
+        tryVerify(() => card(panel, "applicationSwapStatus").visible);
+        verify(card(panel, "applicationProcessCoverage").visible);
+        verify(card(panel, "applicationProcessCoverage").text.includes("Shared attribution"));
+        verify(page.contentHeight <= page.height + 1);
+        const energy = card(panel, "resourceCard_energy");
+        verify(energy.mapToItem(page, 0, energy.height).y < page.height);
+        const stopped = Object.assign({}, changed, {running: false});
+        c.resourceHistory = [];
+        c.replaceProviderResults([c.provider.resultFor(stopped)], false);
+        tryVerify(() => card(panel, "applicationResourceSnapshotStatus").visible);
+        verify(card(panel, "applicationResourceSnapshotStatus").text.includes("no retained measurements"));
+        verify(!card(panel, "applicationCpuActivity").available);
+        verify(card(panel, "resourceContentState_activity").visible);
+        verify(page.contentHeight <= page.height + 1);
+    }
+    function test_pairedBarsKeepZerosAndIndependentGaps() {
+        const panel = make();
+        const c = panel.chooserController;
+        const start = c.historyWindowStartMs;
+        const duration = (c.historyWindowEndMs - start) / 3;
+        c.resourceHistory = [
+            {timestamp_ms: start + duration, duration_ms: duration, cpu_percent_of_machine: 0, gpu_busy_percent: 20, availability: {cpu: true, gpu: true}},
+            {timestamp_ms: start + duration * 2, duration_ms: duration, cpu_percent_of_machine: 10, gpu_busy_percent: null, availability: {cpu: true, gpu: true}},
+            {timestamp_ms: start + duration * 3, duration_ms: duration, cpu_percent_of_machine: 20, gpu_busy_percent: 30, availability: {cpu: true, gpu: true}}
+        ];
+        const plot = card(panel, "resourcePlot_activity");
+        compare(plot.segments[0].length, 1);
+        compare(plot.segments[1].length, 2, "Missing GPU sample must not bridge the gap");
+        compare(plot.columnRect(plot.segments[0][0][0], 0).height, 0, "Measured zero has no artificial bar");
+        const cpu = plot.columnRect(plot.segments[0][0][0], 0);
+        const gpu = plot.columnRect(plot.segments[1][0][0], 1);
+        verify(cpu.x + cpu.width < gpu.x, "Paired columns are adjacent, not stacked");
+        verify(gpu.x + gpu.width <= plot.xFor(start + duration), "Columns stay within their observed bucket");
+    }
+    function test_loadingTotalsAndPairedHistory() {
+        const panel = make();
+        const c = panel.chooserController;
+        const activity = card(panel, "resourcePlot_activity");
+        compare(activity.series.length, 2, "CPU/GPU share one plot without summing");
+        compare(activity.maximum, 100);
+        compare(card(panel, "resourcePlot_memory").series.length, 2);
+        verify(card(panel, "resourceTotal_average_power_watts").available);
+        verify(card(panel, "resourceTotal_disk_read_bytes_per_second").valueText.startsWith("≈ "));
+        const range = field(panel);
+        const before = historyCalls();
+        mouseClick(range, range.width / 2, range.height / 2);
+        compare(c.historyRange, "30m", "Pointer choice is still a local draft");
+        compare(historyCalls(), before);
+        keyClick(Qt.Key_Return);
+        compare(c.historyRange, "2h");
+        verify(!card(panel, "resourceTotal_disk_read_bytes_per_second").available);
+        verify(!activity.visible, "Never show old-window bars while loading");
+        verify(card(panel, "applicationRam").available, "Current readings survive range loading");
+        verify(card(panel, "resourceContentState_activity").visible);
+        seedHistory(c);
+        tryVerify(() => activity.visible);
+        verify(card(panel, "resourceTotal_disk_read_bytes_per_second").available);
+        verify(card(panel, "applicationDiskFootprint").available);
+        compare(panel.detailsNavigation.availableFields().length, 1);
     }
 }

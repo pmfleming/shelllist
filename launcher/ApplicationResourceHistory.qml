@@ -21,9 +21,10 @@ ColumnLayout {
     readonly property var footprint: ({
         total: currentHas("disk_space_total_bytes") ? current.disk_space_total_bytes : null,
         reading: {
-            objectName: "applicationDiskFootprint", label: qsTr("Identified app data"),
+            objectName: "applicationDiskFootprint", label: qsTr("Identified app data"), icon: "folder",
             available: currentHas("disk_space_total_bytes"), valueText: currentText("disk_space_total_bytes", "bytes"), color: Ui.Theme.resourceDisk,
-            detailText: qsTr("Installation and shared dependencies not measured. Referenced files may overlap and are not added.")
+            detailText: qsTr("Persistent %1. Temporary %2. Installation and shared dependencies not measured. Referenced files may overlap and are not added. Temporary data is not necessarily safe to delete.")
+                .arg(currentText("disk_space_permanent_bytes", "bytes")).arg(currentText("disk_space_temporary_bytes", "bytes"))
         },
         parts: [footprintPart("permanent", "persistent", qsTr("Persistent app data"), "inventory_2", Ui.Theme.resourceDisk),
             footprintPart("temporary", "temporary", qsTr("Temporary app data"), "folder_clock", Ui.Theme.resourceNetworkTransmit)]
@@ -79,7 +80,7 @@ ColumnLayout {
     }
 
     Layout.fillWidth: true
-    spacing: Math.round(14 * uiScale)
+    spacing: Math.round(6 * uiScale)
 
     Ui.ThemeText {
         objectName: "applicationResourceSnapshotStatus"
@@ -90,30 +91,6 @@ ColumnLayout {
         wrapMode: Text.Wrap
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
-    ApplicationResourceOverview {
-        objectName: "applicationResourceOverview"
-        Layout.fillWidth: true
-        lanes: history.lanes
-        footprint: history.footprint
-        uiScale: history.uiScale
-    }
-    Ui.DetailSection {
-        Layout.fillWidth: true
-        informationOnly: true
-        ApplicationResourceCapacity {
-            descriptor: history.lanes[4].series[0]
-            Layout.fillWidth: true
-            alignRight: false
-            uiScale: history.uiScale
-            valueSize: 22 * history.uiScale
-        }
-        ApplicationResourceDiskBreakdown {
-            objectName: "applicationDiskBreakdown"
-            Layout.fillWidth: true
-            footprint: history.footprint
-            uiScale: history.uiScale
-        }
-    }
     Ui.SegmentedControl {
         objectName: "applicationHistoryRange"
         Layout.alignment: Qt.AlignRight
@@ -123,20 +100,23 @@ ColumnLayout {
         value: history.controller.historyRange
         onSelected: function (value) { history.controller.selectHistoryRange(value); }
     }
-    Ui.DetailSection {
+    ApplicationResourceOverview {
+        objectName: "applicationResourceOverview"
         Layout.fillWidth: true
-        informationOnly: true
-        ApplicationResourceLaneChart {
-            objectName: "applicationResourceTimeline"
-            Layout.fillWidth: true
-            points: history.points
-            lanes: history.lanes
-            loading: history.controller.historyInFlight
-            active: history.controller.uiActive
-            rangeStartMilliseconds: history.controller.historyWindowStartMs
-            rangeEndMilliseconds: history.controller.historyWindowEndMs
-            uiScale: history.uiScale
-        }
+        Layout.fillHeight: true
+        lanes: history.lanes
+        footprint: history.footprint
+        points: history.points
+        loading: history.controller.historyInFlight
+        active: history.controller.uiActive
+        rangeStartMilliseconds: history.controller.historyWindowStartMs
+        rangeEndMilliseconds: history.controller.historyWindowEndMs
+        uiScale: history.uiScale
+    }
+    ApplicationResourceTimeAxis {
+        Layout.fillWidth: true
+        rangeStartMilliseconds: history.controller.historyWindowStartMs
+        rangeEndMilliseconds: history.controller.historyWindowEndMs
     }
     Ui.ThemeText {
         objectName: "applicationProcessCoverage"

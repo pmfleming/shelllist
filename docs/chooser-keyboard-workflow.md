@@ -430,14 +430,18 @@ steal focus or become new Tab stops; stale owner/content completions are rejecte
 by the daemon. Online enrichment is an explicit deployment setting, off by default.
 See [Media presentation and shortcut diagnosis](media.md).
 
-Applications' Resources page has four passive snapshot cards (Activity, Memory,
-Disk, Network), icon-led disk breakdown and larger history/transfer evidence.
+Applications' Resources page has five passive integrated microcards: Activity,
+Memory, Disk I/O, Network and a full-width Power/energy card with app-data bytes.
+Icon/value pairs sit beside bar histories; disk/network values are period totals.
+The 2×2 + full-width grid fills the expanded detail viewport without scrolling,
+reserving space for the header, bottom tabs, range, time axis and exceptions.
 Its shared 30m / 2h / 24h segmented field is the sole editable stop and controls
 period totals and history, not current snapshots. Pointer choice remains a local
 draft; Enter/Tab saves and requests the new range, Escape or leaving the editor
 discards without a history request. Tab/Shift+Tab wrap on that field; cards,
 glyphs, bars and statistics never become additional stops or click actions.
-PageUp/PageDown scroll the page while browsing. There is no definitions/caveats
+PageUp/PageDown retain shared page semantics, with no scroll distance in this
+viewport-fitted page. There is no definitions/caveats
 panel, Measurement details command, Alt+H disclosure or new chart-inspection key
 model. Accessible summaries retain full metric identities and observation data;
 unavailable/error/loading states and attribution exceptions stay explicit. See

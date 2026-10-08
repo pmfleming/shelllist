@@ -11,18 +11,12 @@ Ui.DetailFlickable {
     required property var application
     required property real uiScale
 
-    Ui.ThemeText {
-        objectName: "applicationHistoryStatus"
-        visible: page.controller.historyInFlight
-        width: parent.width
-        text: qsTr("Loading period measurements…")
-        color: Ui.Theme.mutedText
-        wrapMode: Text.Wrap
-        font.pixelSize: Ui.Theme.fontSizeCaption
-    }
-
+    // Keep the shared page/navigation contract, but give the resource grid the
+    // viewport rather than a content-sized history stack. Restored scroll offsets
+    // are clamped to zero by DetailFlickable as the page resizes.
     ApplicationResourceHistory {
         width: parent.width
+        height: page.height
         controller: page.controller
         application: page.application
         uiScale: page.uiScale

@@ -18,6 +18,7 @@ ColumnLayout {
     property real uiScale: 1
     property real valueSize: 24 * uiScale
     property bool alignRight: glyph.length > 0
+    property bool showUnavailableReason: true
     objectName: descriptor.objectName
     spacing: Math.round(3 * uiScale)
     Accessible.role: Accessible.StaticText
@@ -50,7 +51,7 @@ ColumnLayout {
     Ui.ThemeText {
         objectName: "resourceUnavailable"
         Layout.fillWidth: true
-        visible: !reading.available
+        visible: !reading.available && reading.showUnavailableReason
         text: qsTr("%1 unavailable").arg(reading.accessibleLabel)
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption
