@@ -188,7 +188,7 @@ DaemonTestCase {
         timeline.receive(context, Object.assign({}, good, data.patch), "", "");
         verify(timeline.error.length > 0);
         verify(!timeline.busy);
-        compare(timeline.staging.length, 0);
+        compare(timeline.staging, null);
         compare(JSON.stringify(timeline.entries), published);
         compare(timeline.snapshot, good);
         content.destroy();
@@ -271,7 +271,7 @@ DaemonTestCase {
         verify(index >= 0);
         const key = list.model.get(index).resultKey;
         const offset = list.itemAtIndex(index).y - list.contentY;
-        timeline.staging = [];
+        timeline.staging = null;
         const first = timelinePage(0, [101].concat(ids.slice(0, 19)), 20);
         first.count = 21; first.total_rows = 21; first.dates[3].count = 21; first.anchor_reached = false;
         first.recent = [1001,1000,999].map(id => preview(id, "named:Chat"));
@@ -295,6 +295,71 @@ DaemonTestCase {
         verify(Math.abs(list.itemAtIndex(restored).y - list.contentY - offset) < 2);
         compare(timeline.entries.length, 21);
         compare(timeline.snapshot.recent[0].id, 1001);
+        content.destroy();
+    }
+    function test_unownedTimelineRepliesKeepPendingWindow_data() {
+        return [
+            {tag: "view", patch: {view: "apps"}},
+            {tag: "generation", patch: {generation: -1}},
+            {tag: "app", patch: {appKey: "named:Mail"}},
+            {tag: "query", patch: {query: "old query"}},
+            {tag: "period", patch: {date: "today"}},
+            {tag: "grouping", patch: {grouping: false}}
+        ];
+    }
+    function test_unownedTimelineRepliesKeepPendingWindow(data) {
+        const {state, controller, content} = make();
+        controller.openDetails();
+        const timeline = controller.timeline;
+        timeline.requestedDate = "older";
+        const context = {view: "timeline", generation: timeline.generation, appKey: timeline.appKey,
+            query: timeline.query, date: timeline.requestedDate, grouping: timeline.grouping,
+            offset: 0, replacing: true, revision: state.observedHistoryRevision};
+        timeline.receive(context, Object.assign(timelinePage(0, [100], 1), {anchor_reached: false}), "", "");
+        verify(timeline.busy);
+        const staged = JSON.stringify(timeline.staging);
+        for (const failure of ["", "Unrelated failure"]) {
+            state.centerResponse(Object.assign({}, context, data.patch), null, failure, "history-cursor-stale");
+            compare(JSON.stringify(timeline.staging), staged);
+            verify(timeline.busy);
+            compare(timeline.error, "");
+        }
+        controller.uiActive = false;
+        compare(timeline.staging, null, "hiding discards the cursor together with its entries");
+        state.centerResponse(context, timelinePage(1, [99], 2), "", "");
+        compare(timeline.staging, null);
+        verify(!timeline.busy);
+        content.destroy();
+    }
+    function test_rejectedTimelineContinuationDiscardsWholeStaging_data() {
+        return [
+            {tag: "failure", failure: "History unavailable", code: "", patch: {}},
+            {tag: "stale-cursor", failure: "", code: "history-cursor-stale", patch: {}},
+            {tag: "midnight", failure: "", code: "", patch: {period_day: "2026-10-09"}},
+            {tag: "duplicate", failure: "", code: "", patch: {entries: timelinePage(0, [100], 1).entries}}
+        ];
+    }
+    function test_rejectedTimelineContinuationDiscardsWholeStaging(data) {
+        const {state, controller, content} = make();
+        controller.openDetails();
+        const timeline = controller.timeline;
+        timeline.requestedDate = "older";
+        const context = offset => ({view: "timeline", generation: timeline.generation, appKey: timeline.appKey,
+            query: timeline.query, date: timeline.requestedDate, grouping: timeline.grouping,
+            offset: offset, replacing: true, revision: state.observedHistoryRevision});
+        const published = timelinePage(0, [101], 1);
+        timeline.receive(context(0), published, "", "");
+        let publications = 0;
+        timeline.viewChanged.connect(() => publications++);
+        timeline.receive(context(0), Object.assign(timelinePage(0, [100], 1), {anchor_reached: false}), "", "");
+        compare(timeline.staging.entries.length, 1);
+        compare(timeline.staging.period_day, published.period_day);
+        timeline.receive(context(1), Object.assign(timelinePage(1, [99], 2), data.patch), data.failure, data.code);
+        compare(timeline.staging, null);
+        verify(!timeline.busy);
+        compare(timeline.snapshot, published);
+        compare(timeline.entries[0].preview.id, 101);
+        compare(publications, 0, "neither staging nor rejection can publish a partial window");
         content.destroy();
     }
     function test_timelineAtomicWindowsRejectDuplicateAndStaleReplies() {

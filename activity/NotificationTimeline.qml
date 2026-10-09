@@ -22,16 +22,16 @@ Item {
     property bool dirty: false
     property string error: ""
     property int generation: 0
-    property var staging: []
-    property var stagingMetadata: null
+    // An unpublished window keeps its accumulated entries and cursor together.
+    property var staging: null
     property string anchor: ""
     signal viewAboutToChange
     signal viewChanged
     readonly property bool hasMore: snapshot.next_offset !== null && snapshot.next_offset !== undefined
     function invalidate(clear: bool): void {
-        generation++; busy = false; dirty = true; staging = [];
+        generation++; busy = false; staging = null;
         if (clear) { snapshot = ({}); entries = []; expandedStacks = ({}); collapsed = true; }
-        if (active) debounce.restart();
+        refresh();
     }
     function refresh(): void { dirty = true; if (active) debounce.restart(); }
     function chooseDate(date: string): void {
@@ -43,14 +43,13 @@ Item {
     }
     function reload(): void {
         if (!active || !appKey || !store.backend.ready || busy) return;
-        generation++; dirty = false; error = ""; staging = [];
-        stagingMetadata = null;
+        generation++; dirty = false; error = ""; staging = null;
         anchor = entries.length ? entries[entries.length - 1].key : "";
         request(0, true);
     }
     function request(offset: int, replacing: bool): void {
         busy = true;
-        const cursor = offset ? (replacing ? stagingMetadata : snapshot) : null;
+        const cursor = offset ? (replacing ? staging : snapshot) : null;
         store.backend.queryCenter({view: "timeline", app_key: appKey, query: query, date: requestedDate || null,
             period_groups: true, period_day: cursor?.period_day ?? null,
             group_similar: grouping, offset: offset,
@@ -87,28 +86,42 @@ Item {
         if (value.date ? !value.dates.some(d => d.key === value.date && d.count === value.count) : value.count !== 0) return false;
         return NotificationValidation.pageEnds(value, offset, value.entries.length, value.total_rows);
     }
+    function ownsRead(context: var): bool {
+        return context.view === "timeline" && context.generation === generation && context.appKey === appKey
+            && context.query === query && context.date === requestedDate && context.grouping === grouping;
+    }
+    function sameWindow(previous: var, value: var): bool {
+        return !!previous && previous.epoch === value.epoch && previous.revision === value.revision
+            && previous.period_day === value.period_day && previous.date === value.date
+            && store.equal(previous.recent, value.recent) && store.equal(previous.dates, value.dates);
+    }
     function receive(context: var, value: var, failure: string, code: string): void {
-        if (context.view !== "timeline" || context.generation !== generation || context.appKey !== appKey || context.query !== query || context.date !== requestedDate || context.grouping !== grouping) return;
+        if (!ownsRead(context)) return;
         busy = false;
-        if (context.revision !== store.observedHistoryRevision || code === "history-cursor-stale") { staging = []; refresh(); return; }
-        const base = context.replacing ? staging : entries;
-        if (failure || !valid(value, base.length)) { staging = []; error = failure || qsTr("Invalid notification timeline"); return; }
-        const metadata = context.replacing ? stagingMetadata : snapshot;
-        if (context.offset && (!metadata || metadata.epoch !== value.epoch || metadata.revision !== value.revision
-            || metadata.period_day !== value.period_day || metadata.date !== value.date
-            || !store.equal(metadata.recent, value.recent) || !store.equal(metadata.dates, value.dates))) { staging = []; refresh(); return; }
+        const previous = context.replacing ? staging : snapshot;
+        const base = context.replacing ? previous?.entries ?? [] : entries;
+        // Consume unpublished state once. Only a valid continuation installs it
+        // again; every rejection leaves both its rows and cursor discarded.
+        staging = null;
+        if (context.revision !== store.observedHistoryRevision || code === "history-cursor-stale") { refresh(); return; }
+        if (failure || !valid(value, base.length)) { error = failure || qsTr("Invalid notification timeline"); return; }
+        if (context.offset && !sameWindow(previous, value)) { refresh(); return; }
         const next = base.concat(value.entries);
-        const keys = next.reduce((all, e) => all.concat(e.members.map(p => p.id + ":" + p.created)), []);
+        const keys = [];
+        next.forEach(e => e.members.forEach(p => keys.push(p.id + ":" + p.created)));
         const allKeys = keys.concat(value.recent.map(p => Ui.NotificationPresentation.recordKey(p)));
-        if (new Set(allKeys).size !== allKeys.length || keys.length > value.count) { error = qsTr("Notification window did not advance"); staging = []; return; }
-        if (context.replacing && value.next_offset !== null && !value.anchor_reached) {
-            staging = next; stagingMetadata = value;
+        if (new Set(allKeys).size !== allKeys.length || keys.length > value.count) { error = qsTr("Notification window did not advance"); return; }
+        acceptWindow(context.replacing, value, next);
+    }
+    function acceptWindow(replacing: bool, value: var, next: var): void {
+        if (replacing && value.next_offset !== null && !value.anchor_reached) {
+            staging = Object.assign({}, value, {entries: next});
             if (active) request(value.next_offset, true); else invalidate(false);
             return;
         }
         viewAboutToChange();
         if (!store.equal(entries, next)) entries = next;
-        snapshot = value; staging = []; error = "";
+        snapshot = value; error = "";
         viewChanged();
         if (dirty) debounce.restart();
     }

@@ -375,9 +375,11 @@ checks retain their existing identities and do not become additional field stops
 Native windows stage refreshes atomically and fence stale revisions, epochs,
 queries, period changes and local-midnight rollover. Frontend notification readers
 share wire-shape validation, not request ownership or publication. Timeline
-continuations use one staged metadata snapshot; malformed previews, periods or
-stack members retain the published window and surface an error, never a partial
-replacement. Delete-count validation retains its separate bounds and no-replay
+continuations keep accumulated entries and metadata in one unpublished window;
+an owned completion consumes that window once and only a validated continuation
+can stage it again. Unowned replies cannot retire its busy state or discard it.
+Malformed previews, periods or stack members retain the published window and
+surface an error, never a partial replacement. Delete-count validation retains its separate bounds and no-replay
 policy. `tst_notification_center.qml` covers these rejection/continuation paths. Recent previews and period
 windows publish atomically, without duplicated records. `tst_notifications.qml` and `tst_notification_center.qml`
 cover actual app/card commands and menus, icon tabs, empty-period visibility,
