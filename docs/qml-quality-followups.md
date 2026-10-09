@@ -70,3 +70,43 @@ Existing native save/discard, partial retry, captured-adapter and transport-loss
 cases pass. Full Qt **384/0/1**; strict lint, Bluetooth JavaScript (248 checks),
 TypeScript generation/typechecking, daemon boundary and relative imports pass.
 Numeric-role review reports no new overrides. Evidence: `pass3/`.
+
+## 4 — Application operation outcomes
+
+`apply` retains request/operation/target/action ownership checks and record
+construction, then dispatches active progress or terminal completion. Terminal
+handling computes one warning decision for failure, launch-placement partial
+success or observed Close, instead of independently recombining those conditions.
+Handoff still publishes pending ownership before dismissal; no launch/close replay,
+optimistic window removal or new command/field behavior is introduced.
+
+`apply` cyclomatic/cognitive/weighted effort **29/30/133 → 9/8/41**; new
+`updateActive` **5/4/23** and `complete` **13/12/58** are included in aggregate sums.
+Production sums fall **7,934/5,438/39,272 → 7,932/5,432/39,261**. Production source
+LOC grows **39,720 → 39,725**; locality, leverage and clone counts are unchanged.
+
+Twelve new native cases exercise placed/unavailable receipts, terminal placement
+without prior handoff (including legacy absent placement), and closed/still-open/
+unknown/missing/failed/cancelled Close outcomes while browsing another application.
+They assert retained window identity, no replay, no duplicate refresh/notification,
+and no Close handoff even with an irrelevant receipt or placement payload.
+Existing native command, status-recovery and reopened-view coverage remains.
+Full Qt **396/0/1**; strict lint, application lifecycle JavaScript, TypeScript,
+runtime smoke, daemon boundary and packaged imports pass. Numeric-role review
+reports no added overrides; `git diff --check` passes. Evidence: `pass4/`.
+
+## Combined result and limits
+
+Compared with `051f462`, production function sums are **7,936/5,455/39,300 →
+7,932/5,432/39,261**. Component effort **45,119 → 45,082**; production source LOC
+**39,713 → 39,725**. One fewer dynamic property; no new escapes or suppressions.
+This pass prioritizes coherent state ownership and smaller peak functions, not
+LOC reduction. Added regressions increase test LOC. Mean locality/leverage remain
+**75.66/37.95**, expanded normalized/structural clones **157/35**, score **83**,
+parser diagnostics **0**, and the single enum-only tray-mock cleanup finding remains.
+
+The former resource-pixel failure is resolved, not skipped. The only remaining Qt
+skip is existing RHI-only artwork coverage. Lens still reports incomplete static
+contracts due to unresolved binding side effects; metrics are advisory. No full
+sibling-aware Nix release build, live hardware/compositor/visual acceptance,
+profiler or coverage run is claimed.

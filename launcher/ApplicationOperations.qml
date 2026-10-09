@@ -81,32 +81,37 @@ Item {
             windowIds: Array.isArray(operation.close?.targeted_window_ids) ? operation.close.targeted_window_ids : original.windowIds,
             checks: original.operationId ? original.checks : 0});
         const closing = Presentation.isCloseAction(record.request.actionId);
-        if (transition.stage === "active") {
-            record.message = record.request.action.label + (record.checks >= 3 ? ": still waiting for confirmation" : "…");
-            // A running operation with a launch receipt has passed checked
-            // process/D-Bus handoff; window placement may still take seconds.
+        if (transition.stage === "active")
+            updateActive(record, operation, closing);
+        else
+            complete(record, operation, closing);
+    }
+    function updateActive(record: var, operation: var, closing: bool): void {
+        record.message = record.request.action.label + (record.checks >= 3 ? ": still waiting for confirmation" : "…");
+        // Publish ownership before checked process/D-Bus handoff dismisses the
+        // chooser; window placement may still take seconds.
+        store(record);
+        if (!closing && operation.launch_backend && operation.launch_scope) {
+            handOff(record);
             store(record);
-            if (!closing && operation.launch_backend && operation.launch_scope) {
-                handOff(record);
-                store(record);
-            }
-            return;
         }
-        const completed = transition.status === "completed";
-        const placementWarning = completed
-            && ["activate", "launch", "desktop-action"].includes(Lifecycle.expectedOperationAction(record.request.actionId))
-            && ["unavailable", "failed"].includes(record.placement?.status);
-        const closeWarning = completed && closing && record.close?.status !== "closed";
+    }
+    function complete(record: var, operation: var, closing: bool): void {
+        const completed = record.status === "completed";
+        const warning = !completed || (closing
+            ? record.close?.status !== "closed"
+            : ["activate", "launch", "desktop-action"].includes(Lifecycle.expectedOperationAction(record.request.actionId))
+                && ["unavailable", "failed"].includes(record.placement?.status));
         record.message = completed && closing && !record.close
             ? "Close outcome unconfirmed; check windows before trying again"
-            : (operation.message || "Application action " + transition.status);
+            : (operation.message || "Application action " + record.status);
         // Placement is daemon-owned. A launched app must not be replayed because
         // its move could not be confirmed; retain/show the partial-success warning
         // even when checked handoff already dismissed the chooser.
-        if (completed && !closing && !placementWarning)
+        if (!warning && !closing)
             handOff(record);
         retire(record);
-        if (!completed || placementWarning || closeWarning)
+        if (warning)
             reportFailure(record);
         if (closing && controller.uiActive)
             controller.refresh(false);

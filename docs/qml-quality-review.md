@@ -7,14 +7,20 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 The [four-pass follow-up](qml-quality-followups.md) starts from `051f462` and records
 separate fixes/refactors and validation for the resource test environment,
 notification timeline, Bluetooth responses and application operation outcomes.
+All four passes are complete: full Qt **396 passed, 0 failed, 1 existing renderer
+skip**, strict lint and runtime smoke pass. The resource-pixel failure below is
+resolved by the shared packaged font environment. Production complexity/effort
+fall modestly, peak handlers simplify, and production source grows 12 lines;
+locality, leverage and clone counts are unchanged. Lens remains incomplete and
+full sibling release/hardware acceptance is still unverified.
 
 The [2026-10-09 catalog/shared-label review](qml-maintenance-2026-10-09.md)
 compares against clean `a910ac5d`. It removes the unused notification detail reader,
 obsolete toolbar and unused IDs, and shares dropdown label/icon composition.
 Production complexity, effort, locality, leverage and cloning improve modestly;
 physical code falls 144 lines including regressions. Strict lint and focused Qt
-suites pass. The full suite remains at one identical baseline resource-pixel failure
-and one existing renderer skip (365 passes); Lens remains incomplete. No full
+suites pass. That captured full suite had one identical baseline resource-pixel failure
+and one existing renderer skip (365 passes); Lens remained incomplete. No full
 sibling/Nix or hardware gate is claimed.
 
 The preceding [2026-10-08 maintenance review](qml-maintenance-2026-10-08.md) uses the

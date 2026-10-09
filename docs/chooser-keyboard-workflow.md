@@ -404,8 +404,12 @@ reply retires only its owned read so Check status remains usable, never replayin
 the mutation or announcing completion. A removed window command
 returns to shared detail browsing. Closing a view does not cancel its submitted
 operation, and a late reply cannot dismiss a reopened or newly browsed view.
-Background errors notify without reopening. See [application action outcomes](application-actions.md)
-for ownership, acknowledgement, recovery bounds and interaction tests.
+Background errors notify without reopening. Active progress and terminal outcomes
+share the same ownership gate. Terminal launch placement warnings prevent a new
+handoff; Close never hands off, even with unrelated launch/placement metadata.
+Missing Close observations remain unconfirmed, not successful window removal.
+See [application action outcomes](application-actions.md) for ownership,
+acknowledgement, recovery bounds and interaction tests.
 
 ## Application detail commands
 

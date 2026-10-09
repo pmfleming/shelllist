@@ -111,6 +111,8 @@ DaemonTestCase {
     function test_placementWarningAfterHandoff_data() {
         return [
             {tag: "failed-status-read", status: "failed", statusRead: true},
+            {tag: "unavailable-event", status: "unavailable", statusRead: false},
+            {tag: "placed-event", status: "placed", statusRead: false},
         ];
     }
     function test_placementWarningAfterHandoff(data) {
@@ -142,6 +144,69 @@ DaemonTestCase {
         compare(panel.failures.length, data.status === "placed" ? 0 : 1, "Duplicate outcomes do not notify twice");
         compare(panel.dismissals, 1);
         compare(calls.filter(c => c.method === Api.methods.execute).length, 1, "Placement recovery never replays launch");
+    }
+    function test_terminalPlacementWithoutReceipt_data() {
+        return [
+            {tag: "failed", dismiss: false}, {tag: "unavailable", dismiss: false},
+            {tag: "placed", dismiss: true}, {tag: "legacy-absent", dismiss: true}
+        ];
+    }
+    function test_terminalPlacementWithoutReceipt(data) {
+        const panel = makePanel();
+        keyClick(Qt.Key_Return, Qt.ShiftModifier);
+        const call = lastCall(Api.methods.execute);
+        accept(call);
+        const extra = {placement: data.tag === "legacy-absent" ? null : {status: data.tag}, message: "Launch outcome"};
+        event(call, "completed", extra);
+        compare(panel.dismissals, data.dismiss ? 1 : 0);
+        compare(panel.controller.uiActive, !data.dismiss);
+        compare(panel.failures.length, 0, "partial success stays with the still-selected application");
+        compare(panel.controller.operations.message("Alpha", ""), "Launch outcome");
+        verify(!panel.controller.operations.busy("Alpha"));
+        event(call, "completed", extra);
+        compare(panel.dismissals, data.dismiss ? 1 : 0);
+        compare(calls.filter(c => c.method === Api.methods.execute).length, 1);
+    }
+    function test_closeTerminalOutcomesNeverHandOff_data() {
+        return [
+            {tag: "closed", status: "completed", close: "closed", warning: false},
+            {tag: "still-open", status: "completed", close: "still-open", warning: true},
+            {tag: "unknown", status: "completed", close: "unknown", warning: true},
+            {tag: "missing", status: "completed", close: null, warning: true},
+            {tag: "cancelled", status: "cancelled", close: "closed", warning: true},
+            {tag: "failed", status: "failed", close: "closed", warning: true}
+        ];
+    }
+    function test_closeTerminalOutcomesNeverHandOff(data) {
+        const panel = makePanel(), c = panel.controller;
+        expand(panel);
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        const call = lastCall(Api.methods.execute);
+        compare(call.params.action, "close");
+        accept(call);
+        event(call, "running", {launch_backend: "ignored", launch_scope: "ignored"});
+        compare(panel.dismissals, 0, "a receipt on Close is not a launch handoff");
+        verify(c.operations.busy("Alpha"));
+        panel.listItem.focusList();
+        keyClick(Qt.Key_Down);
+        compare(c.selectedResult.id, "Beta");
+        const extra = {close: data.close ? {status: data.close, targeted_window_ids: ["w2"]} : null,
+            placement: {status: "failed"}, message: "Native Close outcome"};
+        const queries = calls.filter(c => c.method === Api.methods.query).length;
+        event(call, data.status, extra);
+        const message = data.close ? extra.message : "Close outcome unconfirmed; check windows before trying again";
+        compare(c.operations.message("Alpha", "w2"), message);
+        compare(c.operations.message("Alpha", "w1"), data.close ? "" : message);
+        compare(c.filteredResults.find(r => r.id === "Alpha").payload.instances.length, 2);
+        verify(!c.operations.busy("Alpha"));
+        compare(panel.failures.length, data.warning ? 1 : 0);
+        if (data.warning) compare(panel.failures[0].message, message);
+        compare(calls.filter(c => c.method === Api.methods.query).length, queries + 1, "Close refreshes observations, never rewrites windows");
+        event(call, data.status, extra);
+        compare(panel.failures.length, data.warning ? 1 : 0);
+        compare(calls.filter(c => c.method === Api.methods.query).length, queries + 1);
+        compare(calls.filter(c => c.method === Api.methods.execute).length, 1);
+        compare(panel.dismissals, 0);
     }
     function test_close_usesNativeObservationAndRestoresCommandFocus() {
         const panel = makePanel();

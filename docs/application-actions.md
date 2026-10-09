@@ -49,7 +49,11 @@ never reopen or refocus the panel. The error is also retained with the app.
 Only owned request/operation IDs, matching target/action and known lifecycle
 states can change pending state. Early events before the admission response are
 not trusted; owned status reads recover them. Duplicates and stale failures cannot
-retire another operation. Event gaps trigger read-only status/catalog recovery.
+retire another operation. The owner separates active publication/handoff from
+terminal retirement after this shared gate. One terminal warning decision keeps
+failed actions, placement partial success and unconfirmed Close distinct from
+successful handoff; irrelevant launch receipts or placement metadata cannot turn
+Close into a handoff. Event gaps trigger read-only status/catalog recovery.
 No recovery path replays a launch or close.
 
 Automatic operation-status checks are bounded to ten reads at two-second
@@ -72,9 +76,11 @@ Applications with a recording daemon transport. It covers handoff vs admission,
 background tracking/failure, close acknowledgements versus observed disappearance,
 last-window Launch, native focus recovery, concurrent targets, navigation while
 pending, reopened/navigated views, failed reads and stale/foreign completions.
-It also covers placement partial-success warnings after handoff and via owned
-status reads, foreign/duplicate outcomes, retained feedback, continued native
-navigation and the absence of automatic relaunch. App-daemon tests cover retained
+It also covers placement partial-success warnings before/after handoff and via
+owned status reads, legacy absent placement, closed/still-open/unknown/missing
+Close observations, cancelled/failed Close, foreign/duplicate outcomes, retained
+window identities and feedback, continued native navigation and the absence of
+automatic relaunch or duplicate refresh/notification. App-daemon tests cover retained
 owner-only launch receipts and terminal cancellation; its isolated session suite
 covers all five category mappings across launch paths, scope migration, D-Bus and
 singleton attribution, existing-window exclusion, ambiguous/unrelated windows,
