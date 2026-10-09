@@ -78,10 +78,10 @@ Ui.DetailColumnCard {
         Ui.ThemeText {
             objectName: "audioCodec"
             Layout.fillWidth: true
-            text: "Codec: " + (card.displayedProfile.codec || "—")
-            opacity: card.liveAudio ? 1.0 : Ui.Theme.disabledOpacity
+            text: qsTr("Codec: %1").arg(card.displayedProfile.codec || "—") + (!card.liveAudio && card.displayedProfile.codec ? qsTr(" · Audio disconnected") : "")
             color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeSmall
+            font.pixelSize: Ui.Theme.metadataSize
+            wrapMode: Text.Wrap
         }
 
         RowLayout {
@@ -121,7 +121,7 @@ Ui.DetailColumnCard {
         }
     }
 
-    Ui.FieldLabel {
+    Ui.SectionLabel {
         text: qsTr("On connection")
     }
     Ui.ToggleRow {

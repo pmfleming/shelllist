@@ -135,7 +135,6 @@ ColumnLayout {
         Ui.ToggleRow {
             objectName: "bluetoothRadioPower"
             Layout.fillWidth: true
-            Layout.preferredHeight: 38
             title: qsTr("Radio power")
             subtitle: section.controller.radio.hard_blocked ? "Hardware blocked" : section.controller.radio.soft_blocked ? "Software blocked" : section.controller.selectedAdapter.powered ? "On · selected adapter" : "Off · selected adapter"
             checked: !!section.controller.selectedAdapter.powered
@@ -143,12 +142,13 @@ ColumnLayout {
             onClicked: section.controller.setAdapterPower(section.controller.selectedAdapter, !section.controller.selectedAdapter.powered)
         }
 
-        Ui.FieldLabel {
-            text: qsTr("Bluetooth state on login")
-        }
-        Ui.SegmentedControl {
-            objectName: "bluetoothLoginState"
+        Ui.SettingRow {
+            title: qsTr("Login state")
             Layout.fillWidth: true
+            Ui.SegmentedControl {
+            objectName: "bluetoothLoginState"
+            Accessible.name: qsTr("Bluetooth state on login")
+            Layout.preferredWidth: 250
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             options: [
                 {
@@ -170,6 +170,7 @@ ColumnLayout {
                 section.controller.updateManagement({
                     launch_state: value
                 });
+            }
             }
         }
     }

@@ -24,7 +24,6 @@ Ui.ActionDetailsPane {
     subtitle: deviceContext ? BluetoothFlow.deviceState(controller.selectedDevice) : "Computer-wide Bluetooth settings"
     subtitleColor: !deviceContext || controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
     subtitleWeight: Ui.Theme.fontWeightMedium
-    titlePixelSize: Math.round(Ui.Theme.fontSizeDisplay * uiScale)
     actions: deviceContext ? controller.detailActions : []
     secondaryVisible: deviceContext
 

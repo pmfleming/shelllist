@@ -37,16 +37,6 @@ ColumnLayout {
     })
 
     spacing: Ui.Theme.spacingSm
-    Ui.FieldLabel {
-        text: qsTr("Override defaults")
-    }
-    Ui.ThemeText {
-        Layout.fillWidth: true
-        text: qsTr("Overrides apply only to this device. Reset restores device and audio defaults.")
-        wrapMode: Text.WordWrap
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeSmall
-    }
     Ui.ActionToggleList {
         Layout.fillWidth: true
         actions: section.actions

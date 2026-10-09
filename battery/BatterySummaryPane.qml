@@ -25,8 +25,8 @@ Column {
             Ui.ThemeText {
                 Layout.fillWidth: true
                 text: qsTr("Power mode")
-                font.pixelSize: Ui.Theme.fontSizeLabel
-                font.weight: Ui.Theme.fontWeightDemiBold
+                font.pixelSize: Ui.Theme.groupHeadingSize
+                font.weight: Ui.Theme.groupHeadingWeight
                 wrapMode: Text.Wrap
             }
 
@@ -44,14 +44,14 @@ Column {
             }
         }
 
-        Ui.FieldLabel {
+        Ui.InlineStatus {
             Layout.fillWidth: true
             visible: !pane.controller.powerProfile.available
             text: qsTr("power-profiles-daemon is unavailable")
             color: Ui.Theme.warning
         }
 
-        Ui.FieldLabel {
+        Ui.InlineStatus {
             Layout.fillWidth: true
             visible: !!pane.controller.powerProfile.performance_degraded
             text: "Performance is limited: " + pane.controller.powerProfile.performance_degraded

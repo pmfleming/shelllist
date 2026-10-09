@@ -77,7 +77,7 @@ Column {
             visible: !pane.controller.thresholdDraftValid
             text: qsTr("Resume charging must be lower than stop charging.")
             color: Ui.Theme.danger
-            font.pixelSize: Ui.Theme.fontSizeCaption
+            font.pixelSize: Ui.Theme.statusTextSize
         }
         Ui.SaveStatusLabel {
             objectName: "batteryThresholdSaveStatus"
@@ -114,7 +114,8 @@ Column {
             Ui.ThemeText {
                 Layout.fillWidth: true
                 text: qsTr("Charging actions")
-                font.pixelSize: Ui.Theme.fontSizeLabel
+                font.pixelSize: Ui.Theme.groupHeadingSize
+                font.weight: Ui.Theme.groupHeadingWeight
                 wrapMode: Text.Wrap
             }
             Ui.SurfaceActionRow {

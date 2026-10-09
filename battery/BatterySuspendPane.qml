@@ -18,8 +18,9 @@ Ui.DetailColumnCard {
         Ui.ThemeText {
             Layout.fillWidth: true
             text: qsTr("Lock & suspend")
-            font.pixelSize: Ui.Theme.fontSizeLabel
-            font.weight: Ui.Theme.fontWeightDemiBold
+            font.pixelSize: Ui.Theme.groupHeadingSize
+            font.weight: Ui.Theme.groupHeadingWeight
+            Layout.minimumWidth: 0
             wrapMode: Text.Wrap
         }
 
@@ -42,25 +43,21 @@ Ui.DetailColumnCard {
             onClicked: pane.controller.toggleKeepAwake()
         }
 
-        Repeater {
-            model: ["lock", "suspend", "hibernate"]
-
-            delegate: Ui.ActionButton {
-                required property string modelData
-                objectName: "suspendAction-" + modelData
-                accessKey: ({lock: "L", suspend: "U", hibernate: "H"})[modelData]
-                Layout.preferredWidth: Ui.Theme.formActionSize
-                Layout.preferredHeight: Ui.Theme.formActionSize
-                icon: modelData === "lock" ? "lock" : (modelData === "suspend" ? "bedtime" : "snooze")
-                iconSize: Ui.Theme.formActionIconSize
-                labelColor: modelData === "lock" ? Ui.Theme.accent : (modelData === "suspend" ? Ui.Theme.accent : Ui.Theme.warning)
-                backgroundColor: Ui.Theme.input
-                borderColor: "transparent"
-                accessibleName: Presentation.suspendActionName(modelData)
-                toolTip: accessibleName + " · " + Presentation.suspendCapabilityDescription(pane.controller.powerSuspend, modelData)
-                enabled: pane.controller.canPowerSuspendAction(modelData)
-                onClicked: pane.controller.powerSuspendAction(modelData)
-            }
+        Ui.SurfaceActionRow {
+            Layout.preferredWidth: 3 * Ui.Theme.formActionSize + 2 * Ui.Theme.spacingSm
+            Layout.minimumWidth: 3 * Ui.Theme.minimumSecondaryActionHeight + 2 * Ui.Theme.minimumActionGap
+            headerCommands: false
+            compactSecondaryActions: true
+            actionObjectNamePrefix: "suspendAction-"
+            actions: ["lock", "suspend", "hibernate"].map(function (action) {
+                return {id: action, accessKey: ({lock: "L", suspend: "U", hibernate: "H"})[action],
+                    label: Presentation.suspendActionName(action),
+                    icon: ({lock: "lock", suspend: "bedtime", hibernate: "snooze"})[action],
+                    enabled: pane.controller.canPowerSuspendAction(action),
+                    metadata: {toolTip: Presentation.suspendActionName(action) + " · " + Presentation.suspendCapabilityDescription(pane.controller.powerSuspend, action)},
+                    presentation: {group: "toolbar", tone: action === "hibernate" ? "warning" : "normal"}};
+            })
+            onTriggered: function (action) { pane.controller.powerSuspendAction(action); }
         }
     }
 
@@ -70,7 +67,7 @@ Ui.DetailColumnCard {
         visible: pane.controller.suspendStatus.length > 0
         spacing: Ui.Theme.spacingSm
 
-        Ui.FieldLabel {
+        Ui.InlineStatus {
             objectName: "suspendStatusText"
             Layout.fillWidth: true
             text: pane.controller.suspendStatus
@@ -94,7 +91,7 @@ Ui.DetailColumnCard {
         }
     }
 
-    Ui.FieldLabel {
+    Ui.InlineStatus {
         objectName: "keepAwakeStatus"
         Layout.fillWidth: true
         visible: pane.controller.keepAwakePending || pane.controller.keepAwakeError.length > 0
@@ -104,7 +101,7 @@ Ui.DetailColumnCard {
         elide: Text.ElideNone
     }
 
-    Ui.FieldLabel {
+    Ui.InlineStatus {
         objectName: "suspendFailureReason"
         Layout.fillWidth: true
         text: (pane.controller.powerSuspend.operation || {}).error || pane.controller.suspendError || pane.controller.powerSuspend.error || ""

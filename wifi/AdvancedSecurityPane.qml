@@ -21,7 +21,7 @@ AdvancedSettingsFlickable {
             title: qsTr("Security & privacy")
             Column {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: Theme.spacingMd
                 AdvancedSegmentedRow {
                     visible: !!securityFlick.settings.bandStatus.path
                     enabled: !securityFlick.settings.controller.actionInFlight
@@ -31,7 +31,7 @@ AdvancedSettingsFlickable {
                     options: [
                         {
                             value: "auto",
-                            label: qsTr("Auto")
+                            label: qsTr("Automatic")
                         },
                         {
                             value: "2.4",
@@ -122,7 +122,6 @@ AdvancedSettingsFlickable {
             objectName: "wifiSecurityDiagnostics"
             DetailCard {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 350
                 title: qsTr("Technical details")
                 entries: [
                     {

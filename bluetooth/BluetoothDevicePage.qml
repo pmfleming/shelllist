@@ -54,6 +54,7 @@ Ui.DetailFlickable {
         objectName: "devicePolicy"
         visible: page.selectedTab === "settings"
         title: qsTr("Connection and pairing")
+        helpText: qsTr("Overrides apply only to this device. Reset restores device and audio defaults.")
         BluetoothDevicePolicy {
             Layout.fillWidth: true
             controller: page.controller

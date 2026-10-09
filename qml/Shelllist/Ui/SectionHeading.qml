@@ -7,6 +7,7 @@ ColumnLayout {
     property string title: ""
     property string helpText: ""
     property bool helpOpen: false
+    property string helpObjectName: "sectionHeadingHelp"
     spacing: Theme.spacingSm
 
     RowLayout {
@@ -23,7 +24,7 @@ ColumnLayout {
             wrapMode: Text.Wrap
         }
         FlatIconButton {
-            objectName: "sectionHeadingHelp"
+            objectName: heading.helpObjectName
             visible: heading.helpText.length > 0
             Layout.preferredWidth: Theme.formActionSize
             Layout.preferredHeight: Theme.formActionSize

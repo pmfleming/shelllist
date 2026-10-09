@@ -91,7 +91,23 @@ part of these commits.
 
 ### Phase 2 — pilot forms
 
-Pending.
+- Wi-Fi uses shared inspector insets, sentence-case tabs, field-label roles and
+  content-sized diagnostics. The wrapping advanced error panel reserves space
+  instead of covering controls. Native IP/DNS validation/credentials are unchanged.
+- Bluetooth removes its title-size override, uses consistent search/login labels,
+  retains readable codec information with disconnected context, and discloses
+  routine policy guidance from the shared card heading. Native identities,
+  profile/adapter saves and recovery are unchanged.
+- Battery's heading-with-Help is now a compatibility wrapper around the shared
+  component, retaining its command identity. Headings/validation are aligned;
+  sleep commands use SurfaceActionRow with their original IDs/chords/guards.
+  Keep awake retains its native checkable action and independent state.
+- Strict lint: pass. Full combined Qt suite: **338 passes, zero failures, one
+  existing renderer skip**, without the temporary readiness experiment.
+  All-panel captures: **28 passes**; dense-form captures: **4 passes**.
+- Inspected Battery Care/Power, Bluetooth adapter General and narrow IPv6 captures.
+  Short/narrow forms scroll and wrap rather than shrinking switch geometry.
+  Recording transports confirm no mutations during capture.
 
 ### Phase 3 — remaining panels
 

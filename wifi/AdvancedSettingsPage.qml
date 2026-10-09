@@ -10,7 +10,7 @@ Item {
     required property WifiController controller
 
     property var profile: controller.advanced.profile
-    property int sectionSpacing: 12
+    property int sectionSpacing: Theme.cardGap
     property string macPolicy
     property bool sendHostname
     property bool castingEnabled: false
@@ -240,7 +240,7 @@ Item {
 
     Loader {
         width: parent.width
-        height: parent.height
+        height: Math.max(0, parent.height - (errorPanel.visible ? errorPanel.height + Theme.spacingSm : 0))
         x: page.sectionOffset
         active: true
         sourceComponent: page.securityView ? securitySection : ipSection
@@ -260,27 +260,12 @@ Item {
         }
     }
 
-    Rectangle {
-        visible: page.controller.advanced.error.length > 0
-        anchors.horizontalCenter: parent.horizontalCenter
+    PanelMessage {
+        id: errorPanel
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 8
-        width: Math.min(parent.width - 24, errorText.implicitWidth + 24)
-        height: 34
-        radius: Theme.controlRadius
-        color: Theme.dangerBackground
-        border.width: 1
-        border.color: Theme.danger
-
-        Text {
-            id: errorText
-            anchors.centerIn: parent
-            text: page.controller.advanced.error
-            color: Theme.danger
-            font.family: Theme.fontFamily
-            font.pixelSize: 11
-            elide: Text.ElideRight
-        }
+        width: parent.width
+        height: implicitHeight
+        text: page.controller.advanced.error
     }
 
     CenteredMessage {

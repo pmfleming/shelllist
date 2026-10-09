@@ -100,23 +100,9 @@ Ui.PanelSurface {
             }
         }
 
-        Rectangle {
+        Ui.PanelMessage {
             Layout.fillWidth: true
-            Layout.preferredHeight: visible ? errorText.implicitHeight + 20 : 0
-            visible: content.errorMessage.length > 0
-            radius: Ui.Theme.cardRadius
-            color: Ui.Theme.dangerBackground
-            border.color: Ui.Theme.withAlpha(Ui.Theme.danger, 0.45)
-
-            Ui.ThemeText {
-                id: errorText
-                anchors.fill: parent
-                anchors.margins: 10
-                text: content.errorMessage
-                color: Ui.Theme.danger
-                wrapMode: Text.Wrap
-                font.pixelSize: Ui.Theme.fontSizeSmall
-            }
+            text: content.errorMessage
         }
 
         Ui.DetailFlickable {

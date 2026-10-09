@@ -95,7 +95,7 @@ Ui.DetailColumnCard {
         visible: !pane.controller.alertDraftValid
         text: qsTr("Critical percentage cannot exceed the low-battery percentage.")
         color: Ui.Theme.danger
-        font.pixelSize: Ui.Theme.fontSizeCaption
+        font.pixelSize: Ui.Theme.statusTextSize
         wrapMode: Text.Wrap
     }
 

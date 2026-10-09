@@ -22,8 +22,6 @@ ActionDetailsPane {
     chooserController: controller
     uiScale: 1
     sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, uiScale)
-    leftMargin: 18
-    rightMargin: 16
     emptyText: "Select a network"
     emptyFontSize: 20
     controlHeight: detailControlHeight
@@ -49,12 +47,12 @@ ActionDetailsPane {
             {
                 value: "network",
                 icon: "󰋜",
-                label: "Network Details"
+                label: qsTr("Network details")
             },
             {
                 value: "security",
                 icon: "󰌾",
-                label: "Security & Privacy",
+                label: qsTr("Security & privacy"),
                 enabled: !!pane.controller.profileFor(pane.ap)
             },
             {

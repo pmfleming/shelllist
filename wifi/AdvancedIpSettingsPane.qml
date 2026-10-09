@@ -27,7 +27,7 @@ AdvancedSettingsFlickable {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: Theme.spacingMd
 
                 AdvancedSegmentedRow {
                     Layout.fillWidth: true
