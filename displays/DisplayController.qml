@@ -63,7 +63,7 @@ Ui.ProviderChooserController {
     readonly property var placementReferences: Model.placementReferences(draft, selectedName)
     readonly property bool canArrange: canEdit && !discardPrompt && !layoutDragging && !!selectedDraft && Model.isIndependent(selectedDraft) && placementReferences.length > 0
     readonly property var placementChoices: ["left", "above", "below", "right"].map(side => Model.placement(draft, selectedName, referenceName, side))
-    readonly property string arrangementHint: !selectedDraft ? qsTr("Select a display to arrange") : !selectedDraft.enabled ? qsTr("Enable this display to arrange it") : selectedDraft.mirror_of ? qsTr("Mirrors %1 · position follows the source").arg(selectedDraft.mirror_of) : !placementReferences.length ? qsTr("Connect another extended display to arrange") : ""
+    readonly property string arrangementHint: !selectedDraft ? qsTr("Select a display to arrange") : !selectedDraft.enabled ? qsTr("Enable this display to arrange it or choose its content.") : selectedDraft.mirror_of ? qsTr("Mirrors %1 · position follows the source. Scaled to fit; black bars may appear.").arg(selectedDraft.mirror_of) : !placementReferences.length ? qsTr("Connect another extended display to arrange") : ""
     readonly property var selectedOutput: outputs.find(function (o) {
         return o.name === selectedName;
     }) || null

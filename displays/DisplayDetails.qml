@@ -20,13 +20,19 @@ Ui.ActionDetailsPane {
     subtitleWeight: Ui.Theme.fontWeightMedium
     enabled: !controller.trial && !controller.discardPrompt && !controller.actionInFlight
 
+    Ui.FeedbackSource {
+        text: pane.controller.statusMessage || (!pane.controller.globalSettingsOpen && pane.controller.dirty ? qsTr("Unsaved layout · Preview changes") : "")
+        summaryText: pane.controller.stale ? qsTr("Layout changed · Reload required") : pane.controller.dirty ? qsTr("Layout draft · Not applied") : qsTr("Display update needs attention")
+        tone: pane.controller.statusMessage ? "warning" : "info"
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: pane.sectionSpacing
         ColumnLayout {
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingXs
-            visible: !pane.controller.globalSettingsOpen && !!pane.controller.selectedOutput
+            visible: !pane.controller.globalSettingsOpen && !!pane.controller.selectedOutput && pane.controller.detailsTab === "settings"
             DisplayCanvas {
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(96, Math.min(180, pane.height * 0.23))
@@ -36,16 +42,9 @@ Ui.ActionDetailsPane {
                 Layout.fillWidth: true
                 controller: pane.controller
             }
-            Ui.ThemeText {
-                objectName: "displayLayoutPreviewLabel"
-                Layout.fillWidth: true
-                text: qsTr("Drag to an edge or choose a direction")
-                color: Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.statusTextSize
-                wrapMode: Text.Wrap
-            }
         }
         RowLayout {
+            visible: pane.controller.globalSettingsOpen
             Layout.fillWidth: true
             Layout.minimumHeight: Ui.Theme.controlHeight
             Layout.preferredHeight: Ui.Theme.controlHeight
@@ -63,23 +62,6 @@ Ui.ActionDetailsPane {
                 onClicked: pane.controller.closeDetails()
             }
             Item { Layout.fillWidth: true }
-            Ui.FeedbackSource {
-                text: pane.controller.statusMessage || (!pane.controller.globalSettingsOpen && pane.controller.dirty ? qsTr("Unsaved layout · Preview changes") : "")
-                summaryText: pane.controller.stale ? qsTr("Layout changed · Reload required") : pane.controller.dirty ? qsTr("Layout draft · Not applied") : qsTr("Display update needs attention")
-                tone: pane.controller.statusMessage ? "warning" : "info"
-            }
-            Ui.FlatIconButton {
-                objectName: "reloadDisplayLayout"
-                accessKey: "X"
-                visible: !pane.controller.globalSettingsOpen
-                Layout.preferredWidth: Ui.Theme.controlHeight
-                Layout.preferredHeight: Ui.Theme.controlHeight
-                icon: "󰕍"
-                accessibleName: pane.controller.stale ? qsTr("Reload current displays") : qsTr("Discard layout changes")
-                toolTip: accessibleName
-                enabled: pane.controller.canChange && (pane.controller.dirty || pane.controller.stale)
-                onClicked: pane.controller.reloadDraft()
-            }
         }
         Ui.CenteredMessage {
             objectName: "displayEmptyDetails"

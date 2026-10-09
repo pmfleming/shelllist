@@ -100,6 +100,101 @@ DaemonTestCase {
         tryCompare(panel.detailsItem.parent, "status", Loader.Ready);
         verify(waitForPolish(panel.Window.window));
     }
+    function test_arrangementFeedbackStaysInStatusBar() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        c.selectOutput("eDP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        const label = findChild(panel.list, "feedbackText");
+        const slot = label.parent;
+        const hint = findChild(panel, "displayArrangementHint");
+        verify(hint instanceof Ui.FeedbackSource);
+        verify(!hint.visible);
+        compare(hint.implicitHeight, 0);
+        compare(findChild(panel, "displayLayoutPreviewLabel"), null);
+        compare(findChild(panel, "displayEnablementStatus"), null);
+        tryVerify(() => label.text.includes("Enable"));
+        compare(slot.contributions.length, 1, "disabled guidance is contributed only once");
+        verify(slot.fullText.includes("choose its content"));
+        verify(!slot.fullText.includes("Drag to an edge"));
+        const footerHeight = slot.height;
+        const card = findChild(panel, "displayModeCard");
+        const cardHeight = card.height;
+        c.displayPolicyError = "Could not update displays";
+        tryVerify(() => slot.fullText.includes(c.displayPolicyError));
+        compare(slot.messageTone, "warning");
+        compare(slot.height, footerHeight);
+        compare(card.height, cardHeight, "feedback does not grow settings");
+        c.displayPolicyError = "";
+        c.detailsTab = "information";
+        tryCompare(label, "text", "1 active · 2 connected");
+        verify(!findChild(panel, "displayArrangementSummary").visible);
+        verify(!slot.fullText.includes("Enable"), "settings guidance is absent on Information");
+
+        const state = displayState();
+        state.outputs[0].disabled = false;
+        c.applyDisplayPolicy(state);
+        c.selectOutput("DP-1");
+        c.detailsTab = "settings";
+        tryCompare(label, "text", "Drag to an edge or choose a direction");
+        panel.navigation.focusContent();
+        verify(panel.navigation.targets.every(item => !(item instanceof Ui.FeedbackSource)));
+        panel.list.focusSearch();
+        keyClick(Qt.Key_L, Qt.AltModifier);
+        verify(c.dirty);
+        tryVerify(() => slot.fullText.includes("Unsaved layout"));
+        verify(!slot.fullText.includes("Drag to an edge"));
+        compare(slot.height, footerHeight);
+        compare(calls.length, 0, "feedback and arrangement never submit the draft");
+    }
+    function test_noResetRowAndDiscardOnClose() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        c.selectOutput("eDP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        compare(findChild(panel, "reloadDisplayLayout"), null);
+        const back = findChild(panel, "backToDisplayList");
+        verify(!back.parent.visible, "display pages reserve no Back/reset row");
+        const arrangement = findChild(panel, "displayArrangementSummary").parent;
+        const tabs = findChild(panel, "displayDetailsTabs");
+        compare(tabs.y, arrangement.y + arrangement.height + panel.detailsItem.sectionSpacing);
+
+        panel.list.focusSearch();
+        keyClick(Qt.Key_E, Qt.AltModifier);
+        verify(c.dirty && c.selectedDraft.enabled);
+        const feedback = findChild(panel.list, "feedbackText").parent;
+        tryVerify(() => feedback.fullText.includes("Unsaved layout"));
+        keyClick(Qt.Key_X, Qt.AltModifier);
+        verify(c.dirty, "removed reset command cannot silently discard");
+        panel.navigation.focusContent();
+        keyClick(Qt.Key_Escape);
+        const prompt = findChild(panel, "discardDisplayDraft");
+        tryVerify(() => prompt.visible);
+        keyClick(Qt.Key_Escape);
+        tryVerify(() => !prompt.visible);
+        verify(c.dirty && c.detailsOpen, "cancelling keeps the layout draft");
+        panel.navigation.focusContent();
+        keyClick(Qt.Key_Escape);
+        tryVerify(() => prompt.visible);
+        wait(0);
+        prompt.focusAction("accept");
+        keyClick(Qt.Key_Space);
+        tryVerify(() => !c.dirty && !c.detailsOpen);
+        verify(!c.draft.find(output => output.name === "eDP-1").enabled);
+        compare(calls.length, 0, "discarding a local draft never mutates the backend");
+
+        c.openGlobalSettings();
+        waitForDetails(panel);
+        const globalBack = findChild(panel, "backToDisplayList");
+        verify(globalBack.visible && globalBack.parent.visible, "global settings keeps its Back command");
+        panel.list.focusSearch();
+        keyClick(Qt.Key_B, Qt.AltModifier);
+        tryVerify(() => !c.detailsOpen);
+    }
     function focusState() {
         const state = displayState();
         state.outputs[0].disabled = false;
@@ -153,10 +248,26 @@ DaemonTestCase {
         const saved = JSON.stringify(c.draft);
         keyClick(data.key, Qt.AltModifier);
         compare(JSON.stringify(c.draft), saved, "repeating the current direction is a no-op");
-        c.detailsTab = "information";
-        verify(button.visible && controls.visible);
+        const tabs = findChild(panel, "displayDetailsTabs");
+        const settingsY = tabs.y;
+        const settingsHeight = tabs.height;
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        tryCompare(c, "detailsTab", "information");
+        verify(!map.visible && !button.visible && !controls.visible);
+        tryCompare(tabs, "y", 0);
+        compare(tabs.height, settingsHeight + settingsY, "Information reclaims the entire arrangement area");
+        const feedback = findChild(panel.list, "feedbackText").parent;
+        verify(feedback.fullText.includes("Unsaved layout"), "draft status remains visible without the map");
         panel.navigation.focusContent();
-        verify(panel.navigation.targets.every(item => !item.objectName.startsWith("displayPlace-")));
+        verify(panel.navigation.targets.every(item => !item.objectName.startsWith("displayPlace-") && item.objectName !== "displayPositionReference"));
+        keyClick(Qt.Key_U, Qt.AltModifier);
+        compare(JSON.stringify(c.draft), saved, "hidden arrangement commands cannot change the draft");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
+        tryCompare(c, "detailsTab", "settings");
+        verify(map.visible && button.visible && controls.visible);
+        tryCompare(tabs, "y", settingsY);
+        compare(tabs.height, settingsHeight);
+        compare(JSON.stringify(c.draft), saved, "tab changes preserve saved layout edits");
         compare(calls.length, 0, "buttons and Alt commands are draft-only");
     }
     function beginMapDrag(panel) {
@@ -243,6 +354,9 @@ DaemonTestCase {
         c.edit("HDMI-A-1", "x", -2560);
         verify(!findChild(panel, "displayPlace-left").enabled);
         verify(findChild(panel, "displayArrangementHint").text.includes("Would overlap HDMI-A-1"));
+        const feedback = findChild(panel.list, "feedbackText").parent;
+        tryVerify(() => feedback.fullText.includes("Would overlap HDMI-A-1"));
+        compare(feedback.messageTone, "warning");
         const collisionDraft = JSON.stringify(c.draft);
         verify(!c.placeSelected("left"));
         const map = beginMapDrag(panel);
@@ -349,6 +463,9 @@ DaemonTestCase {
         verify(c.canPreview);
         verify(!c.canArrange);
         verify(findChild(panel, "displayArrangementHint").text.includes("Mirrors"));
+        const feedback = findChild(panel.list, "feedbackText").parent;
+        tryVerify(() => feedback.fullText.includes("black bars may appear"));
+        compare(feedback.contributions.filter(entry => entry.text.includes("Mirrors")).length, 1);
         compare(findChild(panel, "displayPositionCard"), null);
         const oldX = c.selectedDraft.x;
         c.edit("DP-1", "x", 9999);

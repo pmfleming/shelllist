@@ -643,6 +643,19 @@ browser launch. Claimed ID, episode and URL must match, with a finite future
 expiry. `tst_wifi_portal.qml` exercises actual command/navigation keys,
 claim acknowledgement, late replies, failures and UI disappearance.
 
+The display layout diagram and arrangement controls appear only on **Settings**.
+**Information** reclaims their entire vertical allocation; hidden arrangement
+commands and the reference field are unavailable there. Tab changes preserve the
+saved layout draft, and dirty/error feedback stays in the status bar on either page.
+Display arrangement guidance and disabled/mirror blockers contribute once to the
+fixed list status bar on Settings, not labels below the map or settings. The routine drag hint
+is shown only when arrangement is available and no dirty layout or operation status
+needs attention. Full mirror consequences and blocked-direction diagnostics remain
+accessible there; feedback adds no field stops or inspector height. Display pages
+have no inline reset command or reserved reset row. Leaving a dirty layout retains
+the existing Discard / Keep editing confirmation; global settings keeps its Back
+command and row. Removing that row never hides dirty/error status from the footer.
+
 Display arrangement follows the same command model: **Alt+L/U/D/R** invokes the
 Left/Above/Below/Right buttons below the monitor map. These actions modify the
 local layout draft, not the backend. Buttons and the map are not Tab stops;

@@ -73,13 +73,11 @@ ColumnLayout {
             }
         }
     }
-    Ui.ThemeText {
+    Ui.FeedbackSource {
         objectName: "displayArrangementHint"
-        Layout.fillWidth: true
-        visible: text.length > 0
-        text: controls.controller.arrangementHint || controls.blockedDirections
-        wrapMode: Text.Wrap
-        color: controls.controller.arrangementHint ? Ui.Theme.mutedText : Ui.Theme.warning
-        font.pixelSize: Ui.Theme.fontSizeSmall
+        text: controls.controller.arrangementHint || controls.blockedDirections || (controls.controller.canArrange && !controls.controller.dirty && !controls.controller.statusMessage ? qsTr("Drag to an edge or choose a direction") : "")
+        summaryText: controls.blockedDirections ? qsTr("Some directions are blocked") : controls.controller.selectedDraft && !controls.controller.selectedDraft.enabled ? qsTr("Enable display to arrange or choose content") : controls.controller.selectedDraft && controls.controller.selectedDraft.mirror_of ? qsTr("Mirror follows source · Scaled to fit") : text
+        tone: controls.blockedDirections ? "warning" : "info"
+        priority: controls.blockedDirections ? 20 : 0
     }
 }

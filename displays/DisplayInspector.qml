@@ -63,10 +63,6 @@ ColumnLayout {
             }
         }
         Ui.FeedbackSource {
-            text: !inspector.draft.enabled ? qsTr("Enable this display to choose its content.") : inspector.draft.mirror_of ? qsTr("Mirrors %1 · position follows the source. Scaled to fit; black bars may appear.").arg(inspector.draft.mirror_of) : ""
-            summaryText: !inspector.draft.enabled ? qsTr("Display disabled") : qsTr("Mirror follows source · Scaled to fit")
-        }
-        Ui.FeedbackSource {
             active: inspector.controller.draft.some(o => o.enabled && o.mirror_of === inspector.output.name)
             text: qsTr("Copies must extend before this display can mirror another. Disabling it makes its copies extended displays.")
             summaryText: qsTr("Extend copies before mirroring")
@@ -185,14 +181,6 @@ ColumnLayout {
                     }
                 }
             }
-        }
-        Ui.ThemeText {
-            objectName: "displayEnablementStatus"
-            Layout.fillWidth: true
-            text: inspector.draft.enabled ? qsTr("Enabled in the draft") : qsTr("Disabled in the draft")
-            wrapMode: Text.Wrap
-            color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeSmall
         }
     }
 
