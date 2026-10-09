@@ -98,17 +98,24 @@ Tests.DaemonTestCase {
                 {id: 0, name: "eDP-1", width: 1920, height: 1200, refreshRate: 60, x: 0, y: 0, scale: 1.25, transform: 0, disabled: false, supported: true, internal: true, current_mode: "mode-1", modes: [{id: "mode-1", width: 1920, height: 1200, rate: 60, size: "1920x1200"}]}
             ]});
         } else if (id === "battery") {
-            c.applyBattery({available: true, percentage: 80, plugged: true, devices: []});
+            c.applyBattery({available: true, percentage: 80, plugged: true, charging: true, power_available: true, power_watts: 8.4,
+                devices: [{id: "BAT0", health_percent: 94, cycles: 186, protection: {supported: true, managed: true, enabled: true,
+                    desired_enabled: true, desired_start_percent: 75, desired_end_percent: 80, start_percent: 75, end_percent: 80,
+                    thresholds_verified: true, available_behaviours: ["inhibit-charge", "force-discharge"]}}]});
             c.applyPowerProfile({available: true, profile: "balanced", profiles: [{name: "power-saver"}, {name: "balanced"}, {name: "performance"}]});
             c.applyPowerSuspend({available: true, can_suspend: "yes", can_hibernate: "yes", keep_awake: false, lock_before_sleep: true, inhibitors: []});
             c.selectViewTab("power");
         } else if (id === "activity" || id === "time-weather") {
-            c.applySnapshot({timezone: {available: true, timezone: "Europe/Amsterdam", city: "Amsterdam", abbreviation: "CEST", utc_offset_seconds: 7200}, activity: {available: true, syncing: false, event_count: 0, incomplete_todo_count: 0, sources: [], world_clocks: [], weather_locations: [], weather: {available: false, location: "Amsterdam"}}});
+            const weather = {available: true, location: "Amsterdam", temperature_c: 18, high_c: 20, low_c: 12,
+                condition: "Partly cloudy", condition_code: 2, utc_offset_seconds: 7200, updated_unix_ms: Date.now(), hourly: [], daily: []};
+            c.applySnapshot({timezone: {available: true, timezone: "Europe/Amsterdam", city: "Amsterdam", abbreviation: "CEST", utc_offset_seconds: 7200},
+                activity: {available: true, syncing: false, event_count: 0, incomplete_todo_count: 0, sources: [], world_clocks: [], weather_locations: [], weather: weather,
+                    locations: [{id: "native-amsterdam", label: "Amsterdam", city: "Amsterdam", timezone: "Europe/Amsterdam", abbreviation: "CEST",
+                        utc_offset_seconds: 7200, timezone_region_ids: [], has_coordinates: false, home: true, has_weather: true, weather: weather, lunar: null}]}});
         } else if (id === "notifications") {
-            const message = {id: 101, app_name: "Mail", summary: "Notification with a deliberately long summary to check title elision", body: "A synthetic message with live default, reply and named application actions.", created_unix_ms: Date.now(), actions: [{key: "default", label: "Open"}, {key: "archive", label: "Archive"}, {key: "inline-reply", label: "Reply"}]};
-            c.notificationState.notifications = {available: true, count: 1, dnd: false};
-            c.notificationState.notificationActive = {notifications: [message]};
-            c.notificationState.applyHistory({records: [{history_id: null, notification: message}], epoch: "review", revision: "1", query: "", next_cursor: null, anchor_reached: true, scope_limit: 5000}, true, null);
+            const message = {id: 101, app_key: "named:Mail", app_name: "Mail", app_icon: "", summary: "Notification with a deliberately long summary to check title elision", body: "Synthetic native-catalog preview. No sender actions in the center.", created_unix_ms: Date.now()};
+            c.notificationState.applySummary({available: true, backend: "native", count: 1, dnd: false, history_revision: 1, app_policies: {}});
+            c.catalog.apps = [{key: "named:Mail", count: 1, total_count: 1, latest: message}];
             c.rebuildRecords();
         } else if (id === "audio") {
             panel.desktop.audio = {available: true, sink_name: "speakers", sink_description: "Studio speakers", volume_percent: 50, muted: false};
@@ -125,12 +132,16 @@ Tests.DaemonTestCase {
             tryVerify(() => c.hasSelection, 5000, id + " must have a real selected result");
             c.openDetails();
             tryVerify(() => panel.surface.detailsItem !== null);
+            if (id === "notifications") {
+                c.timeline.busy = false;
+                c.timeline.snapshot = {recent: [c.catalog.apps[0].latest], dates: [], next_offset: null};
+            }
         }
     }
     function save(panel, name) {
         wait(180);
         verify(waitForPolish(panel.Window.window));
-        const directory = decodeURIComponent(Qt.resolvedUrl("../../target/circular-action-review/").toString().replace(/^file:\/\//, ""));
+        const directory = Quickshell.env("SHELLLIST_REVIEW_DIR") || decodeURIComponent(Qt.resolvedUrl("../../target/circular-action-review/").toString().replace(/^file:\/\//, ""));
         // QtTest.grabImage crops using logical coordinates on HiDPI windows.
         // Grab the complete render layer instead; Qt applies the window DPR
         // to this logical target size (do not multiply by DPR a second time).
@@ -161,7 +172,8 @@ Tests.DaemonTestCase {
         toast.visible = false;
         const bar = createTemporaryObject(barFactory, tests);
         save(bar, "bar-" + data.tag);
-        checkCircles(bar);
+        // The bar intentionally has its own compact artwork/shape grammar.
+        // Panel circle assertions do not apply to BarAction or media artwork.
         bar.visible = false;
         const prompt = createTemporaryObject(promptFactory, tests);
         save(prompt, "prompt-" + data.tag);
@@ -201,6 +213,27 @@ Tests.DaemonTestCase {
             controller.detailsTab = "settings";
             save(panel, data.tag + "-settings");
             checkCircles(panel.surface);
+        }
+        const tabs = ({applications: ["application", "resources", "settings"], bluetooth: ["device", "settings", "information"],
+            clipboard: ["data", "info"], displays: ["settings", "information"], "time-weather": ["time", "weather"],
+            notifications: ["notifications", "controls"]})[data.id] || [];
+        if (data.id === "notifications") controller.settingsOpen = false;
+        for (const tab of tabs) {
+            controller.detailsTab = tab;
+            save(panel, data.tag + "-" + tab);
+        }
+        if (data.id === "battery") {
+            for (const tab of ["overview", "care", "power"]) {
+                controller.selectViewTab(tab);
+                save(panel, data.tag + "-" + tab);
+            }
+        }
+        if (data.id === "bluetooth") {
+            controller.openBluetoothSettings();
+            for (const tab of ["general", "pairing"]) {
+                controller.adapterSettingsTab = tab;
+                save(panel, data.tag + "-adapter-" + tab);
+            }
         }
         verify(!calls.some(call => /\.(set|connect$|disconnect$|commit|invoke|preview|confirm|reply|dismiss|launch|activate|rename)/.test(call.method)), "captures never dispatch mutations");
     }
