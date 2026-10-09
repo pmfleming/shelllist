@@ -12,6 +12,7 @@ TestCase {
     width: 560
     height: 700
     Component { id: toggleFactory; Ui.ToggleRow { width: 250; title: "A deliberately long translated setting name that must wrap over several lines without shrinking the switch"; compact: true; checked: true; property int activations: 0; onClicked: activations++ } }
+    Component { id: stripFactory; Ui.StatusPanel { width: 170; uiScale: 1; status: "A long operation failure must wrap without hiding the reason or covering the result list." } }
     Component { id: statusFactory; Ui.SaveStatusLabel { valid: true; error: ""; saving: true; text: "Saving…" } }
     Component { id: readingFactory; Apps.ApplicationResourceCapacity { width: 200; valueSize: 8; descriptor: ({objectName: "testResourceReading", valueText: "15.7 MiB", label: "Memory", detailText: "Measured", color: Ui.Theme.accent, available: true, icon: "memory"}) } }
     Component { id: messageFactory; Ui.PanelMessage { width: 240; text: "A detailed operation failure must remain visible and wrap instead of being elided to a short, ambiguous fragment." } }
@@ -65,6 +66,12 @@ TestCase {
         tryVerify(() => message.implicitHeight > oldHeight);
         message.text = "";
         compare(message.implicitHeight, 0);
+        const strip = createTemporaryObject(stripFactory, tests);
+        verify(waitForRendering(strip));
+        verify(strip.height > Ui.Theme.statusHeight, "list feedback grows, rather than eliding failures");
+        const stripHeight = strip.height;
+        strip.width = 120;
+        tryVerify(() => strip.height > stripHeight);
     }
     function test_stackedLabelAndResourceReadingFloor() {
         const surface = createTemporaryObject(formFactory, tests);

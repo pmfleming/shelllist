@@ -72,7 +72,7 @@ Ui.ProviderChooserSurface {
         chooserController: content.controller
         resultModel: content.controller.filteredResultsModel
         filterText: content.controller.filterText
-        placeholder: qsTr("Search %1").arg(content.controller.title)
+        placeholder: tray ? qsTr("Search tray applications…") : audio ? qsTr("Search audio devices…") : qsTr("Search media players…")
         readonly property bool tray: content.controller.kind === "tray"
         readonly property bool audio: content.controller.kind === "audio"
         readonly property string readError: !tray && content.controller.barController ? content.controller.barController.backend.snapshotError : ""

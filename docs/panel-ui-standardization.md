@@ -141,9 +141,113 @@ part of these commits.
 
 ### Phase 4 — acceptance and prevention
 
-Pending. Offscreen evidence does not establish hardware IME, assistive-reader,
-compositor blur/input-mask or live display-mode safety acceptance. Record these
-limits explicitly, never convert a renderer skip into passing pixel coverage.
+Implementation and engineering acceptance complete. Evidence is deliberately
+split by boundary; this is **not** a blanket hardware/accessibility certification.
+
+- Strict qmllint: **pass**. Full combined working-tree Qt suite: **339 passes,
+  zero failures, one existing software-renderer artwork skip**. All **17
+  JavaScript suites** pass (including 150 seed/mode contrast combinations and
+  source-tree import checks); native offscreen runtime smoke passes. A separate
+  archive of HEAD plus **only this phase's owned paths** also passes strict lint
+  and the full suite: **320 passes, zero failures, one existing skip**. This rules
+  out relying on unrelated unstaged implementations to make the commits pass.
+- Normal light/dark panel fixtures: **28 passes / 110 images**, including
+  auxiliaries, subpages, 976×600 resources, long failures and pending policy.
+  Dense/read-only/invalid/narrow forms: **4 passes / 10 images**. Display layout,
+  drag, mirror/disabled monitors, Focus, minimum/overflow, dirty and timed-trial
+  states: **4 passes / 42 images**, with initial Revert focus asserted.
+- Fractional offscreen scale 1.25×: **28 passes / 110 images**. Live Wayland on
+  the existing 3440×1440 monitor at scale 1.25, using Qt 6.11.1/OpenGL RHI:
+  **28 passes / 110 images**. The latter uses real Wayland windows but recording
+  transports, not real daemon mutations or physical mode switches. QRhi pipeline
+  output and monitor geometry are in the separate `wayland.log` and monitor JSON.
+- Visual inspection included both themes, full-size switches, measured Resources,
+  Activity with long native-projected events/todos, field/state feedback, long
+  Wi-Fi and notification errors, passive Tray, expressive Time/Weather, and
+  Display Keep/Revert. Loaded Activity exposed a real clipped-row risk: event
+  rows now size from all text, long todo rows grow without shrinking their switch,
+  and delete commands retain secondary size. Search prompts use sentence case.
+- Tests wait for the Activity asynchronous Loader to become Ready before layout
+  and pointer input, rather than assuming finding a child means it is ready.
+  Capture helpers verify asynchronous image writes; bar snapshot fixtures are
+  acknowledged so ready Audio/Media captures no longer show false busy controls.
+- Canonical local comparison gallery: `target/panel-standardization/phase4/gallery.html`.
+  Rebuild with `python3 tests/build-panel-gallery.py`; its image/document links
+  are checked. Headless Chrome confirms twelve comparisons, named enlargement
+  links, light-theme disclosure and no horizontal overflow at 1440px or 390px.
+  Images remain ignored evidence, not shipped assets or pixel goldens.
+- `AGENTS.md`, this matrix and the keyboard contract now describe current roles.
+  `tests/review-panel-ui.py --base <ref>` identifies added numeric role overrides,
+  shared composition changes and new local setting wrappers for explicit review.
+  Reviewing against phase 0 found shared-composition migrations, not a new family
+  of local setting wrappers. Domain geometry is intentionally not blanket-banned.
+  The Python review detector's changed-line numbering and numeric/composition
+  classification were smoke-tested; generated gallery references all resolve.
+
+**Evidence limits / owner follow-up:** the existing artwork pixel skip stays a
+skip even though separate RHI captures were inspected. Native accessibility
+names/state/activation and keyboard transactions are exercised by Qt tests;
+no hardware IME session or human screen-reader walkthrough was performed.
+The desktop/QA owner retains those checks, real native-menu integration,
+compositor blur/input masks and physical display-mode recovery. No destructive
+or hardware-mutating acceptance was attempted. Incoming resource, notification
+and choice-session work remains separate; these counts validate the combined
+checkout, not a claim that those unrelated changes were authored by this plan.
+
+## Panel acceptance matrix
+
+Every row has normal/minimum light/dark captures, plus a separate fractional and
+live Wayland pass. Additional state/transaction evidence remains at the consumer
+boundary instead of being duplicated in a giant visual test.
+
+| Panel | Representative captures / states | Native regression owners (`tests/qml/`) |
+| --- | --- | --- |
+| Applications | Application, Settings, measured Resources, missing network data, minimum viewport | `tst_application_details`, `tst_application_settings`, `tst_application_resources`, `tst_application_actions` |
+| Wi-Fi | IPv4/IPv6, long errors, narrow/required/read-only/invalid fields | `tst_ip_fields`, `tst_wifi_operations`, `tst_wifi_prompt`, `tst_wifi_portal` |
+| Bluetooth | Device, Settings, Information, adapter General/Pairing, unavailable controls | `tst_bluetooth_recovery` |
+| Clipboard | Data/Information, long text, loading with retained content | `tst_clipboard_preview`, `tst_clipboard_recovery` |
+| Displays | Layout/Information, Focus subpages, draft/trial, drag, mirror/disabled, narrow/short | `tst_displays` |
+| Battery & Power | Overview/Care/Power, unavailable telemetry, long failure, firmware controls | `tst_battery_presentation`, `tst_battery_suspend` |
+| Activity | Glance/Schedule, long event/todo, empty day, error with retained content | `tst_activity_days` |
+| Notifications | Previews/Controls/global settings, pending/error, singular count | `tst_notification_center`, `tst_notifications` |
+| Time & Weather | Time/Weather, solar/timezone, unknown forecasts, measured hero | `tst_time_weather_locations` |
+| Audio | Output, ready commands, mute, long failure | `tst_system_choosers` (includes input/target guards) |
+| Media | Ready transport, pin/mode, long failure, passive metadata/artwork | `tst_system_choosers` |
+| Tray | Passive details without duplicate card, stable native-menu routes | `tst_system_choosers` |
+
+Shared `tst_panel_roles`, `tst_field_interaction`, `tst_material_feedback` and
+chooser/command suites cover identity, wrapping, passive roles, browse/edit
+markers, editable-only traversal, Enter/Tab save, Escape discard, snapshot/draft
+isolation, continuous-preview rollback and guarded command activation.
+
+## Maintainer review / owned exceptions
+
+The frontend maintainer owns the shared roles; each panel's domain maintainer
+owns its deliberate content geometry. Desktop/QA owns hardware/live acceptance.
+
+| Exception | Owner / reason |
+| --- | --- |
+| Weather/time/media heroes, artwork | Time/Weather and Media maintainers; semantic prominence and domain imagery, named size roles |
+| Resource card geometry, 14px essential-value floor, 11px plot annotations | Applications maintainer; viewport fit, metric semantics/gaps, no extra chart interaction |
+| Calendar cells, agenda markers, monitor maps, notification content | Respective domain maintainers; content geometry is not a settings heading or field |
+| Stacked FormField name on a narrow compound todo editor | Shared UI + Activity maintainers; keep name and native input usable without reducing text/control size |
+| Read-only/unsupported controls and pending state | Domain maintainer; preserve availability/retry/acknowledgement, never imply success or an editable value |
+| Bar, toast, prompt, OSD and native menus | Shell/desktop maintainers; independent density, routing and safety boundaries |
+
+For every panel PR:
+
+1. Use semantic Theme roles and shared fields/headings/status; explain new numeric
+   font, spacing or corner overrides and local wrappers in review.
+2. Keep exactly one identity header. Omit empty or duplicate card headings; make
+   routine guidance explicit Help, not a key legend. Keep actionable blockers,
+   countdowns and failures visible and wrapping.
+3. Check long labels, pending/error/disabled/read-only and minimum supported size
+   in both themes. Preserve switch geometry and readable passive metadata.
+4. Preserve native editor identity, accessibility name/description, command ID,
+   draft/save/rollback and domain acknowledgements. Help/status/artwork add no
+   field stops. Test the affected actual consumer, not just a token table.
+5. Refresh the small representative gallery/matrix; record renderer, font setup,
+   fixture limitations, skipped cases and any unperformed hardware checks.
 
 ## Reproduction
 

@@ -78,8 +78,8 @@ Arriving at a switch highlights it **without toggling it** and returns to
 browsing. Actions are never traversal stops. Shift+Enter remains available for a
 newline in multiline editors.
 
-`FormField` inline icons/names, separators, state badges and disclosed help are
-passive: the contained shared editor keeps its stable focus identity and
+`FormField` inline icons/names (or its opt-in stacked name for a narrow compound
+editor), separators, state badges and disclosed help are passive: the contained shared editor keeps its stable focus identity and
 transaction. A single-line or expanded scrolling `TextEditor` is still one field. IP/DNS errors become visible on explicit save, without
 trapping Tab: saving retains the domain draft, while the existing whole-group
 readiness guard blocks invalid/incomplete backend writes. CIDR, unsupported zone

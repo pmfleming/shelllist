@@ -4,6 +4,17 @@ Keep tests at the narrowest **behavioral boundary** that catches a meaningful
 failure. Prefer representative scenarios over repeated fixtures. Do not mirror
 implementation tables or freeze visual choices unnecessarily.
 
+## Panel standardization acceptance
+
+`docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,
+exceptions and separate source/offscreen/live evidence. `tst_panel_roles.qml`
+covers meaningful shared-role risks: switch/label readability, growing diagnostics,
+pending versus success, stacked labels, native identity and editable-only traversal.
+The explicit manual capture fixtures cover panels, dense forms and display safety
+states. Generate the local comparison gallery with `tests/build-panel-gallery.py`;
+use `tests/review-panel-ui.py --base <ref>` as an advisory PR drift review, not a
+blanket ban on numeric domain geometry. Neither freezes screenshots as goldens.
+
 ## Retained coverage
 
 Run `tests/run-qml-tests.sh` from `nix develop`. The development shell and Nix

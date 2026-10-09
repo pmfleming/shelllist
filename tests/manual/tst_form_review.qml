@@ -120,7 +120,10 @@ Tests.DaemonTestCase {
         wait(150);
         verify(waitForPolish(item.Window.window));
         const path = decodeURIComponent(Qt.resolvedUrl("../../target/form-field-implementation/").toString().replace(/^file:\/\//, ""));
-        grabImage(item).save(path + name + ".png");
+        let saved = false;
+        verify(item.grabToImage(function(result) { saved = result.saveToFile(path + name + ".png"); },
+            Qt.size(Math.ceil(item.width), Math.ceil(item.height))));
+        tryVerify(() => saved, 5000, "capture must be written successfully");
     }
     function test_capture_data() {
         return [{tag: "light", scheme: Qt.Light}, {tag: "dark", scheme: Qt.Dark}];
@@ -142,6 +145,8 @@ Tests.DaemonTestCase {
         save(panel, "ipv6-" + data.tag);
         panel.width = 380;
         save(panel, "network-narrow-" + data.tag);
+        panel.controller.advanced.error = "The service rejected this configuration. The previous settings are retained. Check the address and gateway before retrying; this diagnostic must wrap without covering the last editable control.";
+        save(panel, "network-error-" + data.tag);
         compare(calls.filter(call => call.method !== "bar.snapshot").length, 0, "capture must never mutate a backend");
     }
 }

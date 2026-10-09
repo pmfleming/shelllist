@@ -49,10 +49,10 @@ Rectangle {
                 id: eventRow
                 required property var modelData
                 width: ListView.view.width
-                height: Math.max(66, eventTitle.implicitHeight + 34)
+                height: Math.max(66, eventText.implicitHeight + 2 * Ui.Theme.spacingSm)
                 radius: Ui.Theme.cardRadius
                 color: Ui.Theme.surfaceRaised
-                border.color: Ui.Theme.border
+                border.width: 0
                 Rectangle {
                     anchors.left: parent.left
                     anchors.top: parent.top
@@ -62,6 +62,7 @@ Rectangle {
                     color: eventRow.modelData.color || Ui.Theme.accent
                 }
                 Column {
+                    id: eventText
                     anchors.fill: parent
                     anchors.leftMargin: Ui.Theme.spacingLg
                     anchors.rightMargin: Ui.Theme.cardPadding

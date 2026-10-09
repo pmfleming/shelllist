@@ -58,7 +58,10 @@ Tests.DaemonTestCase {
         wait(300);
         verify(waitForPolish(item.Window.window));
         const directory = decodeURIComponent(Qt.resolvedUrl("../../target/display-settings-review/").toString().replace(/^file:\/\//, ""));
-        grabImage(item).save(directory + name + ".png");
+        let saved = false;
+        verify(item.grabToImage(function(result) { saved = result.saveToFile(directory + name + ".png"); },
+            Qt.size(Math.ceil(item.width), Math.ceil(item.height))));
+        tryVerify(() => saved, 5000, "capture must be written successfully");
     }
     function test_render_data() {
         return [{tag: "dark", scheme: Qt.Dark}, {tag: "light", scheme: Qt.Light}];

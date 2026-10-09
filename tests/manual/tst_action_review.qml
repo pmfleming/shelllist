@@ -3,6 +3,8 @@ import QtQuick
 import Quickshell
 import Shelllist.Ui as Ui
 import Shelllist.Bar as Bar
+import Shelllist.Io as Io
+import "../../bar/BarApi.js" as BarApi
 import "../../shell" as Shell
 import "../qml" as Tests
 import "../qml/imports/Quickshell/Services/SystemTray" as Tray
@@ -123,6 +125,15 @@ Tests.DaemonTestCase {
                 activity: {available: true, syncing: false, event_count: 0, incomplete_todo_count: 0, sources: [], world_clocks: [], weather_locations: [], weather: weather,
                     locations: [{id: "native-amsterdam", label: "Amsterdam", city: "Amsterdam", timezone: "Europe/Amsterdam", abbreviation: "CEST",
                         utc_offset_seconds: 7200, timezone_region_ids: [], has_coordinates: false, home: true, has_weather: true, weather: weather, lunar: null}]}});
+            if (id === "activity") {
+                const now = Date.now();
+                const day = c.selectedDateKey;
+                const days = {}; days[day] = {event_ids: ["review-event"], todo_ids: ["review-todo"]};
+                c.applyRange({events: [{id: "review-event", title: "A deliberately long event title from the native day projection",
+                    calendar_name: "Synthetic calendar", location: "A deliberately long meeting room location", start_unix_ms: now, end_unix_ms: now + 3600000}],
+                    todos: [{id: "review-todo", title: "Review a long translated task description without shrinking its switch", completed: false}],
+                    busy_dates: [day], local_date: day, from_unix_ms: now - 86400000, to_unix_ms: now + 86400000, days: days});
+            }
         } else if (id === "notifications") {
             const message = {id: 101, app_key: "named:Mail", app_name: "Mail", app_icon: "", summary: "Notification with a deliberately long summary to check title elision", body: "Synthetic native-catalog preview. No sender actions in the center.", created_unix_ms: Date.now()};
             c.notificationState.applySummary({available: true, backend: "native", count: 1, dnd: false, history_revision: 1, app_policies: {}});
@@ -131,7 +142,7 @@ Tests.DaemonTestCase {
         } else if (id === "audio") {
             panel.desktop.audio = {available: true, sink_name: "speakers", sink_description: "Studio speakers", volume_percent: 50, muted: false};
         } else if (id === "media") {
-            panel.desktop.media = {available: true, active_player: "player", players: [{id: "player", identity: "Music player with a long application name", title: "A very long track title", artist: "Artist", playback_status: "Playing", can_control: true, can_pause: true, can_play: true, can_previous: true, can_next: true, can_seek: true}]};
+            panel.desktop.media = {available: true, active_player: "player", pinned_player: null, players: [{id: "player", control_mode: "automatic", identity: "Music player with a long application name", title: "A very long track title", artist: "Artist", playback_status: "Playing", can_control: true, can_pause: true, can_play: true, can_previous: true, can_next: true, can_seek: true}]};
         } else if (id === "tray") {
             Tray.SystemTray.items.values = [createTemporaryObject(trayFactory, tests, {id: "review-tray"})];
         }
@@ -217,6 +228,12 @@ Tests.DaemonTestCase {
         const panel = createTemporaryObject(factory, tests);
         panel.registry.select(data.id);
         tryVerify(() => panel.registry.controllerFor(data.id) !== null && panel.surface !== null);
+        wait(0);
+        // Complete synthetic initial reads: a permanently pending bar.snapshot
+        // would disable every Audio/Media command in the supposed ready capture.
+        for (const call of calls.filter(call => call.method === BarApi.methods.snapshot))
+            Io.DaemonSessions.sessions[panel.desktop.backend.daemonName].client.response(call.id,
+                {protocol: BarApi.protocol, version: BarApi.version, ok: true, data: {}}, "", call.route);
         seed(panel, data.id);
         save(panel, data.tag);
         checkCircles(panel.surface);
@@ -270,6 +287,23 @@ Tests.DaemonTestCase {
                 controller.adapterSettingsTab = tab;
                 save(panel, data.tag + "-adapter-" + tab);
             }
+        }
+        const error = "The requested change could not be confirmed. The previous acknowledged state is retained. Check the service connection and retry; this deliberately long diagnostic must remain readable.";
+        if (data.id === "activity" || data.id === "battery") {
+            controller.lastError = error;
+            save(panel, data.tag + "-error");
+        } else if (data.id === "audio" || data.id === "media") {
+            panel.desktop.backend.operationError = error;
+            save(panel, data.tag + "-error");
+        } else if (data.id === "notifications") {
+            controller.detailsTab = "controls";
+            const errors = {}; errors[controller.selectedAppKey] = error;
+            controller.notificationState.policyErrors = errors;
+            save(panel, data.tag + "-error");
+            controller.notificationState.policyErrors = {};
+            const pending = {}; pending[controller.selectedAppKey] = true;
+            controller.notificationState.policyPending = pending;
+            save(panel, data.tag + "-pending");
         }
         verify(!calls.some(call => /\.(set|connect$|disconnect$|commit|invoke|preview|confirm|reply|dismiss|launch|activate|rename)/.test(call.method)), "captures never dispatch mutations");
     }

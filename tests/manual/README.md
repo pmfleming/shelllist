@@ -1,3 +1,28 @@
+# Panel standardization acceptance
+
+The current twelve-panel matrix, exceptions and evidence limits are in
+`docs/panel-ui-standardization.md`. Use the three fixtures below after changing
+shared roles; they capture actual QML, not the illustrative HTML proposal.
+They include measured Resources at 976×600, long operation failures, pending
+notification policy, narrow Wi-Fi errors, and guarded display trial/drag states.
+
+```sh
+mkdir -p target/{circular-action-review,form-field-implementation,display-settings-review}
+# Run all three fixtures below, then preserve the checkpoint:
+mkdir -p target/panel-standardization/phase4/{captures,forms,displays}
+cp -a target/circular-action-review/. target/panel-standardization/phase4/captures/
+cp -a target/form-field-implementation/. target/panel-standardization/phase4/forms/
+cp -a target/display-settings-review/. target/panel-standardization/phase4/displays/
+python3 tests/build-panel-gallery.py
+```
+
+Open `target/panel-standardization/phase4/gallery.html`. The generator also includes
+optional `fractional/` and `wayland/` folders; preserve the ordinary capture set
+before repeating a fixture with another renderer/scale. A missing baseline is
+explicitly labeled, not silently replaced. Review numbers/wrappers introduced by
+a PR with `python3 tests/review-panel-ui.py --base <ref>`, documenting intentional
+exceptions instead of banning chart/calendar/map geometry.
+
 # External-heading decision review
 
 `docs/reviews/external-header-review.html` preserves the offline **before-change**
@@ -55,7 +80,7 @@ export FONTCONFIG_FILE=/path/to/packaged-fonts.conf
 tests/run-qmlquality-tests.sh -input tests/manual/tst_form_review.qml -o -,txt
 ```
 
-Eight PNGs cover light/dark shared fields, IPv4, IPv6 and narrow network forms.
+Ten PNGs cover light/dark shared fields, IPv4, IPv6, narrow network forms and long errors.
 Captures are ignored build artifacts, not golden tests. The fixture checks that
 no backend mutation is emitted. Hardware IME, pointer-selection paste, compositor
 scaling and screen-reader acceptance remain live checks.
@@ -78,8 +103,8 @@ fc-match 'Material Symbols Rounded'
 tests/run-qmlquality-tests.sh -input tests/manual/tst_display_review.qml -o -,txt
 ```
 
-The fixture writes 28 PNGs to `target/display-settings-review/`: compact,
-layout, draft, Focus overview, four categories, Diagnostics, contextual help,
+The fixture writes 42 PNGs to `target/display-settings-review/`: compact,
+layout/drag, multiple/mirrored/disabled monitors, draft, Focus overview, categories, Diagnostics, contextual help,
 narrow list/editor, short Focus, and the confirmation dialog, in light/dark.
 It checks initial Revert focus and rejects daemon mutations; read-only snapshots
 are allowed. Images are intentionally ignored build artifacts, not golden files.

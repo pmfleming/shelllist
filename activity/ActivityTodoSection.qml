@@ -69,7 +69,7 @@ Column {
     }
     Ui.ScrollableListView {
         width: parent.width
-        height: Math.min(230 * section.uiScale, section.controller.selectedTodos.length * 46)
+        height: Math.min(230 * section.uiScale, Math.max(contentHeight, section.controller.selectedTodos.length * Ui.Theme.formHeight))
         spacing: Ui.Theme.spacingSm
         clip: true
         model: section.controller.selectedTodos
@@ -77,9 +77,10 @@ Column {
             id: todoRow
             required property var modelData
             width: ListView.view.width
-            height: Ui.Theme.controlHeight
+            height: Math.max(Ui.Theme.formHeight, todoToggle.implicitHeight)
             spacing: Ui.Theme.spacingSm
             Ui.ToggleRow {
+                id: todoToggle
                 objectName: "todo::" + todoRow.modelData.id + "::completed"
                 width: parent.width - deleteButton.width - parent.spacing
                 height: parent.height
@@ -92,8 +93,10 @@ Column {
                 accessKey: "D"
                 commandScope: todoRow
                 objectName: "todo::" + todoRow.modelData.id + "::delete"
+                anchors.verticalCenter: parent.verticalCenter
                 width: height
-                height: parent.height
+                height: Ui.Theme.formActionSize
+                iconSize: Ui.Theme.formActionIconSize
                 icon: "󰆴"
                 accessibleName: qsTr("Delete %1").arg(todoRow.modelData.title || qsTr("todo"))
                 onClicked: section.controller.deleteTodo(todoRow.modelData)
