@@ -27,8 +27,6 @@ ColumnLayout {
         if (deviceChanged)
             validationAttempted = false;
         displayedDeviceKey = nextKey;
-        const saved = controller.nameEdits.draft(nextKey);
-        renameInput.text = saved ? saved.value : (controller.selectedDevice.name || "");
     }
 
     function queueRename() {
@@ -48,7 +46,6 @@ ColumnLayout {
     }
 
     Component.onCompleted: Qt.callLater(section.syncDeviceName, true)
-    onDraftChanged: Qt.callLater(section.syncDeviceName, false)
     Component.onDestruction: if (renameDirty && !(draft || {}).pending && !(draft || {}).error)
         section.saveRename()
 
@@ -83,7 +80,7 @@ ColumnLayout {
             id: renameInput
             objectName: "deviceNameInput"
             Layout.fillWidth: true
-            text: ""
+            text: section.draft ? section.draft.value : (section.controller.selectedDevice.name || "")
             maximumLength: 248
             inputValid: !section.validationAttempted || section.renameValid
             readOnly: section.controller.actionInFlight || !(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_rename)

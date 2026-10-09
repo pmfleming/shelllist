@@ -299,6 +299,70 @@ DaemonTestCase {
         ]);
         return findChild(panel.page, "currentAudioProfile");
     }
+    Component {
+        id: signalContentComponent
+        Bt.BluetoothContent {}
+    }
+    function test_signalUpdatesKeepSelectionAndNativeNameDraft() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.uiActive = true;
+        controller.searchScope = "mine";
+        const content = createTemporaryObject(signalContentComponent, testCase, {
+            controller: controller, width: testCase.width, height: testCase.height
+        });
+        wait(0);
+        findChild(controller, "bluetoothBackend").pending = ({});
+        calls = [];
+        content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => content.detailsItem !== null);
+        controller.detailsTab = "settings";
+        wait(0);
+        keyClick(Qt.Key_Tab);
+        const name = findChild(content.detailsItem, "deviceNameInput");
+        verify(name !== null);
+        for (let i = 0; i < 12 && content.detailsNavigation.currentTarget !== name; ++i)
+            keyClick(Qt.Key_Tab);
+        compare(content.detailsNavigation.currentTarget, name);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_A, Qt.ControlModifier);
+        keyClick(Qt.Key_X);
+        compare(name.text, "x");
+        const original = controller.allDevices[0];
+        const samples = [
+            {rssi: null, signal_strength: null, signal_live: false, text: "—", level: 0},
+            {rssi: -58, rssi_kind: "dbm", signal_strength: 70, signal_live: true, text: "70%", level: 3},
+            {rssi: 0, rssi_kind: "bredr-relative", signal_strength: null, signal_live: true, text: "0 dB", level: 0},
+            {rssi: -5, rssi_kind: "bredr-relative", signal_strength: null, signal_live: false, text: "-5 dB", level: 0},
+            {rssi: -70, rssi_kind: "dbm", signal_strength: 50, signal_live: false, text: "50%", level: 2}
+        ];
+        for (const sample of samples) {
+            controller.applySnapshot({
+                radio: controller.radio, adapters: controller.adapters,
+                devices: [Object.assign({}, original, sample)]
+            });
+            tryVerify(() => findChild(content.listItem, "bluetoothSignalValue") !== null);
+            const value = findChild(content.listItem, "bluetoothSignalValue");
+            compare(value.text, sample.text);
+            compare(value.opacity, sample.signal_live ? 1 : 0.58);
+            compare(findChild(content.listItem, "bluetoothSignalIcon").level, sample.level);
+            compare(controller.selectedDevice.key, "buds");
+            compare(name.text, "x");
+            verify(name.editSession.active);
+            compare(calls.length, 0, "telemetry must not submit a field draft");
+        }
+        controller.applySnapshot({
+            radio: controller.radio, adapters: controller.adapters,
+            devices: [Object.assign({}, original, {name: "Remote rename"})]
+        });
+        compare(name.text, "x", "even an updated name must not replace a local draft");
+        keyClick(Qt.Key_Escape);
+        compare(name.text, "Remote rename");
+        verify(!name.editSession.active);
+        compare(calls.length, 0);
+        content.destroy();
+    }
     function test_audioProfileSingleNativeOperationPreservesPartialSuccess() {
         const panel = makePanel();
         const profile = setupAudioProfile(panel);

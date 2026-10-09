@@ -216,12 +216,20 @@ function deviceState(device) {
         return "Available";
     return device.last_seen_ms ? "Recently found" : "Not in range";
 }
+function hasRelativeSignal(device) {
+    return device.rssi_kind === "bredr-relative" && typeof device.rssi === "number" && Number.isFinite(device.rssi);
+}
 function hasSignal(device) {
-    return device.signal_strength !== null && device.signal_strength !== undefined;
+    return hasRelativeSignal(device) || (device.signal_strength !== null && device.signal_strength !== undefined);
+}
+function signalValue(device) {
+    if (hasRelativeSignal(device))
+        return device.rssi + " dB";
+    return hasSignal(device) ? Math.max(0, Math.min(100, Math.round(Number(device.signal_strength) || 0))) + "%" : "—";
 }
 function signalLevel(device) {
-    if (!hasSignal(device))
-        return 0;
+    if (!hasSignal(device) || hasRelativeSignal(device))
+        return 0; // Relative BR/EDR RSSI is not an absolute strength/bar scale.
     const strength = Math.max(0, Math.min(100, Number(device.signal_strength) || 0));
     return strength >= 67 ? 3 : (strength >= 34 ? 2 : 1);
 }
@@ -229,7 +237,7 @@ function signalLabel(device) {
     if (!hasSignal(device))
         return "Unavailable";
     const suffix = device.signal_live ? "" : " · cached";
-    return Math.max(0, Math.min(100, Math.round(Number(device.signal_strength) || 0))) + "%" + suffix;
+    return signalValue(device) + (hasRelativeSignal(device) ? " relative to receive range" : "") + suffix;
 }
 function deviceScore(device) {
     return (device.connected ? 10000 : 0)
