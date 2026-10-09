@@ -24,9 +24,12 @@ blanket ban on numeric domain geometry. Neither freezes screenshots as goldens.
 ## Retained coverage
 
 Run `tests/run-qml-tests.sh` from `nix develop`. The development shell and Nix
-`qmlTests` check provide matching Qt SVG plugins and timezone data. Both QML
-runner scripts use the same offscreen/software, UTC setup. Refresh an existing
-development shell after changing `flake.nix`.
+`qmlTests` check provide matching Qt SVG plugins, timezone data and the same
+Fontconfig configuration as the application. Both QML runner scripts use the same
+offscreen/software, UTC setup. Refresh an existing development shell after changing
+`flake.nix`. Without Material Symbols, literal icon names can overflow adjacent
+cards and produce misleading chart-pixel failures; the resource pixel test checks
+that prerequisite rather than skipping or weakening its paint assertions.
 
 - `tst_field_interaction.qml`: local drafts, binding survival, backend updates
   during editing, native arrows and slider Home, forward/reverse Tab after

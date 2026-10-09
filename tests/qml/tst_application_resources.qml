@@ -356,6 +356,7 @@ DaemonTestCase {
         verify(gpu.x + gpu.width <= plot.xFor(start + duration), "Columns stay within their observed bucket");
     }
     function test_missingIntervalsHaveNoDashedPaint() {
+        verify(Qt.fontFamilies().includes(Ui.Theme.symbolFontFamily), "Run in nix develop: missing Material Symbols renders icon names across adjacent plots");
         const panel = make();
         for (const id of ["activity", "energy"]) {
             const plot = card(panel, "resourcePlot_" + id);

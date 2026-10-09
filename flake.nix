@@ -42,6 +42,14 @@
     let
       systems = [ "x86_64-linux" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
+      fontsConf = pkgs: pkgs.makeFontsConf {
+        fontDirectories = [
+          pkgs.roboto-flex
+          pkgs.material-symbols
+          pkgs.noto-fonts
+          pkgs.nerd-fonts.jetbrains-mono
+        ];
+      };
     in
     {
       homeManagerModules = {
@@ -94,16 +102,7 @@
             name = "shelllist-material-gallery";
             runtimeInputs = [ pkgs.quickshell ];
             text = ''
-              export FONTCONFIG_FILE=${
-                pkgs.makeFontsConf {
-                  fontDirectories = [
-                    pkgs.roboto-flex
-                    pkgs.material-symbols
-                    pkgs.noto-fonts
-                    pkgs.nerd-fonts.jetbrains-mono
-                  ];
-                }
-              }
+              export FONTCONFIG_FILE=${fontsConf pkgs}
               export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml
               export QML2_IMPORT_PATH="$QML_IMPORT_PATH"
               exec quickshell --no-color --path ${./dev/material-gallery.qml} "$@"
@@ -133,16 +132,7 @@
             ];
             text = ''
               config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/shell
-              export FONTCONFIG_FILE=${
-                pkgs.makeFontsConf {
-                  fontDirectories = [
-                    pkgs.roboto-flex
-                    pkgs.material-symbols
-                    pkgs.noto-fonts
-                    pkgs.nerd-fonts.jetbrains-mono
-                  ];
-                }
-              }
+              export FONTCONFIG_FILE=${fontsConf pkgs}
               export QML_IMPORT_PATH=${
                 self.packages.${system}.shelllistConfig
               }/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
@@ -840,14 +830,7 @@
               {
                 # Geometry tests must use the same fonts as the application,
                 # not Qt's fallback metrics in the isolated build sandbox.
-                FONTCONFIG_FILE = pkgs.makeFontsConf {
-                  fontDirectories = [
-                    pkgs.roboto-flex
-                    pkgs.material-symbols
-                    pkgs.noto-fonts
-                    pkgs.nerd-fonts.jetbrains-mono
-                  ];
-                };
+                FONTCONFIG_FILE = fontsConf pkgs;
                 nativeBuildInputs = [
                   pkgs.qt6.qtdeclarative
                   pkgs.qt6.qtsvg
@@ -923,6 +906,7 @@
       devShells = forAllSystems (
         system: pkgs: {
           default = pkgs.mkShell {
+            FONTCONFIG_FILE = fontsConf pkgs;
             shellHook = ''
               export QT_PLUGIN_PATH="${pkgs.qt6.qtsvg}/lib/qt-6/plugins''${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
               export TZDIR="${pkgs.tzdata}/share/zoneinfo"

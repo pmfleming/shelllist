@@ -4,6 +4,10 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
+The [four-pass follow-up](qml-quality-followups.md) starts from `051f462` and records
+separate fixes/refactors and validation for the resource test environment,
+notification timeline, Bluetooth responses and application operation outcomes.
+
 The [2026-10-09 catalog/shared-label review](qml-maintenance-2026-10-09.md)
 compares against clean `a910ac5d`. It removes the unused notification detail reader,
 obsolete toolbar and unused IDs, and shares dropdown label/icon composition.
