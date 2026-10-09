@@ -30,6 +30,7 @@ Ui.DetailColumnCard {
             Layout.preferredWidth: Ui.Theme.formActionSize
             Layout.preferredHeight: Ui.Theme.formActionSize
             icon: "coffee"
+            iconColor: pane.controller.keepAwake ? labelColor : Ui.Theme.mix(Ui.Theme.text, Qt.color(Presentation.profileTint("performance")), 0.35)
             iconSize: Ui.Theme.formActionIconSize
             tone: pane.controller.keepAwake ? "accent" : "normal"
             accessibleName: qsTr("Keep awake")
@@ -55,36 +56,18 @@ Ui.DetailColumnCard {
                     icon: ({lock: "lock", suspend: "bedtime", hibernate: "snooze"})[action],
                     enabled: pane.controller.canPowerSuspendAction(action),
                     metadata: {toolTip: Presentation.suspendActionName(action) + " · " + Presentation.suspendCapabilityDescription(pane.controller.powerSuspend, action)},
-                    presentation: {group: "toolbar", tone: action === "hibernate" ? "warning" : "normal"}};
+                    presentation: {group: "toolbar", tone: "normal",
+                        iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(({lock: Presentation.profileTint("power-saver"), suspend: Presentation.profileTint("balanced"), hibernate: "#a39bb0"})[action]), 0.35)}};
             })
             onTriggered: function (action) { pane.controller.powerSuspendAction(action); }
         }
     }
 
-    RowLayout {
-        objectName: "suspendStatusRow"
-        Layout.fillWidth: true
-        spacing: Ui.Theme.spacingSm
-        Item { Layout.fillWidth: true }
-        Ui.FeedbackSource {
-            objectName: "suspendStatusText"
-            text: pane.controller.suspendStatus
-            summaryText: pane.controller.suspendBusy ? qsTr("Sleep action pending") : pane.controller.suspendOutcomeUnknown ? qsTr("Sleep outcome unknown") : qsTr("Sleep action needs attention")
-            tone: pane.controller.suspendBusy ? "info" : pane.controller.suspendError.length ? "error" : "warning"
-        }
-
-        Ui.FlatIconButton {
-            objectName: "suspendRetryButton"
-            accessKey: "T"
-            Layout.preferredWidth: 30
-            Layout.preferredHeight: 30
-            icon: "󰑐"
-            flatIconColor: Ui.Theme.accent
-            accessibleName: qsTr("Retry %1").arg(Presentation.suspendActionName(pane.controller.suspendRetryAction))
-            toolTip: accessibleName
-            enabled: pane.controller.suspendError.length > 0 && !pane.controller.suspendBusy && !pane.controller.suspendOutcomeUnknown && pane.controller.canPowerSuspendAction(pane.controller.suspendRetryAction)
-            onClicked: pane.controller.powerSuspendAction(pane.controller.suspendRetryAction)
-        }
+    Ui.FeedbackSource {
+        objectName: "suspendStatusText"
+        text: pane.controller.suspendStatus
+        summaryText: pane.controller.suspendBusy ? qsTr("Sleep action pending") : pane.controller.suspendOutcomeUnknown ? qsTr("Sleep outcome unknown") : qsTr("Sleep action needs attention")
+        tone: pane.controller.suspendBusy ? "info" : pane.controller.suspendError.length ? "error" : "warning"
     }
 
     Ui.FeedbackSource {

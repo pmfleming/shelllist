@@ -25,6 +25,7 @@ DaemonTestCase {
         }
     }
     function init() { failOnWarning(/.*/); }
+    function cleanup() { Ui.Theme.previewColorScheme = Qt.Unknown; }
     function battery(id = "BAT0", once = false) {
         return {available: true, percentage: 87, plugged: true, charging: true,
             power_available: true, power_watts: 8.4,
@@ -84,7 +85,11 @@ DaemonTestCase {
             tests.width = originalWidth;
         }
     }
-    function test_modeIsFirstCircularAndDeferred() {
+    function test_modeIsFirstCircularAndDeferred_data() {
+        return [{tag: "dark", scheme: Qt.Dark}, {tag: "light", scheme: Qt.Light}];
+    }
+    function test_modeIsFirstCircularAndDeferred(data) {
+        Ui.Theme.previewColorScheme = data.scheme;
         const panel = make();
         const mode = findChild(panel, "batteryPowerModeProfile");
         verify(mode.circular && mode.iconOnly);
@@ -95,9 +100,26 @@ DaemonTestCase {
         const balanced = findChild(mode, "segment-balanced");
         compare(balanced.width, balanced.height);
         compare(balanced.Accessible.name, "Balanced");
+        const icons = ["eco", "balance", "speed"];
+        const colors = [];
+        for (let i = 0; i < mode.options.length; ++i) {
+            const option = mode.options[i];
+            const segment = findChild(mode, "segment-" + option.value);
+            const glyph = findChild(segment, "controlIcon");
+            compare(glyph.icon, icons[i]);
+            compare(glyph.iconColor, segment.selected ? option.selectedIconColor : option.iconColor);
+            const color = glyph.iconColor;
+            compare(color.a, 1, "tints remain opaque foreground colours");
+            colors.push(String(option.iconColor));
+            verify(Math.max(color.r, color.g, color.b) - Math.min(color.r, color.g, color.b) < 0.15,
+                   "profile glyphs stay very desaturated in both themes");
+        }
+        compare(new Set(colors).size, 3, "each profile has a distinct tint");
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Right);
         compare(mode.displayedValue, "performance");
+        compare(findChild(findChild(mode, "segment-performance"), "controlIcon").iconColor,
+                mode.options[2].selectedIconColor);
         compare(mode.value, "balanced");
         compare(calls.length, 0);
         keyClick(Qt.Key_Escape);
@@ -137,11 +159,28 @@ DaemonTestCase {
         keyClick(Qt.Key_Tab, Qt.ControlModifier);
         compare(panel.controller.viewTab, "care");
     }
-    function test_combinedChargingTargetsAndDeferredThresholds() {
+    function test_combinedChargingTargetsAndDeferredThresholds_data() {
+        return [{tag: "dark", scheme: Qt.Dark}, {tag: "light", scheme: Qt.Light}];
+    }
+    function test_combinedChargingTargetsAndDeferredThresholds(data) {
+        Ui.Theme.previewColorScheme = data.scheme;
         const panel = make("care");
         const notify = findChild(panel, "batteryChargeNotificationToggle");
         const card = findChild(panel, "batteryProtectionCard");
         verify(notify.mapToItem(card, 0, 0).y >= 0);
+        const actionRow = findChild(panel, "batteryChargingActionRow");
+        const gap = actionRow.mapToItem(card, 0, 0).y - notify.mapToItem(card, 0, notify.height).y;
+        verify(gap >= card.contentSpacing + Ui.Theme.spacingSm - 1, "extra breathing room above the entire command row");
+        const colors = [];
+        for (const action of ["once", "pause", "calibrate"]) {
+            const button = findChild(panel, "batteryCareAction-" + action);
+            const color = findChild(button, "controlIcon").iconColor;
+            compare(color, button.iconColor);
+            compare(color.a, 1);
+            verify(Math.max(color.r, color.g, color.b) - Math.min(color.r, color.g, color.b) < 0.15);
+            colors.push(String(color));
+        }
+        compare(new Set(colors).size, 3);
         verify(findChild(panel, "batteryChargeNotificationCard") === null);
         compare(notify.title, "90%");
         verify(notify.Accessible.name.includes("90"));

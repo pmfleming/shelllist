@@ -40,7 +40,12 @@ function timeLabel(battery) {
 }
 
 function profileIcon(profile) {
-    return ({"power-saver": "eco", "balanced": "tune", "performance": "bolt"})[profile] || "";
+    return ({"power-saver": "eco", "balanced": "balance", "performance": "speed"})[profile] || "";
+}
+
+// Low-chroma sage, blue-grey and sand, mixed with theme foregrounds by the owner.
+function profileTint(profile) {
+    return ({"power-saver": "#8da394", "balanced": "#919faf", "performance": "#b0a18a"})[profile] || "";
 }
 
 function profileName(profile) {

@@ -124,8 +124,8 @@ Rectangle {
                     icon: segment.modelData.icon || ""
                     hotkey: ""
                     iconSize: Theme.formActionIconSize
-                    iconColor: segment.selected ? Theme.selectedText : Theme.text
-                    labelColor: iconColor
+                    iconColor: segment.selected ? (segment.modelData.selectedIconColor || Theme.selectedText) : (segment.modelData.iconColor || Theme.text)
+                    labelColor: segment.selected ? Theme.selectedText : Theme.text
                     labelPixelSize: Theme.fontSizeLabel
                     labelWeight: segment.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
                     Accessible.ignored: true

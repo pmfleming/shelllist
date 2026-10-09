@@ -787,7 +787,10 @@ no frontend timestamp classification or extra editable stop is introduced.
 ## Battery & Power compact presentation
 
 Overview begins with one deferred Power mode field, displayed as three circular
-icon choices (saver / balanced / performance). The shared `SegmentedControl`
+icon choices (leaf / balance scales / speedometer for saver / balanced /
+performance), with very desaturated sage / blue-grey / sand glyphs mixed with
+theme foregrounds. Colour is supplemental; accessible names, the saved dot and
+draft highlight retain their meanings. The shared `SegmentedControl`
 retains its session, arrow editing and Enter/Tab save / Escape discard behavior;
 its circles are not independent commands or switches. The saved selection dot
 is distinct from the draft's tonal highlight. Bottom pages retain shared
@@ -796,7 +799,11 @@ icon-only tabs and full accessible names.
 Battery care combines charge notification with protection. The bell's numerical
 target follows acknowledged protection / one-time-full-charge state. Resume/stop
 thresholds remain deferred; separate alert and threshold pending/error state is
-retained. One-time charge, pause/resume and calibration use a compact shared
+retained. Lock & suspend commands use low-chroma sand/sage/blue-grey/lavender
+glyphs, with Keep awake's acknowledged active fill unchanged. The separate Retry
+button and Alt+T shortcut are removed; existing explicit commands and their guards
+remain, and sleep pending/error/unknown feedback stays in the fixed footer.
+One-time charge, pause/resume and calibration use a compact shared
 content action row (Alt+O/P/C), outside field traversal. Ordinary success copy
 is hidden, not validation, firmware mismatch or operation progress.
 

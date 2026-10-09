@@ -99,6 +99,7 @@ Item {
         toolTip: row.primaryAction ? (row.primaryAction.metadata || {}).toolTip || "" : ""
         enabled: !!row.primaryAction && row.primaryAction.enabled !== false
         tone: row.primaryAction ? row.actionTone(row.primaryAction, true) : "normal"
+        iconColor: row.primaryAction ? (row.primaryAction.presentation || {}).iconColor || labelColor : labelColor
         onClicked: row.triggered(row.primaryAction.id)
     }
     Item {
@@ -130,6 +131,7 @@ Item {
                 toolTip: (modelData.metadata || {}).toolTip || ""
                 enabled: modelData.enabled !== false
                 tone: row.actionTone(modelData, false)
+                iconColor: (modelData.presentation || {}).iconColor || labelColor
                 onClicked: row.triggered(modelData.id)
             }
         }

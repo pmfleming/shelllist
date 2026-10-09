@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Battery as Battery
 import Shelllist.Io as Io
+import Shelllist.Ui as Ui
 
 DaemonTestCase {
     id: testCase
@@ -21,6 +22,7 @@ DaemonTestCase {
             property alias controller: controller
             Battery.BatteryController {
                 id: controller
+                uiActive: true
             }
             Battery.BatteryContent {
                 objectName: "batterySurface"
@@ -28,6 +30,8 @@ DaemonTestCase {
             }
         }
     }
+
+    function cleanup() { Ui.Theme.previewColorScheme = Qt.Unknown; }
 
     function suspendState(inhibitors) {
         return {
@@ -71,6 +75,41 @@ DaemonTestCase {
         return panel;
     }
 
+    function test_mutedCommandsWithoutRetry_data() {
+        return [{tag: "dark", scheme: Qt.Dark}, {tag: "light", scheme: Qt.Light}];
+    }
+
+    function test_mutedCommandsWithoutRetry(data) {
+        Ui.Theme.previewColorScheme = data.scheme;
+        const panel = makePanel();
+        findChild(panel, "batteryDetailPage").contentY = 0;
+        verify(waitForRendering(panel));
+        verify(findChild(panel, "suspendRetryButton") === null);
+        verify(findChild(panel, "suspendStatusRow") === null, "no empty retry row");
+        const colors = [];
+        for (const name of ["keepAwakeButton", "suspendAction-lock", "suspendAction-suspend", "suspendAction-hibernate"]) {
+            const button = findChild(panel, name);
+            compare(button.tone, "normal");
+            const glyph = findChild(button, "controlIcon");
+            compare(glyph.iconColor, button.iconColor);
+            verify(button.iconColor !== button.labelColor);
+            const color = button.iconColor;
+            verify(Math.max(color.r, color.g, color.b) - Math.min(color.r, color.g, color.b) < 0.15);
+            colors.push(String(color));
+        }
+        compare(new Set(colors).size, 4);
+        verify(!findChild(panel, "suspendAction-hibernate").enabled, "capability guard is unchanged");
+        calls = [];
+        findChild(panel, "batterySurface").detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_T, Qt.AltModifier);
+        compare(calls.length, 0, "removed Retry shortcut cannot dispatch");
+        keyClick(Qt.Key_U, Qt.AltModifier);
+        compare(calls.length, 1, "explicit Suspend command remains available");
+        verify(panel.controller.suspendBusy);
+        keyClick(Qt.Key_U, Qt.AltModifier);
+        compare(calls.length, 1, "busy command cannot dispatch twice");
+    }
+
     function test_degradedTelemetryAllowsOnlyReleaseThroughKeyboardAndAccessibility() {
         const panel = makePanel();
         const controller = panel.controller;
@@ -109,6 +148,8 @@ DaemonTestCase {
         controller.operationFinished("power-keep-awake-3");
         controller.applyPowerSuspend(Object.assign(suspendState(), {keep_awake: true, can_hibernate: "yes"}));
         verify(button.Accessible.checked && button.enabled, "acknowledged Keep awake can still be released");
+        compare(button.iconColor, button.labelColor, "active fill retains its contrasting foreground");
+        compare(button.backgroundColor, Ui.Theme.accent);
         verify(findChild(panel, "suspendAction-lock").enabled);
         verify(!findChild(panel, "suspendAction-suspend").enabled);
         verify(!findChild(panel, "suspendAction-hibernate").enabled);
@@ -159,8 +200,11 @@ DaemonTestCase {
             }
         }));
         panel.controller.suspendError = "reply lost";
-        verify(findChild(panel, "suspendRetryButton").visible);
-        verify(!findChild(panel, "suspendRetryButton").enabled, "unknown outcomes cannot retry");
+        verify(findChild(panel, "suspendRetryButton") === null);
+        calls = [];
+        findChild(panel, "batterySurface").detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_T, Qt.AltModifier);
+        compare(calls.length, 0, "removed Retry cannot replay an unknown outcome");
         verify(findChild(panel, "suspendStatusText").text.includes("outcome unknown"));
     }
 

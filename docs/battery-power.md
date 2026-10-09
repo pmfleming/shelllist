@@ -7,7 +7,8 @@ acknowledgement semantics.
 ## Overview
 
 Power mode comes first: a title with right-aligned saver (`eco`), balanced
-(`tune`) and performance (`bolt`) circles, matching Lock & suspend's scale.
+(`balance`) and performance (`speed`) circles, matching Lock & suspend's scale.
+Glyphs use very desaturated sage, blue-grey and sand mixed with theme foregrounds.
 These circles are still a **single deferred segmented field**, including pointer
 entry. Arrows choose a local draft; Enter/Tab saves; Escape or leaving the field
 discards. The dot follows the saved value; tonal fill follows the local candidate.
@@ -29,6 +30,9 @@ notification, and one compact command row. The notification target follows the
 acknowledged stop threshold unless protection is disabled or one-time full charge
 is active, when it follows 100%. Alert and threshold save/error states stay
 independent. Suppress only idle success boilerplate and repeated device/range copy.
+Charging command glyphs use muted sage (one-time full charge), sand (pause/resume)
+and blue-grey (calibration). The title and icons share one row with an extra
+shared small-spacing inset above, separating it from the preceding field line.
 
 - Alt+O: one-time full charge; retain support, AC, busy and active-override guards.
 - Alt+P: pause/resume; retain inhibition support and operation guards.
@@ -42,6 +46,13 @@ shield/refresh readings; Hardware retains device identity, precise capacities,
 desired range, kernel identity and serial information.
 
 ## Sleep and safeguards
+
+Lock & suspend uses muted sand (coffee), sage (lock), blue-grey (moon) and
+lavender (hibernate) glyphs on neutral command circles. Keep awake retains its
+acknowledged accent fill and contrasting glyph when active. There is no separate
+Retry/reset-looking button or Alt+T command; explicit lock/sleep commands remain
+available under their existing capability and operation guards. Pending, error
+and unknown-outcome diagnostics still contribute to the fixed surface footer.
 
 A battery–link–plug row links source profiles. Passive battery/plug headings
 replace repeated subtitles; delay editors retain explicit setting names. Monitor
