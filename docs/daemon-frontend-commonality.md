@@ -75,6 +75,23 @@ The Rust bridge carries typed request addresses and owns subscription-event
 routing/cleanup. QML retains only live view handles and base-subscription
 visibility intent, not per-request routing or subscription-owner dictionaries.
 
+## Bridge process lifecycle
+
+The resident D-Bus daemon is not stopped when a view closes. Only its short-lived
+`<daemon> client` JSONL bridge follows shared-view activity. `JsonlDaemonClient`
+tracks stopped, starting, running and stopping states. Closing immediately clears
+readiness and closes stdin; the shared Rust client already owns EOF handling,
+draining accepted calls, and cancelling its tracked subscriptions/operations.
+QML does not duplicate that cleanup or stop the daemon.
+
+A reopen during draining queues new requests without writing to the closing pipe.
+After an expected successful exit, a replacement starts immediately and sends
+those unsent requests once. Accepted old replies can still settle pending state.
+A second close discards unsent requests. Unexpected exits (including unsolicited
+exit 0) and unsuccessful shutdowns while active still report transport failures
+and use backoff; failed-generation requests are never replayed. Recovery fences
+late stdout and restarts even if its backoff elapsed before the old client exited.
+
 ## Validation
 
 Protocol fixture checks, `tests/check-daemon-boundary.js`, and QML routing tests cover endpoint compatibility and shared-session behavior. Strict `qmllint` checks component integration. Common helper names and composition choices are review concerns, not source-token test contracts.

@@ -14,6 +14,8 @@ Item {
     property var queuedLines: []
     property int maximumQueuedRequests: 256
     property bool retiring: false
+    // This is the short-lived JSONL bridge, never the resident D-Bus daemon.
+    property string lifecycle: "stopped"
     property var counters: ({
             sequence: 0,
             retryAttempt: 0
@@ -27,13 +29,15 @@ Item {
     signal transportFailed(string message)
 
     function start() {
-        if (!active || process.running || retryTimer.running)
+        if (!active || lifecycle !== "stopped" || process.running || retryTimer.running)
             return;
+        lifecycle = "starting";
         process.stdinEnabled = true;
         try {
             console.info("shelllist transport starting daemon=" + daemonName);
             process.exec([daemonName, "client"]);
         } catch (error) {
+            lifecycle = "stopped";
             process.stdinEnabled = false;
             // Requests belong to one transport generation. Once that
             // generation is reported failed they must never be replayed by a
@@ -53,23 +57,15 @@ Item {
     function stop() {
         retryTimer.stop();
         clearQueue();
-        if (!process.running)
+        if (lifecycle === "stopped")
             return;
-        if (ready) {
-            try {
-                if (automaticSubscribe && subscriptionId.length > 0)
-                    cancel("cancel-subscription-" + (++counters.sequence), subscriptionId);
-                send({
-                    id: "shutdown-" + (++counters.sequence),
-                    op: "shutdown"
-                });
-            } catch (error) {
-                console.error("shelllist transport shutdown failed daemon=" + daemonName + " error=" + error);
-            }
-        }
+        lifecycle = "stopping";
+        ready = false;
         subscriptionId = "";
-        // Normal shutdown drains accepted replies so backend pending flags can
-        // settle. Only failed generations fence stdout in recover().
+        // EOF tells the Rust bridge to drain accepted calls and cancel its own
+        // subscriptions/operations. Keep delivering those replies, but queue
+        // new requests for a replacement rather than writing to closing stdin.
+        // Only failed generations fence stdout in recover().
         process.stdinEnabled = false;
     }
 
@@ -172,10 +168,6 @@ Item {
     function recover(message) {
         retiring = true;
         transportFailed(message);
-        if (!active) {
-            ready = false;
-            return;
-        }
         try {
             stop();
         } finally {
@@ -227,6 +219,7 @@ Item {
 
     Process {
         id: process
+        objectName: "daemonBridgeProcess"
         stdinEnabled: true
         // Tokio's default multi-thread runtime otherwise creates one worker per
         // logical CPU for each lightweight JSONL-to-D-Bus bridge process. QML's
@@ -248,8 +241,21 @@ Item {
         }
         onStarted: {
             console.info("shelllist transport started daemon=" + client.daemonName);
+            // The view may have closed (and reopened) before exec completed.
+            // Once EOF was requested this process must finish, not be reused.
+            if (client.lifecycle === "stopping") {
+                process.stdinEnabled = false;
+                return;
+            }
+            if (!client.active) {
+                client.stop();
+                return;
+            }
             client.retiring = false;
+            client.lifecycle = "running";
             client.ready = true;
+            if (client.lifecycle !== "running")
+                return;
             try {
                 if (client.automaticSubscribe)
                     client.subscribe();
@@ -259,13 +265,24 @@ Item {
             }
         }
         onExited: function (exitCode) { // qmllint disable signal-handler-parameters
+            const expected = client.lifecycle === "stopping" && exitCode === 0 && !client.retiring;
             client.ready = false;
-            // Anything queued against the process that just exited is lost,
-            // even if it was queued during the small exit notification race.
+            client.lifecycle = "stopped";
+            if (expected) {
+                // These requests were never sent: they belong to a reopen
+                // while the old Rust bridge was draining, not to its lifetime.
+                client.start();
+                return;
+            }
+            // Failed-generation effects must never be replayed.
             client.clearQueue();
-            // recover() already reported and scheduled this generation's
-            // failure. Its deliberate shutdown is not a second failure.
-            if (!client.active || client.retiring)
+            if (client.retiring) {
+                // Respect a pending backoff; if it already fired while we
+                // were draining, the exit must still wake the replacement.
+                client.start();
+                return;
+            }
+            if (!client.active)
                 return;
             const detail = processError.text.length > 0 ? processError.text : "exit " + exitCode;
             console.error("shelllist transport exited daemon=" + client.daemonName + " detail=" + detail);

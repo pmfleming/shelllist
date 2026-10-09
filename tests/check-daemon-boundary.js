@@ -22,7 +22,7 @@ const quietConsole = { info() {}, warn() {}, error() {} };
 const transport = source("qml/Shelllist/Io/process/JsonlDaemonClient.qml");
 for (const failure of ["start", "exit", "recovered-exit"]) {
     const writes = [];
-    const client = { active: true, ready: false, daemonName: "test-daemon",
+    const client = { active: true, ready: false, lifecycle: "stopped", daemonName: "test-daemon",
         queuedLines: ["destructive-effect"], counters: { retryAttempt: 0 },
         initialRetryInterval: 1500, maximumRetryInterval: 30000,
         console: quietConsole, processError: { text: "crashed" },
@@ -41,6 +41,98 @@ for (const failure of ["start", "exit", "recovered-exit"]) {
     client.ready = true;
     client.flushQueue();
     assert.deepEqual(writes, [], `${failure}: failed-generation effects must never replay`);
+}
+
+// Drive real transport functions and process callbacks without launching a
+// client. Rust owns EOF draining; model its asynchronous exit explicitly.
+function bridgeLifecycle() {
+    const writes = [], failures = [], starts = [];
+    const client = { active: true, ready: false, lifecycle: "stopped", retiring: false,
+        daemonName: "test-daemon", automaticSubscribe: false, subscriptionId: "",
+        queuedLines: [], maximumQueuedRequests: 256, counters: { sequence: 0, retryAttempt: 0 },
+        initialRetryInterval: 1500, maximumRetryInterval: 30000,
+        console: quietConsole, processError: { text: "" },
+        process: { running: false, stdinEnabled: false,
+            exec(command) { starts.push(command); this.running = true; },
+            write(line) { assert.equal(this.stdinEnabled, true); writes.push(JSON.parse(line)); } },
+        retryTimer: { running: false, restart() { this.running = true; }, stop() { this.running = false; } },
+        transportFailed: message => failures.push(message),
+        response() {}, Routing: { responseOutcome: message => message },
+    };
+    client.client = client;
+    install(client, transport);
+    const started = transport.match(/        onStarted: \{\n([\s\S]*?)\n        \}/)[1];
+    const exited = transport.match(/onExited: function \(exitCode\) \{[^\n]*\n([\s\S]*?)\n        \}/)[1];
+    vm.runInContext("function started() {" + started + "\n}\nfunction exited(exitCode) {" + exited + "\n}", client);
+    return { client, writes, failures, starts,
+        open() { client.active = true; client.start(); },
+        close() { client.active = false; client.stop(); },
+        exit(code = 0) { client.process.running = false; client.exited(code); } };
+}
+
+for (const closeDuringStartup of [false, true]) {
+    const f = bridgeLifecycle();
+    f.open();
+    if (!closeDuringStartup) f.client.started();
+    f.close();
+    assert.equal(f.client.ready, false, "closing is immediately unavailable for writes");
+    f.open();
+    f.client.call("new-request", "effect.once", {});
+    if (closeDuringStartup) f.client.started();
+    assert.equal(f.client.lifecycle, "stopping");
+    assert.equal(f.starts.length, 1, "a draining bridge cannot be revived or duplicated");
+    assert.equal(f.writes.length, 0, "new effects never reach the closing pipe");
+    f.exit();
+    assert.equal(f.starts.length, 2, "reopen starts immediately after a clean exit");
+    f.client.started();
+    assert.deepEqual(f.writes.map(message => message.id), ["new-request"]);
+    assert.deepEqual(f.failures, []);
+    assert.equal(f.client.retryTimer.running, false);
+}
+
+{
+    const f = bridgeLifecycle();
+    f.open(); f.client.started(); f.close(); f.exit();
+    assert.equal(f.starts.length, 1, "remaining closed must not restart");
+    assert.equal(f.client.lifecycle, "stopped");
+    assert.deepEqual(f.failures, []);
+}
+
+{
+    const f = bridgeLifecycle();
+    f.open(); f.client.started(); f.close(); f.open();
+    f.client.call("closed-again", "effect.once", {});
+    f.close(); f.exit(); f.open(); f.client.started();
+    assert.deepEqual(f.writes, [], "a second close discards unsent requests");
+}
+
+for (const exitCode of [0, 1]) {
+    const f = bridgeLifecycle();
+    f.open(); f.client.started(); f.exit(exitCode);
+    assert.equal(f.failures.length, 1, "an unsolicited exit, even zero, remains a failure");
+    assert.equal(f.client.retryTimer.running, true);
+}
+
+{
+    const f = bridgeLifecycle();
+    f.open(); f.client.started(); f.close(); f.open();
+    f.client.call("never-replay", "effect.once", {});
+    f.exit(1);
+    assert.equal(f.failures.length, 1, "a crash during intentional shutdown is not hidden");
+    assert.equal(f.client.queuedLines.length, 0);
+}
+
+for (const backoffExpired of [false, true]) {
+    const f = bridgeLifecycle();
+    f.open(); f.client.started(); f.client.recover("lost transport");
+    if (backoffExpired) {
+        f.client.retryTimer.running = false;
+        f.client.start();
+    }
+    f.exit();
+    assert.equal(f.starts.length, backoffExpired ? 2 : 1,
+        "recovery cannot stall when the retry timer fired before exit");
+    assert.deepEqual(f.failures, ["lost transport"]);
 }
 
 // Exercise compatibility and gap handling through the consumer, rather than
