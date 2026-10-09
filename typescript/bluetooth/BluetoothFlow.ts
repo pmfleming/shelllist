@@ -196,6 +196,14 @@ function shouldStartScan(uiActive: boolean, powered: boolean, scanning: boolean,
     return uiActive && powered && !scanning && !requested;
 }
 
+function audioProfileStatus(outcome: Maybe<{applied: boolean; remembered?: boolean; persistence_error?: string}>): string {
+    if (!outcome?.applied)
+        return "Audio profile outcome unconfirmed; refresh before retrying";
+    if (!outcome.remembered)
+        return "Audio profile applied, but could not remember it: " + (outcome.persistence_error || "Persistence unconfirmed");
+    return "Bluetooth audio profile updated and remembered";
+}
+
 function completedCallStatus(id: string, powered: boolean, currentStatus: string) {
     const messages: Record<string, string> = ({
         power: powered ? "Bluetooth turned on" : "Bluetooth turned off",

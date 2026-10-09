@@ -1,6 +1,7 @@
 import QtQuick
 import Shelllist.Io as Io
 import "BtApi.js" as BtApi
+import "BluetoothFlow.js" as BluetoothFlow
 
 Io.DaemonBackend {
     id: backend
@@ -9,7 +10,6 @@ Io.DaemonBackend {
     property var operations: ({})
     property var finishedOperations: ({})
     property string nameRequestKey: ""
-    property string adapterBatchKey: ""
 
     daemonName: "bt-daemon"
     expectedProtocol: BtApi.protocol
@@ -32,9 +32,7 @@ Io.DaemonBackend {
             },
             audio_devices: function (id, data) {
                 backend.controller.applyAudioSnapshot(data.audio_devices);
-                if (id === "audio-set-profile")
-                    backend.controller.status = "Bluetooth audio profile updated";
-                else if (id === "audio-set-default")
+                if (id === "audio-set-default")
                     backend.controller.status = "Default Bluetooth audio route updated";
             },
             operation: function (id, data) {
@@ -47,7 +45,6 @@ Io.DaemonBackend {
 
     function resetTransportState() {
         nameRequestKey = "";
-        adapterBatchKey = "";
         pending = ({});
         operations = ({});
         finishedOperations = ({});
@@ -81,29 +78,12 @@ Io.DaemonBackend {
         const error = responseError(envelope, transportError, "Bluetooth operation failed");
         finishDeviceRequest(id, error);
         if (id === "adapter-batch") {
-            const key = adapterBatchKey;
-            adapterBatchKey = "";
-            if (!key)
-                return;
-            const data = (envelope && envelope.data) || ({});
-            let message = controller.adapterEdits.finish(key, data.adapter_batch, error);
-            // Apply observations separately: a bad snapshot cannot undo an acknowledged write.
-            if (!error && data.snapshot) {
-                try {
-                    controller.applySnapshot(data.snapshot);
-                } catch (snapshotError) {
-                    message += "; could not read adapter snapshot: " + snapshotError;
-                }
-            }
-            if (message)
-                controller.status = message;
+            controller.adapterEdits.receive(envelope?.data || ({}), error);
             return;
         }
         if (error.length > 0) {
-            if (id === "snapshot" || id === "scan-start")
-                controller.listError = error;
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
-            controller.status = error;
+            showFailure(id, error);
             return;
         }
         if (id.startsWith("cancel-operation-")) {
@@ -113,21 +93,18 @@ Io.DaemonBackend {
         }
         try {
             applyResponse(id, envelope.data || ({}));
-            if (id === "audio-set-profile") {
-                const outcome = (envelope.data || {}).profile_outcome;
-                controller.status = outcome && outcome.applied && outcome.remembered
-                    ? "Bluetooth audio profile updated and remembered"
-                    : outcome && outcome.applied
-                        ? "Audio profile applied, but could not remember it: " + (outcome.persistence_error || "Persistence unconfirmed")
-                        : "Audio profile outcome unconfirmed; refresh before retrying";
-            }
+            if (id === "audio-set-profile")
+                controller.status = BluetoothFlow.audioProfileStatus(envelope.data?.profile_outcome);
             console.info("shelllist bluetooth request completed id=" + id);
         } catch (applyError) {
             console.error("shelllist bluetooth request failed id=" + id + " stage=parse error=" + applyError);
-            controller.status = "Could not parse bt-daemon " + id + " response: " + applyError;
-            if (id === "snapshot" || id === "scan-start")
-                controller.listError = controller.status;
+            showFailure(id, "Could not parse bt-daemon " + id + " response: " + applyError);
         }
+    }
+    function showFailure(id: string, message: string): void {
+        if (id === "snapshot" || id === "scan-start")
+            controller.listError = message;
+        controller.status = message;
     }
     function applyResponse(id, data) {
         const kind = BtApi.responseKind(data);
@@ -270,11 +247,7 @@ Io.DaemonBackend {
     function updateAdapter(key, changes) {
         if (isPending("adapter-batch"))
             return false;
-        adapterBatchKey = key;
-        if (call("adapter-batch", BtApi.methods.adapterUpdate, { key: key, changes: changes }))
-            return true;
-        adapterBatchKey = "";
-        return false;
+        return call("adapter-batch", BtApi.methods.adapterUpdate, { key: key, changes: changes });
     }
     function adapterOperation(operation, adapter, values) {
         const id = "adapter-" + operation;
@@ -328,11 +301,7 @@ Io.DaemonBackend {
     onEventReceived: function (event) {
         handleEvent(event);
     }
-    onSendFailed: function (id, message) {
-        if (id === "snapshot" || id === "scan-start")
-            controller.listError = message;
-        controller.status = message;
-    }
+    onSendFailed: function (id, message) { showFailure(id, message); }
     onTransportFailed: function (message) {
         resetTransportState();
         controller.handleTransportFailure(message);

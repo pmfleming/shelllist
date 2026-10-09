@@ -4,6 +4,7 @@ import Shelllist.Core as Core
 Core.DraftStore {
     required property BluetoothController controller
     required property BluetoothBackend backend
+    property string requestKey: ""
     readonly property var wireFields: ({
             alias: "alias",
             discoverableTimeout: "discoverable_timeout",
@@ -51,8 +52,10 @@ Core.DraftStore {
         }
         // Only saved field values enter this immutable submission, never editor buffers.
         patch(key, { pending: true, pendingValues: changes });
+        requestKey = key;
         if (backend.updateAdapter(key, changes))
             return true;
+        requestKey = "";
         finish(key, null, "Could not send the adapter settings");
         return false;
     }
@@ -100,7 +103,25 @@ Core.DraftStore {
         put(key, remaining ? { fields: fields, pending: false, error: message } : null);
         return batch.snapshot_error ? message + "; snapshot unavailable: " + (batch.snapshot_error.message || "Refresh required") : message;
     }
+    function receive(data: var, error: string): void {
+        const key = requestKey;
+        requestKey = "";
+        if (!key)
+            return;
+        let message = finish(key, data.adapter_batch, error);
+        // Observations follow acknowledgement: a bad snapshot cannot undo a write.
+        if (!error && data.snapshot) {
+            try {
+                controller.applySnapshot(data.snapshot);
+            } catch (snapshotError) {
+                message += "; could not read adapter snapshot: " + snapshotError;
+            }
+        }
+        if (message)
+            controller.status = message;
+    }
     function transportFailed(message: string): void {
+        requestKey = "";
         for (const key of Object.keys(drafts)) {
             if (draft(key).pending)
                 finish(key, null, "Adapter outcome unknown; inspect current settings before retrying: " + message);

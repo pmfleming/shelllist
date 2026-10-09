@@ -47,3 +47,26 @@ existing viewport, keyboard, deletion and malformed-wire tests remain. Full Qt:
 **376/0/1**. Strict lint and notification-presentation JavaScript checks pass.
 A trial use of `Array.flatMap` failed on QV4 and was replaced by supported
 `forEach` accumulation before the passing run. Logs/configs are in `pass2/`.
+
+## 3 — Bluetooth response responsibilities
+
+Adapter request identity, acknowledgement and post-acknowledgement observation now
+live together in `BluetoothAdapterEdits`. Send failure/disconnection retire the
+captured identity; duplicate/unowned completions cannot reapply observations.
+Backend failures share one read-versus-mutation feedback route. The canonical
+TypeScript Bluetooth presentation helper formats profile outcomes with explicit
+guards, and the generated JS is rebuilt. Remove the intermediate profile-success
+message so observers see only acknowledged success, partial persistence or unknown.
+
+Backend `finish` cyclomatic/cognitive/weighted effort **25/34/142 → 8/7/45**.
+Across production functions this pass also reduces sums **7,939/5,455/39,314 →
+7,934/5,438/39,272**; production source LOC **39,723 → 39,720**. Mean locality,
+leverage and expanded clones are unchanged. Tests/canonical TypeScript add code;
+this is not a whole-repository LOC reduction.
+
+Eight new native cases cover final-only profile messages, read/mutation send and
+response errors, and acknowledged settings followed by a malformed snapshot.
+Existing native save/discard, partial retry, captured-adapter and transport-loss
+cases pass. Full Qt **384/0/1**; strict lint, Bluetooth JavaScript (248 checks),
+TypeScript generation/typechecking, daemon boundary and relative imports pass.
+Numeric-role review reports no new overrides. Evidence: `pass3/`.

@@ -455,6 +455,42 @@ DaemonTestCase {
         content.destroy();
         wait(0); // Destroy the surface before its controller-owned fixture.
     }
+    function test_audioProfilePublishesOnlyFinalOutcome_data() {
+        return [
+            {tag: "missing", outcome: null, message: "Audio profile outcome unconfirmed; refresh before retrying"},
+            {tag: "not-applied", outcome: {applied: false, remembered: true}, message: "Audio profile outcome unconfirmed; refresh before retrying"},
+            {tag: "partial", outcome: {applied: true, remembered: false}, message: "Audio profile applied, but could not remember it: Persistence unconfirmed"},
+            {tag: "remembered", outcome: {applied: true, remembered: true}, message: "Bluetooth audio profile updated and remembered"}
+        ];
+    }
+    function test_audioProfilePublishesOnlyFinalOutcome(data) {
+        const panel = makePanel(), controller = panel.controller;
+        const backend = findChild(controller, "bluetoothBackend");
+        setupAudioProfile(panel);
+        verify(controller.setAudioProfile({key: "aac", label: "AAC"}));
+        const messages = [];
+        controller.statusChanged.connect(() => messages.push(controller.status));
+        backend.acceptSharedResponse("audio-set-profile", {protocol: "bt-api", version: 1, ok: true,
+            data: {audio_devices: [], profile_outcome: data.outcome}}, "");
+        compare(messages, [data.message], "never emit an intermediate success before reading the outcome");
+        compare(calls.length, 1, "missing or partial acknowledgement must not replay the operation");
+        verify(!backend.requestRunning);
+    }
+    function test_requestErrorsKeepReadAndMutationFeedbackSeparate_data() {
+        return [{tag: "snapshot", read: true}, {tag: "scan-start", read: true}, {tag: "audio-set-profile", read: false}];
+    }
+    function test_requestErrorsKeepReadAndMutationFeedbackSeparate(data) {
+        const controller = makePanel().controller;
+        const backend = findChild(controller, "bluetoothBackend");
+        for (const stage of ["send", "response"]) {
+            controller.listError = "Previous read failed";
+            if (stage === "send") backend.sendFailed(data.tag, "Denied");
+            else backend.acceptSharedResponse(data.tag, {protocol: "bt-api", version: 1, ok: false, error: {message: "Denied"}}, "");
+            compare(controller.status, "Denied");
+            compare(controller.listError, data.read ? "Denied" : "Previous read failed");
+        }
+        compare(calls.length, 0);
+    }
     function findToggle(item, title) {
         if (item.title === title && item.checked !== undefined)
             return item;
@@ -586,6 +622,23 @@ DaemonTestCase {
         verify(controller.status.includes("snapshot unavailable"));
         wait(750);
         compare(adapterCalls().length, 2, "no frontend continuation, even after editor unload");
+    }
+    function test_adapterAcknowledgementSurvivesMalformedSnapshot() {
+        const controller = makePanel().controller, edits = controller.adapterEdits;
+        const backend = findChild(controller, "bluetoothBackend");
+        edits.edit("adapter", "alias", "Saved name");
+        verify(edits.saveBatch("adapter"));
+        const response = batchReply("adapter", {alias: "Saved name"});
+        response.data.snapshot = {adapters: [null]};
+        backend.acceptSharedResponse("adapter-batch", response, "");
+        compare(Object.keys(edits.draft("adapter").fields).length, 0);
+        compare(edits.requestKey, "");
+        verify(controller.status.includes("could not read adapter snapshot"));
+        const status = controller.status;
+        backend.acceptSharedResponse("adapter-batch", response, "");
+        compare(controller.status, status, "an unowned response cannot reapply a snapshot");
+        wait(150);
+        compare(adapterCalls().length, 1, "a failed observation never replays an acknowledged write");
     }
     function test_adapterBatchRejectsMalformedAndLostOutcomes_data() {
         return [ {tag: "missing"}, {tag: "wrong-key"}, {tag: "wrong-value"},

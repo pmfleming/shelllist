@@ -729,7 +729,9 @@ These updates add no Tab stops or keyboard behavior.
 Saving an audio profile submits one native apply-and-remember request. Selection
 changes do not retarget it. Partial persistence failure is reported without
 replaying the applied hardware change; disconnects never trigger automatic
-retries. The shared choice control still owns its local save/discard transaction.
+retries. Profile completion publishes only its final acknowledged/partial/unknown
+message, not an intermediate success. The shared choice control still owns its
+local save/discard transaction.
 
 ## Submitted Bluetooth adapter settings
 
@@ -739,7 +741,9 @@ Escape remains discard. The captured adapter identity and submitted values survi
 selection changes or editor unload without a frontend continuation loop. Native
 per-field acknowledgements clear only applied values; unknown/not-attempted fields
 remain with explicit recovery feedback. A failed snapshot cannot erase a known
-write acknowledgement. No automatic replay after disconnect, malformed reply or
+write acknowledgement. The adapter edit owner consumes the captured request key
+before applying acknowledgement and any subsequent snapshot; duplicate replies
+cannot reapply those observations. No automatic replay after disconnect, malformed reply or
 partial failure; saving another field cannot silently retry uncertain fields.
 Explicit Retry resubmits retained saved values, while Discard only removes local
 drafts, never claiming native rollback. Recovery commands stay outside Tab order.
