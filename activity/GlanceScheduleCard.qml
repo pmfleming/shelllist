@@ -17,9 +17,9 @@ Rectangle {
         return event.all_day ? qsTr("All day") : Qt.formatTime(new Date(event.start_unix_ms), "HH:mm");
     }
     width: parent.width
-    radius: Ui.Theme.panelRadius
+    radius: Ui.Theme.cardRadius
     color: Ui.Theme.surface
-    border.color: Ui.Theme.border
+    border.width: 0
 
     Column {
         anchors.fill: parent
@@ -31,9 +31,9 @@ Rectangle {
             height: 24
             Ui.ThemeText {
                 width: parent.width - scheduleExpand.width
-                text: "Calendar · Agenda · Todo    " + String(card.controller.activity.incomplete_todo_count || 0)
-                font.pixelSize: Ui.Theme.fontSizeLabel
-                font.weight: Ui.Theme.fontWeightDemiBold
+                text: qsTr("Calendar")
+                font.pixelSize: Ui.Theme.groupHeadingSize
+                font.weight: Ui.Theme.groupHeadingWeight
             }
             Ui.ThemeText {
                 id: scheduleExpand

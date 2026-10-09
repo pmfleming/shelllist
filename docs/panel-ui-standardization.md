@@ -39,7 +39,8 @@ error/retry ownership; presentation components never dispatch domain mutations.
 - Resource microcards retain their 2×2 plus full-width, viewport-fitted layout,
   metric colors/units, missing-data gaps and single editable range selector.
   Preserve the no-new-help/no-chart-keyboard contract. Prefer reducing chart
-  ornament over shrinking essential values; verify short-height fit separately.
+  ornament over shrinking essential values; essential readings have a 14px
+  minimum, while chart ticks may remain 11px. Verify short-height fit separately.
 - Calendars, monitor maps, notification previews and charts retain domain content
   geometry. Notification content titles are not structural group headings.
 - Battery's title/percentage is a heading-only header, not an invented chooser
@@ -111,7 +112,32 @@ part of these commits.
 
 ### Phase 3 — remaining panels
 
-Pending.
+- Applications/Clipboard use symmetric insets; Applications drops redundant
+  resource guidance, Clipboard uses “Information” and readable file metadata.
+- Displays uses a labeled Content form with the existing mirror selector; routine
+  docking guidance is explicit Help, while consequences, pending/dirty blockers,
+  layout validation and the guarded trial workflow stay visible and unchanged.
+- Activity has one identity and Schedule context, Calendar/Agenda/Todos group
+  headings and tonal cards. Its narrow compound todo editor opts into a shared
+  stacked field label rather than squeezing the input behind its label.
+- Notifications uses the shared inset/status roles and correctly singular counts.
+  Its native catalog, notification previews and policy/error ownership are intact.
+- Time/Weather retains expressive heroes with named size exceptions; surrounding
+  headings are sentence case, forecast cards share roles, location-list metadata
+  is at least 12px and the Home marker has a named accessible glyph.
+- Audio uses the shared command row without changing action IDs; Media's Bar
+  controls selector is a named form; Tray removes a card repeating its subtitle.
+  Playback artwork, capability guards and native tray menus remain unchanged.
+- Shared list status wraps at 13px instead of truncating operation feedback.
+  Resource readings cannot shrink below 14px; chart layout/series/requests are not
+  redesigned or included from the separate in-progress resource work.
+- Capture fixtures now include genuinely measured resource snapshots/history at
+  976×600, not only loading placeholders. Display fixtures supply the required
+  native baseline token; omission had correctly disabled draft/drag controls.
+- Reviewed normal/minimum Resources, Activity Schedule, Audio/Media and Time
+  captures. Added shared native-field identity/stacked-label/readability tests.
+- Strict lint and full suite pass (**339 passes, zero failures, one existing
+  renderer skip**). Captures: **28 passes**; forms: **4**; display workflow: **4**.
 
 ### Phase 4 — acceptance and prevention
 

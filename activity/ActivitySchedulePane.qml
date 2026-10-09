@@ -25,10 +25,10 @@ Column {
 
     Rectangle {
         width: parent.width
-        height: 52
-        radius: Ui.Theme.panelRadius
+        height: Ui.Theme.formHeight
+        radius: Ui.Theme.cardRadius
         color: Ui.Theme.surface
-        border.color: Ui.Theme.border
+        border.width: 0
 
         Row {
             anchors.fill: parent
@@ -47,8 +47,8 @@ Column {
                 text: Qt.formatDate(pane.controller.selectedDate, "dddd, d MMMM yyyy")
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                font.pixelSize: Ui.Theme.fontSizeHeading
-                font.weight: Ui.Theme.fontWeightDemiBold
+                font.pixelSize: Ui.Theme.groupHeadingSize
+                font.weight: Ui.Theme.groupHeadingWeight
             }
             ActivityHeaderButton {
                 id: nextWidth
@@ -80,9 +80,9 @@ Column {
         Rectangle {
             width: parent.width - x
             height: parent.height
-            radius: Ui.Theme.panelRadius
+            radius: Ui.Theme.cardRadius
             color: Ui.Theme.surface
-            border.color: Ui.Theme.border
+            border.width: 0
 
             ActivityTodoSection {
                 id: todos

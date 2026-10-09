@@ -17,7 +17,7 @@ WeatherForecastCard {
         return Visuals.temperatureY(value, minimum, maximum);
     }
     height: 232
-    label: "12H"
+    label: qsTr("Next 12 hours")
     hasData: points.length > 0
     emptyText: qsTr("No hourly forecast")
     labelTopMargin: 8

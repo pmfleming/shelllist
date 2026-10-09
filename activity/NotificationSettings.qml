@@ -65,7 +65,7 @@ Column {
             }
         }
     }
-    Ui.ThemeText {
+    Ui.InlineStatus {
         width: parent.width
         text: settings.notificationState.dndError
         visible: text.length > 0
@@ -87,7 +87,8 @@ Column {
         width: parent.width
         visible: settings.overrides.length > 0
         text: qsTr("App overrides")
-        font.weight: Ui.Theme.fontWeightDemiBold
+        font.pixelSize: Ui.Theme.groupHeadingSize
+        font.weight: Ui.Theme.groupHeadingWeight
     }
     Repeater {
         model: settings.overrides

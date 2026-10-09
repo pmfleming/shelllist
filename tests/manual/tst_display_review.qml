@@ -46,7 +46,7 @@ Tests.DaemonTestCase {
         for (const group of Focus.groups())
             for (const setting of group.settings)
                 values[setting.key] = setting.boolean ? false : 0;
-        return {available: true, policy: {prefer_external: false}, status: "extended",
+        return {available: true, baseline: "visual-review-baseline", policy: {prefer_external: false}, status: "extended",
             layout: {saved: {outputs: []}, trial: null},
             focus: {available: true, saved: {}, values: values},
             outputs: [

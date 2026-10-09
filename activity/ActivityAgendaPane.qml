@@ -15,18 +15,18 @@ Rectangle {
     }
 
     height: parent.height
-    radius: Ui.Theme.panelRadius
+    radius: Ui.Theme.cardRadius
     color: Ui.Theme.surface
-    border.color: Ui.Theme.border
+    border.width: 0
 
     Column {
         anchors.fill: parent
         anchors.margins: Ui.Theme.spacingMd
         spacing: Ui.Theme.spacingSm
         Ui.ThemeText {
-            text: Qt.formatDate(pane.controller.selectedDate, "dddd, d MMMM")
-            font.pixelSize: Ui.Theme.fontSizeHeading
-            font.weight: Ui.Theme.fontWeightDemiBold
+            text: qsTr("Agenda")
+            font.pixelSize: Ui.Theme.groupHeadingSize
+            font.weight: Ui.Theme.groupHeadingWeight
         }
         Ui.ContentState {
             objectName: "agendaContentState"
@@ -63,11 +63,11 @@ Rectangle {
                 }
                 Column {
                     anchors.fill: parent
-                    anchors.leftMargin: 16
-                    anchors.rightMargin: 10
-                    anchors.topMargin: 9
-                    anchors.bottomMargin: 9
-                    spacing: 3
+                    anchors.leftMargin: Ui.Theme.spacingLg
+                    anchors.rightMargin: Ui.Theme.cardPadding
+                    anchors.topMargin: Ui.Theme.spacingSm
+                    anchors.bottomMargin: Ui.Theme.spacingSm
+                    spacing: Ui.Theme.spacingXs
                     Ui.ThemeText {
                         id: eventTitle
                         width: parent.width

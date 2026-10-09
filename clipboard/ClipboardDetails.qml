@@ -96,8 +96,6 @@ Ui.ActionDetailsPane {
     }
 
     chooserController: controller
-    leftMargin: 18
-    rightMargin: 16
     emptyText: "Select a clipboard entry"
     controlHeight: toolbarHeight
     icon: selected.icon || "󰅇"
@@ -120,7 +118,7 @@ Ui.ActionDetailsPane {
             },
             {
                 value: "info",
-                label: qsTr("Info"),
+                label: qsTr("Information"),
                 icon: "󰋼"
             }
         ]

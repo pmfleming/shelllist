@@ -18,10 +18,13 @@ DaemonTestCase {
         const content = createTemporaryObject(contentFactory, testCase, {controller: owner, width: width, height: height});
         owner.openSection("schedule");
         tryCompare(owner, "detailsExpansionProgress", 1);
-        verify(waitForPolish(testCase.Window.window));
         tryVerify(() => findChild(content, "activityNextDay") !== null);
+        // The schedule Loader can expose the command before its first layout.
+        const next = findChild(content, "activityNextDay");
+        verify(waitForPolish(testCase.Window.window));
+        verify(waitForRendering(next));
         compare(owner.selectedEvents.length, 1, "membership belongs to the daemon, not JS timestamps");
-        mouseClick(findChild(content, "activityNextDay"));
+        mouseClick(next);
         compare(owner.selectedDateKey, "2026-03-30");
         compare(owner.selectedEvents.length, 0);
         const previous = findChild(content, "activityPreviousDay");

@@ -8,6 +8,8 @@ Item {
     default property alias content: editorHost.data
     property Item editor: editorHost.children.length > 0 ? editorHost.children[0] : null
     property string label: ""
+    // Narrow compound editors keep a visible name without crushing the input.
+    property bool stackedLabel: false
     property string icon: "text_fields"
     property string accessibleName: label
     property bool requiredInput: false
@@ -26,12 +28,25 @@ Item {
     readonly property string message: errorText || statusText || (helpOpen ? helpText : "")
     // Keep the wrapping row's allocated width out of parent layout negotiation.
     implicitWidth: 320
-    implicitHeight: row.height + 1 + (support.visible ? Theme.spacingXs + support.implicitHeight : 0)
+    implicitHeight: row.y + row.height + 1 + (support.visible ? Theme.spacingXs + support.implicitHeight : 0)
     Layout.minimumWidth: 0
     Layout.alignment: Qt.AlignTop
 
+    ThemeText {
+        id: stackedName
+        objectName: "formFieldStackedLabel"
+        visible: field.stackedLabel && field.label.length > 0
+        width: parent.width
+        text: field.requiredInput ? qsTr("%1 *").arg(field.label) : field.label
+        font.pixelSize: Theme.fieldNameSize
+        font.weight: Theme.fieldNameWeight
+        color: Theme.mutedText
+        wrapMode: Text.Wrap
+        Accessible.ignored: true
+    }
     RowLayout {
         id: row
+        y: stackedName.visible ? stackedName.implicitHeight + Theme.spacingXs : 0
         width: parent.width
         height: Math.max(Theme.formHeight, implicitHeight)
         spacing: Theme.spacingSm
@@ -49,7 +64,7 @@ Item {
             Layout.preferredWidth: Math.min(implicitWidth, field.width * 0.24)
             Layout.minimumWidth: 0
             Layout.maximumWidth: field.width * 0.24
-            visible: field.label.length > 0
+            visible: !field.stackedLabel && field.label.length > 0
             text: field.requiredInput ? qsTr("%1 *").arg(field.label) : field.label
             font.pixelSize: Theme.fieldNameSize
             font.weight: Theme.fieldNameWeight

@@ -191,7 +191,7 @@ Item {
                         objectName: "notificationPreviewMeta-" + row.modelData.key
                         Layout.fillWidth: true
                         text: Ui.NotificationPresentation.timeLabel(card.preview.created_unix_ms, page.controller.nowMs) + (row.modelData.stack ? qsTr(" · %1 similar notifications").arg(row.modelData.count) : "")
-                        color: Ui.Theme.mutedText; font.pixelSize: Ui.Theme.fontSizeCaption
+                        color: Ui.Theme.mutedText; font.pixelSize: Ui.Theme.metadataSize
                     }
                     RowLayout {
                         Layout.fillWidth: true

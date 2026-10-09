@@ -19,12 +19,13 @@ Column {
     }
     Ui.ThemeText {
         text: qsTr("Todos")
-        font.pixelSize: Ui.Theme.fontSizeHeading
-        font.weight: Ui.Theme.fontWeightDemiBold
+        font.pixelSize: Ui.Theme.groupHeadingSize
+        font.weight: Ui.Theme.groupHeadingWeight
     }
     Ui.FormField {
         width: parent.width
         label: qsTr("New todo")
+        stackedLabel: width < 320
         icon: "check"
         editor: todoInput
         Row {
@@ -46,8 +47,10 @@ Column {
             Ui.FlatIconButton {
                 id: addButton
                 accessKey: "A"
+                anchors.verticalCenter: parent.verticalCenter
                 width: height
-                height: parent.height
+                height: Ui.Theme.formActionSize
+                iconSize: Ui.Theme.formActionIconSize
                 icon: "+"
                 accessibleName: qsTr("Add todo")
                 onClicked: section.addTodo()
@@ -67,7 +70,7 @@ Column {
     Ui.ScrollableListView {
         width: parent.width
         height: Math.min(230 * section.uiScale, section.controller.selectedTodos.length * 46)
-        spacing: 5
+        spacing: Ui.Theme.spacingSm
         clip: true
         model: section.controller.selectedTodos
         delegate: Row {

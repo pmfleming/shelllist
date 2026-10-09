@@ -13,9 +13,9 @@ Rectangle {
     property alias labelTopMargin: caption.anchors.topMargin
 
     width: parent.width
-    radius: Ui.Theme.panelRadius
+    radius: Ui.Theme.cardRadius
     color: Ui.Theme.surface
-    border.color: Ui.Theme.border
+    border.width: 0
 
     Ui.ContentState {
         objectName: "forecastContentState"
@@ -34,8 +34,10 @@ Rectangle {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: Ui.Theme.spacingMd
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        font.weight: Ui.Theme.fontWeightDemiBold
+        width: Math.max(0, parent.width - 2 * Ui.Theme.cardPadding)
+        color: Ui.Theme.text
+        font.pixelSize: Ui.Theme.groupHeadingSize
+        font.weight: Ui.Theme.groupHeadingWeight
+        elide: Text.ElideRight
     }
 }

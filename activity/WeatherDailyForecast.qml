@@ -12,7 +12,7 @@ WeatherForecastCard {
     height: days.length > 0 ? 43 + days.length * 43 : 150
     hasData: days.length > 0
     emptyText: qsTr("No daily forecast")
-    label: "7D"
+    label: qsTr("Next 7 days")
     labelTopMargin: 10
 
     Column {

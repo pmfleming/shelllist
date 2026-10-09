@@ -36,7 +36,7 @@ Ui.ResultRow {
         horizontalAlignment: Text.AlignRight
         text: "Pinned"
         color: Ui.Theme.accent
-        font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
+        font.pixelSize: Ui.Theme.metadataSize
         font.weight: Ui.Theme.fontWeightDemiBold
     }
 

@@ -6,7 +6,7 @@ Ui.DetailFlickable {
     objectName: "applicationPage"
     viewMemory: controller.viewMemory
     memoryTab: "application"
-    cardSpacing: Math.round(Ui.Theme.spacingXl * uiScale)
+    cardSpacing: Ui.Theme.cardGap
 
     required property ApplicationController controller
     required property var application
@@ -72,12 +72,4 @@ Ui.DetailFlickable {
         wrapMode: Text.Wrap
     }
 
-    Ui.ThemeText {
-        visible: page.application.kind !== "desktop-shortcut" && (page.application.instances || []).length > 0
-        width: parent.width
-        text: qsTr("CPU, memory and history are available in Resources.")
-        color: Ui.Theme.mutedText
-        wrapMode: Text.Wrap
-        font.pixelSize: Ui.Theme.fontSizeSmall
-    }
 }

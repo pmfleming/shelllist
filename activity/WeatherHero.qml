@@ -44,7 +44,7 @@ Rectangle {
             anchors.right: updated.left
             anchors.rightMargin: Ui.Theme.spacingMd
             anchors.verticalCenter: parent.verticalCenter
-            text: String(hero.weather.location || "—").toUpperCase()
+            text: String(hero.weather.location || "—")
             elide: Text.ElideRight
             color: Ui.Theme.weatherHeroText
             font.pixelSize: Ui.Theme.fontSizeLabel
@@ -123,7 +123,7 @@ Rectangle {
                 anchors.right: parent.right
                 text: Visuals.numberLabel(hero.weather.temperature_c, "°")
                 color: Ui.Theme.weatherHeroTemperature
-                font.pixelSize: hero.compact ? 48 : 56
+                font.pixelSize: hero.compact ? Ui.Theme.heroWeatherCompactSize : Ui.Theme.heroWeatherSize
             }
             Ui.ThemeText {
                 id: dailyRange

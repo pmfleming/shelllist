@@ -81,7 +81,7 @@ Ui.ResultRow {
                     anchors.verticalCenter: parent.verticalCenter
                     text: row.percentage(row.weather.precipitation_probability)
                     color: Ui.Theme.mutedText
-                    font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
+                    font.pixelSize: Ui.Theme.metadataSize
                 }
             }
         }
@@ -115,7 +115,7 @@ Ui.ResultRow {
                 horizontalAlignment: Text.AlignHCenter
                 text: row.temperature(row.weather.high_c) + " " + row.temperature(row.weather.low_c)
                 color: Ui.Theme.mutedText
-                font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
+                font.pixelSize: Ui.Theme.metadataSize
             }
         }
     }
@@ -137,7 +137,7 @@ Ui.ResultRow {
             horizontalAlignment: Text.AlignHCenter
             text: row.city.abbreviation || Visuals.utcOffset(row.city.utc_offset_seconds)
             color: Ui.Theme.mutedText
-            font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
+            font.pixelSize: Ui.Theme.metadataSize
         }
     }
 }

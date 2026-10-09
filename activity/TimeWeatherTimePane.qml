@@ -73,25 +73,26 @@ Ui.DetailFlickable {
                 height: 28
                 Ui.ThemeText {
                     width: parent.width - homeLabel.width
-                    text: String(pane.city.label || "Location").toUpperCase()
+                    text: String(pane.city.label || qsTr("Location"))
                     color: Ui.Theme.mutedText
                     elide: Text.ElideRight
                     font.pixelSize: Ui.Theme.fontSizeLabel
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
-                Ui.ThemeText {
+                Ui.GlyphLabel {
                     id: homeLabel
                     visible: !!pane.city.home
-                    text: qsTr("⌂  HOME")
+                    glyph: "󰋜"
                     color: Ui.Theme.accent
-                    font.pixelSize: Ui.Theme.fontSizeCaption
-                    font.weight: Ui.Theme.fontWeightDemiBold
+                    font.pixelSize: Ui.Theme.iconSizeSmall
+                    Accessible.name: qsTr("Home location")
+                    Accessible.role: Accessible.StaticText
                 }
             }
 
             Ui.ThemeText {
                 text: Visuals.localTime(pane.now.getTime(), pane.offsetSeconds)
-                font.pixelSize: 64
+                font.pixelSize: Ui.Theme.heroClockSize
             }
             Ui.ThemeText {
                 text: Visuals.localDate(pane.now.getTime(), pane.offsetSeconds)
@@ -181,17 +182,17 @@ Ui.DetailFlickable {
     Rectangle {
         width: parent.width
         height: 250
-        radius: Ui.Theme.panelRadius
+        radius: Ui.Theme.cardRadius
         color: Ui.Theme.surface
-        border.color: Ui.Theme.border
+        border.width: 0
 
         Ui.ThemeText {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.margins: Ui.Theme.spacingMd
-            text: "TODAY'S SUN POSITION IN " + String(pane.city.label || "LOCATION").toUpperCase()
-            font.pixelSize: Ui.Theme.fontSizeLabel
-            font.weight: Ui.Theme.fontWeightDemiBold
+            text: qsTr("Sun position")
+            font.pixelSize: Ui.Theme.groupHeadingSize
+            font.weight: Ui.Theme.groupHeadingWeight
         }
 
         Canvas {
@@ -296,18 +297,17 @@ Ui.DetailFlickable {
     Rectangle {
         width: parent.width
         height: Math.round(116 + Math.max(0, width - Ui.Theme.spacingMd * 2) / 1.94)
-        radius: Ui.Theme.panelRadius
+        radius: Ui.Theme.cardRadius
         color: Ui.Theme.surface
-        border.color: Ui.Theme.border
+        border.width: 0
 
         Ui.ThemeText {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.margins: Ui.Theme.spacingMd
-            text: "TIMEZONE"
-            color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeCaption
-            font.weight: Ui.Theme.fontWeightDemiBold
+            text: qsTr("Timezone")
+            font.pixelSize: Ui.Theme.groupHeadingSize
+            font.weight: Ui.Theme.groupHeadingWeight
         }
         Ui.ThemeText {
             anchors.left: parent.left

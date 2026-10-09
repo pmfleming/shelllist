@@ -79,10 +79,21 @@ Tests.DaemonTestCase {
         Quickshell.environment = ({});
         Ui.Theme.previewColorScheme = Qt.Unknown;
     }
+    function resourceSample() {
+        return {metric_availability: {cpu_percent_of_machine: true, memory_bytes: true, gpu_busy_percent: true,
+            gpu_memory_resident_bytes: true, disk_space_total_bytes: true, disk_space_permanent_bytes: true,
+            disk_space_temporary_bytes: true, disk_read_bytes_per_second: true, disk_write_bytes_per_second: true,
+            average_power_watts: true}, cpu_percent_of_machine: 4, memory_bytes: 78852915, gpu_busy_percent: 0,
+            gpu_memory_resident_bytes: 276824064, disk_space_total_bytes: 6400000, disk_space_permanent_bytes: 6300000,
+            disk_space_temporary_bytes: 100000, disk_read_bytes_per_second: 0, disk_write_bytes_per_second: 0,
+            estimated_app_power_watts: 0.38, average_power_watts: 0.38, energy_confidence: "low", energy_source: "rapl",
+            measurement: {coverage: 1, memory_source: "pss", gpu_available: true, storage_available: true,
+                network_bytes_available: false, disk_space_scope: "identified-app-directories", attribution_method: "application-cgroup"}};
+    }
     function seed(panel, id) {
         const c = panel.registry.controllerFor(id);
         if (id === "applications") {
-            c.replaceProviderResults(c.provider.resultsFor([{id: "review-app", kind: "desktop-application", name: "Application with a very long translated display name", running: true, running_count: 1, instances: [], desktop_actions: [{name: "Open a private window"}]}]), true);
+            c.replaceProviderResults(c.provider.resultsFor([Object.assign(resourceSample(), {id: "review-app", kind: "desktop-application", name: "Application with a very long translated display name", running: true, running_count: 1, instances: [], desktop_actions: [{name: "Open a private window"}]})]), true);
         } else if (id === "wifi") {
             c.applyNetworks([{key: "review-wifi", ssid: "rembrandtweg — a deliberately long network title", active: true, strength: 90, security: "wpa2", frequency: 5180, profiles: []}], true, null);
         } else if (id === "bluetooth") {
@@ -94,7 +105,7 @@ Tests.DaemonTestCase {
             c.detailState.entryRevision = 1;
             c.detailState.value = {entry: entry, text: "A synthetic clipboard example. Nothing will be pasted or copied.", files: []};
         } else if (id === "displays") {
-            c.applyDisplayPolicy({available: true, policy: {prefer_external: false}, status: "extended", layout: {saved: {outputs: []}, trial: null}, outputs: [
+            c.applyDisplayPolicy({available: true, baseline: "visual-review-baseline", policy: {prefer_external: false}, status: "extended", layout: {saved: {outputs: []}, trial: null}, outputs: [
                 {id: 0, name: "eDP-1", width: 1920, height: 1200, refreshRate: 60, x: 0, y: 0, scale: 1.25, transform: 0, disabled: false, supported: true, internal: true, current_mode: "mode-1", modes: [{id: "mode-1", width: 1920, height: 1200, rate: 60, size: "1920x1200"}]}
             ]});
         } else if (id === "battery") {
@@ -137,6 +148,22 @@ Tests.DaemonTestCase {
                 c.timeline.snapshot = {recent: [c.catalog.apps[0].latest], dates: [], next_offset: null};
             }
         }
+    }
+    function seedResourceHistory(controller) {
+        const start = controller.historyWindowStartMs;
+        const end = controller.historyWindowEndMs;
+        const metric = {available: true, mean: 0, peak: 0, observed_ms: end - start, coverage: 1};
+        const metrics = {cpu_percent_of_machine: Object.assign({}, metric, {mean: 4, peak: 25}),
+            memory_bytes: Object.assign({}, metric, {mean: 78852915, peak: 79000000}),
+            gpu_busy_percent: metric, gpu_memory_resident_bytes: Object.assign({}, metric, {mean: 276824064, peak: 280000000}),
+            disk_read_bytes_per_second: Object.assign({}, metric, {observed_total: 123456, total_unit: "bytes"}),
+            disk_write_bytes_per_second: Object.assign({}, metric, {observed_total: 654321, total_unit: "bytes"}),
+            average_power_watts: Object.assign({}, metric, {mean: 0.38, peak: 1.2, observed_total: 190, total_unit: "mWh"})};
+        controller.applyResourceHistory(controller.activeHistoryRequestId, {target_id: controller.selectedResult.id,
+            points: [Object.assign(resourceSample(), {timestamp_ms: end - 15000, duration_ms: 15000, coverage: 1, sample_count: 7,
+                availability: {cpu: true, memory: true, gpu: true, energy: true, storage: true, network_bytes: false}})],
+            has_more: false, next_cursor: "review",
+            summary: {energy_confidence: "low", window_start_ms: start, window_end_ms: end, revision: "review", weighting: "observed-duration", metrics: metrics}});
     }
     function save(panel, name) {
         wait(180);
@@ -220,7 +247,16 @@ Tests.DaemonTestCase {
         if (data.id === "notifications") controller.settingsOpen = false;
         for (const tab of tabs) {
             controller.detailsTab = tab;
+            if (data.id === "applications" && tab === "resources") {
+                tryVerify(() => controller.historyInFlight && findChild(panel, "applicationHistoryRange") !== null);
+                seedResourceHistory(controller);
+            }
             save(panel, data.tag + "-" + tab);
+            if (data.id === "applications" && tab === "resources") {
+                panel.width = 976; panel.height = 600;
+                save(panel, data.tag + "-resources-minimum");
+                panel.width = tests.width; panel.height = tests.height;
+            }
         }
         if (data.id === "battery") {
             for (const tab of ["overview", "care", "power"]) {

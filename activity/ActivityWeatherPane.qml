@@ -28,7 +28,7 @@ Ui.DetailFlickable {
         active: pane.controller.uiActive
     }
 
-    Ui.ThemeText {
+    Ui.InlineStatus {
         width: parent.width
         visible: Number(pane.weather.updated_unix_ms || 0) > 0 && !!pane.weather.error
         text: pane.weather.error || ""

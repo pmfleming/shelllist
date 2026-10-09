@@ -58,7 +58,7 @@ Ui.DetailFlickable {
         interactive: page.settingsAvailable
         onClicked: page.save({bypass_dnd: !checked})
     }
-    Ui.ThemeText {
+    Ui.InlineStatus {
         width: parent.width
         text: page.controller.notificationState.policyErrors[page.controller.selectedAppKey] || (page.controller.appBusy ? qsTr("Saving…") : "")
         visible: text.length > 0

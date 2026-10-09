@@ -140,6 +140,7 @@ Item {
     readonly property int fieldNameWeight: fontWeightMedium
     readonly property int statusTextSize: formSupportSize
     readonly property int metadataSize: fontSizeSmall
+    readonly property int resourceValueMinimumSize: fontSizeLabel
     readonly property int inspectorInset: spacingLg
     readonly property int cardPadding: spacingMd
     readonly property int cardGap: spacingMd

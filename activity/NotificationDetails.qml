@@ -7,8 +7,8 @@ Item {
     required property NotificationController controller
     Loader {
         anchors.fill: parent
-        anchors.leftMargin: Ui.Theme.spacingMd
-        anchors.rightMargin: Ui.Theme.spacingMd
+        anchors.leftMargin: Ui.Theme.inspectorInset
+        anchors.rightMargin: Ui.Theme.inspectorInset
         active: pane.controller.detailsOpen && pane.controller.settingsOpen
         sourceComponent: Ui.DetailFlickable {
             viewMemory: pane.controller.viewMemory
@@ -26,8 +26,8 @@ Item {
         onSelected: function (value) { pane.controller.setDetailsTab(value); }
         Loader {
             anchors.fill: parent
-            anchors.leftMargin: Ui.Theme.spacingMd
-            anchors.rightMargin: Ui.Theme.spacingMd
+            anchors.leftMargin: Ui.Theme.inspectorInset
+            anchors.rightMargin: Ui.Theme.inspectorInset
             active: pane.controller.detailsOpen && !pane.controller.settingsOpen
             sourceComponent: pane.controller.detailsTab === "controls" ? controls : index
         }

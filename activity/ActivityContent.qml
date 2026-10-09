@@ -30,7 +30,8 @@ Ui.PanelSurface {
             uiScale: content.uiScale
             compactSecondaryActions: content.controller.detailsOpen
             icon: "today"
-            title: content.controller.detailsOpen ? "Activity  /  " + content.sectionTitle(content.controller.detailSection) : "Activity"
+            title: qsTr("Activity")
+            subtitle: content.controller.detailsOpen ? qsTr("Schedule") : ""
             actions: [
                 {id: "today", label: qsTr("Today"), icon: "today", accessKey: "T", visible: !content.controller.detailsOpen, presentation: {group: "primary"}},
                 {id: "overview", label: qsTr("Overview"), icon: "arrow_back", accessKey: "O", visible: content.controller.detailsOpen, presentation: {group: "toolbar"}},
@@ -43,21 +44,10 @@ Ui.PanelSurface {
             }
         }
 
-        Rectangle {
-            visible: content.controller.lastError.length > 0
+        Ui.PanelMessage {
             width: parent.width
-            height: visible ? errorText.implicitHeight + 18 : 0
-            radius: Ui.Theme.cardRadius
-            color: Ui.Theme.dangerBackground
-            Ui.ThemeText {
-                id: errorText
-                anchors.fill: parent
-                anchors.margins: 9
-                text: content.controller.lastError
-                color: Ui.Theme.danger
-                wrapMode: Text.Wrap
-                font.pixelSize: Ui.Theme.fontSizeSmall
-            }
+            height: implicitHeight
+            text: content.controller.lastError
         }
 
         Row {
@@ -101,10 +91,6 @@ Ui.PanelSurface {
             uiScale: content.uiScale
             now: content.now
         }
-    }
-
-    function sectionTitle(section: string): string {
-        return "Calendar · Agenda · Todo";
     }
 
     Shortcut {

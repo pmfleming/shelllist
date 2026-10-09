@@ -76,7 +76,7 @@ Ui.ProviderChooserSurface {
             required property var resultData
             readonly property var app: JSON.parse(resultData.payload)
             readonly property string latestText: [Ui.NotificationPresentation.previewHeading(app.latest), Ui.NotificationPresentation.previewBody(app.latest)].filter(Boolean).join(" · ") || qsTr("Notification")
-            readonly property string metadata: [Ui.NotificationPresentation.timeLabel(app.latest.created_unix_ms, content.controller.nowMs), app.latest.app_name || qsTr("Unknown app"), qsTr("%1 notifications").arg(app.total_count), content.controller.notificationState.appPolicy(app.key).silent ? qsTr("Silent") : ""].filter(Boolean).join(" · ")
+            readonly property string metadata: [Ui.NotificationPresentation.timeLabel(app.latest.created_unix_ms, content.controller.nowMs), app.latest.app_name || qsTr("Unknown app"), (app.total_count === 1 ? qsTr("1 notification") : qsTr("%1 notifications").arg(app.total_count)), content.controller.notificationState.appPolicy(app.key).silent ? qsTr("Silent") : ""].filter(Boolean).join(" · ")
             objectName: "notificationAppRow-" + app.key
             listPane: pane
             rowHeight: pane.delegateHeight

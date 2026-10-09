@@ -63,7 +63,7 @@ Ui.PointerActionControl {
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: 12
         text: Visuals.numberLabel(locationCard.modelData.temperature_c, "°")
-        font.pixelSize: 29
+        font.pixelSize: Ui.Theme.heroReadingSize
     }
 
     Column {

@@ -32,46 +32,49 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         Layout.preferredHeight: implicitHeight
-        title: qsTr("Display content")
         contentSpacing: Ui.Theme.spacingSm
-        Ui.DropDownList {
-            objectName: "displayContentMode"
+        Ui.FormField {
             Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            options: [
-                {
-                    value: "",
-                    label: qsTr("Extend desktop")
+            label: qsTr("Content")
+            icon: "monitor"
+            accessibleName: qsTr("Extend desktop or mirror another display")
+            Ui.DropDownList {
+                objectName: "displayContentMode"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                options: [
+                    {
+                        value: "",
+                        label: qsTr("Extend desktop")
+                    }
+                ].concat(Model.mirrorSources(inspector.controller.draft, inspector.output.name).map(function (source) {
+                    const output = inspector.controller.outputs.find(o => o.name === source.name) || source;
+                    return {
+                        value: source.name,
+                        label: qsTr("Mirror %1 (%2)").arg(Model.title(output)).arg(source.name)
+                    };
+                }))
+                value: inspector.draft.mirror_of || ""
+                interactive: inspector.controller.canEdit && !!inspector.draft.enabled
+                Accessible.name: qsTr("Extend desktop or mirror another display")
+                onSelected: function (value) {
+                    inspector.controller.setDisplayContent(inspector.output.name, value);
                 }
-            ].concat(Model.mirrorSources(inspector.controller.draft, inspector.output.name).map(function (source) {
-                const output = inspector.controller.outputs.find(o => o.name === source.name) || source;
-                return {
-                    value: source.name,
-                    label: qsTr("Mirror %1 (%2)").arg(Model.title(output)).arg(source.name)
-                };
-            }))
-            value: inspector.draft.mirror_of || ""
-            interactive: inspector.controller.canEdit && !!inspector.draft.enabled
-            Accessible.name: qsTr("Extend desktop or mirror another display")
-            onSelected: function (value) {
-                inspector.controller.setDisplayContent(inspector.output.name, value);
             }
         }
-        Ui.ThemeText {
+        Ui.InlineStatus {
             Layout.fillWidth: true
             visible: text.length > 0
             text: !inspector.draft.enabled ? qsTr("Enable this display to choose its content.") : inspector.draft.mirror_of ? qsTr("Mirrors %1 · position follows the source. Scaled to fit; black bars may appear.").arg(inspector.draft.mirror_of) : ""
             wrapMode: Text.Wrap
             color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeSmall
         }
-        Ui.ThemeText {
+        Ui.InlineStatus {
             Layout.fillWidth: true
             visible: inspector.controller.draft.some(o => o.enabled && o.mirror_of === inspector.output.name)
             text: qsTr("Copies must extend before this display can mirror another. Disabling it makes its copies extended displays.")
             wrapMode: Text.Wrap
             color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeSmall
         }
     }
 

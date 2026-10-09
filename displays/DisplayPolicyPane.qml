@@ -15,6 +15,7 @@ Ui.DetailColumnCard {
         Layout.fillWidth: true
         label: qsTr("Laptop screen")
         icon: "monitor"
+        supportingText: qsTr("Manual changes override this preference. The laptop screen returns if no external display remains active.")
         accessibleName: qsTr("Laptop screen when an external display is available")
         Ui.DropDownList {
             id: preference
@@ -45,19 +46,11 @@ Ui.DetailColumnCard {
             }
         }
     }
-    Ui.ThemeText {
-        Layout.fillWidth: true
-        text: qsTr("Manual changes override this preference. The laptop screen returns if no external display remains active.")
-        wrapMode: Text.Wrap
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeSmall
-    }
-    Ui.ThemeText {
+    Ui.InlineStatus {
         objectName: "dockingSaveStatus"
         Layout.fillWidth: true
-        text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.") : qsTr("All displays · Enter or Tab saves; Escape discards")
+        text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.") : ""
         wrapMode: Text.Wrap
         color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeCaption
     }
 }

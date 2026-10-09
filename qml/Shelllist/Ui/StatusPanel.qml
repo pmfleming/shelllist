@@ -15,7 +15,7 @@ Rectangle {
         return Math.round(value * uiScale);
     }
 
-    height: scaled(Theme.statusHeight)
+    height: Math.max(scaled(Theme.statusHeight), statusLabel.implicitHeight + 2 * Theme.spacingSm)
     radius: Theme.cardRadius
     color: Theme.surfaceRaised
     border.color: Theme.border
@@ -52,11 +52,13 @@ Rectangle {
         }
 
         ThemeText {
+            id: statusLabel
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             text: panel.status
             color: panel.busy ? Theme.accent : Theme.subtleText
-            font.pixelSize: Math.max(Theme.fontSizeCaption, panel.scaled(Theme.fontSizeCaption))
-            elide: Text.ElideRight
+            font.pixelSize: Theme.statusTextSize
+            wrapMode: Text.Wrap
             verticalAlignment: Text.AlignVCenter
         }
     }

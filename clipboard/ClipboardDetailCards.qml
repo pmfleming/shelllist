@@ -103,7 +103,7 @@ Ui.DetailFlickable {
     Ui.DetailColumnCard {
         objectName: "clipboardInfoCard"
         visible: cards.selectedTab === "info"
-        title: qsTr("Info")
+        title: qsTr("Information")
 
         Ui.DetailGrid {
             objectName: "clipboardMetadata"
@@ -148,7 +148,8 @@ Ui.DetailFlickable {
             visible: cards.files.length > 0
             Layout.fillWidth: true
             text: qsTr("Files")
-            color: Ui.Theme.mutedText
+            font.pixelSize: Ui.Theme.groupHeadingSize
+            font.weight: Ui.Theme.groupHeadingWeight
         }
 
         Item {
@@ -185,7 +186,7 @@ Ui.DetailFlickable {
                     Ui.ThemeText {
                         text: fileRow.modelData.operation === "cut" ? "Move" : "Copy"
                         color: Ui.Theme.mutedText
-                        font.pixelSize: Ui.Theme.fontSizeCaption
+                        font.pixelSize: Ui.Theme.metadataSize
                     }
                 }
             }

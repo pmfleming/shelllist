@@ -43,7 +43,8 @@ ColumnLayout {
             color: reading.available ? reading.accentColor : Ui.Theme.mutedText
             wrapMode: Text.Wrap
             horizontalAlignment: reading.alignRight ? Text.AlignRight : Text.AlignLeft
-            font.pixelSize: reading.valueSize
+            font.pixelSize: Math.max(Ui.Theme.resourceValueMinimumSize, reading.valueSize)
+            minimumPixelSize: Ui.Theme.resourceValueMinimumSize
             font.weight: Ui.Theme.fontWeightDemiBold
             Accessible.ignored: true
         }

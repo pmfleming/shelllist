@@ -141,10 +141,12 @@ Ui.ProviderChooserSurface {
                             font.pixelSize: Ui.Theme.fontSizeHeading
                             Accessible.name: qsTr("Volume: %1").arg(text)
                         }
-                        Ui.ActionToolbar {
-                            actionNamePrefix: "audioVolume-"
-                            spacing: 5
-                            actions: content.controller.kind === "audio" ? content.controller.detailActions.filter(action => ["quieter", "louder"].includes(action.id)) : []
+                        Ui.SurfaceActionRow {
+                            actionObjectNamePrefix: "audioVolume-"
+                            Layout.preferredWidth: 2 * Ui.Theme.formActionSize + Ui.Theme.spacingSm
+                            headerCommands: false
+                            compactSecondaryActions: true
+                            actions: content.controller.kind === "audio" ? content.controller.detailActions.filter(action => ["quieter", "louder"].includes(action.id)).map(action => Object.assign({}, action, {presentation: {group: "toolbar"}})) : []
                             onTriggered: function (actionId) {
                                 content.controller.triggerDetailAction(actionId);
                             }
@@ -158,16 +160,6 @@ Ui.ProviderChooserSurface {
                     checked: content.controller.muted
                     enabled: content.controller.hasSelection && !content.controller.actionInFlight
                     onClicked: content.controller.toggleAudioMuted()
-                }
-                Ui.DetailColumnCard {
-                    objectName: "trayApplication"
-                    visible: content.controller.kind === "tray"
-                    title: qsTr("Application")
-                    Ui.ThemeText {
-                        Layout.fillWidth: true
-                        text: content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
-                        wrapMode: Text.Wrap
-                    }
                 }
                 MediaPlaybackCard {
                     objectName: "mediaPlayback"
@@ -206,17 +198,13 @@ Ui.ProviderChooserSurface {
                         implicitHeight: 1
                         color: Ui.Theme.border
                     }
-                    RowLayout {
+                    Ui.FormField {
                         Layout.fillWidth: true
-                        Ui.ThemeText {
-                            Layout.fillWidth: true
-                            text: qsTr("Bar controls")
-                            font.pixelSize: Ui.Theme.fontSizeHeading
-                            wrapMode: Text.Wrap
-                        }
+                        label: qsTr("Bar controls")
+                        icon: "tune"
                         Ui.DropDownList {
                             objectName: "mediaControlMode"
-                            Layout.preferredWidth: 220
+                            Layout.fillWidth: true
                             Layout.minimumWidth: 0
                             compact: true
                             Accessible.name: qsTr("Bar controls")
@@ -233,9 +221,8 @@ Ui.ProviderChooserSurface {
                         }
                     }
                 }
-                Ui.ThemeText {
+                Ui.InlineStatus {
                     width: parent.width
-                    wrapMode: Text.WordWrap
                     text: content.controller.statusText
                     color: Ui.Theme.danger
                     visible: text.length > 0

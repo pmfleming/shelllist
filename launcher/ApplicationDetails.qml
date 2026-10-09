@@ -14,8 +14,6 @@ Ui.ActionDetailsPane {
     readonly property int footerHeight: actionHeight
 
     chooserController: controller
-    leftMargin: 18
-    rightMargin: 16
     emptyText: "Select an application"
     controlHeight: actionHeight
     icon: "󰀻"
