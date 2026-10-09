@@ -96,22 +96,6 @@ ColumnLayout {
             onTrailingActionRequested: section.controller.resetSelectedName()
         }
     }
-    Ui.RecoveryActions {
-        Layout.fillWidth: true
-        enabled: !!(section.draft || {}).error
-        retryAction.objectName: "retryDeviceName"
-        retryAction.accessKey: "N"
-        retryAction.label: qsTr("Retry rename")
-        retryAction.enabled: !section.controller.actionInFlight && section.renameValid
-        discardAction.objectName: "discardDeviceName"
-        discardAction.enabled: !(section.draft || {}).pending
-        onRetryRequested: section.controller.nameEdits.retry(section.displayedDeviceKey)
-        onDiscardRequested: {
-            section.controller.nameEdits.discard(section.displayedDeviceKey);
-            section.syncDeviceName(true);
-        }
-    }
-
     Ui.ActionToggleList {
         Layout.fillWidth: true
         showDisabledReason: !section.controller.actionInFlight

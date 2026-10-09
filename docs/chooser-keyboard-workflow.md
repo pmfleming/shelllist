@@ -224,6 +224,9 @@ missing-original and already-original guards and authoritative acknowledgement
 are unchanged. `TextField.trailingAction` exposes the shared embedded command for
 identity/access-key configuration. `tst_bluetooth_recovery.qml` covers its actual
 pointer/key routes, native save/discard, placement and disabled guards.
+The device Name field has no separate Retry rename / Discard draft button row.
+Name validation, error feedback and controller-owned failed drafts remain intact;
+this does not remove the adapter settings' recovery commands.
 
 ## Commands, tabs and exceptions
 

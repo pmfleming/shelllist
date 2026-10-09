@@ -506,7 +506,9 @@ DaemonTestCase {
         });
         wait(0);
         compare(findChild(newPage, "deviceNameInput").text, "My renamed buds");
-        findChild(newPage, "retryDeviceName").clicked();
+        compare(findChild(newPage, "retryDeviceName"), null);
+        compare(findChild(newPage, "discardDeviceName"), null);
+        controller.nameEdits.retry("buds");
         compare(calls[calls.length - 1].params.alias, "My renamed buds");
         backend.acceptSharedResponse("device-set-alias", {
             protocol: "bt-api",
@@ -518,7 +520,7 @@ DaemonTestCase {
         }, "");
         verify(controller.nameEdits.draft("buds").dirty);
         verify(!controller.nameEdits.draft("buds").pending);
-        findChild(newPage, "discardDeviceName").clicked();
+        controller.nameEdits.discard("buds");
         compare(findChild(newPage, "deviceNameInput").text, "Buds");
         compare(controller.nameEdits.draft("buds"), null);
     }
