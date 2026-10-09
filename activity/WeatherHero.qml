@@ -57,7 +57,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: Number(hero.weather.updated_unix_ms || 0) > 0 ? "↻ " + Visuals.weatherTime(hero.weather.updated_unix_ms, hero.weather) : ""
             color: Ui.Theme.weatherHeroMutedText
-            font.pixelSize: Ui.Theme.fontSizeCaption
+            font.pixelSize: Ui.Theme.metadataSize
         }
     }
 
@@ -73,6 +73,13 @@ Rectangle {
         icon: "cloud"
         kind: hero.weather.error ? "unavailable" : hero.updating ? "loading" : "empty"
         text: hero.weather.error || (hero.updating ? qsTr("Updating forecast…") : qsTr("No forecast available"))
+    }
+
+    TextMetrics {
+        id: candidateTemperature
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: hero.compact ? Ui.Theme.heroWeatherCompactSize : Ui.Theme.heroWeatherSize
+        text: Visuals.numberLabel(hero.weather.temperature_c, "°")
     }
 
     Item {
@@ -120,10 +127,15 @@ Rectangle {
 
             Ui.ThemeText {
                 id: currentTemperature
+                objectName: "weatherCurrentTemperature"
                 anchors.right: parent.right
                 text: Visuals.numberLabel(hero.weather.temperature_c, "°")
                 color: Ui.Theme.weatherHeroTemperature
-                font.pixelSize: hero.compact ? Ui.Theme.heroWeatherCompactSize : Ui.Theme.heroWeatherSize
+                // Increase the hero only when the unchanged content region fits.
+                // Keep room for condition text and the existing high/low line.
+                font.pixelSize: candidateTemperature.advanceWidth <= Math.max(0, temperature.parent.width - conditionIcon.width - 2 * Ui.Theme.spacingMd - 5 * Ui.Theme.fontSizeHeading)
+                    ? candidateTemperature.font.pixelSize
+                    : hero.compact ? Ui.Theme.heroWeatherCompactFallbackSize : Ui.Theme.heroWeatherFallbackSize
             }
             Ui.ThemeText {
                 id: dailyRange
@@ -212,13 +224,13 @@ Rectangle {
                         text: heroMetric.modelData.label
                         elide: Text.ElideRight
                         color: Ui.Theme.weatherHeroMutedText
-                        font.pixelSize: Ui.Theme.fontSizeCaption
+                        font.pixelSize: Ui.Theme.metadataSize
                     }
                     Ui.ThemeText {
                         width: parent.width
                         text: heroMetric.modelData.value
                         fontSizeMode: Text.HorizontalFit
-                        minimumPixelSize: 10
+                        minimumPixelSize: Ui.Theme.metadataSize
                         elide: Text.ElideRight
                         color: Ui.Theme.weatherHeroMetricText
                         font.pixelSize: Ui.Theme.fontSizeSmall

@@ -37,7 +37,6 @@ Ui.DetailColumnCard {
                     objectName: level.low ? "batteryLowPoint" : "batteryCriticalPoint"
                     Layout.fillWidth: true
                     label: level.low ? qsTr("Low battery") : qsTr("Critical battery")
-                    labelWidth: 120
                     valueWidth: 40
                     value: pane.controller.alertDraft[level.fields.percent]
                     enabled: level.active && !pane.controller.actionInFlight
@@ -52,8 +51,8 @@ Ui.DetailColumnCard {
 
                 Ui.ToggleSwitch {
                     objectName: level.low ? "batteryLowEnabled" : "batteryCriticalEnabled"
-                    Layout.preferredWidth: 44
-                    Layout.preferredHeight: 36
+                    Layout.preferredWidth: implicitWidth
+                    Layout.preferredHeight: implicitHeight
                     checked: level.active
                     enabled: !pane.controller.actionInFlight
                     Accessible.role: Accessible.CheckBox
@@ -67,16 +66,12 @@ Ui.DetailColumnCard {
                 }
             }
 
-            RowLayout {
+            Ui.FormField {
                 Layout.fillWidth: true
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
+                label: level.low ? qsTr("Low battery profile") : qsTr("Critical battery profile")
                 BatteryProfileSelector {
                     objectName: level.low ? "batteryLowProfile" : "batteryCriticalProfile"
-                    Layout.preferredWidth: implicitWidth
+                    Layout.fillWidth: true
                     Layout.preferredHeight: implicitHeight
                     accessibleName: level.low ? qsTr("Low battery power profile") : qsTr("Critical battery power profile")
                     options: pane.controller.levelProfileOptions
@@ -90,33 +85,29 @@ Ui.DetailColumnCard {
         }
     }
 
-    Ui.ThemeText {
-        Layout.fillWidth: true
-        visible: !pane.controller.alertDraftValid
+    Ui.FeedbackSource {
+        active: !pane.controller.alertDraftValid
         text: qsTr("Critical percentage cannot exceed the low-battery percentage.")
-        color: Ui.Theme.danger
-        font.pixelSize: Ui.Theme.statusTextSize
-        wrapMode: Text.Wrap
+        summaryText: qsTr("Critical level must not exceed low")
+        tone: "error"
     }
 
     Ui.SaveStatusLabel {
         objectName: "batteryLevelsSaveStatus"
         Layout.fillWidth: true
-        visible: pane.controller.alertDraftDirty || pane.controller.alertOperationActive || pane.controller.alertSaveError.length > 0
+        active: pane.controller.alertDraftDirty || pane.controller.alertOperationActive || pane.controller.alertSaveError.length > 0
         text: pane.controller.alertSaveStatus
         valid: pane.controller.alertDraftValid
         error: pane.controller.alertSaveError
         saving: pane.controller.alertOperationActive
     }
 
-    Ui.FieldLabel {
+    Ui.FeedbackSource {
         objectName: "batteryAutomationStatus"
-        Layout.fillWidth: true
-        visible: ["paused", "blocked", "unavailable", "error"].indexOf(pane.controller.batteryAutomation.status) >= 0
+        active: ["paused", "blocked", "unavailable", "error"].indexOf(pane.controller.batteryAutomation.status) >= 0
         text: pane.controller.automationStatus
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
-        color: pane.controller.batteryAutomation.status === "error" ? Ui.Theme.danger : Ui.Theme.mutedText
+        summaryText: qsTr("Battery automation: %1").arg(pane.controller.batteryAutomation.status)
+        tone: pane.controller.batteryAutomation.status === "error" ? "error" : "info"
     }
 
     Ui.LabeledAction {
@@ -124,9 +115,8 @@ Ui.DetailColumnCard {
         objectName: "batteryAutomationResume"
         accessKey: "A"
         Layout.fillWidth: true
-        visible: pane.controller.batteryAutomation.status === "paused"
         label: qsTr("Resume automatic switching")
-        enabled: pane.controller.powerProfile.available && !pane.controller.actionInFlight
+        enabled: pane.controller.batteryAutomation.status === "paused" && pane.controller.powerProfile.available && !pane.controller.actionInFlight
         onClicked: pane.controller.resumeAutomaticProfiles()
     }
 }

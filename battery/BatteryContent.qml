@@ -10,6 +10,9 @@ Ui.PanelSurface {
     required property BatteryController controller
     chooserController: controller
     navigationContent: detailPage
+    feedbackEnabled: true
+    feedbackText: errorMessage
+    feedbackSummary: qsTr("Battery operation needs attention")
     readonly property var battery: controller.battery || ({})
     readonly property var protection: controller.protection
     readonly property var device: controller.primaryDevice || ({})
@@ -98,11 +101,6 @@ Ui.PanelSurface {
                 font.pixelSize: Ui.Theme.fontSizeDisplay
                 font.weight: Ui.Theme.fontWeightBold
             }
-        }
-
-        Ui.PanelMessage {
-            Layout.fillWidth: true
-            text: content.errorMessage
         }
 
         Ui.DetailFlickable {

@@ -11,13 +11,15 @@ Ui.DetailSection {
     id: overview
     informationOnly: true
     required property var lanes
-    required property var footprint
     required property var points
     required property double rangeStartMilliseconds
     required property double rangeEndMilliseconds
     required property real uiScale
     property bool loading: false
     property bool active: true
+    // Compute once, not from fractionally rounded individual grid cells.
+    readonly property real valueSize: Math.max(Ui.Theme.formValueSize, Math.min(28,
+        Math.floor(((height - 2 * Math.round(8 * uiScale)) / 3 - 2 * Math.round(10 * uiScale)) * 0.20)))
     readonly property var cards: [
         {lane: lanes[0], readings: lanes[0].series, glyph: ""},
         {lane: lanes[1], readings: lanes[1].series, glyph: ""},
@@ -32,10 +34,11 @@ Ui.DetailSection {
         const energy = descriptor.kind === "power";
         return Object.assign({}, descriptor, {
             objectName: "resourceTotal_" + descriptor.metric,
-            label: energy ? qsTr("Estimated CPU-package energy") : qsTr("%1 transferred").arg(descriptor.label),
-            icon: energy ? "functions" : descriptor.icon,
+            label: energy ? qsTr("Estimated CPU-package energy") : qsTr("Estimated %1 transferred").arg(descriptor.label),
+            icon: energy ? "∑" : descriptor.icon,
             available: !loading && Resources.measured(descriptor.periodValue),
             valueText: descriptor.periodText,
+            color: energy ? Ui.Theme.graphSecondary : descriptor.color,
             detailText: qsTr("Selected period %1. Current %2. %3").arg(descriptor.observation).arg(descriptor.valueText).arg(descriptor.detailText)
         });
     }
@@ -64,7 +67,7 @@ Ui.DetailSection {
                 lane: modelData.lane
                 readings: modelData.readings
                 glyph: modelData.glyph
-                footprint: index === 4 ? overview.footprint.reading : null
+                valueSize: overview.valueSize
                 points: overview.points
                 rangeStartMilliseconds: overview.rangeStartMilliseconds
                 rangeEndMilliseconds: overview.rangeEndMilliseconds

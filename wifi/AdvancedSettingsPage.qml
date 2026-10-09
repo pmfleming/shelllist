@@ -240,7 +240,7 @@ Item {
 
     Loader {
         width: parent.width
-        height: Math.max(0, parent.height - (errorPanel.visible ? errorPanel.height + Theme.spacingSm : 0))
+        height: parent.height
         x: page.sectionOffset
         active: true
         sourceComponent: page.securityView ? securitySection : ipSection
@@ -260,12 +260,10 @@ Item {
         }
     }
 
-    PanelMessage {
-        id: errorPanel
-        anchors.bottom: parent.bottom
-        width: parent.width
-        height: implicitHeight
+    FeedbackSource {
         text: page.controller.advanced.error
+        summaryText: qsTr("Network settings need attention")
+        tone: "error"
     }
 
     CenteredMessage {

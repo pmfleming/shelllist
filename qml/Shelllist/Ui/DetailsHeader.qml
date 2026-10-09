@@ -93,7 +93,7 @@ Item {
                     textFormat: Text.PlainText
                     color: header.subtitleColor
                     font.weight: header.subtitleWeight
-                    font.pixelSize: Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeSmall * header.uiScale))
+                    font.pixelSize: Math.max(Theme.metadataSize, Math.round(Theme.fontSizeSmall * header.uiScale))
                     elide: Text.ElideRight
                 }
             }

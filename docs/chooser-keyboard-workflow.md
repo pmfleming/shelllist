@@ -78,8 +78,10 @@ Arriving at a switch highlights it **without toggling it** and returns to
 browsing. Actions are never traversal stops. Shift+Enter remains available for a
 newline in multiline editors.
 
-`FormField` inline icons/names (or its opt-in stacked name for a narrow compound
-editor), separators, state badges and disclosed help are passive: the contained shared editor keeps its stable focus identity and
+`FieldRow` owns the common left-label/right-editor composition used by
+`FormField`, `SettingRow`, sliders and toggles. Labels wrap within the shared
+column; panels must not introduce stacked labels or private breakpoints.
+Inline icons/names, separators, state badges and disclosed help are passive: the contained shared editor keeps its stable focus identity and
 transaction. A single-line or expanded scrolling `TextEditor` is still one field. IP/DNS errors become visible on explicit save, without
 trapping Tab: saving retains the domain draft, while the existing whole-group
 readiness guard blocks invalid/incomplete backend writes. CIDR, unsupported zone
@@ -127,10 +129,11 @@ Escape-to-stop-editing step.
 ## Highlighting
 
 Only the editable portion is highlighted: input box, slider, selected segment or
-switch—not the setting's label, explanatory text, row or card. Browsing has a
-subtle tonal highlight plus a compact opaque Primary pill with a Surface keyline.
-The marker/keyline pair retains at least 3:1 contrast, including over selected or
-filled controls; the low-alpha tint alone is not the focus cue. This is not a
+switch—not the setting's label, explanatory text, row or card. Browsing uses
+only a compact opaque Primary marker with a Surface keyline; its background is
+transparent. The marker/keyline pair retains at least 3:1 contrast, including over
+selected or filled controls. Saved selection, switch-on, hover and pressed paint
+retain their independent meanings. This is not a
 rectangular outline around the control. The top bar opts out of this panel
 browsing marker; its pointer feedback and panel markers remain unchanged.
 The bar's Media opener and transport share a passive tonal pill, not a combined
@@ -141,8 +144,8 @@ hover/pressed feedback stays local to each button. Every density retains the
 artwork opener and all three transport controls. Unsupported actions and missing
 players disable transport without hiding it; artwork still opens Media directly.
 No hover, disclosure or secondary click is required to reach transport. Group
-padding and gaps have no action. Native pointer/accessibility route and density
-coverage lives in `tst_media_chip.qml`; its rounded-artwork pixel check additionally
+padding and gaps have no action. Native pointer/accessibility routes at
+representative wide/narrow sizes live in `tst_media_chip.qml`; its rounded-artwork pixel check additionally
 requires an RHI renderer.
 
 The chromatic bar uses fixed-size icon-only category targets (Shell, Browser,
@@ -170,8 +173,8 @@ workspace selection, overflow, fill pixels and battery state boundaries.
 System tray application icons appear only in the Tray chooser, opened by the
 bar's ellipsis button; no bar density exposes inline tray application icons.
 Horizontal sliders place the marker above
-the track. Editing replaces the marker with a stronger tonal highlight and accent
-edge, plus native caret/selection feedback. Feedback is immediate and never delayed
+the track. Editing replaces the marker with an editor-local tonal background and
+lower line, plus native caret/selection feedback; it has no enclosing focus border. Feedback is immediate and never delayed
 by animation. `ToggleRow.focusSurface` is its switch, not the containing row.
 The outer panel outline is passive decoration, inset inside the surface's clip
 boundary to survive fractional scaling. It is not a focus target or an extra
@@ -200,10 +203,17 @@ They remain outside field traversal. Copy is opt-in and routed through the
 existing domain publisher/guards; secrets never acquire automatic copy actions.
 Existing external Help commands can suppress the embedded button without losing
 accessible guidance. Errors, safety/recovery messages and in-flight status remain
-visible; no empty supporting row is reserved. DNS/other native multiline editors
+visible in a fixed surface status allocation: provider panels use their existing
+list footer; standalone panels use `PanelSurface`'s shared footer. `FeedbackSource`
+contributes domain text, summary, tone and priority without taking layout space.
+`FeedbackSlot` fits concise owner summaries at the 13px status role, never grows
+for paragraphs or shrinks typography. Full diagnostics remain accessible and in
+existing domain owners. Safety countdowns and consequences take priority and
+retain explicit short wording. Recovery controls retain their geometry and guards.
+Only explicitly disclosed Help can expand a supporting row. DNS/other native multiline editors
 start at one line and grow to a bounded scrolling area; explicitly sized document
 editors retain their size and single-field transaction. See the
-[implementation record](reviews/compact-text-fields.md) and
+[shared FormField implementation](../qml/Shelllist/Ui/FormField.qml) and
 `tst_compact_fields.qml`, `tst_ip_fields.qml`, `tst_material_feedback.qml`.
 
 Bluetooth’s **Restore original name** is an icon-only trailing action inside the
@@ -264,7 +274,7 @@ predicate, so command, modal and information-only subtrees stay out of field
 traversal.
 Modal header commands are excluded from panel command discovery and use the
 existing contained native modal traversal. See the
-[circular action implementation](proposals/circular-panel-actions.md).
+[shared action row](../qml/Shelllist/Ui/SurfaceActionRow.qml).
 
 - Action buttons use **Alt+letter**, not Tab. `ActionControl.accessKey` defines a
   command; `commandScope` can limit a repeated command to the current field/row
@@ -355,7 +365,12 @@ Popup sender actions/replies retain their existing acknowledgement and lifecycle
 guards. Tab changes still discard only uncommitted app-control edits.
 
 Native windows stage refreshes atomically and fence stale revisions, epochs,
-queries, period changes and local-midnight rollover. Recent previews and period
+queries, period changes and local-midnight rollover. Frontend notification readers
+share wire-shape validation, not request ownership or publication. Timeline
+continuations use one staged metadata snapshot; malformed previews, periods or
+stack members retain the published window and surface an error, never a partial
+replacement. Delete-count validation retains its separate bounds and no-replay
+policy. `tst_notification_center.qml` covers these rejection/continuation paths. Recent previews and period
 windows publish atomically, without duplicated records. `tst_notifications.qml` and `tst_notification_center.qml`
 cover actual app/card commands and menus, icon tabs, empty-period visibility,
 shared scrolling, policy transactions, confirmation/cancel, stale responses,
@@ -402,8 +417,9 @@ busy and backend guards; rows disappear only on authoritative snapshots, with no
 optimistic removal or claimed undo. Full labels and stable daemon IDs are retained.
 Compact number-first window rows keep workspace/current-window badges and
 acknowledged focus-success checks passive, with full accessible names. No field
-stops, row-wide hit targets or selection highlights are added. Long titles and
-error/progress text can expand the row; Focus/Close normally use shared 32px command
+stops, row-wide hit targets or selection highlights are added. Long
+titles can wrap, but error/progress text uses the fixed surface footer rather than
+expanding rows. Focus/Close normally use shared 32px command
 circles with 16px icons.
 See [application details](application-details.md) for the visual and capability
 contract and Qt interaction coverage.
@@ -420,7 +436,11 @@ contract and Qt interaction coverage.
    not `textChanged`, `valueChanged`, native `activated`, or focus loss. These
    public edit signals publish only on save inside a navigation boundary.
    `FieldEditSession` owns only the temporary original/draft transaction; it
-   never stores values in presentation memory. Raw controls outside a panel
+   never stores values in presentation memory. Dropdowns and segmented controls
+   share its internal `ChoiceEditSession` specialization: the acknowledged source
+   stays bound while the session owns the choice draft. Incoming snapshots do not
+   replace that draft; Escape or blur reveals the latest source without publishing.
+   `tst_field_interaction.qml` exercises both controls with actual native keys. Raw controls outside a panel
    boundary retain their native behavior (including required-input dialogs).
 4. Multiline/lease-owning domains use `TextEditor.edited` and
    `editFinished(saved)` to submit/cancel their domain session. Clipboard is the
@@ -474,8 +494,15 @@ by the daemon. Online enrichment is an explicit deployment setting, off by defau
 See [Media presentation and shortcut diagnosis](media.md).
 
 Applications' Resources page has five passive integrated microcards: Activity,
-Memory, Disk I/O, Network and a full-width Power/energy card with app-data bytes.
-Icon/value pairs sit beside bar histories; disk/network values are period totals.
+Memory, Disk I/O, Network and a full-width Power/energy card. Each has two primary
+readings, one shared value scale, meaningful glyphs and two reused theme-derived
+series colours. Icon/value pairs overlay full-card histories; disk/network values
+are period totals. Readable rows take the space they need inside the card rather
+than enforcing an exact upper-half fit. Only horizontal chart guides remain, with
+missing intervals unpainted instead of hatched. Identified app-data bytes belong
+in passive Application details, not the power card. Visible approximation signs
+are omitted; estimated attribution, observation coverage, confidence, units,
+missing data and zero-versus-unavailable semantics remain authoritative.
 The 2×2 + full-width grid fills the expanded detail viewport without scrolling,
 reserving space for the header, bottom tabs, range, time axis and exceptions.
 Its shared 30m / 2h / 24h segmented field is the sole editable stop and controls
@@ -535,12 +562,11 @@ history is passive, not an endless request. Agenda, Todos, forecast, battery and
 resource history use the same component inside missing-data sections, without
 hiding calendar/input/power controls or valid cached readings.
 
-`tests/qml/tst_content_state.qml` exercises semantic/legacy glyphs, actual key
-navigation and save/discard during arrival/refresh/removal, read-state adapters,
-radio-off versus absent hardware, failure copy, independent Tray readiness, and
-partial section data. Existing domain suites retain paging, reply drafts,
+`tests/qml/tst_content_state.qml` exercises semantic glyphs, actual key
+navigation and save/discard during arrival/refresh/removal, representative read-state
+adapters, radio-off versus absent hardware, failure copy and independent Tray readiness. Existing domain suites retain paging, reply drafts,
 acknowledgement, retry, modal and rollback coverage. See the
-[visual proposal](proposals/panel-empty-states.html) for the design rationale.
+[shared ContentState implementation](../qml/Shelllist/Ui/ContentState.qml) for the current presentation.
 
 ## Validation
 
@@ -630,19 +656,29 @@ routes, reference save/discard, guards and cancellation; JavaScript checks cover
 all four directional calculations and fractional/rotated placement. Shared
 header/bar tests cover responsive direct-command sizing and explicit menus rather
 than repeating a per-panel size matrix. The
-[2026-10-06 test review](reviews/test-pruning-2026-10-06.md) records reduced coverage,
+historical 2026-10-06 test review (retired from the checkout) records reduced coverage,
 including native End/RTL/vertical matrices, outside-drop and
 some restoration/consumer paths. Shared transactions, actual command keys and
 domain safety guards remain tested; these reductions do not change or relax the
 interaction contract.
 
-The [2026-10-07 Lens maintenance review](reviews/lens-maintenance-2026-10-07.md)
+The historical 2026-10-07 Lens maintenance review (retired from the checkout)
 changes no keys or save boundaries. Wi-Fi reuses `TabbedDetailsStack` for its
 clipped viewport/footer; profile availability still gates its tabs and Ctrl+Tab
 still discards unsaved edits. Resource snapshot descriptors feed one passive
 reading adapter: replacements update values, availability and accessible names
 without adding fields or interrupting the range draft. Native Wi-Fi tab and
 resource-arrival tests cover these shared-layout/data paths.
+
+The [2026-10-07 test review](reviews/test-pruning-2026-10-07.md) reduces the
+established inventory from 464 to 311 units without changing this contract.
+It preserves shared field transactions, actual domain commands, acknowledgement,
+retry, secret handling, malformed/late replies and no-replay guards. Exact
+presentation matrices, old identity aliases, per-wrapper geometry, some happy-path
+restoration and consumer wiring receive less direct coverage; the review names
+those gaps. Shared tests do not prove every consumer route. The existing RHI-only
+media pixel skip remains counted but is not passing coverage on the software
+runner; no new skips or discovery exclusions were added.
 
 ## Display preview baselines
 

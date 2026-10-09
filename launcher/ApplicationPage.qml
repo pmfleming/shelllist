@@ -15,12 +15,17 @@ Ui.DetailFlickable {
     Ui.LabeledAction {
         objectName: "applicationActionStatus"
         width: parent.width
-        visible: page.controller.selectedActionMessage.length > 0
-        label: page.controller.selectedActionMessage
+        enabled: page.controller.selectedActionMessage.length > 0
+        label: qsTr("Check status")
         accessibleName: "Check status"
         icon: "refresh"
         accessKey: "K"
         onClicked: page.controller.operations.check(page.application.id)
+    }
+
+    Ui.FeedbackSource {
+        text: page.controller.selectedActionMessage
+        summaryText: qsTr("Application action · Check status")
     }
 
     Ui.ThemeText {
@@ -54,6 +59,12 @@ Ui.DetailFlickable {
         controller: page.controller
         application: page.application
         uiScale: page.uiScale
+    }
+
+    ApplicationDataDetails {
+        width: parent.width
+        controller: page.controller
+        application: page.application
     }
 
     ApplicationDesktopActions {

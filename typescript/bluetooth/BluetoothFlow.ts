@@ -25,6 +25,8 @@ interface Device {
     trusted?: boolean;
     wake_allowed?: boolean;
     last_seen_ms?: number | null;
+    rssi?: number | null;
+    rssi_kind?: string;
     signal_strength?: number | null;
     signal_live?: boolean;
     policy?: unknown;
@@ -175,14 +177,14 @@ function adapterLabel(adapter: Partial<Adapter>) {
     return adapter.alias || adapter.name || "Bluetooth adapter";
 }
 
-function radioStatus(radio: Maybe<Radio>, searchAllDevices: boolean, scanning: boolean, count: number) {
+function radioStatus(radio: Maybe<Radio>, searchAllDevices: boolean, scanning: boolean, count: number, countText: string = "") {
     const state: Radio = radio || ({});
     if (state.hard_blocked) return "Bluetooth is disabled by a hardware switch";
     if (state.soft_blocked) return "Bluetooth is disabled by rfkill";
     if (!state.available || Number(state.adapter_count || 0) === 0) return "No Bluetooth adapters available";
     if (!state.powered) return "Bluetooth is off";
-    if (searchAllDevices) return scanning ? count + " Bluetooth devices · scanning…" : count + " Bluetooth devices";
-    return count + " devices in My Devices";
+    const label = countText || (searchAllDevices ? count + (count === 1 ? " Bluetooth device" : " Bluetooth devices") : count + (count === 1 ? " device in My devices" : " devices in My devices"));
+    return searchAllDevices && scanning ? label + " · scanning…" : label;
 }
 
 function retainedAdapterKey(adapters: Adapter[], currentKey: string) {
@@ -306,12 +308,23 @@ function deviceState(device: Device) {
     return device.last_seen_ms ? "Recently found" : "Not in range";
 }
 
+function hasRelativeSignal(device: Device) {
+    return device.rssi_kind === "bredr-relative" && typeof device.rssi === "number" && Number.isFinite(device.rssi);
+}
+
 function hasSignal(device: Device) {
-    return device.signal_strength !== null && device.signal_strength !== undefined;
+    return hasRelativeSignal(device) || (device.signal_strength !== null && device.signal_strength !== undefined);
+}
+
+function signalValue(device: Device) {
+    if (hasRelativeSignal(device))
+        return device.rssi + " dB";
+    return hasSignal(device) ? Math.max(0, Math.min(100, Math.round(Number(device.signal_strength) || 0))) + "%" : "—";
 }
 
 function signalLevel(device: Device) {
-    if (!hasSignal(device)) return 0;
+    if (!hasSignal(device) || hasRelativeSignal(device))
+        return 0; // Relative BR/EDR RSSI is not an absolute strength/bar scale.
     const strength = Math.max(0, Math.min(100, Number(device.signal_strength) || 0));
     return strength >= 67 ? 3 : (strength >= 34 ? 2 : 1);
 }
@@ -319,7 +332,7 @@ function signalLevel(device: Device) {
 function signalLabel(device: Device) {
     if (!hasSignal(device)) return "Unavailable";
     const suffix = device.signal_live ? "" : " · cached";
-    return Math.max(0, Math.min(100, Math.round(Number(device.signal_strength) || 0))) + "%" + suffix;
+    return signalValue(device) + (hasRelativeSignal(device) ? " relative to receive range" : "") + suffix;
 }
 
 function deviceScore(device: Device) {

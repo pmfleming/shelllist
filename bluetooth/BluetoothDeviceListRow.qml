@@ -26,7 +26,7 @@ Ui.ResultRow {
         text: BluetoothFlow.signalValue(row.device)
         color: row.signalColor
         opacity: row.signalLive ? 1 : 0.58
-        font.pixelSize: Math.max(10, row.scaled(Ui.Theme.fontSizeCaption))
+        font.pixelSize: Ui.Theme.metadataSize
         font.weight: Font.Medium
     }
 

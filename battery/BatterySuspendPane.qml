@@ -64,16 +64,13 @@ Ui.DetailColumnCard {
     RowLayout {
         objectName: "suspendStatusRow"
         Layout.fillWidth: true
-        visible: pane.controller.suspendStatus.length > 0
         spacing: Ui.Theme.spacingSm
-
-        Ui.InlineStatus {
+        Item { Layout.fillWidth: true }
+        Ui.FeedbackSource {
             objectName: "suspendStatusText"
-            Layout.fillWidth: true
             text: pane.controller.suspendStatus
-            wrapMode: Text.Wrap
-            elide: Text.ElideNone
-            color: pane.controller.suspendBusy ? Ui.Theme.mutedText : (pane.controller.suspendError.length > 0 ? Ui.Theme.danger : Ui.Theme.warning)
+            summaryText: pane.controller.suspendBusy ? qsTr("Sleep action pending") : pane.controller.suspendOutcomeUnknown ? qsTr("Sleep outcome unknown") : qsTr("Sleep action needs attention")
+            tone: pane.controller.suspendBusy ? "info" : pane.controller.suspendError.length ? "error" : "warning"
         }
 
         Ui.FlatIconButton {
@@ -81,33 +78,28 @@ Ui.DetailColumnCard {
             accessKey: "T"
             Layout.preferredWidth: 30
             Layout.preferredHeight: 30
-            visible: pane.controller.suspendError.length > 0 && !pane.controller.suspendBusy && !pane.controller.suspendOutcomeUnknown
             icon: "󰑐"
             flatIconColor: Ui.Theme.accent
             accessibleName: qsTr("Retry %1").arg(Presentation.suspendActionName(pane.controller.suspendRetryAction))
             toolTip: accessibleName
-            enabled: pane.controller.canPowerSuspendAction(pane.controller.suspendRetryAction)
+            enabled: pane.controller.suspendError.length > 0 && !pane.controller.suspendBusy && !pane.controller.suspendOutcomeUnknown && pane.controller.canPowerSuspendAction(pane.controller.suspendRetryAction)
             onClicked: pane.controller.powerSuspendAction(pane.controller.suspendRetryAction)
         }
     }
 
-    Ui.InlineStatus {
+    Ui.FeedbackSource {
         objectName: "keepAwakeStatus"
-        Layout.fillWidth: true
-        visible: pane.controller.keepAwakePending || pane.controller.keepAwakeError.length > 0
+        active: pane.controller.keepAwakePending || pane.controller.keepAwakeError.length > 0
         text: pane.controller.keepAwakePending ? qsTr("Updating Keep awake…") : pane.controller.keepAwakeError
-        color: pane.controller.keepAwakeError.length > 0 ? Ui.Theme.danger : Ui.Theme.mutedText
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
+        summaryText: pane.controller.keepAwakePending ? qsTr("Updating Keep awake…") : qsTr("Keep awake change failed")
+        tone: pane.controller.keepAwakeError.length ? "error" : "info"
     }
 
-    Ui.InlineStatus {
+    Ui.FeedbackSource {
         objectName: "suspendFailureReason"
-        Layout.fillWidth: true
         text: (pane.controller.powerSuspend.operation || {}).error || pane.controller.suspendError || pane.controller.powerSuspend.error || ""
-        visible: text.length > 0 && pane.controller.suspendPendingAction.length === 0
-        color: Ui.Theme.warning
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
+        active: pane.controller.suspendPendingAction.length === 0
+        summaryText: qsTr("Sleep action failed")
+        tone: "warning"
     }
 }

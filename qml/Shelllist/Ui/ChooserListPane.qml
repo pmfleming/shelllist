@@ -37,6 +37,9 @@ ColumnLayout {
     property bool searchActionEnabled: true
     property string filterText: ""
     property string status: ""
+    property string statusSummary: qsTr("Status needs attention")
+    property string statusTone: "info"
+    property Item feedbackScope: null
     property int bodySpacing: Theme.verticalSpacing(Theme.spacingSm, densityScale)
     readonly property int resultCount: body.resultCount
     readonly property real delegateHeight: body.delegateHeight
@@ -150,6 +153,9 @@ ColumnLayout {
         emptyIcon: pane.emptyIcon
         emptyState: pane.emptyState
         status: pane.status
+        statusSummary: pane.statusSummary
+        statusTone: pane.statusTone
+        feedbackScope: pane.feedbackScope
         icon: pane.icon
         signalIcon: pane.signalIcon
         powered: pane.powered

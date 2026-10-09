@@ -83,7 +83,7 @@ WeatherForecastCard {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: hourlyCard.hourY(hourPoint.modelData.temperature_c) - 20
                 text: Visuals.numberLabel(hourPoint.modelData.temperature_c, "°")
-                font.pixelSize: Ui.Theme.fontSizeCaption
+                font.pixelSize: Ui.Theme.metadataSize
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
             Ui.ThemeText {
@@ -91,7 +91,7 @@ WeatherForecastCard {
                 y: 184
                 text: Number(hourPoint.modelData.precipitation_probability || 0) > 0 ? Visuals.numberLabel(hourPoint.modelData.precipitation_probability, "%") : ""
                 color: Ui.Theme.accent
-                font.pixelSize: Ui.Theme.fontSizeCaption
+                font.pixelSize: Ui.Theme.metadataSize
             }
             Ui.ThemeText {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -99,7 +99,7 @@ WeatherForecastCard {
                 anchors.bottomMargin: 7
                 text: Visuals.weatherTime(hourPoint.modelData.time_unix_ms, hourlyCard.weather)
                 color: Ui.Theme.subtleText
-                font.pixelSize: Ui.Theme.fontSizeCaption
+                font.pixelSize: Ui.Theme.metadataSize
             }
         }
     }

@@ -196,7 +196,7 @@ Item {
             return;
         }
         deletePreparing = false;
-        if (error || typeof value?.token !== "string" || !Number.isSafeInteger(value.count) || value.count < 1 || value.count > 100200 || !Number.isSafeInteger(value.expires_unix_ms) || value.expires_unix_ms <= Date.now() || (value.app_key ?? null) !== deleteScope.app_key || (deleteScope.selected ? value.selected?.id !== deleteScope.selected.id || value.selected?.created !== deleteScope.selected.created : (value.selected ?? null) !== null)) {
+        if (error || typeof value?.token !== "string" || !NotificationValidation.integerIn(value.count, 1, 100200) || !Number.isSafeInteger(value.expires_unix_ms) || value.expires_unix_ms <= Date.now() || (value.app_key ?? null) !== deleteScope.app_key || (deleteScope.selected ? value.selected?.id !== deleteScope.selected.id || value.selected?.created !== deleteScope.selected.created : (value.selected ?? null) !== null)) {
             if (value?.token) backend.deleteConfirmed(value.token, true);
             lastError = error || qsTr("Invalid delete confirmation"); return;
         }

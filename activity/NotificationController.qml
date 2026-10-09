@@ -136,7 +136,7 @@ Ui.ChooserController {
         else if (action === "delete" && app) notificationState.prepareDelete(key, null, app.latest.app_name || qsTr("Application"));
     }
     function deleteRecord(record: var): void {
-        if (!record || !catalog.validPreview(record)) return;
+        if (!record || !NotificationValidation.preview(record)) return;
         notificationState.prepareDelete(record.app_key, record, record.summary || qsTr("Notification"));
     }
     function primarySelected(): bool {

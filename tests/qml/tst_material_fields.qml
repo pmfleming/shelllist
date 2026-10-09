@@ -66,7 +66,8 @@ TestCase {
         compare(errorIcon.symbol, "error");
         compare(errorIcon.font.family, Ui.Theme.symbolFontFamily);
         verify(input.activeFocus && ring.visible);
-        compare(ring.border.width, 2);
+        compare(ring.border.width, 0);
+        verify(findChild(ring, "editingFocusLine").visible);
         compare(String(ring.color), String(Ui.Theme.withAlpha(Ui.Theme.danger, 0.22)));
         compare(String(field.border.color), String(Ui.Theme.danger));
         compare(field.height, height);

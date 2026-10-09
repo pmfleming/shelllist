@@ -8,27 +8,16 @@ Ui.DetailColumnCard {
     objectName: "bluetoothListOptions"
     title: qsTr("List options")
 
-    Ui.FieldLabel {
-        text: qsTr("Device list")
-    }
-    Ui.SegmentedControl {
-        objectName: "bluetoothSearchScope"
+    Ui.FormField {
         Layout.fillWidth: true
-        Layout.preferredHeight: Ui.Theme.compactControlHeight
-        options: [
-            {
-                value: "mine",
-                label: "My Devices"
-            },
-            {
-                value: "all",
-                label: "All Devices"
-            }
-        ]
-        value: options.controller.searchScope
-        interactive: !options.controller.globalRequestInFlight
-        onSelected: function (value) {
-            options.controller.setSearchScope(value);
+        label: qsTr("Device list")
+        Ui.SegmentedControl {
+            objectName: "bluetoothSearchScope"
+            Layout.fillWidth: true
+            options: [{value: "mine", label: qsTr("My devices")}, {value: "all", label: qsTr("All devices")}]
+            value: options.controller.searchScope
+            interactive: !options.controller.globalRequestInFlight
+            onSelected: function (value) { options.controller.setSearchScope(value); }
         }
     }
     Ui.ToggleRow {
@@ -46,7 +35,7 @@ Ui.DetailColumnCard {
         objectName: "showRecentDevices"
         Layout.fillWidth: true
         title: qsTr("Show recently found devices")
-        subtitle: qsTr("Include cached devices in All Devices")
+        subtitle: qsTr("Include cached devices in All devices")
         checked: !!options.controller.management.show_recent_devices
         interactive: !options.controller.globalRequestInFlight
         onClicked: options.controller.updateManagement({

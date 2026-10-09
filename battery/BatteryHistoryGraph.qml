@@ -171,7 +171,7 @@ Item {
             context.lineJoin = "round";
             context.lineCap = "round";
             graph.powerAreas.forEach(function (area) {
-                const color = area.charging ? Ui.Theme.active : Ui.Theme.resourcePower;
+                const color = area.charging ? Ui.Theme.graphSecondary : Ui.Theme.graphPrimary;
                 context.strokeStyle = color;
                 context.fillStyle = color;
                 const points = area.points.map(function (point) {

@@ -17,6 +17,9 @@ Item {
     property string emptyIcon: ""
     property string emptyState: "empty"
     property string status: ""
+    property string statusSummary: qsTr("Status needs attention")
+    property string statusTone: "info"
+    property Item feedbackScope: null
     property string icon: ""
     property bool signalIcon: false
     property bool powered: false
@@ -70,10 +73,12 @@ Item {
 
         // Keep domain progress/errors; a result count cannot replace these.
         StatusPanel {
-            visible: status.length > 0
             Layout.fillWidth: true
             uiScale: 1
             status: body.status || (listFrame.count === 0 ? body.emptyText : "")
+            statusSummary: body.statusSummary
+            statusTone: body.statusTone
+            feedbackScope: body.feedbackScope
             icon: body.icon
             signalIcon: body.signalIcon
             powered: body.powered

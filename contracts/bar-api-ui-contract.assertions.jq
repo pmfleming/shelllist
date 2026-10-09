@@ -66,6 +66,13 @@
 (.snapshot.notifications.count | type == "number") and
 (.snapshot.notifications.backend | type == "string") and
 (.snapshot.notifications.dnd_until_unix_ms | type == "number" or . == null) and
+(any(.registry.methods[]; .name == "notifications.setAppPolicy" and .result == "notifications" and
+  (.params.app_key | type == "string") and
+  (.params.policy == {silent: true, until_unix_ms: null, group_similar: true, bypass_dnd: false}))) and
+(any(.registry.methods[]; .name == "notifications.prepareDelete" and .result == "delete_confirmation" and
+  (.params | has("app_key") and has("selected")))) and
+(any(.registry.methods[]; .name == "notifications.delete" and .result == "deleted" and
+  (.params.token | type == "string") and (.params.cancel | type == "boolean"))) and
 (any(.registry.methods[]; .name == "notifications.queryHistory" and (.params | has("cursor") and has("anchor") and has("query")))) and
 (.notification_page.epoch | type == "string") and
 (.notification_page.revision == "1") and
@@ -76,7 +83,9 @@
 (.notification_page.records[0].history_id == null) and
 (.notification_page.records[0].notification.id == .snapshot.notification_active.notifications[0].id) and
 (.notification_page.records[0].notification.toast_visible == false) and
-(any(.registry.methods[]; .name == "notifications.queryCenter" and (.params | has("view") and has("page") and has("selected") and has("app_anchor")))) and
+(.notification_page.records[0].notification.dnd_bypass == false) and
+(.notification_page.records[0].notification.identity_icon | type == "string") and
+(any(.registry.methods[]; .name == "notifications.queryCenter" and (.params | has("view") and has("page") and has("selected") and has("app_anchor") and has("period_day")) and (.params.period_groups | type == "boolean"))) and
 (.notification_apps.view == "apps") and
 (.notification_apps.total_apps == 1) and
 (.notification_apps.apps[0].key == .notification_app.app_key) and
@@ -86,6 +95,9 @@
 (.notification_app.selected.notification.hints as $hints |
   [.notification_apps.apps[0].latest, .notification_app.overview[], .notification_app.entries[]] |
   all(.hints.desktop_entry == $hints.desktop_entry and .hints.image_path == $hints.image_path)) and
+(.notification_app.selected.notification.identity_icon as $icon |
+  [.notification_apps.apps[0].latest, .notification_app.overview[], .notification_app.entries[]] |
+  all(.identity_icon == $icon)) and
 (.notification_app.view == "app") and
 (.notification_app.pages == 1 and .notification_app.page == 1) and
 (.notification_app.overview | length <= 3) and

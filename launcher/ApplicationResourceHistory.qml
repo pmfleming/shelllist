@@ -18,17 +18,6 @@ ColumnLayout {
     readonly property string memorySource: application.running ? Resources.text((application.measurement || {}).memory_source, "unknown") : qsTr("Source not recorded")
     readonly property string observationStatus: application.running ? ""
         : latestPoint ? qsTr("App stopped · last observed %1").arg(Qt.formatDateTime(new Date(latestPoint.timestamp_ms), "yyyy-MM-dd HH:mm:ss")) : qsTr("App stopped · no retained measurements")
-    readonly property var footprint: ({
-        total: currentHas("disk_space_total_bytes") ? current.disk_space_total_bytes : null,
-        reading: {
-            objectName: "applicationDiskFootprint", label: qsTr("Identified app data"), icon: "folder",
-            available: currentHas("disk_space_total_bytes"), valueText: currentText("disk_space_total_bytes", "bytes"), color: Ui.Theme.resourceDisk,
-            detailText: qsTr("Persistent %1. Temporary %2. Installation and shared dependencies not measured. Referenced files may overlap and are not added. Temporary data is not necessarily safe to delete.")
-                .arg(currentText("disk_space_permanent_bytes", "bytes")).arg(currentText("disk_space_temporary_bytes", "bytes"))
-        },
-        parts: [footprintPart("permanent", "persistent", qsTr("Persistent app data"), "inventory_2", Ui.Theme.resourceDisk),
-            footprintPart("temporary", "temporary", qsTr("Temporary app data"), "folder_clock", Ui.Theme.resourceNetworkTransmit)]
-    })
     readonly property var lanes: [
         lane("activity", qsTr("Activity"), "percent", [
             series("cpu_percent_of_machine", "CPU", "CPU", "memory", Ui.Theme.resourceCpu, "percent", "applicationCpuActivity", 0),
@@ -51,11 +40,6 @@ ColumnLayout {
     }
     function currentText(metric: string, kind: string): string {
         return currentHas(metric) ? Resources.formatted(application.running ? Resources.currentValue(application, metric) : current[metric], kind) : qsTr("Unavailable");
-    }
-    function footprintPart(metric: string, id: string, label: string, icon: string, color: color): var {
-        const key = "disk_space_" + metric + "_bytes";
-        return {id: id, label: label, icon: icon, color: color, available: currentHas(key),
-            value: currentHas(key) ? current[key] : null, valueText: currentText(key, "bytes")};
     }
     function series(metric: string, label: string, shortLabel: string, icon: string, color: color, kind: string, objectName: string, direction: int): var {
         const stats = Resources.summaryMetric(summary, metric);
@@ -82,30 +66,29 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Math.round(6 * uiScale)
 
-    Ui.ThemeText {
+    Ui.FeedbackSource {
         objectName: "applicationResourceSnapshotStatus"
-        Layout.fillWidth: true
-        visible: history.observationStatus.length > 0
+        active: history.observationStatus.length > 0
         text: history.observationStatus
-        color: Ui.Theme.mutedText
-        wrapMode: Text.Wrap
-        font.pixelSize: Ui.Theme.fontSizeCaption
+        summaryText: history.latestPoint ? qsTr("App stopped · Last observation") : qsTr("App stopped · No measurements")
     }
-    Ui.SegmentedControl {
-        objectName: "applicationHistoryRange"
-        Layout.alignment: Qt.AlignRight
-        Layout.preferredWidth: Math.round(170 * history.uiScale)
-        Layout.preferredHeight: Math.round(36 * history.uiScale)
-        options: [{value: "30m", label: "30m"}, {value: "2h", label: "2h"}, {value: "24h", label: "24h"}]
-        value: history.controller.historyRange
-        onSelected: function (value) { history.controller.selectHistoryRange(value); }
+    Ui.FormField {
+        Layout.fillWidth: true
+        label: qsTr("Range")
+        accessibleName: qsTr("Resource history range")
+        Ui.SegmentedControl {
+            objectName: "applicationHistoryRange"
+            Layout.fillWidth: true
+            options: [{value: "30m", label: "30m"}, {value: "2h", label: "2h"}, {value: "24h", label: "24h"}]
+            value: history.controller.historyRange
+            onSelected: function (value) { history.controller.selectHistoryRange(value); }
+        }
     }
     ApplicationResourceOverview {
         objectName: "applicationResourceOverview"
         Layout.fillWidth: true
         Layout.fillHeight: true
         lanes: history.lanes
-        footprint: history.footprint
         points: history.points
         loading: history.controller.historyInFlight
         active: history.controller.uiActive
@@ -118,25 +101,19 @@ ColumnLayout {
         rangeStartMilliseconds: history.controller.historyWindowStartMs
         rangeEndMilliseconds: history.controller.historyWindowEndMs
     }
-    Ui.ThemeText {
+    Ui.FeedbackSource {
         objectName: "applicationProcessCoverage"
-        Layout.fillWidth: true
         readonly property var coverage: history.application.running ? (history.application.measurement || {}).coverage : history.current.coverage
         readonly property bool shared: !!(history.application.measurement || {}).resources_shared && history.application.running
-        visible: !Resources.measured(coverage) || coverage < 1 || shared
+        active: !Resources.measured(coverage) || coverage < 1 || shared
         text: (Resources.measured(coverage) ? qsTr("Process coverage %1").arg(Resources.ratioPercent(coverage)) : qsTr("Unknown process coverage"))
             + (shared ? qsTr(" · Shared attribution") : "")
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        wrapMode: Text.Wrap
+        summaryText: shared ? qsTr("Shared resource attribution") : qsTr("Partial process coverage")
+        tone: "warning"
     }
-    Ui.ThemeText {
+    Ui.FeedbackSource {
         objectName: "applicationSwapStatus"
-        Layout.fillWidth: true
-        visible: history.currentHas("memory_swap_bytes") && history.current.memory_swap_bytes > 0
+        active: history.currentHas("memory_swap_bytes") && history.current.memory_swap_bytes > 0
         text: qsTr("Swap %1").arg(history.currentText("memory_swap_bytes", "bytes"))
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        wrapMode: Text.Wrap
     }
 }

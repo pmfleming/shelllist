@@ -179,6 +179,7 @@ Tests.DaemonTestCase {
     function save(panel, name) {
         wait(180);
         verify(waitForPolish(panel.Window.window));
+        checkSharedComposition(panel);
         const directory = Quickshell.env("SHELLLIST_REVIEW_DIR") || decodeURIComponent(Qt.resolvedUrl("../../target/circular-action-review/").toString().replace(/^file:\/\//, ""));
         // QtTest.grabImage crops using logical coordinates on HiDPI windows.
         // Grab the complete render layer instead; Qt applies the window DPR
@@ -188,6 +189,32 @@ Tests.DaemonTestCase {
             saved = result.saveToFile(directory + name + ".png");
         }, Qt.size(Math.ceil(panel.width), Math.ceil(panel.height))));
         tryVerify(() => saved);
+    }
+    function fieldGeometry(root) {
+        const rows = [];
+        function visit(item) {
+            if (!item.visible) return;
+            if (item instanceof Ui.FieldRow) {
+                const position = item.mapToItem(root, 0, 0);
+                rows.push([item.label, position.x, position.y, item.width, item.height, item.editorX].join(":"));
+            }
+            for (const child of item.children) visit(child);
+        }
+        visit(root);
+        return rows.join(";");
+    }
+    function checkSharedComposition(item) {
+        if (!item.visible) return;
+        if (item instanceof Ui.StatusPanel || item instanceof Ui.FeedbackSlot)
+            compare(item.height, item.implicitHeight, "Status geometry is fixed: " + item.objectName);
+        if (item instanceof Ui.FeedbackSlot && item.fullText.length) {
+            const label = findChild(item, "feedbackText");
+            compare(label.font.pixelSize, Ui.Theme.statusTextSize);
+            verify(label.contentHeight <= label.height + 1, "Feedback fits: " + label.text);
+        }
+        if (item instanceof Ui.FieldRow && item.label.length)
+            verify(item.editorX >= item.labelColumnWidth, "Labels stay left of editors");
+        for (const child of item.children) checkSharedComposition(child);
     }
     function checkCircles(item) {
         if (!item.visible) return;
@@ -288,18 +315,29 @@ Tests.DaemonTestCase {
                 save(panel, data.tag + "-adapter-" + tab);
             }
         }
+        // Normal width was restored after the minimum capture. Measure only
+        // after its nested layouts have settled, not a mixed old/new geometry.
+        verify(waitForPolish(panel.Window.window));
+        const beforeFeedback = fieldGeometry(panel.surface);
         const error = "The requested change could not be confirmed. The previous acknowledged state is retained. Check the service connection and retry; this deliberately long diagnostic must remain readable.";
         if (data.id === "activity" || data.id === "battery") {
             controller.lastError = error;
             save(panel, data.tag + "-error");
+            compare(fieldGeometry(panel.surface), beforeFeedback, "Standalone feedback does not move fields");
         } else if (data.id === "audio" || data.id === "media") {
             panel.desktop.backend.operationError = error;
             save(panel, data.tag + "-error");
+            compare(fieldGeometry(panel.surface), beforeFeedback, "Audio/Media feedback does not move fields");
+            controller.closeDetails();
+            tryVerify(() => !controller.detailsOpen);
+            tryVerify(() => findChild(panel, "feedbackText").text.includes("unconfirmed"));
+            compare(findChild(panel, "feedbackText").color, Ui.Theme.danger, "Outcome and tone survive inspector collapse");
         } else if (data.id === "notifications") {
             controller.detailsTab = "controls";
             const errors = {}; errors[controller.selectedAppKey] = error;
             controller.notificationState.policyErrors = errors;
             save(panel, data.tag + "-error");
+            compare(fieldGeometry(panel.surface), beforeFeedback, "Notification feedback does not move fields");
             controller.notificationState.policyErrors = {};
             const pending = {}; pending[controller.selectedAppKey] = true;
             controller.notificationState.policyPending = pending;

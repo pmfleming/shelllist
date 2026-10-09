@@ -1,65 +1,19 @@
 import QtQuick
-import QtQuick.Layouts
 
-// Passive list anatomy; the trailing native control keeps browse/edit ownership.
-Item {
+// Compatibility names only: composition, Help and feedback belong to FormField.
+FormField {
     id: row
     property string title: ""
     property string subtitle: ""
     property color subtitleColor: Theme.mutedText
-    property bool separatorVisible: true
     property bool compact: false
-    property string icon: ""
-    default property alias controls: trailing.data
-
-    Layout.fillWidth: true
-    implicitHeight: Math.max(compact ? Theme.formHeight : 56, Math.max(labels.implicitHeight, trailing.implicitHeight) + 2 * Theme.spacingSm)
-
-    RowLayout {
-        anchors.fill: parent
-        anchors.topMargin: Theme.spacingSm
-        anchors.bottomMargin: Theme.spacingSm
-        spacing: row.compact ? Theme.spacingSm : Theme.spacingLg
-        GlyphLabel {
-            visible: row.icon.length > 0
-            glyph: row.icon
-            Layout.preferredWidth: Theme.iconSize
-            font.pixelSize: Theme.iconSize
-            Accessible.ignored: true
-        }
-        Column {
-            id: labels
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            spacing: Theme.spacingXs
-            ThemeText {
-                width: parent.width
-                text: row.title
-                font.pixelSize: Theme.fieldNameSize
-                font.weight: Theme.fieldNameWeight
-                color: Theme.mutedText
-                wrapMode: Text.WordWrap
-            }
-            ThemeText {
-                width: parent.width
-                visible: row.subtitle.length > 0
-                text: row.subtitle
-                color: row.subtitleColor
-                font.pixelSize: Theme.statusTextSize
-                wrapMode: Text.WordWrap
-            }
-        }
-        RowLayout {
-            id: trailing
-            spacing: Theme.spacingSm
-        }
-    }
-    Rectangle {
-        visible: row.separatorVisible
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        height: 1
-        color: Theme.withAlpha(Theme.border, 0.55)
-    }
+    default property alias controls: row.content
+    readonly property bool operationalSubtitle: subtitleColor === Theme.warning || subtitleColor === Theme.danger
+    label: title
+    supportingText: operationalSubtitle ? "" : subtitle
+    errorText: subtitleColor === Theme.danger ? subtitle : ""
+    statusText: subtitleColor === Theme.warning ? subtitle : ""
+    statusTone: "warning"
+    // Guidance/operation transitions must not change the editor's allocation.
+    showHelpButton: true
 }

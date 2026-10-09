@@ -85,7 +85,7 @@ Item {
             text: message.text
             wrapMode: Text.Wrap
             horizontalAlignment: Text.AlignHCenter
-            font.pixelSize: message.compact ? Theme.fontSizeCaption : Theme.fontSizeBody
+            font.pixelSize: message.compact ? Theme.metadataSize : Theme.fontSizeBody
             color: message.kind === "unavailable" ? Theme.danger : Theme.mutedText
             Accessible.ignored: true
         }

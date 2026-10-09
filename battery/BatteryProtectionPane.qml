@@ -26,17 +26,17 @@ Column {
             title: qsTr("Charging & protection")
             helpText: qsTr("Resume and stop set the charge limits. The bell follows the effective target, including a one-time full charge. Charging actions: full battery charges to 100% once; pause/play stops or resumes charging; circular arrow calibrates. Health is full capacity divided by design capacity; the cycle icon counts charge cycles.")
         }
-        Ui.FieldLabel {
-            Layout.fillWidth: true
-            visible: !pane.controller.protectionSupported
+        Ui.FeedbackSource {
+            active: !pane.controller.protectionSupported
             text: qsTr("Charge thresholds are not exposed by this battery")
-            color: Ui.Theme.warning
+            summaryText: qsTr("Charge thresholds unsupported")
+            tone: "warning"
         }
-        Ui.FieldLabel {
-            Layout.fillWidth: true
-            visible: pane.controller.protectionSupported && !!pane.protection.managed && !pane.protection.thresholds_verified
+        Ui.FeedbackSource {
+            active: pane.controller.protectionSupported && !!pane.protection.managed && !pane.protection.thresholds_verified
             text: qsTr("The firmware accepted the range but reported a different value.")
-            color: Ui.Theme.warning
+            summaryText: qsTr("Charge range differs from request")
+            tone: "warning"
         }
         Ui.ToggleRow {
             objectName: "batteryProtectionEnabled"
@@ -72,17 +72,16 @@ Column {
             }
             onEditingFinished: pane.controller.finishThresholdEditing()
         }
-        Ui.ThemeText {
-            Layout.fillWidth: true
-            visible: !pane.controller.thresholdDraftValid
+        Ui.FeedbackSource {
+            active: !pane.controller.thresholdDraftValid
             text: qsTr("Resume charging must be lower than stop charging.")
-            color: Ui.Theme.danger
-            font.pixelSize: Ui.Theme.statusTextSize
+            summaryText: qsTr("Resume must be below stop")
+            tone: "error"
         }
         Ui.SaveStatusLabel {
             objectName: "batteryThresholdSaveStatus"
             Layout.fillWidth: true
-            visible: pane.controller.protectionSupported && (pane.controller.thresholdDraftDirty || pane.controller.thresholdOperationActive || pane.controller.thresholdSaveError.length > 0)
+            active: pane.controller.protectionSupported && (pane.controller.thresholdDraftDirty || pane.controller.thresholdOperationActive || pane.controller.thresholdSaveError.length > 0)
             text: pane.controller.thresholdSaveStatus
             valid: pane.controller.thresholdDraftValid
             error: pane.controller.thresholdSaveError
@@ -103,7 +102,7 @@ Column {
         Ui.SaveStatusLabel {
             objectName: "batteryChargeNotificationSaveStatus"
             Layout.fillWidth: true
-            visible: pane.controller.alertDraftDirty || pane.controller.alertOperationActive || pane.controller.alertSaveError.length > 0
+            active: pane.controller.alertDraftDirty || pane.controller.alertOperationActive || pane.controller.alertSaveError.length > 0
             text: pane.controller.alertSaveStatus
             valid: pane.controller.alertDraftValid
             error: pane.controller.alertSaveError
@@ -152,12 +151,11 @@ Column {
                 }
             }
         }
-        Ui.FieldLabel {
+        Ui.FeedbackSource {
             objectName: "batteryChargingStatus"
-            Layout.fillWidth: true
-            visible: pane.controller.calibrating || pane.controller.chargingInhibited || !!pane.protection.charge_once_active
+            active: pane.controller.calibrating || pane.controller.chargingInhibited || !!pane.protection.charge_once_active
             text: pane.controller.calibrating ? Presentation.calibrationLabel(pane.controller.batteryOperation) : (pane.controller.chargingInhibited ? qsTr("Charging paused") : qsTr("One-time full charge active"))
-            color: Ui.Theme.active
+            summaryText: pane.controller.calibrating ? qsTr("Calibration in progress") : text
         }
     }
 }

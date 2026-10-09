@@ -4,6 +4,15 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
+The [2026-10-08 maintenance review](qml-maintenance-2026-10-08.md) uses the
+incoming dirty worktree as its baseline. Shared notification validation and choice
+transactions, consolidated timeline cursor state and removal of an unused resource
+subtree reduce production source by 439 lines and total physical code by 360 lines,
+including regressions. Complexity, effort, cloning and locality improve; average
+leverage is slightly lower despite new shared consumers. Native lint and the Qt
+suite pass (312 passes, one existing RHI-only skip). The full sibling/Nix gate
+remains unverified; the review records static-analysis limits and follow-up work.
+
 The subsequent [test pruning](reviews/test-pruning-2026-10-06.md) reduces the
 corrected mixed inventory from 314 to 210 without changing production code.
 Current Qt results are 148 behavioral cases / 212 passes including hooks. Counts

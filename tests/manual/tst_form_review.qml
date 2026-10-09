@@ -27,6 +27,7 @@ Tests.DaemonTestCase {
     Component {
         id: familyFactory
         Rectangle {
+            id: family
             width: tests.width
             height: 880
             color: Ui.Theme.window
@@ -100,6 +101,7 @@ Tests.DaemonTestCase {
                     onReplyRequested: tests.fail("Capture must not send replies")
                 }
                 Item { Layout.fillHeight: true }
+                Ui.StatusPanel { Layout.fillWidth: true; uiScale: 1; feedbackScope: family }
             }
         }
     }
@@ -113,7 +115,18 @@ Tests.DaemonTestCase {
             property alias controller: controller
             property alias page: page
             Wifi.WifiController { id: controller; prompt: Wifi.WifiPromptController { } }
-            Wifi.AdvancedSettingsPage { id: page; anchors.fill: parent; anchors.margins: 20; controller: panel.controller }
+            Wifi.AdvancedSettingsPage {
+                id: page
+                anchors.fill: parent; anchors.margins: 20
+                anchors.bottomMargin: 20 + footer.height + Ui.Theme.spacingMd
+                controller: panel.controller
+            }
+            Ui.StatusPanel {
+                id: footer
+                anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 20
+                uiScale: 1
+                feedbackScope: page
+            }
         }
     }
     function save(item, name) {

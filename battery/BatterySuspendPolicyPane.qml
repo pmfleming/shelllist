@@ -56,7 +56,7 @@ Ui.DetailColumnCard {
         }
         Ui.DropDownList {
             objectName: "lidCloseAction"
-            Layout.preferredWidth: Math.min(160, pane.width * 0.38)
+            Layout.fillWidth: true
             options: [
                 {
                     value: "system",
@@ -133,7 +133,7 @@ Ui.DetailColumnCard {
 
                 Ui.DropDownList {
                     objectName: "suspendDelay-" + profile.modelData
-                    Layout.preferredWidth: Math.min(140, pane.width * 0.38)
+                    Layout.fillWidth: true
                     options: pane.delayOptions(profile.settings.sleep_minutes)
                     value: String(profile.settings.sleep_minutes)
                     interactive: pane.interactive
@@ -151,7 +151,7 @@ Ui.DetailColumnCard {
 
                 Ui.DropDownList {
                     objectName: "hibernateDelay-" + profile.modelData
-                    Layout.preferredWidth: Math.min(140, pane.width * 0.38)
+                    Layout.fillWidth: true
                     options: pane.delayOptions(profile.settings.hibernate_minutes).map(function (option) {
                         return Object.assign({}, option, {
                             enabled: option.value === "0" || !!pane.controller.suspendPolicyState.hibernate_available
@@ -181,13 +181,11 @@ Ui.DetailColumnCard {
         }
     }
 
-    Ui.FieldLabel {
-        Layout.fillWidth: true
-        visible: pane.controller.suspendPolicyState.available && !!pane.controller.suspendPolicyState.hibernate_error
+    Ui.FeedbackSource {
+        active: pane.controller.suspendPolicyState.available && !!pane.controller.suspendPolicyState.hibernate_error
         text: pane.controller.suspendPolicyState.hibernate_error || ""
-        color: Ui.Theme.warning
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
+        summaryText: qsTr("Hibernation unavailable")
+        tone: "warning"
     }
 
     Ui.ToggleRow {
@@ -213,7 +211,7 @@ Ui.DetailColumnCard {
         visible: pane.criticalPolicy.enabled
         Ui.DropDownList {
             objectName: "criticalBatteryPercent"
-            Layout.preferredWidth: 116
+            Layout.fillWidth: true
             options: Array.from({
                 length: 20
             }, function (_, i) {
@@ -238,7 +236,7 @@ Ui.DetailColumnCard {
         visible: pane.criticalPolicy.enabled
         Ui.DropDownList {
             objectName: "criticalBatteryGrace"
-            Layout.preferredWidth: 116
+            Layout.fillWidth: true
             options: Array.from(new Set([30, 60, 90, 120, 180, 300, pane.criticalPolicy.grace_seconds])).sort(function (a, b) {
                 return a - b;
             }).map(function (seconds) {
@@ -256,14 +254,13 @@ Ui.DetailColumnCard {
         }
     }
 
-    Ui.FieldLabel {
+    Ui.FeedbackSource {
         objectName: "criticalBatteryStatus"
-        Layout.fillWidth: true
-        visible: text.length > 0
         text: pane.criticalState.error || (pane.criticalState.phase === "countdown" ? qsTr("Hibernation in %1 seconds unless AC connects or you cancel.").arg(pane.criticalState.remaining_seconds) : (["disabled", "armed", "idle"].includes(pane.criticalState.phase || "disabled") ? "" : qsTr("Protection: %1 · locking and inhibitors remain enforced; failures are not retried automatically.").arg(pane.criticalState.phase)))
-        color: pane.criticalState.error ? Ui.Theme.warning : Ui.Theme.mutedText
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
+        summaryText: pane.criticalState.phase === "countdown" ? qsTr("Hibernation in %1s · Connect AC or cancel").arg(pane.criticalState.remaining_seconds) : pane.criticalState.error ? qsTr("Critical protection failed") : qsTr("Protection: %1").arg(pane.criticalState.phase)
+        briefText: pane.criticalState.phase === "countdown" ? qsTr("Hibernate in %1s · AC / Cancel").arg(pane.criticalState.remaining_seconds) : summaryText
+        tone: "warning"
+        priority: 100
     }
 
     Ui.LabeledAction {
@@ -271,27 +268,23 @@ Ui.DetailColumnCard {
         objectName: "criticalBatteryCancel"
         accessKey: "C"
         Layout.fillWidth: true
-        visible: ["countdown", "acting"].includes(pane.criticalState.phase)
         label: qsTr("Cancel critical-battery hibernation")
-        enabled: !pane.controller.actionInFlight
+        enabled: ["countdown", "acting"].includes(pane.criticalState.phase) && !pane.controller.actionInFlight
         toolTip: qsTr("Cancels this battery episode. An already dispatched request cannot be undone.")
         onClicked: pane.controller.cancelCriticalBattery()
     }
 
-    Ui.FieldLabel {
+    Ui.FeedbackSource {
         objectName: "suspendPolicyStatus"
-        Layout.fillWidth: true
-        visible: text.length > 0
         text: pane.controller.suspendPolicyError || (pane.controller.suspendPolicyState.error || pane.controller.suspendPolicyState.last_error || !pane.controller.suspendPolicyState.available ? qsTr("Automatic sleep unavailable") : (pane.controller.suspendPolicySaving ? qsTr("Saving…") : ""))
-        color: pane.controller.suspendPolicyError.length > 0 || pane.controller.suspendPolicyState.error || pane.controller.suspendPolicyState.last_error ? Ui.Theme.warning : Ui.Theme.mutedText
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
+        summaryText: pane.controller.suspendPolicySaving ? qsTr("Saving sleep settings…") : qsTr("Automatic sleep needs attention")
+        tone: pane.controller.suspendPolicyError.length > 0 || pane.controller.suspendPolicyState.error || pane.controller.suspendPolicyState.last_error ? "warning" : "info"
     }
 
     Ui.FlatIconButton {
         objectName: "suspendPolicyDetails"
         Layout.alignment: Qt.AlignRight
-        visible: !!pane.controller.suspendPolicyState.error || !!pane.controller.suspendPolicyState.last_error || !pane.controller.suspendPolicyState.available
+        enabled: !!pane.controller.suspendPolicyState.error || !!pane.controller.suspendPolicyState.last_error || !pane.controller.suspendPolicyState.available
         icon: pane.errorDetailsOpen ? "expand_less" : "info"
         accessibleName: qsTr("Automatic sleep diagnostic details")
         onClicked: pane.errorDetailsOpen = !pane.errorDetailsOpen
@@ -311,9 +304,8 @@ Ui.DetailColumnCard {
         objectName: "suspendPolicyRetry"
         accessKey: "R"
         Layout.fillWidth: true
-        visible: pane.controller.suspendPolicyError.length > 0 && pane.controller.suspendPolicyDirty
         label: qsTr("Retry settings")
-        enabled: pane.controller.suspendPolicyCriticalOnly ? pane.criticalInteractive : pane.interactive
+        enabled: pane.controller.suspendPolicyError.length > 0 && pane.controller.suspendPolicyDirty && (pane.controller.suspendPolicyCriticalOnly ? pane.criticalInteractive : pane.interactive)
         onClicked: pane.controller.saveSuspendPolicy()
     }
 }

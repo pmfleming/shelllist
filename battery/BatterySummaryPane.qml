@@ -18,18 +18,9 @@ Column {
     Ui.DetailColumnCard {
         objectName: "powerModeCard"
 
-        RowLayout {
+        Ui.FormField {
             Layout.fillWidth: true
-            spacing: Ui.Theme.spacingMd
-
-            Ui.ThemeText {
-                Layout.fillWidth: true
-                text: qsTr("Power mode")
-                font.pixelSize: Ui.Theme.groupHeadingSize
-                font.weight: Ui.Theme.groupHeadingWeight
-                wrapMode: Text.Wrap
-            }
-
+            label: qsTr("Power mode")
             BatteryProfileSelector {
                 objectName: "batteryPowerModeProfile"
                 Layout.preferredWidth: implicitWidth
@@ -44,29 +35,26 @@ Column {
             }
         }
 
-        Ui.InlineStatus {
-            Layout.fillWidth: true
-            visible: !pane.controller.powerProfile.available
+        Ui.FeedbackSource {
+            active: !pane.controller.powerProfile.available
             text: qsTr("power-profiles-daemon is unavailable")
-            color: Ui.Theme.warning
+            summaryText: qsTr("Power profiles unavailable")
+            tone: "warning"
         }
-
-        Ui.InlineStatus {
-            Layout.fillWidth: true
-            visible: !!pane.controller.powerProfile.performance_degraded
-            text: "Performance is limited: " + pane.controller.powerProfile.performance_degraded
-            color: Ui.Theme.warning
+        Ui.FeedbackSource {
+            active: !!pane.controller.powerProfile.performance_degraded
+            text: qsTr("Performance is limited: %1").arg(pane.controller.powerProfile.performance_degraded)
+            summaryText: qsTr("Performance is limited")
+            tone: "warning"
         }
 
         Repeater {
             model: pane.controller.powerProfile.active_holds || []
 
-            delegate: Ui.FieldLabel {
+            delegate: Ui.FeedbackSource {
                 required property var modelData
-                Layout.fillWidth: true
-                Layout.preferredHeight: 26
                 text: Presentation.holdSummary(modelData)
-                color: Ui.Theme.active
+                summaryText: qsTr("An application holds the power profile")
             }
         }
     }
@@ -81,10 +69,14 @@ Column {
         BatterySectionHeading {
             Layout.fillWidth: true
             title: qsTr("Application energy")
-            helpText: qsTr("Plug: since last charge. 7d: last seven days. ≈ marks estimated attributed energy, not direct per-application measurement. Confidence: %1.").arg(pane.controller.energyOverview.energy_confidence || "low")
+            helpText: qsTr("Plug: since last charge. 7d: last seven days. Energy is estimated attribution, not direct per-application measurement. Confidence: %1.").arg(pane.controller.energyOverview.energy_confidence || "low")
         }
 
-        Ui.SegmentedControl {
+        Ui.FormField {
+            Layout.fillWidth: true
+            label: qsTr("Period")
+            accessibleName: qsTr("Application energy period")
+            Ui.SegmentedControl {
             objectName: "batteryEnergyPeriod"
             iconOnly: true
             Accessible.name: qsTr("Application energy period")
@@ -106,13 +98,19 @@ Column {
             onSelected: function (value) {
                 pane.controller.selectEnergyPeriod(value);
             }
+            }
         }
 
-        Ui.FieldLabel {
+        Ui.ThemeText {
             Layout.fillWidth: true
-            text: pane.controller.energyLoading ? "Updating estimated energy…" : (pane.controller.energyError.length > 0 ? pane.controller.energyError : "≈ " + Presentation.energy(pane.controller.energyOverview.total_energy_mwh))
-            color: pane.controller.energyError.length > 0 ? Ui.Theme.warning : Ui.Theme.mutedText
-            Accessible.name: pane.controller.energyError || (qsTr("Estimated attributed energy: %1. Confidence: %2").arg(Presentation.energy(pane.controller.energyOverview.total_energy_mwh)).arg(pane.controller.energyOverview.energy_confidence || "low"))
+            text: pane.controller.energyError || pane.controller.energyOverview.total_energy_mwh === undefined ? qsTr("Unavailable") : Presentation.energy(pane.controller.energyOverview.total_energy_mwh)
+            font.pixelSize: Ui.Theme.formValueSize
+            Accessible.name: qsTr("Estimated attributed energy: %1. Confidence: %2").arg(text).arg(pane.controller.energyOverview.energy_confidence || "low")
+        }
+        Ui.FeedbackSource {
+            text: pane.controller.energyError || (pane.controller.energyLoading ? qsTr("Updating estimated energy…") : "")
+            summaryText: pane.controller.energyError ? qsTr("Energy unavailable") : qsTr("Updating energy…")
+            tone: pane.controller.energyError ? "warning" : "info"
         }
 
         Repeater {
@@ -183,7 +181,7 @@ Column {
                     Ui.ThemeText {
                         text: Presentation.energy(energyRow.modelData.energy_mwh)
                         color: Ui.Theme.accent
-                        font.pixelSize: Ui.Theme.fontSizeCaption
+                        font.pixelSize: Ui.Theme.metadataSize
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }
                 }

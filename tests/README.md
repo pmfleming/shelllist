@@ -8,8 +8,14 @@ implementation tables or freeze visual choices unnecessarily.
 
 `docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,
 exceptions and separate source/offscreen/live evidence. `tst_panel_roles.qml`
-covers meaningful shared-role risks: switch/label readability, growing diagnostics,
-pending versus success, stacked labels, native identity and editable-only traversal.
+covers switch/label readability, fixed feedback, pending versus success,
+inline labels, native identity and editable-only traversal.
+`tst_shared_panel_composition.qml` compares field-family boundaries at common
+widths, caret-only browsing, stable error geometry, retained drafts, readable
+summary fallback and Weather's unchanged frame/metric strip. Manual all-panel
+captures assert fixed status bounds and representative real-consumer error
+transitions. See [current convergence evidence](../docs/shared-panel-ui-convergence.md);
+pruning checkpoints below describe historical source snapshots, not this run.
 The explicit manual capture fixtures cover panels, dense forms and display safety
 states. Generate the local comparison gallery with `tests/build-panel-gallery.py`;
 use `tests/review-panel-ui.py --base <ref>` as an advisory PR drift review, not a
@@ -186,8 +192,8 @@ Direct per-wrapper visual/size matrices, some happy-path restoration and consume
 wiring checks, exhaustive history schema variants, native slider End, RTL segment
 navigation, outside-drop cancellation and standalone animation completion receive
 less direct evidence. Essential behavior remains covered, but fewer tests do not
-prove identical branch coverage. See the [review](../docs/reviews/test-pruning-2026-10-06.md)
-for decisions, explicit gaps, per-suite counts and reproduction commands.
+prove identical branch coverage. The historical 2026-10-06 review is retired from the checkout; its decisions
+and explicit coverage gaps are summarized above.
 Evidence is in ignored `target/test-pruning-2026-10-06/`.
 
 This checkpoint is not a permanent test-count cap. Add focused behavioral
@@ -195,10 +201,12 @@ regressions when a meaningful failure is found.
 
 ## Historical checkpoints
 
-- [2026-10-05: 359 → 241](../docs/reviews/test-pruning-2026-10-05.md)
-- [2026-10-04: 396 → 265](../docs/reviews/test-pruning-2026-10-04.md)
-- [2026-09-27: 298 → 200](../docs/reviews/test-pruning-2026-09-27.md)
-- [2026-09-26: 357 → 239](../docs/reviews/test-pruning-2026-09-26.md)
+Retired review records (counts retained for history; files are no longer linked):
+
+- 2026-10-05: 359 → 241
+- 2026-10-04: 396 → 265
+- 2026-09-27: 298 → 200
+- 2026-09-26: 357 → 239
 
 These describe earlier sources and validation, not the current suite. Always
 count matching source snapshots and QML logs; the inventory script rejects

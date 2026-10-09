@@ -23,9 +23,6 @@ Item {
     property string error: ""
     property int generation: 0
     property var staging: []
-    property string stagingEpoch: ""
-    property string stagingRevision: ""
-    property string stagingDay: ""
     property var stagingMetadata: null
     property string anchor: ""
     signal viewAboutToChange
@@ -47,17 +44,17 @@ Item {
     function reload(): void {
         if (!active || !appKey || !store.backend.ready || busy) return;
         generation++; dirty = false; error = ""; staging = [];
-        stagingEpoch = ""; stagingRevision = ""; stagingDay = ""; stagingMetadata = null;
+        stagingMetadata = null;
         anchor = entries.length ? entries[entries.length - 1].key : "";
         request(0, true);
     }
     function request(offset: int, replacing: bool): void {
         busy = true;
+        const cursor = offset ? (replacing ? stagingMetadata : snapshot) : null;
         store.backend.queryCenter({view: "timeline", app_key: appKey, query: query, date: requestedDate || null,
-            period_groups: true, period_day: offset ? (replacing ? stagingDay : snapshot.period_day) : null,
+            period_groups: true, period_day: cursor?.period_day ?? null,
             group_similar: grouping, offset: offset,
-            epoch: offset ? (replacing ? stagingEpoch : snapshot.epoch) : null,
-            revision: offset ? (replacing ? stagingRevision : snapshot.revision) : null,
+            epoch: cursor?.epoch ?? null, revision: cursor?.revision ?? null,
             timeline_anchor: replacing ? anchor || null : null},
             {view: "timeline", generation: generation, appKey: appKey, query: query,
                 date: requestedDate, grouping: grouping, offset: offset, replacing: replacing, revision: store.observedHistoryRevision});
@@ -66,30 +63,29 @@ Item {
         if (!active || !store.backend.ready || busy || error || !hasMore) return;
         if (dirty) reload(); else request(snapshot.next_offset, false);
     }
-    function validPreview(p: var): bool {
-        return !!p && p.app_key === appKey && Number.isSafeInteger(p.id) && p.id > 0 && p.id <= 4294967295
-            && Number.isSafeInteger(p.created_unix_ms) && p.created_unix_ms > 0
-            && typeof p.summary === "string" && typeof p.body === "string" && typeof p.app_name === "string" && typeof p.app_icon === "string";
+    function validPreview(item: var): bool {
+        return NotificationValidation.preview(item) && item.app_key === appKey;
+    }
+    function validPeriods(dates: var): bool {
+        return Array.isArray(dates) && dates.length === periods.length
+            && dates.every((d, i) => d?.key === periods[i] && NotificationValidation.integerIn(d.count, 0, 5200));
+    }
+    function validEntry(entry: var): bool {
+        return !!entry && validPreview(entry.preview) && entry.key === Ui.NotificationPresentation.recordKey(entry.preview)
+            && Array.isArray(entry.members) && NotificationValidation.integerIn(entry.members.length, 1, 50)
+            && entry.members.every(p => !!p && NotificationValidation.identity(p.id, p.created))
+            && entry.members[0].id === entry.preview.id && entry.members[0].created === entry.preview.created_unix_ms;
     }
     function valid(value: var, offset: int): bool {
-        if (!value || value.view !== "timeline" || value.query !== query || value.app_key !== appKey
-            || typeof value.epoch !== "string" || !value.epoch || typeof value.revision !== "string" || !value.revision
-            || !/^\d{4}-\d{2}-\d{2}$/.test(value.period_day)
-            || value.date !== requestedDate
+        if (!NotificationValidation.envelope(value, "timeline", query) || value.app_key !== appKey
+            || !/^\d{4}-\d{2}-\d{2}$/.test(value.period_day) || value.date !== requestedDate
             || !Array.isArray(value.recent) || value.recent.length > 3 || !value.recent.every(validPreview)
-            || !Array.isArray(value.dates) || value.dates.length !== 4 || !value.dates.every((d, i) => d.key === periods[i] && Number.isSafeInteger(d.count) && d.count >= 0 && d.count <= 5200)
-            || !Number.isSafeInteger(value.total_rows) || value.total_rows < 0 || value.total_rows > 5200
-            || !Number.isSafeInteger(value.count) || value.count < 0 || value.count > 5200 || value.total_rows > value.count
+            || !validPeriods(value.dates) || !NotificationValidation.integerIn(value.count, 0, 5200)
+            || !NotificationValidation.integerIn(value.total_rows, 0, value.count)
             || value.dates.reduce((sum, d) => sum + d.count, value.recent.length) > 5200
-            || typeof value.anchor_reached !== "boolean" || value.offset !== offset
-            || !Array.isArray(value.entries) || value.entries.length > 20) return false;
+            || !Array.isArray(value.entries) || value.entries.length > 20 || !value.entries.every(validEntry)) return false;
         if (value.date ? !value.dates.some(d => d.key === value.date && d.count === value.count) : value.count !== 0) return false;
-        if (!value.entries.every(e => validPreview(e.preview) && e.key === Ui.NotificationPresentation.recordKey(e.preview)
-            && Array.isArray(e.members) && e.members.length > 0 && e.members.length <= 50
-            && e.members.every(p => Number.isSafeInteger(p.id) && p.id > 0 && p.id <= 4294967295 && Number.isSafeInteger(p.created) && p.created > 0)
-            && e.members[0].id === e.preview.id && e.members[0].created === e.preview.created_unix_ms)) return false;
-        const end = offset + value.entries.length;
-        return value.next_offset === null ? end === value.total_rows : value.entries.length > 0 && value.next_offset === end && end < value.total_rows;
+        return NotificationValidation.pageEnds(value, offset, value.entries.length, value.total_rows);
     }
     function receive(context: var, value: var, failure: string, code: string): void {
         if (context.view !== "timeline" || context.generation !== generation || context.appKey !== appKey || context.query !== query || context.date !== requestedDate || context.grouping !== grouping) return;
@@ -97,10 +93,8 @@ Item {
         if (context.revision !== store.observedHistoryRevision || code === "history-cursor-stale") { staging = []; refresh(); return; }
         const base = context.replacing ? staging : entries;
         if (failure || !valid(value, base.length)) { staging = []; error = failure || qsTr("Invalid notification timeline"); return; }
-        const epoch = context.replacing ? stagingEpoch : snapshot.epoch;
-        const revision = context.replacing ? stagingRevision : snapshot.revision;
         const metadata = context.replacing ? stagingMetadata : snapshot;
-        if (context.offset && (epoch !== value.epoch || revision !== value.revision || !metadata
+        if (context.offset && (!metadata || metadata.epoch !== value.epoch || metadata.revision !== value.revision
             || metadata.period_day !== value.period_day || metadata.date !== value.date
             || !store.equal(metadata.recent, value.recent) || !store.equal(metadata.dates, value.dates))) { staging = []; refresh(); return; }
         const next = base.concat(value.entries);
@@ -108,8 +102,7 @@ Item {
         const allKeys = keys.concat(value.recent.map(p => Ui.NotificationPresentation.recordKey(p)));
         if (new Set(allKeys).size !== allKeys.length || keys.length > value.count) { error = qsTr("Notification window did not advance"); staging = []; return; }
         if (context.replacing && value.next_offset !== null && !value.anchor_reached) {
-            staging = next; stagingEpoch = value.epoch; stagingRevision = value.revision;
-            stagingDay = value.period_day; stagingMetadata = value;
+            staging = next; stagingMetadata = value;
             if (active) request(value.next_offset, true); else invalidate(false);
             return;
         }

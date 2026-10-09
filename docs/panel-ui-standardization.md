@@ -1,8 +1,10 @@
 # Panel UI standardization
 
-Approved implementation of the illustrated panel plan (`shelllist-panel-ui-standardization.html`
-in the parent Projects directory). This is the current visual-role specification;
-historical proposals are not additional requirements. The
+The shared-role specification below incorporates approved revised-plan items
+U1, U2, U3, U5, U6, U7 and U8 (`shelllist-panel-ui-revised-plan.html` in the parent
+Projects directory). U4 is excluded. The [convergence record](shared-panel-ui-convergence.md)
+tracks current implementation and evidence. Historical phase notes below describe
+the earlier plan, not acceptance of every consumer or the later revision. The
 [interaction contract](chooser-keyboard-workflow.md) remains authoritative.
 
 ## Approved roles
@@ -13,9 +15,9 @@ historical proposals are not additional requirements. The
 | Group/card heading | 16px medium, sentence case; optional, no empty heading gap |
 | Field name | 14px medium, muted; wrap rather than shrink |
 | Text/dropdown value | 16px regular; segmented options retain native option styling |
-| Body/error/status | 13px, wrapping; pending is not acknowledged success |
+| Body/error/status | 13px; concise summaries in fixed status geometry; pending is not success |
 | Metadata | 12px; 11px only for nonessential chart ticks/annotations |
-| Form/setting row | 52px minimum compact form; ordinary settings/toggles 56px |
+| Form/setting row | Shared `FieldRow`, left label/right editor, `Theme.formHeight` floor; labels may wrap |
 | Switch | 52×32 track, 16/24px off/on thumb; compact does not shrink the switch |
 | Inspector inset | Symmetric 16px at 1×; shared outer geometry remains unchanged |
 | Card spacing/padding | 12px peers/padding; 24px only for a distinct major group |
@@ -31,13 +33,16 @@ Routine guidance belongs in explicit Help and native descriptions, not persisten
 key legends or hover tooltips. Failures, blockers, pending operations, countdowns,
 dirty display layouts and safety consequences remain visible. Keep independent
 error/retry ownership; presentation components never dispatch domain mutations.
+Errors contribute through `FeedbackSource` to a fixed `StatusPanel`/`FeedbackSlot`,
+not auto-expanding rows. Provider and standalone surface hosts own that allocation.
+Browsing uses a marker only; editing adds an editor-local background and lower line.
 
 ## Intentional exceptions
 
 - Weather/time/media heroes retain expressive artwork and larger named reading
   sizes. Hero frames may retain 20px corners; ordinary surrounding cards use 16px.
 - Resource microcards retain their 2×2 plus full-width, viewport-fitted layout,
-  metric colors/units, missing-data gaps and single editable range selector.
+  two reused theme series colours, units, missing-data gaps and single editable range selector.
   Preserve the no-new-help/no-chart-keyboard contract. Prefer reducing chart
   ornament over shrinking essential values; essential readings have a 14px
   minimum, while chart ticks may remain 11px. Verify short-height fit separately.
@@ -141,7 +146,8 @@ part of these commits.
 
 ### Phase 4 — acceptance and prevention
 
-Implementation and engineering acceptance complete. Evidence is deliberately
+Historical phase-4 engineering checks completed; the later audit found consumer
+composition and feedback defects. This is not a blanket completion claim. Evidence is deliberately
 split by boundary; this is **not** a blanket hardware/accessibility certification.
 
 - Strict qmllint: **pass**. Full combined working-tree Qt suite: **339 passes,
@@ -230,7 +236,7 @@ owns its deliberate content geometry. Desktop/QA owns hardware/live acceptance.
 | Weather/time/media heroes, artwork | Time/Weather and Media maintainers; semantic prominence and domain imagery, named size roles |
 | Resource card geometry, 14px essential-value floor, 11px plot annotations | Applications maintainer; viewport fit, metric semantics/gaps, no extra chart interaction |
 | Calendar cells, agenda markers, monitor maps, notification content | Respective domain maintainers; content geometry is not a settings heading or field |
-| Stacked FormField name on a narrow compound todo editor | Shared UI + Activity maintainers; keep name and native input usable without reducing text/control size |
+| Shared inline field composition, including narrow todo input | Shared UI + panel maintainers; wrap the left label without stacking it above the editor |
 | Read-only/unsupported controls and pending state | Domain maintainer; preserve availability/retry/acknowledgement, never imply success or an editable value |
 | Bar, toast, prompt, OSD and native menus | Shell/desktop maintainers; independent density, routing and safety boundaries |
 
@@ -240,7 +246,7 @@ For every panel PR:
    font, spacing or corner overrides and local wrappers in review.
 2. Keep exactly one identity header. Omit empty or duplicate card headings; make
    routine guidance explicit Help, not a key legend. Keep actionable blockers,
-   countdowns and failures visible and wrapping.
+   countdowns and failures visible through concise, fixed-geometry status summaries.
 3. Check long labels, pending/error/disabled/read-only and minimum supported size
    in both themes. Preserve switch geometry and readable passive metadata.
 4. Preserve native editor identity, accessibility name/description, command ID,

@@ -5,6 +5,15 @@ All six planned migrations are now implemented locally; see the
 coordinated activation remain separate. The original findings below are retained
 as historical context and annotated with their implementation outcomes.
 
+## Current follow-up review
+
+The [2026-10-08 opportunity review](daemon-opportunities-2026-10-08.md) checks
+current frontend and sibling-daemon working trees. It identifies additional work:
+calendar-day semantics (with a reproduced DST error), Bluetooth apply-and-remember,
+display baseline tokens, remaining resource semantics and application close
+observation. These recommendations are **not implemented** by that review and do
+not reopen the six completed historical migrations below.
+
 ## Follow-up: display normalization
 
 `bar-daemon` now publishes normalized display support/internal flags, exact current

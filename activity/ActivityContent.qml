@@ -8,6 +8,9 @@ Ui.PanelSurface {
 
     required property ActivityController controller
     chooserController: controller
+    feedbackEnabled: true
+    feedbackText: controller.lastError
+    feedbackSummary: qsTr("Activity update failed")
     navigationContent: region === 0 || !controller.detailsOpen ? glance : (sectionLoader.item as Item)
     Connections {
         target: content.controller
@@ -42,12 +45,6 @@ Ui.PanelSurface {
                 else if (actionId === "overview") content.controller.closeSection();
                 else if (actionId === "refresh") content.controller.refresh();
             }
-        }
-
-        Ui.PanelMessage {
-            width: parent.width
-            height: implicitHeight
-            text: content.controller.lastError
         }
 
         Row {

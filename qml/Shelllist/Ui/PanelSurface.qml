@@ -11,6 +11,10 @@ ChooserSurface {
     property Item navigationContent: body
     property bool pendingFocus: false
     property bool consumed: false
+    property bool feedbackEnabled: false
+    property string feedbackText: ""
+    property string feedbackSummary: qsTr("Operation needs attention")
+    property string feedbackTone: "error"
 
     function snapshot(): void {
         chooserController.focusMemory = {context: context(), region: region, location: navigation.activeFocus ? navigation.locationState() : navigation.lastLocation};
@@ -59,7 +63,24 @@ ChooserSurface {
         onInteractionRequested: surface.pendingFocus = false
         onNativeFocusChanged: if (!applyingMemory) surface.pendingFocus = false
         onExitRequested: surface.chooserController.dismissNavigation()
-        Item { id: body; anchors.fill: parent }
+        Item {
+            id: body
+            anchors.fill: parent
+            anchors.bottomMargin: surface.feedbackEnabled ? Theme.statusHeight + Theme.spacingMd : 0
+        }
+    }
+    StatusPanel {
+        objectName: "panelFeedback"
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: Theme.contentMargin
+        visible: surface.feedbackEnabled
+        uiScale: 1
+        status: surface.feedbackText
+        statusSummary: surface.feedbackSummary
+        statusTone: surface.feedbackTone
+        feedbackScope: body
     }
     Shortcut {
         sequence: "Escape"

@@ -72,7 +72,7 @@ WeatherForecastCard {
                     width: 39
                     text: Visuals.numberLabel(dayRow.modelData.precipitation_probability, "%")
                     color: Ui.Theme.accent
-                    font.pixelSize: Ui.Theme.fontSizeCaption
+                    font.pixelSize: Ui.Theme.metadataSize
                 }
                 Ui.ThemeText {
                     anchors.right: temperatureRange.left

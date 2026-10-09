@@ -65,20 +65,17 @@ Column {
             }
         }
     }
-    Ui.InlineStatus {
-        width: parent.width
+    Ui.FeedbackSource {
         text: settings.notificationState.dndError
-        visible: text.length > 0
-        color: Ui.Theme.danger
-        wrapMode: Text.WordWrap
+        summaryText: qsTr("Do Not Disturb change failed")
+        tone: "error"
     }
     Ui.LabeledAction {
         icon: "refresh"
         uiScale: Ui.Theme.expandedSecondaryActionScale
         objectName: "notificationDndRetry"
         accessKey: "T"
-        visible: settings.notificationState.dndError.length > 0
-        enabled: !settings.notificationState.dndPending && settings.nativeAvailable
+        enabled: settings.notificationState.dndError.length > 0 && !settings.notificationState.dndPending && settings.nativeAvailable
         width: parent.width
         label: qsTr("Retry Do Not Disturb change")
         onClicked: settings.notificationState.retryDnd()

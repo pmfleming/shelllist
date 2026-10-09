@@ -15,7 +15,6 @@ Canvas {
     readonly property bool paired: chartStyle === "paired-columns"
     readonly property var segments: series.map(descriptor => Resources.historySegments(points, descriptor.metric, rangeStartMilliseconds, rangeEndMilliseconds))
     readonly property color guideColor: Ui.Theme.border
-    readonly property color missingColor: Ui.Theme.mutedText
 
     implicitHeight: Math.round(96 * uiScale)
     antialiasing: true
@@ -25,37 +24,11 @@ Canvas {
         return (timestamp - rangeStartMilliseconds) / Math.max(1, rangeEndMilliseconds - rangeStartMilliseconds) * width;
     }
     function baselineY(): real {
-        // Paired I/O has independent coverage bands below its positive baseline.
-        return height - 3 - (paired ? series.length * 4 * uiScale : 0);
+        return height - 3;
     }
     function yFor(value: real, _index: int): real {
         const fraction = Math.min(1, Math.max(0, value) / Math.max(0.01, maximum));
         return baselineY() - fraction * Math.max(1, baselineY() - 3);
-    }
-    function hatch(context: var, left: real, right: real, top: real, bandHeight: real): void {
-        if (right <= left || bandHeight <= 0) return;
-        context.save();
-        context.beginPath();
-        context.rect(left, top, right - left, bandHeight);
-        context.clip();
-        context.fillStyle = Ui.Theme.withAlpha(missingColor, 0.08);
-        context.fillRect(left, top, right - left, bandHeight);
-        context.strokeStyle = Ui.Theme.withAlpha(missingColor, 0.35);
-        context.lineWidth = 1;
-        context.beginPath();
-        for (let x = left - bandHeight; x < right; x += 6 * uiScale) {
-            context.moveTo(x, top + bandHeight);
-            context.lineTo(x + bandHeight, top);
-        }
-        context.stroke();
-        context.restore();
-    }
-    function drawGaps(context: var, index: int): void {
-        const bandHeight = paired ? 4 * uiScale : height;
-        const top = paired ? height - (series.length - index) * bandHeight : 0;
-        Resources.missingIntervals(segments[index], rangeStartMilliseconds, rangeEndMilliseconds).forEach(gap => {
-            hatch(context, xFor(gap.start), xFor(gap.end), top, bandHeight);
-        });
     }
     function strokeSegment(context: var, segment: var, index: int): void {
         const first = segment[0];
@@ -91,7 +64,6 @@ Canvas {
     onChartStyleChanged: requestPaint()
     onUiScaleChanged: requestPaint()
     onGuideColorChanged: requestPaint()
-    onMissingColorChanged: requestPaint()
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
     onVisibleChanged: if (visible) requestPaint()
@@ -110,7 +82,8 @@ Canvas {
         });
         context.stroke();
         series.forEach((_descriptor, index) => {
-            drawGaps(context, index);
+            // Draw only observed intervals. Missing time stays blank: no hatch,
+            // vertical dashes, carry-forward, or zero substitution.
             if (chartStyle === "steps") segments[index].forEach(segment => strokeSegment(context, segment, index));
             else drawColumns(context, index);
         });

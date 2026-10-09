@@ -111,7 +111,7 @@ function periodEstimate(summary: HistorySummary | null | undefined, metric: stri
 
 function periodText(summary: HistorySummary | null | undefined, metric: string): string {
     const estimate = periodEstimate(summary, metric);
-    return estimate === null ? "Unavailable" : "≈ " + formatted(estimate, metric === "average_power_watts" ? "energy" : "bytes");
+    return estimate === null ? "Unavailable" : formatted(estimate, metric === "average_power_watts" ? "energy" : "bytes");
 }
 
 function observationText(summary: HistorySummary | null | undefined, metric: string): string {

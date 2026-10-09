@@ -152,7 +152,7 @@ Ui.DetailFlickable {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: heroTimeMetric.modelData.label
                         color: Ui.Theme.mutedText
-                        font.pixelSize: Ui.Theme.fontSizeCaption
+                        font.pixelSize: Ui.Theme.metadataSize
                     }
                     Ui.ThemeText {
                         width: parent.width - Ui.Theme.spacingSm
@@ -172,7 +172,7 @@ Ui.DetailFlickable {
                         text: heroTimeMetric.modelData.detail || ""
                         color: Ui.Theme.subtleText
                         wrapMode: Text.Wrap
-                        font.pixelSize: Ui.Theme.fontSizeCaption
+                        font.pixelSize: Ui.Theme.metadataSize
                     }
                 }
             }
@@ -282,7 +282,7 @@ Ui.DetailFlickable {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: solarValue.modelData.label
                         color: Ui.Theme.mutedText
-                        font.pixelSize: Ui.Theme.fontSizeCaption
+                        font.pixelSize: Ui.Theme.metadataSize
                     }
                     Ui.ThemeText {
                         anchors.horizontalCenter: parent.horizontalCenter

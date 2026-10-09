@@ -256,7 +256,11 @@ Ui.ProviderChooserController {
         status = statusForSnapshot();
     }
     function statusForSnapshot() {
-        return BluetoothFlow.radioStatus(radio, searchAllDevices, scanning, filteredResults.length);
+        const count = filteredResults.length;
+        const countText = searchAllDevices
+            ? (count === 1 ? qsTr("%n Bluetooth device", "", count) : qsTr("%n Bluetooth devices", "", count))
+            : (count === 1 ? qsTr("%n device in My devices", "", count) : qsTr("%n devices in My devices", "", count));
+        return BluetoothFlow.radioStatus(radio, searchAllDevices, scanning, count, countText);
     }
     function statusForCompletedCall(id) {
         return BluetoothFlow.completedCallStatus(id, powered, status);

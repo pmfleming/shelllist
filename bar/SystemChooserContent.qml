@@ -86,6 +86,8 @@ Ui.ProviderChooserSurface {
         refreshing: reading
         powerVisible: false
         status: content.controller.statusText
+        statusTone: "error"
+        statusSummary: audio ? qsTr("Audio change unconfirmed") : tray ? qsTr("Tray status") : qsTr("Media change unconfirmed")
         rowDelegate: Ui.ResultRow {
             id: row
             required property var resultData
@@ -220,12 +222,6 @@ Ui.ProviderChooserSurface {
                             }
                         }
                     }
-                }
-                Ui.InlineStatus {
-                    width: parent.width
-                    text: content.controller.statusText
-                    color: Ui.Theme.danger
-                    visible: text.length > 0
                 }
             }
         }

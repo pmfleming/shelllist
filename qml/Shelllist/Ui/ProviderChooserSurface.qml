@@ -21,6 +21,16 @@ ChooserSurface {
     readonly property ChooserListPane listItem: chooser.listItem
     readonly property Item detailsItem: chooser.detailsItem
 
+    // All provider panels share the existing fixed list footer for transient
+    // field/operation feedback, including asynchronously loaded subpages.
+    Binding {
+        target: surface.listItem
+        property: "feedbackScope"
+        value: surface.detailsItem
+        when: surface.listItem !== null
+        restoreMode: Binding.RestoreBindingOrValue
+    }
+
     function refresh(): void {
         chooserController.navigationInteracted();
         chooserController.refresh();

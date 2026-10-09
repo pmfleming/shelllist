@@ -58,7 +58,7 @@ Ui.ChooserListPane {
                 text: "Loading more…"
                 color: Ui.Theme.mutedText
                 font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeCaption
+                font.pixelSize: Ui.Theme.metadataSize
                 Accessible.role: Accessible.StaticText
                 Accessible.name: text
             }

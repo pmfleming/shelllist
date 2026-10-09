@@ -57,7 +57,7 @@ Rectangle {
                     horizontalAlignment: Text.AlignHCenter
                     text: modelData
                     color: Ui.Theme.subtleText
-                    font.pixelSize: Ui.Theme.fontSizeCaption
+                    font.pixelSize: Ui.Theme.metadataSize
                 }
             }
         }
@@ -82,7 +82,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: dayCell.value.getDate()
                         color: dayCell.today ? Ui.Theme.accentText : dayCell.inMonth ? Ui.Theme.text : Ui.Theme.subtleText
-                        font.pixelSize: Ui.Theme.fontSizeCaption
+                        font.pixelSize: Ui.Theme.metadataSize
                         font.weight: dayCell.today ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
                     }
                     Rectangle {
@@ -119,15 +119,16 @@ Rectangle {
                 spacing: 2
                 Ui.ThemeText {
                     width: parent.width
-                    text: String(card.controller.activity.event_count || 0) + " upcoming calendar items"
+                    text: Number(card.controller.activity.event_count) === 1 ? qsTr("%n upcoming calendar item", "", 1) : qsTr("%n upcoming calendar items", "", Number(card.controller.activity.event_count || 0))
                     elide: Text.ElideRight
                     font.pixelSize: Ui.Theme.fontSizeSmall
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
                 Ui.ThemeText {
-                    text: "Next " + card.eventTime(card.controller.activity.next_event) + "  ·  " + String(card.controller.activity.incomplete_todo_count || 0) + " open todos"
+                    text: qsTr("Next %1").arg(card.eventTime(card.controller.activity.next_event)) + " · "
+                        + (Number(card.controller.activity.incomplete_todo_count) === 1 ? qsTr("%n open todo", "", 1) : qsTr("%n open todos", "", Number(card.controller.activity.incomplete_todo_count || 0)))
                     color: Ui.Theme.mutedText
-                    font.pixelSize: Ui.Theme.fontSizeCaption
+                    font.pixelSize: Ui.Theme.metadataSize
                 }
             }
         }

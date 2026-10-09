@@ -55,14 +55,16 @@ Item {
     readonly property real shellOpacity: 0.94
     readonly property color shellColor: withAlpha(window, shellOpacity)
 
-    // Resource series remain distinguishable independently of the interactive accent.
-    readonly property color resourceCpu: envColor("SHELLLIST_RESOURCE_CPU", dark ? "#60a5fa" : "#2563eb")
-    readonly property color resourceMemory: envColor("SHELLLIST_RESOURCE_MEMORY", dark ? "#4ade80" : "#15803d")
-    readonly property color resourceGpu: envColor("SHELLLIST_RESOURCE_GPU", dark ? "#fbbf24" : "#b45309")
-    readonly property color resourceDisk: envColor("SHELLLIST_RESOURCE_DISK", dark ? "#38bdf8" : "#0369a1")
-    readonly property color resourceNetworkReceive: envColor("SHELLLIST_RESOURCE_NETWORK_RECEIVE", dark ? "#c084fc" : "#7e22ce")
-    readonly property color resourceNetworkTransmit: envColor("SHELLLIST_RESOURCE_NETWORK_TRANSMIT", dark ? "#22d3ee" : "#0e7490")
-    readonly property color resourcePower: envColor("SHELLLIST_RESOURCE_POWER", dark ? "#fb7185" : "#be123c")
+    // All graphs reuse this theme-derived pair. Glyphs/units identify metrics.
+    readonly property color graphPrimary: accent
+    readonly property color graphSecondary: mutedText
+    readonly property color resourceCpu: graphPrimary
+    readonly property color resourceMemory: graphPrimary
+    readonly property color resourceGpu: graphSecondary
+    readonly property color resourceDisk: graphPrimary
+    readonly property color resourceNetworkReceive: graphPrimary
+    readonly property color resourceNetworkTransmit: graphSecondary
+    readonly property color resourcePower: graphPrimary
 
     // Forecast artwork has a dark backdrop independently of the desktop palette.
     readonly property color weatherHeroText: "#f4f7fb"
@@ -71,7 +73,7 @@ Item {
     readonly property color weatherHeroTemperature: "#ffffff"
     readonly property color weatherHeroMetricText: "#e2e9f2"
     readonly property color weatherHeroBorder: Qt.rgba(1, 1, 1, 0.12)
-    readonly property color weatherPrecipitation: Qt.rgba(47 / 255, 140 / 255, 1, 0.22)
+    readonly property color weatherPrecipitation: withAlpha(graphPrimary, 0.22)
 
     readonly property string fontFamily: envText("SHELLLIST_FONT") || "Roboto Flex"
     readonly property string symbolFontFamily: "Material Symbols Rounded"
@@ -145,8 +147,10 @@ Item {
     readonly property int cardPadding: spacingMd
     readonly property int cardGap: spacingMd
     readonly property int heroClockSize: 64
-    readonly property int heroWeatherSize: 56
-    readonly property int heroWeatherCompactSize: 48
+    readonly property int heroWeatherSize: 64
+    readonly property int heroWeatherCompactSize: 56
+    readonly property int heroWeatherFallbackSize: 56
+    readonly property int heroWeatherCompactFallbackSize: 48
     readonly property int heroReadingSize: 28
 
     readonly property int iconSizeSmall: 15
@@ -206,6 +210,11 @@ Item {
         if (["0", "false", "no", "off", "enabled", "enable"].indexOf(value) >= 0)
             return false;
         return null;
+    }
+
+    // One label-column policy for every setting family, including narrow rows.
+    function fieldLabelWidth(availableWidth) {
+        return Math.max(70, Math.min(150, Math.floor(availableWidth * 0.30)));
     }
 
     function densityScale(availableHeight, verticalMargin) {

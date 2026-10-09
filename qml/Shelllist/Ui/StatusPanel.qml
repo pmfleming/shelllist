@@ -6,6 +6,9 @@ Rectangle {
 
     required property real uiScale
     property string status: ""
+    property string statusSummary: qsTr("Status needs attention")
+    property string statusTone: "info"
+    property Item feedbackScope: null
     property string icon: ""
     property bool signalIcon: false
     property bool powered: false
@@ -15,16 +18,21 @@ Rectangle {
         return Math.round(value * uiScale);
     }
 
-    height: Math.max(scaled(Theme.statusHeight), statusLabel.implicitHeight + 2 * Theme.spacingSm)
+    implicitHeight: scaled(Theme.statusHeight)
+    height: implicitHeight
+    Layout.minimumHeight: implicitHeight
+    Layout.preferredHeight: implicitHeight
+    Layout.maximumHeight: implicitHeight
     radius: Theme.cardRadius
-    color: Theme.surfaceRaised
-    border.color: Theme.border
+    color: feedback.fullText.length ? Theme.surfaceRaised : "transparent"
+    border.color: feedback.fullText.length ? Theme.border : "transparent"
 
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: panel.scaled(Theme.contentMargin)
         anchors.rightMargin: panel.scaled(Theme.contentMargin)
         spacing: panel.scaled(Theme.spacingSm)
+        opacity: feedback.fullText.length ? 1 : 0
 
         Item {
             Layout.preferredWidth: panel.scaled(Theme.iconSize)
@@ -51,15 +59,16 @@ Rectangle {
             }
         }
 
-        ThemeText {
-            id: statusLabel
+        FeedbackSlot {
+            id: feedback
             Layout.fillWidth: true
             Layout.minimumWidth: 0
             text: panel.status
-            color: panel.busy ? Theme.accent : Theme.subtleText
-            font.pixelSize: Theme.statusTextSize
-            wrapMode: Text.Wrap
-            verticalAlignment: Text.AlignVCenter
+            summaryText: panel.statusSummary
+            tone: panel.statusTone
+            scope: panel.feedbackScope
+            padding: 0
+            backgroundVisible: false
         }
     }
 }

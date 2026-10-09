@@ -145,7 +145,7 @@ DaemonTestCase {
         verify(findChild(panel, "batteryChargeNotificationCard") === null);
         compare(notify.title, "90%");
         verify(notify.Accessible.name.includes("90"));
-        verify(!findChild(panel, "batteryThresholdSaveStatus").visible);
+        verify(!findChild(panel, "batteryThresholdSaveStatus").active);
         const start = browse(panel, "batteryResumeCharging");
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Left);
@@ -162,7 +162,8 @@ DaemonTestCase {
         panel.controller.applyBattery(battery("BAT0", true));
         compare(notify.title, "100%");
         panel.controller.thresholdSaveError = "firmware rejected range";
-        verify(findChild(panel, "batteryThresholdSaveStatus").visible);
+        verify(findChild(panel, "batteryThresholdSaveStatus").active);
+        verify(findChild(panel, "feedbackText").text.length > 0, "save feedback reaches the fixed panel slot");
     }
     function test_calibrationReviewBlocksCommandsAndRetargeting() {
         const panel = make("care");

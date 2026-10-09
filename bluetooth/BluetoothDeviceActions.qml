@@ -98,7 +98,7 @@ ColumnLayout {
     }
     Ui.RecoveryActions {
         Layout.fillWidth: true
-        visible: !!(section.draft || {}).error
+        enabled: !!(section.draft || {}).error
         retryAction.objectName: "retryDeviceName"
         retryAction.accessKey: "N"
         retryAction.label: qsTr("Retry rename")

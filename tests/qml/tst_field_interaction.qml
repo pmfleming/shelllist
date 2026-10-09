@@ -157,7 +157,8 @@ TestCase {
         compare(subtle.border.width, 0);
         verify(marker.visible, "browsing is distinguishable without outlining the field");
         keyClick(Qt.Key_Return);
-        compare(subtle.border.width, 2);
+        compare(subtle.border.width, 0);
+        verify(findChild(subtle, "editingFocusLine").visible);
         verify(!marker.visible, "editing uses its own stronger tone and edge");
         keyClick(Qt.Key_X);
         compare(surface.writes, 0);
@@ -229,6 +230,32 @@ TestCase {
         surface.savedText = "another update";
         compare(control.text, surface.savedText);
         compare(surface.writes, 0);
+    }
+    function test_choiceDraftSurvivesSnapshotsAndDiscardsOnExit_data() {
+        return [{tag: "dropdown", name: "choice"}, {tag: "segments", name: "segments"}];
+    }
+    function test_choiceDraftSurvivesSnapshotsAndDiscardsOnExit(data) {
+        const surface = make();
+        browse(surface, data.name);
+        const control = field(surface, data.name);
+        function changeChoice() {
+            keyClick(Qt.Key_Return);
+            keyClick(data.name === "choice" ? Qt.Key_Down : Qt.Key_Right);
+            compare(control.editSession.displayedValue, "b");
+        }
+        changeChoice();
+        surface.savedChoice = "c";
+        compare(control.editSession.displayedValue, "b", "incoming values cannot replace the draft");
+        keyClick(Qt.Key_Escape);
+        compare(control.editSession.displayedValue, "c", "discard reveals the latest source");
+        surface.savedChoice = "a";
+        changeChoice();
+        surface.listItem.focusList();
+        tryVerify(() => !control.editSession.active);
+        compare(control.editSession.displayedValue, "a");
+        compare(surface.writes, 0, "blur must not publish a choice");
+        surface.savedChoice = "b";
+        compare(control.editSession.displayedValue, "b", "the owner binding survives both exits");
     }
     function test_tabKeepsPositionWhenSaveChangesAvailability_data() {
         return [

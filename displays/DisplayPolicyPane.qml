@@ -46,11 +46,9 @@ Ui.DetailColumnCard {
             }
         }
     }
-    Ui.InlineStatus {
+    Ui.FeedbackSource {
         objectName: "dockingSaveStatus"
-        Layout.fillWidth: true
         text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.") : ""
-        wrapMode: Text.Wrap
-        color: Ui.Theme.mutedText
+        summaryText: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : qsTr("Finish layout changes first")
     }
 }

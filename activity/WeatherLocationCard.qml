@@ -42,7 +42,7 @@ Ui.PointerActionControl {
         anchors.topMargin: 7
         text: (locationCard.modelData.home ? "⌂  " : "") + Visuals.weatherTime(locationCard.now.getTime(), locationCard.modelData)
         color: locationCard.modelData.home ? Ui.Theme.accent : Ui.Theme.subtleText
-        font.pixelSize: Ui.Theme.fontSizeCaption
+        font.pixelSize: Ui.Theme.metadataSize
     }
 
     WeatherIcon {
@@ -76,7 +76,7 @@ Ui.PointerActionControl {
             anchors.right: parent.right
             text: Visuals.numberLabel(locationCard.modelData.high_c, "°") + "  " + Visuals.numberLabel(locationCard.modelData.low_c, "°")
             color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeCaption
+            font.pixelSize: Ui.Theme.metadataSize
         }
         Row {
             anchors.right: parent.right
@@ -90,7 +90,7 @@ Ui.PointerActionControl {
             Ui.ThemeText {
                 text: Visuals.numberLabel(locationCard.modelData.precipitation_probability, "%")
                 color: Ui.Theme.accent
-                font.pixelSize: Ui.Theme.fontSizeCaption
+                font.pixelSize: Ui.Theme.metadataSize
             }
         }
     }

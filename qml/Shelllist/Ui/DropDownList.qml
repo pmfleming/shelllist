@@ -17,27 +17,19 @@ Controls.ComboBox {
     property bool saveOnOptionClick: false
     property bool browseFocused: false
     property string placeholder: "Select an option"
-    property string draftValue: value
     readonly property int acknowledgedIndex: optionIndex(value)
-    readonly property int selectedIndex: optionIndex(editSession.active ? draftValue : value)
+    readonly property int selectedIndex: optionIndex(editSession.displayedValue)
     readonly property string selectedIcon: selectedIndex >= 0 ? String(options[selectedIndex].icon || "") : ""
-    readonly property FieldEditSession editSession: FieldEditSession {
+    readonly property ChoiceEditSession editSession: ChoiceEditSession {
         owner: control
         available: control.enabled && control.interactive
-        value: control.draftValue
-        initialValue: control.value
-        onActiveChanged: if (active) control.draftValue = control.value
-        onRestoreRequested: function (value) { control.draftValue = value; }
+        sourceValue: control.value
         onPublishRequested: function (value) { control.selected(value); }
     }
     function stageIndex(index: int): void {
         if (!enabled || !interactive || !optionEnabled(index))
             return;
-        const nextValue = String(options[index].value || "");
-        if (editSession.active)
-            draftValue = nextValue;
-        else if (nextValue !== value)
-            selected(nextValue);
+        editSession.choose(String(options[index].value || ""));
     }
 
     function acceptOptionClick(index: int): void {

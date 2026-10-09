@@ -166,16 +166,12 @@ ColumnLayout {
         Item {
             visible: actionStatus.visible
         }
-        Ui.ThemeText {
+        Ui.FeedbackSource {
             id: actionStatus
             objectName: "windowActionStatus-" + instanceRow.modelData.id
-            Layout.columnSpan: 2
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            visible: instanceRow.actionMessage.length > 0 && !instanceRow.focusSucceeded
+            active: !instanceRow.focusSucceeded
             text: instanceRow.actionMessage
-            wrapMode: Text.Wrap
-            font.pixelSize: Math.round(Ui.Theme.fontSizeCaption * instanceRow.uiScale)
+            summaryText: qsTr("Window %1 · Check status").arg(instanceRow.index + 1)
         }
     }
 }

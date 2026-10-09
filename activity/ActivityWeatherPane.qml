@@ -28,12 +28,11 @@ Ui.DetailFlickable {
         active: pane.controller.uiActive
     }
 
-    Ui.InlineStatus {
-        width: parent.width
-        visible: Number(pane.weather.updated_unix_ms || 0) > 0 && !!pane.weather.error
+    Ui.FeedbackSource {
+        active: Number(pane.weather.updated_unix_ms || 0) > 0 && !!pane.weather.error
         text: pane.weather.error || ""
-        color: Ui.Theme.danger
-        wrapMode: Text.Wrap
+        summaryText: qsTr("Weather refresh failed · Previous reading retained")
+        tone: "error"
     }
 
     WeatherHourlyForecast {

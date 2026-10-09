@@ -838,6 +838,16 @@
           qmlTests =
             pkgs.runCommand "shelllist-qml-tests"
               {
+                # Geometry tests must use the same fonts as the application,
+                # not Qt's fallback metrics in the isolated build sandbox.
+                FONTCONFIG_FILE = pkgs.makeFontsConf {
+                  fontDirectories = [
+                    pkgs.roboto-flex
+                    pkgs.material-symbols
+                    pkgs.noto-fonts
+                    pkgs.nerd-fonts.jetbrains-mono
+                  ];
+                };
                 nativeBuildInputs = [
                   pkgs.qt6.qtdeclarative
                   pkgs.qt6.qtsvg

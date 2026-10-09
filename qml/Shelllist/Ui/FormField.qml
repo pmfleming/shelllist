@@ -1,132 +1,90 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Passive value row (proposal C). The native editor remains the sole field
-// identity; labels, badges, separators and commands never own transactions.
+// Shared passive row. The contained native editor remains the field identity.
 Item {
     id: field
-    default property alias content: editorHost.data
-    property Item editor: editorHost.children.length > 0 ? editorHost.children[0] : null
+    default property alias content: row.content
+    property Item editor: row.controlItem
     property string label: ""
-    // Narrow compound editors keep a visible name without crushing the input.
-    property bool stackedLabel: false
-    property string icon: "text_fields"
+    property string icon: ""
     property string accessibleName: label
     property bool requiredInput: false
     property string supportingText: (editor as TextField)?.supportingText || (editor as TextEditor)?.supportingText || (editor as DropDownList)?.supportingText || ""
     property string errorText: (editor as TextField)?.errorText || (editor as TextEditor)?.errorText || (editor as DropDownList)?.errorText || ""
     property string statusText: ""
-    // Reasons and ordinary guidance are available explicitly, never on hover.
+    property string statusTone: "info"
+    property bool separatorVisible: true
     property string readOnlyReason: ""
     property bool helpOpen: false
     property bool showHelpButton: helpText.length > 0
     property bool copyAvailable: false
     property bool copyEnabled: true
     signal copyRequested
-    readonly property bool editorAvailable: ((editor as TextField)?.editSession || (editor as TextEditor)?.editSession || (editor as DropDownList)?.editSession)?.available ?? false
+    readonly property bool editorAvailable: ((editor as TextField)?.editSession || (editor as TextEditor)?.editSession || (editor as DropDownList)?.editSession || (editor as SegmentedControl)?.editSession || (editor as ValueSlider)?.editSession || (editor as LabeledValueSlider)?.editSession)?.available ?? false
     readonly property string helpText: [readOnlyReason, supportingText].filter(Boolean).join(". ")
-    readonly property string message: errorText || statusText || (helpOpen ? helpText : "")
-    // Keep the wrapping row's allocated width out of parent layout negotiation.
+    readonly property string message: errorText || statusText
     implicitWidth: 320
-    implicitHeight: row.y + row.height + 1 + (support.visible ? Theme.spacingXs + support.implicitHeight : 0)
+    implicitHeight: row.height + (support.visible ? Theme.spacingXs + support.implicitHeight : 0)
     Layout.minimumWidth: 0
     Layout.alignment: Qt.AlignTop
 
-    ThemeText {
-        id: stackedName
-        objectName: "formFieldStackedLabel"
-        visible: field.stackedLabel && field.label.length > 0
-        width: parent.width
-        text: field.requiredInput ? qsTr("%1 *").arg(field.label) : field.label
-        font.pixelSize: Theme.fieldNameSize
-        font.weight: Theme.fieldNameWeight
-        color: Theme.mutedText
-        wrapMode: Text.Wrap
-        Accessible.ignored: true
-    }
-    RowLayout {
+    FieldRow {
         id: row
-        y: stackedName.visible ? stackedName.implicitHeight + Theme.spacingXs : 0
         width: parent.width
-        height: Math.max(Theme.formHeight, implicitHeight)
-        spacing: Theme.spacingSm
-        GlyphLabel {
-            objectName: "formFieldPurpose"
-            visible: field.icon.length > 0
-            glyph: field.icon
-            Layout.preferredWidth: Theme.formIconSize
-            Layout.preferredHeight: Theme.formIconSize
-            font.pixelSize: Theme.formIconSize
-            Accessible.ignored: true
-        }
-        ThemeText {
-            objectName: "formFieldLabel"
-            Layout.preferredWidth: Math.min(implicitWidth, field.width * 0.24)
-            Layout.minimumWidth: 0
-            Layout.maximumWidth: field.width * 0.24
-            visible: !field.stackedLabel && field.label.length > 0
-            text: field.requiredInput ? qsTr("%1 *").arg(field.label) : field.label
-            font.pixelSize: Theme.fieldNameSize
-            font.weight: Theme.fieldNameWeight
-            color: Theme.mutedText
-            wrapMode: Text.Wrap
-            // The native input exposes the full label once, without duplication.
-            Accessible.ignored: true
-        }
-        ColumnLayout {
-            id: editorHost
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            spacing: 0
-        }
-        FlatIconButton {
-            objectName: "formFieldCopy"
-            visible: field.copyAvailable
-            enabled: field.copyEnabled
-            Layout.preferredWidth: Theme.formActionSize
-            Layout.preferredHeight: Theme.formActionSize
-            iconSize: Theme.formActionIconSize
-            icon: "content_copy"
-            accessibleName: qsTr("Copy %1").arg(field.accessibleName)
-            // Read-only rows cannot be selected by Tab. Keep their named
-            // commands in Alt+J instead of scoping them to an unreachable field.
-            commandScope: field.editorAvailable ? field : null
-            accessKey: field.editorAvailable ? "C" : ""
-            onClicked: field.copyRequested()
-        }
-        FlatIconButton {
-            objectName: "formFieldHelp"
-            visible: field.showHelpButton
-            Layout.preferredWidth: Theme.formActionSize
-            Layout.preferredHeight: Theme.formActionSize
-            iconSize: Theme.formActionIconSize
-            icon: field.helpOpen ? "expand_less" : "help_outline"
-            accessibleName: qsTr("Help: %1").arg(field.accessibleName)
-            Accessible.description: field.helpText
-            commandScope: field.editorAvailable ? field : null
-            accessKey: field.editorAvailable ? "H" : ""
-            onClicked: field.helpOpen = !field.helpOpen
-        }
+        height: implicitHeight
+        label: field.requiredInput ? qsTr("%1 *").arg(field.label) : field.label
+        labelObjectName: "formFieldLabel"
+        icons: field.icon.length ? [field.icon] : []
+        separatorVisible: field.separatorVisible
+        accessoriesVisible: field.copyAvailable || field.showHelpButton
+        accessories: [
+            FlatIconButton {
+                objectName: "formFieldCopy"
+                visible: field.copyAvailable
+                enabled: field.copyEnabled
+                Layout.preferredWidth: Theme.formActionSize
+                Layout.preferredHeight: Theme.formActionSize
+                iconSize: Theme.formActionIconSize
+                icon: "content_copy"
+                accessibleName: qsTr("Copy %1").arg(field.accessibleName)
+                commandScope: field.editorAvailable ? field : null
+                accessKey: field.editorAvailable ? "C" : ""
+                onClicked: field.copyRequested()
+            },
+            FlatIconButton {
+                objectName: "formFieldHelp"
+                visible: field.showHelpButton
+                enabled: field.helpText.length > 0
+                Layout.preferredWidth: Theme.formActionSize
+                Layout.preferredHeight: Theme.formActionSize
+                iconSize: Theme.formActionIconSize
+                icon: field.helpOpen ? "expand_less" : "help_outline"
+                accessibleName: qsTr("Help: %1").arg(field.accessibleName)
+                Accessible.description: field.helpText
+                commandScope: field.editorAvailable ? field : null
+                accessKey: field.editorAvailable ? "H" : ""
+                onClicked: field.helpOpen = !field.helpOpen
+            }
+        ]
     }
-    Rectangle {
-        objectName: "formFieldSeparator"
-        anchors.top: row.bottom
-        width: parent.width
-        height: 1
-        color: Theme.border
-        Accessible.ignored: true
-    }
+    // Explicit Help may disclose content. Automatic errors/status never resize it.
     ThemeText {
         id: support
         objectName: "formFieldSupport"
         anchors.top: row.bottom
-        anchors.topMargin: 1 + Theme.spacingXs
+        anchors.topMargin: Theme.spacingXs
         width: parent.width
-        visible: field.message.length > 0
-        text: field.message
+        visible: field.helpOpen && field.helpText.length > 0
+        text: field.helpText
         font.pixelSize: Theme.formSupportSize
-        color: field.errorText.length > 0 ? Theme.danger : Theme.mutedText
+        color: Theme.mutedText
         wrapMode: Text.Wrap
+    }
+    FeedbackSource {
+        text: field.message
+        summaryText: qsTr("%1 needs attention").arg(field.accessibleName)
+        tone: field.errorText.length ? "error" : field.statusTone
     }
     Binding {
         target: field.editor
@@ -145,7 +103,7 @@ Item {
     Binding {
         target: field.editor
         property: "Accessible.description"
-        value: [field.requiredInput ? qsTr("Required") : "", field.helpText, field.errorText || field.statusText].filter(Boolean).join(". ")
+        value: [field.requiredInput ? qsTr("Required") : "", field.helpText, field.message].filter(Boolean).join(". ")
         when: field.editor !== null
         restoreMode: Binding.RestoreBindingOrValue
     }

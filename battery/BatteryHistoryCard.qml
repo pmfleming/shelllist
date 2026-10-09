@@ -95,21 +95,17 @@ Rectangle {
             }
         }
 
-        RowLayout {
+        Ui.FeedbackSource {
+            text: card.exceptionalState ? Presentation.stateLabel(card.battery) : ""
+            summaryText: text
+        }
+        Ui.FormField {
             Layout.fillWidth: true
-            spacing: Ui.Theme.spacingSm
-
-            BatteryIconValue {
-                Layout.fillWidth: true
-                icons: [card.battery.charging ? "battery_charging_full" : (card.battery.plugged ? "power" : "battery_full")]
-                text: card.exceptionalState ? Presentation.stateLabel(card.battery) : ""
-                description: Presentation.stateLabel(card.battery)
-                pixelSize: Ui.Theme.fontSizeCaption
-            }
-
+            label: qsTr("Range")
+            accessibleName: qsTr("Battery history range")
             Ui.SegmentedControl {
                 objectName: "batteryHistoryRange"
-                Layout.preferredWidth: Math.min(168, content.width * 0.55)
+                Layout.fillWidth: true
                 options: [
                     {
                         value: "6",
@@ -179,7 +175,7 @@ Rectangle {
                     width: 9
                     height: 9
                     anchors.verticalCenter: parent.verticalCenter
-                    color: Ui.Theme.active
+                    color: Ui.Theme.graphSecondary
                 }
                 BatteryIconValue {
                     objectName: "batteryChargingLegend"

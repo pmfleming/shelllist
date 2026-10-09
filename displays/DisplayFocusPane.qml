@@ -20,12 +20,11 @@ Ui.DetailFlickable {
     readonly property var activeWindow: controller.workspaceState.available ? controller.workspaceState.active_window : null
     readonly property string windowMonitor: activeWindow ? ((controller.workspaceState.workspaces || []).find(w => w.id === activeWindow.workspace_id) || {}).monitor || "" : ""
 
-    Ui.InlineStatus {
+    Ui.FeedbackSource {
         objectName: "displayFocusStatus"
-        width: parent.width
         text: page.controller.pendingAction === "focus" || page.controller.pendingAction === "focusReset" ? qsTr("Saving…") : page.controller.focusState.error || (!page.controller.focusState.available ? qsTr("Waiting for compositor capabilities") : page.controller.dirty || page.controller.trial ? qsTr("Finish or discard layout changes to edit focus settings.") : "")
-        wrapMode: Text.Wrap
-        color: page.controller.focusState.error ? Ui.Theme.warning : Ui.Theme.mutedText
+        summaryText: page.controller.focusState.error ? qsTr("Focus settings need attention") : qsTr("Finish layout changes first")
+        tone: page.controller.focusState.error ? "warning" : "info"
     }
     Ui.DetailColumnCard {
         objectName: "displayCommonFocus"

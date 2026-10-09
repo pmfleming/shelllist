@@ -17,7 +17,7 @@ Rectangle {
     radius: formStyle ? Theme.formRadius : 4
     color: formStyle ? "transparent" : Theme.surface
     border.width: formStyle && !outlined ? 0 : 1
-    border.color: invalid ? Theme.danger : (highlighted ? Theme.accent : (hovered ? Theme.text : Theme.controlBorder))
+    border.color: invalid ? Theme.danger : (focused ? Theme.accent : (hovered ? Theme.text : Theme.controlBorder))
 
     Rectangle {
         anchors.fill: parent

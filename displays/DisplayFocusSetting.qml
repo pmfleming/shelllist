@@ -117,12 +117,10 @@ ColumnLayout {
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeSmall
     }
-    Ui.ThemeText {
-        Layout.fillWidth: true
-        visible: !setting.supported
-        text: qsTr("Unavailable in this compositor version")
-        wrapMode: Text.Wrap
-        color: Ui.Theme.warning
-        font.pixelSize: Ui.Theme.fontSizeCaption
+    Ui.FeedbackSource {
+        active: !setting.supported
+        text: qsTr("%1: unavailable in this compositor version").arg(setting.entry.title)
+        summaryText: qsTr("Focus option unsupported")
+        tone: "warning"
     }
 }

@@ -25,7 +25,6 @@ Column {
     Ui.FormField {
         width: parent.width
         label: qsTr("New todo")
-        stackedLabel: width < 320
         icon: "check"
         editor: todoInput
         Row {

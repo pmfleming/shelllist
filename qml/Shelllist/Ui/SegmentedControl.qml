@@ -14,15 +14,11 @@ Rectangle {
     property bool iconOnly: false
     readonly property real optionGap: circular ? Theme.spacingSm : 0
     property bool browseFocused: false
-    property string draftValue: value
-    readonly property string displayedValue: editSession.active ? draftValue : value
-    readonly property FieldEditSession editSession: FieldEditSession {
+    readonly property string displayedValue: editSession.displayedValue
+    readonly property ChoiceEditSession editSession: ChoiceEditSession {
         owner: control
         available: control.enabled && control.interactive
-        value: control.draftValue
-        initialValue: control.value
-        onActiveChanged: if (active) control.draftValue = control.value
-        onRestoreRequested: function (value) { control.draftValue = value; }
+        sourceValue: control.value
         onPublishRequested: function (value) { control.selected(value); }
     }
 
@@ -55,11 +51,7 @@ Rectangle {
     function choose(index) {
         if (!enabled || !interactive || !optionEnabled(index))
             return;
-        const nextValue = options[index].value;
-        if (editSession.active)
-            draftValue = nextValue;
-        else if (nextValue !== value)
-            selected(nextValue);
+        editSession.choose(options[index].value);
     }
 
     function move(delta) {

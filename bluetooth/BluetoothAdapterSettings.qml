@@ -78,27 +78,21 @@ ColumnLayout {
         }
     }
 
-    Ui.DetailColumnCard {
+    Ui.FeedbackSource {
+        text: section.draft.error
+        summaryText: qsTr("Adapter settings not saved")
+        tone: "error"
+    }
+    Ui.RecoveryActions {
         Layout.fillWidth: true
-        Layout.preferredHeight: visible ? implicitHeight : 0
-        visible: section.draft.error.length > 0
-        title: qsTr("Unsaved adapter settings")
-        Ui.ThemeText {
-            Layout.fillWidth: true
-            text: section.draft.error
-            color: Ui.Theme.danger
-            wrapMode: Text.WordWrap
-        }
-        Ui.RecoveryActions {
-            Layout.fillWidth: true
-            retryAction.objectName: "retryAdapterSettings"
-            retryAction.enabled: !section.controller.globalRequestInFlight
-            discardAction.objectName: "discardAdapterSettings"
-            discardAction.label: qsTr("Discard drafts")
-            discardAction.enabled: !section.draft.pending
-            onRetryRequested: section.controller.adapterEdits.retry(section.displayedAdapterKey)
-            onDiscardRequested: section.controller.adapterEdits.discard(section.displayedAdapterKey)
-        }
+        enabled: section.draft.error.length > 0
+        retryAction.objectName: "retryAdapterSettings"
+        retryAction.enabled: !section.controller.globalRequestInFlight
+        discardAction.objectName: "discardAdapterSettings"
+        discardAction.label: qsTr("Discard drafts")
+        discardAction.enabled: !section.draft.pending
+        onRetryRequested: section.controller.adapterEdits.retry(section.displayedAdapterKey)
+        onDiscardRequested: section.controller.adapterEdits.discard(section.displayedAdapterKey)
     }
 
     Ui.DetailColumnCard {
@@ -148,8 +142,7 @@ ColumnLayout {
             Ui.SegmentedControl {
             objectName: "bluetoothLoginState"
             Accessible.name: qsTr("Bluetooth state on login")
-            Layout.preferredWidth: 250
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
+            Layout.fillWidth: true
             options: [
                 {
                     value: "remember",

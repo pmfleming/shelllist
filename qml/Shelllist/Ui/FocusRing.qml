@@ -1,7 +1,7 @@
 import QtQuick
 
-// Immediate, input-transparent focus. A small opaque marker qualifies the browse
-// tint without outlining the control. Editing retains its stronger tone/edge.
+// Immediate, input-transparent focus: browsing moves only the opaque marker.
+// Editing adds an editor-local tonal background and lower line.
 // The parent is always the editable surface, never its label.
 Rectangle {
     id: feedback
@@ -17,12 +17,24 @@ Rectangle {
     anchors.fill: parent
     anchors.margins: Theme.focusRingInset
     radius: Math.max(0, cornerRadius - Theme.focusRingInset)
-    color: Theme.withAlpha(ringColor, editing ? 0.22 : 0.08)
-    border.width: editing ? 2 : 0
+    color: editing ? Theme.withAlpha(ringColor, 0.22) : "transparent"
+    border.width: 0
     border.color: ringColor
     visible: active
     z: 100
     Accessible.ignored: true
+
+    Rectangle {
+        objectName: "editingFocusLine"
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: Theme.spacingXs
+        anchors.rightMargin: Theme.spacingXs
+        height: 2
+        color: feedback.ringColor
+        visible: feedback.editing
+    }
 
     Rectangle {
         objectName: "browseFocusIndicator"

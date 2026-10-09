@@ -39,15 +39,17 @@ Ui.ActionDetailsPane {
             Ui.ThemeText {
                 objectName: "displayLayoutPreviewLabel"
                 Layout.fillWidth: true
-                text: pane.controller.stale ? qsTr("Layout changed · reload") : pane.controller.dirty ? qsTr("Preview layout · not applied") : qsTr("Drag to an edge or choose a direction")
-                color: pane.controller.stale ? Ui.Theme.warning : Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.fontSizeSmall
+                text: qsTr("Drag to an edge or choose a direction")
+                color: Ui.Theme.mutedText
+                font.pixelSize: Ui.Theme.statusTextSize
                 wrapMode: Text.Wrap
             }
         }
         RowLayout {
             Layout.fillWidth: true
-            visible: pane.controller.globalSettingsOpen || !!pane.controller.statusMessage || pane.controller.dirty || pane.controller.stale
+            Layout.minimumHeight: Ui.Theme.controlHeight
+            Layout.preferredHeight: Ui.Theme.controlHeight
+            Layout.maximumHeight: Ui.Theme.controlHeight
             spacing: Ui.Theme.spacingSm
             Ui.FlatIconButton {
                 objectName: "backToDisplayList"
@@ -60,12 +62,11 @@ Ui.ActionDetailsPane {
                 toolTip: accessibleName
                 onClicked: pane.controller.closeDetails()
             }
-            Ui.ThemeText {
-                Layout.fillWidth: true
+            Item { Layout.fillWidth: true }
+            Ui.FeedbackSource {
                 text: pane.controller.statusMessage || (!pane.controller.globalSettingsOpen && pane.controller.dirty ? qsTr("Unsaved layout · Preview changes") : "")
-                wrapMode: Text.Wrap
-                font.pixelSize: Ui.Theme.fontSizeSmall
-                color: pane.controller.statusMessage ? Ui.Theme.warning : Ui.Theme.mutedText
+                summaryText: pane.controller.stale ? qsTr("Layout changed · Reload required") : pane.controller.dirty ? qsTr("Layout draft · Not applied") : qsTr("Display update needs attention")
+                tone: pane.controller.statusMessage ? "warning" : "info"
             }
             Ui.FlatIconButton {
                 objectName: "reloadDisplayLayout"

@@ -80,7 +80,7 @@ function periodEstimate(summary, metric) {
 }
 function periodText(summary, metric) {
     const estimate = periodEstimate(summary, metric);
-    return estimate === null ? "Unavailable" : "≈ " + formatted(estimate, metric === "average_power_watts" ? "energy" : "bytes");
+    return estimate === null ? "Unavailable" : formatted(estimate, metric === "average_power_watts" ? "energy" : "bytes");
 }
 function observationText(summary, metric) {
     const stats = summaryMetric(summary, metric);

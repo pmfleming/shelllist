@@ -86,12 +86,13 @@ Item {
         width: parent.width
         spacing: Ui.Theme.spacingSm
         NotificationAppHeader { width: parent.width; controller: page.controller }
-        Ui.ThemeText {
-            width: parent.width; text: page.timeline.error; visible: text.length > 0
-            color: Ui.Theme.danger; wrapMode: Text.WordWrap
+        Ui.FeedbackSource {
+            text: page.timeline.error
+            summaryText: qsTr("Notification history unavailable")
+            tone: "error"
         }
         Ui.LabeledAction {
-            width: parent.width; visible: !!page.timeline.error
+            width: parent.width; enabled: !!page.timeline.error
             icon: "refresh"; label: qsTr("Retry notification history"); accessKey: "T"
             uiScale: Ui.Theme.expandedSecondaryActionScale
             onClicked: page.timeline.refresh()
@@ -101,7 +102,7 @@ Item {
             visible: page.timeline.totalCount === 0
             icon: "notifications_none"
             kind: page.timeline.error ? "unavailable" : page.timeline.busy ? "loading" : page.controller.catalog.query ? "filtered" : "empty"
-            text: page.timeline.error || (kind === "loading" ? qsTr("Loading notifications…") : kind === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
+            text: page.timeline.error ? qsTr("Notification history unavailable") : (kind === "loading" ? qsTr("Loading notifications…") : kind === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
         }
     }
     Ui.DetailListView {

@@ -58,11 +58,9 @@ Ui.DetailFlickable {
         interactive: page.settingsAvailable
         onClicked: page.save({bypass_dnd: !checked})
     }
-    Ui.InlineStatus {
-        width: parent.width
+    Ui.FeedbackSource {
         text: page.controller.notificationState.policyErrors[page.controller.selectedAppKey] || (page.controller.appBusy ? qsTr("Saving…") : "")
-        visible: text.length > 0
-        color: page.controller.appBusy ? Ui.Theme.mutedText : Ui.Theme.danger
-        wrapMode: Text.WordWrap
+        summaryText: page.controller.appBusy ? qsTr("Saving…") : qsTr("App preferences not saved")
+        tone: page.controller.appBusy ? "info" : "error"
     }
 }

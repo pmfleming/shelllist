@@ -124,7 +124,7 @@ Ui.ProviderChooserSurface {
     Ui.ConfirmationDialog {
         visible: content.controller.bulkDeleteConfirmationOpen
         z: 120
-        title: "Delete " + content.controller.multiSelectedCount + " clipboard entries?"
+        title: content.controller.multiSelectedCount === 1 ? qsTr("Delete %n clipboard entry?", "", content.controller.multiSelectedCount) : qsTr("Delete %n clipboard entries?", "", content.controller.multiSelectedCount)
         detail: "Only the selected entries will be permanently removed."
         acceptLabel: "Delete selected"
         onAccepted: content.controller.confirmBulkDelete()

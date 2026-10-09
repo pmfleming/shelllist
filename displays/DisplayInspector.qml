@@ -62,19 +62,14 @@ ColumnLayout {
                 }
             }
         }
-        Ui.InlineStatus {
-            Layout.fillWidth: true
-            visible: text.length > 0
+        Ui.FeedbackSource {
             text: !inspector.draft.enabled ? qsTr("Enable this display to choose its content.") : inspector.draft.mirror_of ? qsTr("Mirrors %1 · position follows the source. Scaled to fit; black bars may appear.").arg(inspector.draft.mirror_of) : ""
-            wrapMode: Text.Wrap
-            color: Ui.Theme.mutedText
+            summaryText: !inspector.draft.enabled ? qsTr("Display disabled") : qsTr("Mirror follows source · Scaled to fit")
         }
-        Ui.InlineStatus {
-            Layout.fillWidth: true
-            visible: inspector.controller.draft.some(o => o.enabled && o.mirror_of === inspector.output.name)
+        Ui.FeedbackSource {
+            active: inspector.controller.draft.some(o => o.enabled && o.mirror_of === inspector.output.name)
             text: qsTr("Copies must extend before this display can mirror another. Disabling it makes its copies extended displays.")
-            wrapMode: Text.Wrap
-            color: Ui.Theme.mutedText
+            summaryText: qsTr("Extend copies before mirroring")
         }
     }
 

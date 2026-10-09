@@ -20,25 +20,21 @@ Ui.DetailFlickable {
     viewMemory: controller.viewMemory
     memoryTab: selectedTab
 
-    Ui.DetailColumnCard {
-        visible: cards.selectedTab === "data" && cards.detailState.editError.length > 0
-        height: visible ? implicitHeight : 0
-        title: qsTr("Unsaved clipboard draft")
-        Ui.ThemeText {
-            Layout.fillWidth: true
-            text: cards.detailState.editError
-            wrapMode: Text.WordWrap
-            color: Ui.Theme.danger
-        }
-        Ui.RecoveryActions {
-            Layout.fillWidth: true
-            enabled: !cards.controller.actionInFlight && !cards.detailState.editBeginPending
-            retryAction.objectName: "retryClipboardEdit"
-            discardAction.objectName: "discardClipboardEdit"
-            discardAction.accessKey: "D"
-            onRetryRequested: cards.detailState.retryEdit()
-            onDiscardRequested: cards.detailState.discardFailedEdit()
-        }
+    Ui.FeedbackSource {
+        active: cards.selectedTab === "data"
+        text: cards.detailState.editError
+        summaryText: qsTr("Clipboard draft not saved")
+        tone: "error"
+    }
+    Ui.RecoveryActions {
+        width: parent.width
+        visible: cards.selectedTab === "data"
+        enabled: cards.detailState.editError.length > 0 && !cards.controller.actionInFlight && !cards.detailState.editBeginPending
+        retryAction.objectName: "retryClipboardEdit"
+        discardAction.objectName: "discardClipboardEdit"
+        discardAction.accessKey: "D"
+        onRetryRequested: cards.detailState.retryEdit()
+        onDiscardRequested: cards.detailState.discardFailedEdit()
     }
 
     Ui.DetailCard {

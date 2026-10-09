@@ -25,24 +25,20 @@ ColumnLayout {
         return output && output.internal ? qsTr("Laptop (%1)").arg(name) : name;
     }
 
-    RowLayout {
+    Ui.FormField {
         Layout.fillWidth: true
         visible: !controls.controller.arrangementHint
-        spacing: Ui.Theme.spacingSm
+        label: qsTr("Position relative to")
         Ui.ThemeText {
             Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            Layout.preferredWidth: 1
-            text: controls.controller.placementReferences.length > 1 ? qsTr("Move %1 relative to").arg(controls.controller.selectedName) : qsTr("Move %1 relative to %2").arg(controls.controller.selectedName).arg(controls.referenceLabel(controls.controller.referenceName))
-            wrapMode: Text.Wrap
-            color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeSmall
+            visible: controls.controller.placementReferences.length <= 1
+            text: controls.referenceLabel(controls.controller.referenceName)
+            font.pixelSize: Ui.Theme.formValueSize
         }
         Ui.DropDownList {
             objectName: "displayPositionReference"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            Layout.preferredWidth: 1
             visible: controls.controller.placementReferences.length > 1
             interactive: controls.controller.canArrange
             options: controls.controller.placementReferences.map(o => ({ value: o.name, label: controls.referenceLabel(o.name) }))

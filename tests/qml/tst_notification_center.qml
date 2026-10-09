@@ -101,6 +101,28 @@ DaemonTestCase {
         compare(controller.visibleApps.length, 2, "failure cannot optimistically remove notifications");
         content.destroy();
     }
+    function test_deleteCountsRejectMalformedAcknowledgements_data() {
+        return [-1, 1.5, 100201, "1", null].map((count, i) => ({tag: String(i), count: count}));
+    }
+    function test_deleteCountsRejectMalformedAcknowledgements(data) {
+        const {state, content} = make();
+        const challenge = {token: "owned", count: data.count, app_key: "named:Chat", expires_unix_ms: Date.now() + 60000};
+        verify(state.prepareDelete("named:Chat", null, "Chat"));
+        state.backend.finish(request(state, "prepare-delete"), {delete_confirmation: challenge}, "", "");
+        compare(state.deleteConfirmation, null);
+        verify(!state.deletePreparing && state.lastError.length > 0);
+        compare(calls.filter(c => c.method === "notifications.delete").pop().params, {token: "owned", cancel: true});
+        state.backend.finish(request(state, "delete"), {cancelled: true}, "", "");
+        verify(state.prepareDelete("named:Chat", null, "Chat"));
+        state.backend.finish(request(state, "prepare-delete"), {delete_confirmation: Object.assign({}, challenge, {count: 1})}, "", "");
+        state.confirmDelete();
+        verify(state.deletePending);
+        const before = calls.length;
+        state.backend.finish(request(state, "delete"), {deleted: data.count}, "", "");
+        verify(!state.deletePending && state.lastError.length > 0);
+        compare(calls.length, before, "malformed acknowledgement neither announces deletion nor replays it");
+        content.destroy();
+    }
     function test_cardDeleteIsBorderlessAndRecordScopedWithoutMessageNavigation() {
         const {state, controller, content} = make();
         controller.openDetails();
@@ -134,6 +156,42 @@ DaemonTestCase {
         return {view: "timeline", epoch: "epoch", revision: "1", query: "", app_key: "named:Chat", date: "older", period_day: "2026-10-08", recent: [1000,999,998].map(id => preview(id, "named:Chat")), dates: ["today", "week", "month", "older"].map(key => ({key: key, count: key === "older" ? 40 : 0})), count: 40, total_rows: 40, offset: offset, next_offset: next, anchor_reached: true,
             entries: ids.map(id => ({key: id + ":" + id * 1000, preview: preview(id, "named:Chat"), members: [{id: id, created: id * 1000}]}))};
     }
+    function test_malformedTimelineKeepsPublishedWindow_data() {
+        const entry = timelinePage(0, [100], null).entries[0];
+        return [
+            {tag: "envelope", patch: {epoch: ""}},
+            {tag: "null-preview", patch: {recent: [null]}},
+            {tag: "foreign-preview", patch: {recent: [preview(1000, "named:Mail")]}},
+            {tag: "null-period", patch: {dates: [null, null, null, null]}},
+            {tag: "null-entry", patch: {entries: [null]}},
+            {tag: "null-member", patch: {entries: [Object.assign({}, entry, {members: [null]})]}},
+            {tag: "invalid-identity", patch: {entries: [Object.assign({}, entry, {members: [{id: 4294967296, created: 100000}]})]}},
+            {tag: "count-bound", patch: {count: 5201}},
+            {tag: "row-count", patch: {total_rows: 41}},
+            {tag: "cursor-skip", patch: {next_offset: 21}}
+        ];
+    }
+    function test_malformedTimelineKeepsPublishedWindow(data) {
+        const {state, controller, content} = make();
+        controller.openDetails();
+        const timeline = controller.timeline;
+        timeline.requestedDate = "older";
+        const context = {view: "timeline", generation: timeline.generation, appKey: timeline.appKey,
+            query: timeline.query, date: timeline.requestedDate, grouping: timeline.grouping,
+            offset: 0, replacing: true, revision: state.observedHistoryRevision};
+        const good = timelinePage(0, Array.from({length: 20}, (_, i) => 100 - i), 20);
+        timeline.receive(context, good, "", "");
+        compare(timeline.entries.length, 20);
+        const published = JSON.stringify(timeline.entries);
+        timeline.busy = true;
+        timeline.receive(context, Object.assign({}, good, data.patch), "", "");
+        verify(timeline.error.length > 0);
+        verify(!timeline.busy);
+        compare(timeline.staging.length, 0);
+        compare(JSON.stringify(timeline.entries), published);
+        compare(timeline.snapshot, good);
+        content.destroy();
+    }
     function test_recentThreeThenClosedPeriodsAndPrimarySecondaryActions() {
         const {state, controller, content} = make();
         controller.openDetails();
@@ -153,12 +211,16 @@ DaemonTestCase {
         const actions = findChild(content, "surfaceActionRow");
         compare(actions.primaryActions.map(action => action.id), ["silence"]);
         compare(actions.secondaryActions.map(action => action.id), ["reset", "delete"]);
+        tryCompare(controller, "detailsExpansionProgress", 1);
+        tryVerify(() => findChild(content, "detailAction:silence") !== null
+            && findChild(content, "detailAction:reset") !== null);
         const primary = findChild(content, "detailAction:silence");
         const reset = findChild(content, "detailAction:reset");
+        tryVerify(() => primary.width > 0 && reset.width > 0);
+        waitForPolish(content);
         verify(primary.width > reset.width);
         verify(primary.mapToItem(content, 0, 0).y < reset.mapToItem(content, 0, 0).y);
         verify(!content.detailsNavigation.targets.includes(primary) && !content.detailsNavigation.targets.includes(reset));
-        tryCompare(controller, "detailsExpansionProgress", 1);
         showRow(list, 3, ListView.Contain);
         const older = findChild(content, "notificationDate-older");
         verify(older !== null);
@@ -213,6 +275,11 @@ DaemonTestCase {
         first.count = 21; first.total_rows = 21; first.dates[3].count = 21; first.anchor_reached = false;
         first.recent = [1001,1000,999].map(id => preview(id, "named:Chat"));
         timeline.receive(context(0), first, "", "");
+        const continuation = calls.filter(c => c.method === "notifications.queryCenter" && c.params.view === "timeline").pop().params;
+        compare(continuation.offset, 20);
+        compare(continuation.epoch, first.epoch);
+        compare(continuation.revision, first.revision);
+        compare(continuation.period_day, first.period_day);
         compare(timeline.entries[0].preview.id, 100, "an incomplete refreshed window remains private");
         compare(timeline.snapshot.recent[0].id, 1000, "recent previews and period rows publish atomically");
         const second = timelinePage(20, [81], null);

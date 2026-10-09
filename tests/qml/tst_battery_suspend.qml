@@ -149,6 +149,8 @@ DaemonTestCase {
         };
         panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
         verify(findChild(panel, "criticalBatteryStatus").text.includes("45"));
+        tryVerify(() => findChild(panel, "feedbackText").text.includes("45"), 1000, "Countdown remains visible in the shared footer");
+        verify(findChild(panel, "feedbackText").text.includes("AC"), "The safety escape remains visible");
         verify(findChild(panel, "criticalBatteryCancel").visible);
         panel.controller.applyPowerSuspend(Object.assign(suspendState(), {
             operation: {
@@ -157,7 +159,8 @@ DaemonTestCase {
             }
         }));
         panel.controller.suspendError = "reply lost";
-        verify(!findChild(panel, "suspendRetryButton").visible);
+        verify(findChild(panel, "suspendRetryButton").visible);
+        verify(!findChild(panel, "suspendRetryButton").enabled, "unknown outcomes cannot retry");
         verify(findChild(panel, "suspendStatusText").text.includes("outcome unknown"));
     }
 

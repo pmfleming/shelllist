@@ -34,4 +34,10 @@ for (let flags = 0; flags < 16; flags++) {
             expect(`visibility ${flags}/${scope}/${JSON.stringify(policy)}`, visible.length === Number(expected));
         }
 }
+const radio = {available: true, adapter_count: 1, powered: true};
+for (const count of [0, 1, 4]) {
+    expect(`all-device plural ${count}`, flow.radioStatus(radio, true, false, count) === `${count} Bluetooth ${count === 1 ? "device" : "devices"}`);
+    expect(`my-device plural ${count}`, flow.radioStatus(radio, false, false, count) === `${count} ${count === 1 ? "device" : "devices"} in My devices`);
+}
+expect("translated count retained", flow.radioStatus(radio, true, false, 1, "Localized device") === "Localized device");
 console.log(`Bluetooth lifecycle: ${checks} checks passed`);

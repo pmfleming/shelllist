@@ -102,7 +102,7 @@ Io.DaemonBackend {
         }
         if (context.deleteGeneration !== undefined) { store.finishPrepareDelete(context.deleteGeneration, data.delete_confirmation, error); return; }
         if (context.cancelDelete) return;
-        if (context.deleteOperation) { store.finishDelete(error || (!Number.isSafeInteger(data.deleted) || data.deleted < 0 || data.deleted > 100200 ? qsTr("Invalid deletion acknowledgement. Refresh before retrying.") : "")); return; }
+        if (context.deleteOperation) { store.finishDelete(error || (!NotificationValidation.integerIn(data.deleted, 0, 100200) ? qsTr("Invalid deletion acknowledgement. Refresh before retrying.") : "")); return; }
         if (context.replyKey !== undefined)
             store.finishReply(context.replyKey, context.text, error);
         if (context.dnd)

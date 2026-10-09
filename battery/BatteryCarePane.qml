@@ -20,9 +20,11 @@ Column {
     Ui.DetailColumnCard {
         objectName: "batteryDeviceCard"
         visible: (pane.battery.devices || []).length > 1
-        title: qsTr("Battery device")
-
-        Ui.SegmentedControl {
+        Ui.FormField {
+            Layout.fillWidth: true
+            label: qsTr("Device")
+            accessibleName: qsTr("Battery device")
+            Ui.SegmentedControl {
             objectName: "batteryDeviceSelector"
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
@@ -36,6 +38,7 @@ Column {
             interactive: !pane.controller.actionInFlight
             onSelected: function (value) {
                 pane.controller.selectDevice(value);
+            }
             }
         }
     }

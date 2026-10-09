@@ -297,7 +297,10 @@ DaemonTestCase {
                 ]
             }
         ]);
-        return findChild(panel.page, "currentAudioProfile");
+    }
+    Component {
+        id: bluetoothContentComponent
+        Bt.BluetoothContent {}
     }
     Component {
         id: signalContentComponent
@@ -365,9 +368,25 @@ DaemonTestCase {
     }
     function test_audioProfileSingleNativeOperationPreservesPartialSuccess() {
         const panel = makePanel();
-        const profile = setupAudioProfile(panel);
+        panel.controller.uiActive = true;
+        const content = createTemporaryObject(bluetoothContentComponent, testCase, {
+            controller: panel.controller, width: testCase.width, height: testCase.height
+        });
         const backend = findChild(panel.controller, "bluetoothBackend");
-        compare(findChild(panel.page, "audioProfileOnConnect"), null);
+        wait(0); // Complete startup reconciliation before supplying the audio snapshot.
+        backend.pending = ({});
+        calls = [];
+        setupAudioProfile(panel);
+        content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => findChild(content.detailsItem, "currentAudioProfile") !== null);
+        tryCompare(panel.controller, "detailsExpansionProgress", 1);
+        const profile = findChild(content.detailsItem, "currentAudioProfile");
+        // An incubating page exposes its children before Loader.Ready. Wait
+        // for shared navigation to discover the field before sending Tab.
+        tryCompare(content.detailsNavigation, "contentReady", true);
+        tryVerify(() => content.detailsNavigation.availableFields().includes(profile));
+        compare(findChild(content.detailsItem, "audioProfileOnConnect"), null);
         compare(profile.value, "sbc");
         profile.activated(profile.optionIndex("unavailable"));
         compare(calls.length, 0);
@@ -380,11 +399,21 @@ DaemonTestCase {
         compare(profile.value, "sbc");
         verify(profile.interactive);
         calls = [];
-        profile.forceActiveFocus();
+        content.listItem.focusList();
+        keyClick(Qt.Key_Tab);
+        tryCompare(content.detailsNavigation, "browsing", true);
+        for (let i = 0; i < 8 && content.detailsNavigation.currentTarget !== profile; ++i)
+            keyClick(Qt.Key_Tab);
+        compare(content.detailsNavigation.currentTarget, profile);
+        verify(content.detailsNavigation.browsing);
         keyClick(Qt.Key_Return);
+        verify(profile.editSession.active);
         keyClick(Qt.Key_Down);
+        compare(profile.editSession.displayedValue, "aac");
         compare(calls.length, 0, "choice drafts must not write");
         keyClick(Qt.Key_Escape);
+        compare(profile.editSession.displayedValue, "sbc");
+        verify(!profile.editSession.active);
         compare(calls.length, 0, "discard must not write");
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Down);
@@ -423,6 +452,8 @@ DaemonTestCase {
         compare(calls.length, 1, "selection changes and partial success must not trigger another write");
         verify(!backend.requestRunning);
         compare(panel.controller.status, "Audio profile applied, but could not remember it: Permission denied");
+        content.destroy();
+        wait(0); // Destroy the surface before its controller-owned fixture.
     }
     function findToggle(item, title) {
         if (item.title === title && item.checked !== undefined)

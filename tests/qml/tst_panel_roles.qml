@@ -28,7 +28,7 @@ TestCase {
                 width: 300
                 Ui.SectionHeading { objectName: "heading"; width: parent.width; title: "Settings"; helpText: "Routine guidance" }
                 Ui.FormField {
-                    objectName: "form"; width: parent.width; label: "A long translated field name"; stackedLabel: true
+                    objectName: "form"; width: parent.width; label: "A long translated field name"
                     Ui.TextField { objectName: "editable"; width: parent.width; text: "Original" }
                 }
                 Ui.InlineStatus { width: parent.width; text: "Pending is not acknowledgement" }
@@ -53,35 +53,35 @@ TestCase {
         mouseClick(row, row.width - 32, row.height / 2);
         compare(row.activations, 1);
     }
-    function test_messagesGrowAndPendingIsNotSuccess() {
+    function test_feedbackKeepsGeometryAndPendingIsNotSuccess() {
         const status = createTemporaryObject(statusFactory, tests);
-        compare(status.color, Ui.Theme.mutedText, "pending is not success");
+        compare(status.tone, "info", "pending is not success");
         status.error = "Save failed";
-        compare(status.color, Ui.Theme.danger);
+        compare(status.tone, "error");
         const message = createTemporaryObject(messageFactory, tests);
         verify(waitForRendering(message));
-        verify(message.implicitHeight > 2 * Ui.Theme.cardPadding + Ui.Theme.statusTextSize * 2);
-        const oldHeight = message.implicitHeight;
+        compare(message.implicitHeight, Ui.Theme.statusHeight);
+        compare(message.Accessible.name, message.text);
         message.width = 140;
-        tryVerify(() => message.implicitHeight > oldHeight);
+        compare(message.implicitHeight, Ui.Theme.statusHeight);
+        tryCompare(message, "displayText", "Operation failed");
         message.text = "";
-        compare(message.implicitHeight, 0);
+        compare(message.implicitHeight, Ui.Theme.statusHeight);
         const strip = createTemporaryObject(stripFactory, tests);
         verify(waitForRendering(strip));
-        verify(strip.height > Ui.Theme.statusHeight, "list feedback grows, rather than eliding failures");
-        const stripHeight = strip.height;
+        compare(strip.height, Ui.Theme.statusHeight);
         strip.width = 120;
-        tryVerify(() => strip.height > stripHeight);
+        compare(strip.height, Ui.Theme.statusHeight);
     }
-    function test_stackedLabelAndResourceReadingFloor() {
+    function test_inlineLabelAndResourceReadingFloor() {
         const surface = createTemporaryObject(formFactory, tests);
         verify(waitForRendering(surface));
         const form = findChild(surface, "form");
         const field = findChild(surface, "editable");
-        const label = findChild(form, "formFieldStackedLabel");
+        const label = findChild(form, "formFieldLabel");
         verify(label.visible);
-        verify(!findChild(form, "formFieldLabel").visible);
-        verify(field.mapToItem(form, 0, 0).y >= label.implicitHeight + Ui.Theme.spacingXs);
+        verify(field.mapToItem(form, 0, 0).x >= label.mapToItem(form, label.width, 0).x);
+        verify(field.mapToItem(form, 0, 0).y < label.mapToItem(form, 0, label.height).y);
         compare(field.Accessible.name, form.label);
         compare(surface.detailsNavigation.availableFields().length, 1);
         const reading = createTemporaryObject(readingFactory, tests);

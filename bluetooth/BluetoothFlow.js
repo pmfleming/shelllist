@@ -93,7 +93,7 @@ function devicesForView(devices, scope, policy) {
 function adapterLabel(adapter) {
     return adapter.alias || adapter.name || "Bluetooth adapter";
 }
-function radioStatus(radio, searchAllDevices, scanning, count) {
+function radioStatus(radio, searchAllDevices, scanning, count, countText = "") {
     const state = radio || ({});
     if (state.hard_blocked)
         return "Bluetooth is disabled by a hardware switch";
@@ -103,9 +103,8 @@ function radioStatus(radio, searchAllDevices, scanning, count) {
         return "No Bluetooth adapters available";
     if (!state.powered)
         return "Bluetooth is off";
-    if (searchAllDevices)
-        return scanning ? count + " Bluetooth devices · scanning…" : count + " Bluetooth devices";
-    return count + " devices in My Devices";
+    const label = countText || (searchAllDevices ? count + (count === 1 ? " Bluetooth device" : " Bluetooth devices") : count + (count === 1 ? " device in My devices" : " devices in My devices"));
+    return searchAllDevices && scanning ? label + " · scanning…" : label;
 }
 function retainedAdapterKey(adapters, currentKey) {
     const retained = adapters.some(function (adapter) { return adapter.key === currentKey; });

@@ -7,6 +7,10 @@ checklist in `docs/panel-ui-standardization.md`; reusable controls belong in
 `qml/Shelllist/Ui/`, not new panel-local setting wrappers. Review added numeric
 font/spacing/radius overrides with `python3 tests/review-panel-ui.py --base <ref>`;
 chart/calendar/map geometry may be intentional, but needs a reason and owner.
+Use the same shared composition, not merely the same control class: `FieldRow`
+keeps labels left of editors; browsing is marker-only; `FeedbackSource` contributes
+to fixed surface feedback instead of growing rows. Follow
+`docs/shared-panel-ui-convergence.md` for the revised scope and evidence gates.
 Keep error/blocked/pending state visible and passive labels readable. New labels,
 headings, Help and telemetry must not become extra editable stops.
 
