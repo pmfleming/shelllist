@@ -80,37 +80,17 @@ Controls.ComboBox {
     }
     onActivated: function (index) { stageIndex(index); }
 
-    contentItem: ThemeText {
-        leftPadding: control.selectedIcon ? Theme.formIconSize + Theme.spacingSm : 0
-        rightPadding: control.errorText ? Theme.formIconSize + Theme.spacingSm : 0
+    contentItem: DropDownLabel {
         // Native currentIndex may be a proposed choice awaiting acknowledgement.
         text: control.optionLabel(control.selectedIndex)
         color: control.selectedIndex >= 0 ? Theme.inputText : Theme.subtleText
-        font.pixelSize: Theme.formValueSize
         font.weight: Theme.fontWeightRegular
-        verticalAlignment: Text.AlignVCenter
-        elide: Text.ElideRight
-
-        GlyphLabel {
-            objectName: "dropDownValueIcon"
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            visible: control.selectedIcon.length > 0
-            glyph: control.selectedIcon
-            font.pixelSize: Theme.formIconSize
-            color: parent.color
-            Accessible.ignored: true
-        }
-        GlyphLabel {
-            objectName: "dropDownErrorIcon"
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            visible: control.errorText.length > 0
-            glyph: "error"
-            font.pixelSize: Theme.formIconSize
-            color: Theme.danger
-            Accessible.ignored: true
-        }
+        leadingIcon.objectName: "dropDownValueIcon"
+        leadingIcon.glyph: control.selectedIcon
+        trailingIcon.objectName: "dropDownErrorIcon"
+        trailingVisible: control.errorText.length > 0
+        trailingIcon.glyph: "error"
+        trailingIcon.color: Theme.danger
     }
 
     indicator: GlyphLabel {

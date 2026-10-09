@@ -68,7 +68,6 @@ Ui.ChooserController {
         store: controller.notificationState
         active: controller.uiActive
         query: controller.filterText.trim().toLowerCase()
-        appKey: controller.selectedAppKey
         onAppsChanged: Qt.callLater(controller.rebuildRecords)
         onQueryChanged: controller.entryGeneration++
     }

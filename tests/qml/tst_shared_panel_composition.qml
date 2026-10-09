@@ -15,7 +15,6 @@ TestCase {
     Component {
         id: factory
         Ui.PanelSurface {
-            id: surface
             width: 520; height: 650
             chooserController: Ui.ChooserController { uiActive: true }
             navigationContent: content

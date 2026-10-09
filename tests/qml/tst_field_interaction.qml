@@ -357,6 +357,10 @@ TestCase {
         const surface = make();
         const control = field(surface, "choice");
         control.saveOnOptionClick = data.immediate;
+        control.options = [{value: "a", label: "A", icon: "home"}, {value: "b", label: "B"}, {value: "c", label: "C", icon: "settings"}];
+        const valueIcon = findChild(control, "dropDownValueIcon");
+        compare(valueIcon.glyph, "home");
+        verify(valueIcon.Accessible.ignored);
         browse(surface, "choice");
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Down);
@@ -368,9 +372,17 @@ TestCase {
         keyClick(Qt.Key_Down);
         compare(surface.writes, 0, "menu highlighting never saves");
         const option = findChild(control.popup.contentItem, "dropDownOption-2");
+        const saved = findChild(control.popup.contentItem, "dropDownOption-0");
+        compare(findChild(option, "dropDownOptionIcon").glyph, "settings");
+        verify(findChild(option, "dropDownOptionIcon").Accessible.ignored);
+        verify(findChild(saved, "dropDownSelectedCheck").visible);
+        verify(!findChild(option, "dropDownSelectedCheck").visible, "candidate highlight is not acknowledgement");
+        compare(option.contentItem.leftPadding, control.contentItem.leftPadding);
+        compare(option.contentItem.rightPadding, saved.contentItem.rightPadding, "reserve the saved-check slot for every option");
         mouseClick(option, option.width / 2, option.height / 2);
         tryCompare(control.popup, "visible", false);
         compare(control.contentItem.text, "C", "clicked option wins over keyboard highlight");
+        compare(valueIcon.glyph, "settings");
         compare(surface.writes, data.immediate ? 1 : 0);
         compare(surface.savedChoice, data.immediate ? "c" : "a");
         compare(surface.detailsNavigation.browsing, data.immediate);
@@ -380,6 +392,8 @@ TestCase {
         }
         surface.savedChoice = "b";
         compare(control.contentItem.text, "B", "source binding survives click save or discard");
+        verify(!valueIcon.visible);
+        compare(control.contentItem.leftPadding, 0);
     }
     function test_sliderCommitAndLiveRollback_data() {
         return [{tag: "deferred", preview: false}, {tag: "live", preview: true}];

@@ -19,7 +19,6 @@ TestCase {
     Component {
         id: formFactory
         Ui.PanelSurface {
-            id: surface
             width: tests.width; height: tests.height
             chooserController: Ui.ChooserController { uiActive: true }
             navigationContent: column

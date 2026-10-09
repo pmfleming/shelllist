@@ -83,7 +83,6 @@ Rectangle {
     // Every card has two readings at one shared scale. Narrow cards retain
     // readable text rather than squeezing a third, unrelated metric into power.
     ColumnLayout {
-        id: overlay
         objectName: "resourceOverlay_" + card.lane.id
         anchors.left: parent.left
         anchors.leftMargin: card.inset
@@ -106,7 +105,6 @@ Rectangle {
                 Layout.alignment: Qt.AlignVCenter
             }
             ColumnLayout {
-                id: readingStack
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumWidth: 0

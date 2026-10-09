@@ -1,29 +1,18 @@
 import QtQuick
-import Shelllist.Ui as Ui
 
-// Only native, bounded view snapshots live here. No grouping, ordering or search
-// over a partially loaded frontend catalog. Read generations never own mutations.
+// Native app-group windows only; NotificationTimeline owns the record windows.
+// No local grouping/search. Read generations never own mutations or group resolution.
 Item {
     id: catalog
     required property NotificationState store
     property bool active: false
     property string query: ""
-    property string appKey: ""
-    property string selectedKey: ""
     property string revealKey: ""
     property var apps: []
-    property var detail: ({})
-    property int page: 1
-    property bool pagePending: false
-    property string pageError: ""
     property string rootError: ""
-    property string detailError: ""
     property bool rootBusy: false
-    property bool detailBusy: false
     property bool rootDirty: false
-    property bool detailDirty: false
     property int rootGeneration: 0
-    property int detailGeneration: 0
     property var nextOffset: null
     property string epoch: ""
     property string revision: ""
@@ -31,16 +20,10 @@ Item {
     property string stagingEpoch: ""
     property string stagingRevision: ""
     property var anchor: null
-    property bool loaded: false
     readonly property bool hasMore: nextOffset !== null
 
-    function position(key: string): var {
-        const parts = key.split(":");
-        return parts.length === 2 ? {id: Number(parts[0]), created: Number(parts[1])} : null;
-    }
     function refresh(): void {
         rootDirty = true;
-        detailDirty = true;
         if (active && store.backend.ready) debounce.restart();
     }
     function reloadApps(): void {
@@ -68,75 +51,31 @@ Item {
         if (rootDirty) { reloadApps(); return; }
         requestApps(nextOffset, false);
     }
-    function requestDetail(preserveAnchor: bool): void {
-        detailGeneration++;
-        detailDirty = false;
-        // The center only consumes app rows and the timeline. Full-record reads
-        // are explicit; an app selection alone must not start an unused reader.
-        if (!appKey || !selectedKey) { detailBusy = false; detail = ({}); return; }
-        detailError = "";
-        detailBusy = true;
-        const first = preserveAnchor && !pagePending && detail.entries?.length ? detail.entries[0] : null;
-        store.backend.queryCenter({view: "app", query: query, app_key: appKey, page: page,
-            page_anchor: first ? {id: first.id, created: first.created_unix_ms} : null,
-            selected: position(selectedKey)},
-            {view: "app", generation: detailGeneration, revision: store.observedHistoryRevision,
-                query: query, appKey: appKey, selectedKey: selectedKey});
-    }
-    function setPage(value: string): void {
-        const total = Number(detail.pages || 1);
-        if (!/^[1-9][0-9]*$/.test(value) || Number(value) > total) {
-            pageError = qsTr("Enter a page from 1 to %1").arg(total);
-            return;
-        }
-        pageError = "";
-        if (Number(value) === page) return;
-        page = Number(value);
-        pagePending = true;
-        requestDetail(false);
-    }
     function invalidate(): void {
         rootGeneration++;
-        detailGeneration++;
         rootBusy = false;
-        detailBusy = false;
         staging = [];
         nextOffset = null;
         rootDirty = true;
-        detailDirty = true;
     }
-    function validList(rows: var, max: int): bool {
-        return Array.isArray(rows) && rows.length <= max
-            && rows.every(item => NotificationValidation.preview(item) && item.app_key === appKey)
-            && new Set(rows.map(Ui.NotificationPresentation.recordKey)).size === rows.length;
-    }
-    function ownsRead(context: var): bool {
-        if (context.resolve || context.query !== query) return false;
-        if (context.view === "apps") return context.generation === rootGeneration;
-        return context.view === "app" && context.generation === detailGeneration
-            && context.appKey === appKey && context.selectedKey === selectedKey;
-    }
-    function failRead(root: bool, message: string): void {
-        if (root) { rootError = message; staging = []; }
-        else detailError = message;
+    function failRead(message: string): void {
+        rootError = message;
+        staging = [];
     }
     function receive(context: var, value: var, error: string, code: string): void {
-        if (!ownsRead(context)) return;
-        const root = context.view === "apps";
-        if (root) rootBusy = false;
-        else detailBusy = false;
+        if (context.resolve || context.view !== "apps" || context.query !== query || context.generation !== rootGeneration) return;
+        rootBusy = false;
         if (context.revision !== store.observedHistoryRevision || code === "history-cursor-stale") {
-            if (root) staging = [];
+            staging = [];
             refresh();
             return;
         }
-        if (error || !NotificationValidation.envelope(value, context.view, query)) {
-            failRead(root, error || qsTr("Invalid notification center response"));
+        if (error || !NotificationValidation.envelope(value, "apps", query)) {
+            failRead(error || qsTr("Invalid notification center response"));
             return;
         }
-        if (root) acceptApps(context, value);
-        else acceptDetail(value);
-        if (active && store.backend.ready && (rootDirty || detailDirty)) debounce.restart();
+        acceptApps(context, value);
+        if (active && store.backend.ready && rootDirty) debounce.restart();
     }
     function validSummary(app: var): bool {
         return NotificationValidation.token(app?.key) && NotificationValidation.preview(app.latest) && app.latest.app_key === app.key
@@ -157,11 +96,11 @@ Item {
             return;
         }
         if (!validAppPage(value, base.length)) {
-            failRead(true, qsTr("Invalid notification app page")); return;
+            failRead(qsTr("Invalid notification app page")); return;
         }
         const next = base.concat(value.apps);
         if (new Set(next.map(a => a.key)).size !== next.length || next.length > value.total_apps) {
-            failRead(true, qsTr("Notification app page did not advance")); return;
+            failRead(qsTr("Notification app page did not advance")); return;
         }
         if (context.replacing && value.next_offset !== null && !value.anchor_reached) {
             staging = next; stagingEpoch = value.epoch; stagingRevision = value.revision;
@@ -173,31 +112,11 @@ Item {
         if (!store.equal(apps, next)) apps = next;
         staging = [];
         epoch = value.epoch; revision = value.revision; nextOffset = value.next_offset;
-        loaded = true;
-    }
-    function acceptDetail(value: var): void {
-        if (value.app_key !== appKey || !validList(value.overview, 3) || !validList(value.entries, 5)
-                || !NotificationValidation.integerIn(value.count, 0, 5200) || !NotificationValidation.integerIn(value.total_count, value.count, 5200)
-                || value.pages !== Math.max(1, Math.ceil(value.count / 5))
-                || !NotificationValidation.integerIn(value.page, 1, value.pages)
-                || (value.selected !== null && Ui.NotificationPresentation.recordKey(value.selected) !== selectedKey)) {
-            detailError = qsTr("Invalid notification detail page"); return;
-        }
-        detailError = "";
-        page = value.page;
-        pagePending = false;
-        if (!store.equal(detail, value)) detail = value;
     }
     onQueryChanged: {
-        invalidate(); apps = []; detail = ({}); page = 1; loaded = false;
-        rootError = ""; detailError = ""; refresh();
+        invalidate(); apps = [];
+        rootError = ""; refresh();
     }
-    onAppKeyChanged: {
-        detailGeneration++; detailBusy = false; detail = ({}); page = 1; pagePending = false; pageError = "";
-        detailDirty = true;
-        if (active && store.backend.ready) Qt.callLater(requestDetail, false);
-    }
-    onSelectedKeyChanged: if (active && appKey && store.backend.ready) Qt.callLater(requestDetail, true)
     onActiveChanged: {
         if (active) refresh();
         else { debounce.stop(); invalidate(); }
@@ -208,7 +127,6 @@ Item {
         onTriggered: {
             if (!catalog.active || !catalog.store.backend.ready) return;
             if (catalog.rootDirty && !catalog.rootBusy) catalog.reloadApps();
-            if (catalog.detailDirty && !catalog.detailBusy) catalog.requestDetail(true);
         }
     }
     Connections {

@@ -58,6 +58,10 @@ Shared `DetailListView` gives virtualized read-only detail content the same Tab
 fallback and PageUp/PageDown behavior as `DetailFlickable`. Up/Down remain app
 navigation. The Message page and Read/right-arrow card navigation are removed;
 there is no hidden full-message reader or sender-command route in the center.
+`NotificationCatalog` retains only app-group windows, not dormant page/selected-
+record state. `NotificationTimeline` owns the live detail windows. Explicit
+controller group resolution still uses the native app lookup, with independent
+ownership; its replies cannot retire catalog reads.
 Sender actions and replies on notification popups remain unchanged. Ctrl+Tab
 cycles only Notifications and App controls, with accessible names retained for
 the icon-only tabs. App controls use ordinary Enter/Tab save and Escape discard

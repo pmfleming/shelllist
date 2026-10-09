@@ -60,12 +60,6 @@ DaemonTestCase {
             ]
         };
     }
-    function record(id, app) {
-        return {
-            history_id: id,
-            notification: notification(id, app)
-        };
-    }
     function makeState() {
         const state = createTemporaryObject(stateComponent, testCase);
         verify(state !== null);
@@ -103,16 +97,6 @@ DaemonTestCase {
         compare(controller.catalog.rootError, "");
         controller.rebuildRecords();
     }
-    function projectDetail(controller, records, count, number) {
-        controller.catalog.detailBusy = false;
-        controller.catalog.acceptDetail({view: "app", epoch: "test-epoch", revision: "1", query: controller.catalog.query,
-            app_key: controller.selectedAppKey, count: count || records.length, total_count: count || records.length,
-            page: number || 1, pages: Math.max(1, Math.ceil((count || records.length) / 5)),
-            overview: records.slice(0, 3).map(r => preview(r.notification.id, controller.selectedAppKey)),
-            entries: records.slice(0, 5).map(r => preview(r.notification.id, controller.selectedAppKey)),
-            selected: records.find(r => r.notification.id + ":" + r.notification.created_unix_ms === controller.catalog.selectedKey) || null});
-        projectTimeline(controller, records.map(r => preview(r.notification.id, controller.selectedAppKey)));
-    }
     function projectTimeline(controller, previews) {
         controller.timeline.busy = false;
         controller.timeline.requestedDate = previews.length > 3 ? "older" : "";
@@ -146,12 +130,10 @@ DaemonTestCase {
         controller.uiActive = true; controller.openDetails();
         const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: controller.currentWindowWidth, height: 600});
         wait(150);
-        projectDetail(controller, [record(100), record(3), record(2)]);
         const savedFile = "File saved to '/run/user/1000/clip-daemon/edits/clipboard-45423e6b-447c-4813-8366-3a5e7c545b95.png'.";
         const entries = [Object.assign(preview(100), {summary: "Chat", body: savedFile, closed_unix_ms: 100001}),
             Object.assign(preview(3), {summary: "Unique subject", body: "<b>Plain message</b> ".repeat(12)}),
             Object.assign(preview(2), {summary: "", body: "Copied to clipboard."})];
-        controller.catalog.acceptDetail(Object.assign({}, controller.catalog.detail, {overview: entries, entries: entries}));
         projectTimeline(controller, entries);
         projectApps(controller, [{key: "Chat", count: 3, total_count: 3, latest: entries[0]}]);
         for (const tab of ["notifications"]) {
@@ -390,25 +372,14 @@ DaemonTestCase {
         state.backend.finish(request, {notification_center: appPage([])}, "", "");
         tryCompare(controller.notificationModel, "count", 0);
         wait(180);
-        compare(catalog.detailDirty, false);
         compare(catalog.rootDirty, false);
-        verify(!catalog.rootBusy && !catalog.detailBusy);
+        verify(!catalog.rootBusy);
         const before = testCase.calls.filter(call => call.method === "notifications.queryCenter").length;
         wait(180);
         compare(testCase.calls.filter(call => call.method === "notifications.queryCenter").length, before, "empty results do not poll continuously");
         catalog.acceptApps({offset: 0, replacing: true}, appPage([app(100), app(100)]));
         verify(catalog.rootError.length > 0);
         compare(catalog.apps.length, 0);
-        projectApps(controller, [app(100, "Chat", 2)]);
-        controller.catalog.selectedKey = "100:100000";
-        projectDetail(controller, [record(100)], 2);
-        verify(controller.catalog.detail.selected !== null);
-        catalog.acceptDetail(Object.assign({}, catalog.detail, {selected: record(1)}));
-        verify(catalog.detailError.length > 0);
-        controller.catalog.selectedKey = "1:1000";
-        catalog.acceptDetail(Object.assign({}, catalog.detail, {selected: null}));
-        compare(controller.catalog.selectedKey, "1:1000", "missing records never retarget a native lookup");
-        verify(controller.catalog.detail.selected === null);
     }
     function test_recordIdentityAndConnectionGenerationFenceDraftsAndHistory() {
         const state = makeState();
@@ -557,16 +528,30 @@ DaemonTestCase {
         verify(!catalog.rootBusy);
         compare(catalog.staging.length, 0);
     }
-    function test_detailValidationKeepsLastCoherentRecord_data() {
-        return [{tag: "wrong-record-app", patch: {entries: [preview(100, "Other")]}}];
+    function test_unownedCenterResponsesCannotRetireAppRead_data() {
+        return [
+            {tag: "removed-reader", patch: {view: "app"}},
+            {tag: "timeline", patch: {view: "timeline"}},
+            {tag: "group-resolution", patch: {resolve: true}},
+            {tag: "old-generation", patch: {generation: -1}},
+            {tag: "old-query", patch: {query: "obsolete"}}
+        ];
     }
-    function test_detailValidationKeepsLastCoherentRecord(data) {
-        const controller = makeController(makeState());
-        controller.catalog.selectedKey = "100:100000"; projectDetail(controller, [record(100)]);
-        const before = JSON.stringify(controller.catalog.detail);
-        controller.catalog.acceptDetail(Object.assign({}, controller.catalog.detail, data.patch));
-        compare(JSON.stringify(controller.catalog.detail), before);
-        verify(controller.catalog.detailError.length > 0);
+    function test_unownedCenterResponsesCannotRetireAppRead(data) {
+        const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;
+        finishApps(controller, stagedPage());
+        const context = state.backend.requests[rootRequest(controller)].center;
+        const visible = JSON.stringify(catalog.apps), staging = JSON.stringify(catalog.staging);
+        for (const error of ["", "Unrelated read failed"]) {
+            state.centerResponse(Object.assign({}, context, data.patch), appPage([]), error, "");
+            verify(catalog.rootBusy, "another reader cannot retire our continuation");
+            compare(catalog.rootError, "");
+            compare(JSON.stringify(catalog.apps), visible);
+            compare(JSON.stringify(catalog.staging), staging);
+        }
+        finishApps(controller, appPage([app(199, "Second")], "", 1, null, 2));
+        compare(catalog.apps.map(app => app.key), ["First", "Second"]);
+        verify(!catalog.rootBusy);
     }
     function test_hidingCenterRetiresStagingWithoutReplayingReads() {
         const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;
@@ -605,8 +590,8 @@ DaemonTestCase {
         finishApps(controller, Object.assign(appPage([]), {epoch: "new-daemon", revision: "0"}));
         compare(catalog.epoch, "new-daemon");
         compare(catalog.apps.length, 0);
-        catalog.rootDirty = false; catalog.detailDirty = false;
+        catalog.rootDirty = false;
         state.backend.eventGapDetected("notifications.changed", {event: "lagged"});
-        verify(catalog.rootDirty && catalog.detailDirty, "a gap refreshes the active reader even before the next revision");
+        verify(catalog.rootDirty, "a gap refreshes the active reader even before the next revision");
     }
 }

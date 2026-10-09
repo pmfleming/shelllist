@@ -14,7 +14,6 @@ RecoveryActions 1.0 RecoveryActions.qml
 ActionArea 1.0 ActionArea.qml
 ActionDetailsPane 1.0 ActionDetailsPane.qml
 ActionToggleList 1.0 ActionToggleList.qml
-ActionToolbar 1.0 ActionToolbar.qml
 CommandGroup 1.0 CommandGroup.qml
 SurfaceActionRow 1.0 SurfaceActionRow.qml
 CenteredMessage 1.0 CenteredMessage.qml
@@ -51,6 +50,7 @@ DetailsTab 1.0 DetailsTab.qml
 DetailsTabBar 1.0 DetailsTabBar.qml
 DropDownList 1.0 DropDownList.qml
 internal DropDownOptionDelegate DropDownOptionDelegate.qml
+internal DropDownLabel DropDownLabel.qml
 Elevation 1.0 Elevation.qml
 internal FieldFrame FieldFrame.qml
 internal FieldStateBadge FieldStateBadge.qml

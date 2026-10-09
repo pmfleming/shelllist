@@ -164,6 +164,7 @@ DaemonTestCase {
             {tag: "foreign-preview", patch: {recent: [preview(1000, "named:Mail")]}},
             {tag: "null-period", patch: {dates: [null, null, null, null]}},
             {tag: "null-entry", patch: {entries: [null]}},
+            {tag: "foreign-entry", patch: {entries: [Object.assign({}, entry, {preview: preview(100, "named:Mail")})]}},
             {tag: "null-member", patch: {entries: [Object.assign({}, entry, {members: [null]})]}},
             {tag: "invalid-identity", patch: {entries: [Object.assign({}, entry, {members: [{id: 4294967296, created: 100000}]})]}},
             {tag: "count-bound", patch: {count: 5201}},

@@ -366,6 +366,11 @@ from this center; there is no hidden tab to restore or navigate to. Alt+D remain
 selected-app deletion, while a card's Delete targets only its stable record ID.
 Popup sender actions/replies retain their existing acknowledgement and lifecycle
 guards. Tab changes still discard only uncommitted app-control edits.
+`NotificationCatalog` owns only app-group reads; its obsolete selected-record/page
+reader is removed. Timeline and explicit group-resolution replies cannot retire a
+catalog read. Native tests cover that ownership boundary and timeline validation.
+Dropdown values/options share passive `DropDownLabel` composition; icons and saved
+checks retain their existing identities and do not become additional field stops.
 
 Native windows stage refreshes atomically and fence stale revisions, epochs,
 queries, period changes and local-midnight rollover. Frontend notification readers

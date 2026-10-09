@@ -4,7 +4,16 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
-The [2026-10-08 maintenance review](qml-maintenance-2026-10-08.md) uses the
+The [2026-10-09 catalog/shared-label review](qml-maintenance-2026-10-09.md)
+compares against clean `a910ac5d`. It removes the unused notification detail reader,
+obsolete toolbar and unused IDs, and shares dropdown label/icon composition.
+Production complexity, effort, locality, leverage and cloning improve modestly;
+physical code falls 144 lines including regressions. Strict lint and focused Qt
+suites pass. The full suite remains at one identical baseline resource-pixel failure
+and one existing renderer skip (365 passes); Lens remains incomplete. No full
+sibling/Nix or hardware gate is claimed.
+
+The preceding [2026-10-08 maintenance review](qml-maintenance-2026-10-08.md) uses the
 incoming dirty worktree as its baseline. Shared notification validation and choice
 transactions, consolidated timeline cursor state and removal of an unused resource
 subtree reduce production source by 439 lines and total physical code by 360 lines,

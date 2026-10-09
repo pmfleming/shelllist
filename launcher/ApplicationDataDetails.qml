@@ -5,7 +5,6 @@ import "ApplicationResources.js" as Resources
 
 // Storage attribution is application context, not a power/energy reading.
 Ui.DetailCard {
-    id: card
     required property ApplicationController controller
     required property var application
     readonly property var points: controller.historyTargetId === application.id ? controller.resourceHistory || [] : []

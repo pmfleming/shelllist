@@ -33,36 +33,16 @@ Controls.AbstractButton {
         id: hover
         enabled: option.enabled
     }
-    contentItem: ThemeText {
+    contentItem: DropDownLabel {
         text: option.optionText
-        leftPadding: option.optionIcon ? Theme.formIconSize + Theme.spacingSm : 0
-        rightPadding: Theme.formIconSize + Theme.spacingSm
+        reserveTrailingSpace: true
         color: option.foreground
-        font.pixelSize: Theme.formValueSize
         font.weight: option.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
-        verticalAlignment: Text.AlignVCenter
-        elide: Text.ElideRight
-
-        GlyphLabel {
-            objectName: "dropDownOptionIcon"
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            visible: option.optionIcon.length > 0
-            glyph: option.optionIcon
-            font.pixelSize: Theme.formIconSize
-            color: option.foreground
-            Accessible.ignored: true
-        }
-        GlyphLabel {
-            objectName: "dropDownSelectedCheck"
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            visible: option.selected
-            glyph: "check"
-            font.pixelSize: Theme.formIconSize
-            color: option.foreground
-            Accessible.ignored: true
-        }
+        leadingIcon.objectName: "dropDownOptionIcon"
+        leadingIcon.glyph: option.optionIcon
+        trailingIcon.objectName: "dropDownSelectedCheck"
+        trailingVisible: option.selected
+        trailingIcon.glyph: "check"
     }
     background: Rectangle {
         radius: 8

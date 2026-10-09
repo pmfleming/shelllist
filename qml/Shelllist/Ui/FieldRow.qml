@@ -30,7 +30,6 @@ Item {
         anchors.fill: parent
         spacing: Theme.spacingMd
         RowLayout {
-            id: labelColumn
             visible: row.label.length > 0 || row.icons.length > 0
             Layout.preferredWidth: row.labelColumnWidth
             Layout.minimumWidth: row.labelColumnWidth

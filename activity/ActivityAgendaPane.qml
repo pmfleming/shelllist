@@ -70,7 +70,6 @@ Rectangle {
                     anchors.bottomMargin: Ui.Theme.spacingSm
                     spacing: Ui.Theme.spacingXs
                     Ui.ThemeText {
-                        id: eventTitle
                         width: parent.width
                         text: eventRow.modelData.title || "Untitled event"
                         elide: Text.ElideRight
