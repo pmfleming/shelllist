@@ -862,6 +862,7 @@
                 ln -sfn ${./displays} test-root/qml/Shelllist/Displays
                 ln -sfn ${./activity} test-root/qml/Shelllist/Activity
                 ln -sfn ${./bar} test-root/qml/Shelllist/Bar
+                ln -s ${./activity} test-root/activity
                 ln -s ${./displays} test-root/displays
                 ln -s ${./bar} test-root/bar
                 ln -s ${./clipboard} test-root/clipboard

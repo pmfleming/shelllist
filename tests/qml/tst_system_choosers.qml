@@ -51,6 +51,61 @@ DaemonTestCase {
     function player(id, seek) {
         return {id: id, identity: id, title: "Track " + id, playback_status: "Playing", can_control: true, can_pause: true, can_play: true, can_seek: seek};
     }
+    function test_mediaStatusUsesSharedFooterWithoutAddingInteractions(): void {
+        const root = fixture();
+        root.desktop.media = {available: true, active_player: "one", players: [player("one", true), player("two", true)]};
+        root.chooser.activateUi("");
+        const pane = root.content.listItem;
+        const label = findChild(pane, "feedbackText");
+        verify(label !== null);
+        tryCompare(label, "text", "2 players");
+        compare(pane.statusTone, "info");
+        verify(pane.icon.length > 0);
+        const footer = label.parent.parent.parent;
+        verify(waitForPolish(root.Window.window));
+        const footerY = footer.mapToItem(root, 0, 0).y;
+        const footerHeight = footer.height;
+        pane.focusSearch();
+        for (const letter of "one") keyClick(letter);
+        tryCompare(label, "text", "1 of 2 players");
+        for (const letter of "missing") keyClick(letter);
+        tryCompare(label, "text", "No matching players");
+        keyClick(Qt.Key_A, Qt.ControlModifier);
+        keyClick(Qt.Key_Backspace);
+        tryCompare(label, "text", "2 players");
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsItem !== null);
+        verify(pane.listFocused);
+        keyClick(Qt.Key_Return);
+        compare(calls.length, 1);
+        tryCompare(label, "text", "Updating media…");
+        acknowledge(root, calls[0], {});
+        tryCompare(label, "text", "2 players");
+        root.desktop.backend.operationError = "Playback request failed";
+        tryCompare(label, "text", "Playback request failed");
+        compare(pane.statusTone, "error");
+        keyClick(Qt.Key_Left);
+        compare(root.chooser.detailsOpen, false);
+        compare(label.text, "Playback request failed", "errors survive inspector collapse");
+        root.desktop.backend.operationError = "";
+        root.desktop.media = {available: true, active_player: "one", players: [player("one", true)]};
+        tryCompare(label, "text", "1 player");
+        root.desktop.backend.snapshotError = "Cannot read players";
+        tryCompare(label, "text", "Cannot read players");
+        compare(pane.statusTone, "error");
+        root.desktop.backend.snapshotError = "";
+        root.desktop.media = {available: false, players: []};
+        tryCompare(label, "text", "No media players");
+        compare(pane.statusTone, "info");
+        clientReady = false;
+        tryCompare(label, "text", "Media service unavailable");
+        compare(pane.statusTone, "error");
+        verify(waitForPolish(root.Window.window));
+        compare(footer.height, footerHeight);
+        compare(footer.mapToItem(root, 0, 0).y, footerY);
+        compare(calls.length, 1, "status updates never dispatch commands");
+    }
     function test_mediaArtworkFollowsMetadataWithoutChangingPlayback(): void {
         const root = fixture();
         const cover = Qt.resolvedUrl("fixtures/media-cover.svg").toString();

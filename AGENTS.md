@@ -8,11 +8,15 @@ checklist in `docs/panel-ui-standardization.md`; reusable controls belong in
 font/spacing/radius overrides with `python3 tests/review-panel-ui.py --base <ref>`;
 chart/calendar/map geometry may be intentional, but needs a reason and owner.
 Use the same shared composition, not merely the same control class: `FieldRow`
-keeps labels left of editors; browsing is marker-only; `FeedbackSource` contributes
-to fixed surface feedback instead of growing rows. Follow
+keeps labels left of editors; browsing is marker-only. When surface feedback is
+shown, use shared `FeedbackSource` composition instead of growing rows. Follow
 `docs/shared-panel-ui-convergence.md` for the revised scope and evidence gates.
-Keep error/blocked/pending state visible and passive labels readable. New labels,
-headings, Help and telemetry must not become extra editable stops.
+A status bar and visible warnings, errors, blocked/pending states or countdowns
+are not mandatory contributor requirements; their presentation may be removed or
+redesigned separately. This supersedes mandatory visibility requirements in the
+referenced UI documents, without changing domain behaviour or safety guards.
+Keep passive labels readable. New labels, headings, Help and telemetry must not
+become extra editable stops.
 
 Use shared `ProviderChooserSurface`/`PanelSurface` navigation and shared editable
 controls. Tab/Shift+Tab traverse only editable fields; arrows browse results or

@@ -487,7 +487,11 @@ controls on the compact bar only. The panel exposes Previous, Next, Rewind 30s
 and Forward 30s directly, with independent capability guards and no transport
 More menu. Shared header sizing may omit disabled commands only as a last resort.
 Playback state uses icons and timing uses numbers, with full accessible descriptions;
-there is no persistent shortcut legend or instructional footer. Errors remain text.
+there is no persistent shortcut legend or instructional footer. The shared list
+status bar remains visible with a media icon and player count (matching/total while
+filtering); loading, pending operations, unavailable service and errors take
+precedence. It is passive, retains fixed geometry and adds no focus stops.
+Errors remain text.
 Recognition and optional daemon-owned YouTube enrichment change presentation/search
 only, never the MPRIS routing or pin ID. Video headers show the channel (otherwise
 service/browser identity), with the full title in the passive card. Metadata is

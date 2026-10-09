@@ -75,6 +75,7 @@ Ui.ProviderChooserSurface {
         placeholder: tray ? qsTr("Search tray applications…") : audio ? qsTr("Search audio devices…") : qsTr("Search media players…")
         readonly property bool tray: content.controller.kind === "tray"
         readonly property bool audio: content.controller.kind === "audio"
+        readonly property bool media: content.controller.kind === "media"
         readonly property string readError: !tray && content.controller.barController ? content.controller.barController.backend.snapshotError : ""
         readonly property bool reading: !tray && !!content.controller.barController && content.controller.barController.backend.snapshotLoading
         emptyIcon: tray ? "apps" : audio ? "speaker" : "music_note"
@@ -85,9 +86,16 @@ Ui.ProviderChooserSurface {
             : tray ? qsTr("No tray applications") : audio ? qsTr("No audio devices") : qsTr("No media players"))
         refreshing: reading
         powerVisible: false
-        status: content.controller.statusText
-        statusTone: "error"
-        statusSummary: audio ? qsTr("Audio change unconfirmed") : tray ? qsTr("Tray status") : qsTr("Media change unconfirmed")
+        icon: media ? "󰝚" : ""
+        powered: media && !!content.controller.barController && content.controller.barController.backend.ready
+        status: content.controller.statusText || (media ? readError || (emptyState === "unavailable" ? emptyText
+            : reading ? qsTr("Looking for media players…")
+            : content.controller.actionInFlight ? qsTr("Updating media…")
+            : resultCount === 0 ? emptyText
+            : filterText.trim() ? (content.controller.sourceEntries.length === 1 ? qsTr("%1 of %n player", "", 1) : qsTr("%1 of %n players", "", content.controller.sourceEntries.length)).arg(resultCount)
+            : resultCount === 1 ? qsTr("%n player", "", resultCount) : qsTr("%n players", "", resultCount)) : "")
+        statusTone: content.controller.statusText || (media && (readError || emptyState === "unavailable")) ? "error" : "info"
+        statusSummary: statusTone !== "error" ? status : audio ? qsTr("Audio change unconfirmed") : tray ? qsTr("Tray status") : content.controller.statusText ? qsTr("Media change unconfirmed") : qsTr("Media service unavailable")
         rowDelegate: Ui.ResultRow {
             id: row
             required property var resultData
