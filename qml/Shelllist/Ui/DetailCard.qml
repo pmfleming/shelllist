@@ -5,13 +5,14 @@ Rectangle {
     id: card
 
     property string title: ""
+    property string helpText: ""
     property var entries: null
     readonly property real headingHeight: title.length > 0 ? heading.implicitHeight : 0
     // Horizontal padding must not depend on height: wrapped content can own
     // the card's height, so height -> padding -> text width creates a loop.
-    property real contentPadding: Theme.spacingMd
+    property real contentPadding: Theme.cardPadding
     // Stable in both axes: content-sized grids must not feed height back into padding.
-    property real verticalContentPadding: Theme.spacingMd
+    property real verticalContentPadding: Theme.cardPadding
     property real headingSpacing: title.length > 0 ? Theme.spacingMd : 0
     implicitHeight: (entries !== null ? entryGrid.implicitHeight : 0) + headingHeight + headingSpacing + 2 * verticalContentPadding
     Layout.minimumHeight: implicitHeight
@@ -31,15 +32,12 @@ Rectangle {
         anchors.bottomMargin: card.verticalContentPadding
         spacing: card.headingSpacing
 
-        ThemeText {
+        SectionHeading {
             id: heading
-
             visible: card.title.length > 0
             width: parent.width
-            text: card.title
-            elide: Text.ElideRight
-            font.pixelSize: Theme.fontSizeHeading
-            font.weight: Theme.fontWeightMedium
+            title: card.title
+            helpText: card.helpText
         }
 
         Item {

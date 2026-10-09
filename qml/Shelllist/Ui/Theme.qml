@@ -132,6 +132,22 @@ Item {
     readonly property int fontWeightDemiBold: Font.DemiBold
     readonly property int fontWeightBold: Font.Bold
 
+    // Panel roles: consumers choose a meaning, not a new local size/weight.
+    readonly property int panelTitleSize: fontSizeTitle
+    readonly property int groupHeadingSize: fontSizeHeading
+    readonly property int groupHeadingWeight: fontWeightMedium
+    readonly property int fieldNameSize: formLabelSize
+    readonly property int fieldNameWeight: fontWeightMedium
+    readonly property int statusTextSize: formSupportSize
+    readonly property int metadataSize: fontSizeSmall
+    readonly property int inspectorInset: spacingLg
+    readonly property int cardPadding: spacingMd
+    readonly property int cardGap: spacingMd
+    readonly property int heroClockSize: 64
+    readonly property int heroWeatherSize: 56
+    readonly property int heroWeatherCompactSize: 48
+    readonly property int heroReadingSize: 28
+
     readonly property int iconSizeSmall: 15
     readonly property int iconSize: 18
     readonly property int iconSizeLarge: 24

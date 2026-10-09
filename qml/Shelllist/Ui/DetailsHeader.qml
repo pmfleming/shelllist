@@ -16,7 +16,7 @@ Item {
     property bool statusIndicatorVisible: false
     property color statusIndicatorColor: subtitleColor
     property int subtitleWeight: Theme.fontWeightRegular
-    property int titlePixelSize: Math.round(Theme.fontSizeTitle * uiScale)
+    property int titlePixelSize: Math.round(Theme.panelTitleSize * uiScale)
     property var actions: []
     property bool secondaryVisible: true
     property bool compactSecondaryActions: false

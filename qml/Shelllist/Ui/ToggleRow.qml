@@ -11,7 +11,7 @@ PointerActionControl {
     property string tone: "normal"
     property bool checked: false
     property bool showSubtitle: true
-    property bool wrapTitle: false
+    property bool wrapTitle: true
     property bool compact: false
     property var icons: []
 
@@ -22,7 +22,6 @@ PointerActionControl {
     color: "transparent"
     focusSurface: toggleFocus
     border.width: 0
-    opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
     accessibleName: subtitle.length > 0 ? title + ". " + subtitle : title
     Accessible.role: Accessible.CheckBox
     Accessible.checked: checked
@@ -45,6 +44,7 @@ PointerActionControl {
         Column {
             id: labels
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             Layout.alignment: Qt.AlignVCenter
             spacing: Math.round(Theme.spacingXs / 2)
 
@@ -54,8 +54,9 @@ PointerActionControl {
                 wrapMode: row.wrapTitle ? Text.WordWrap : Text.NoWrap
                 text: UiText.highlightHotkey(row.title, row.hotkey)
                 textFormat: Text.RichText
-                color: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.text))
-                font.pixelSize: row.compact ? Theme.fontSizeLabel : Theme.fontSizeHeading
+                color: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.mutedText))
+                font.pixelSize: Theme.fieldNameSize
+                font.weight: Theme.fieldNameWeight
             }
 
             ThemeText {
@@ -64,21 +65,24 @@ PointerActionControl {
                 visible: row.showSubtitle && row.subtitle.length > 0
                 text: row.subtitle
                 color: Theme.subtleText
-                font.pixelSize: Theme.fontSizeLabel
-                elide: Text.ElideRight
+                font.pixelSize: Theme.statusTextSize
+                wrapMode: Text.Wrap
             }
         }
 
         Rectangle {
             id: toggleFocus
-            Layout.preferredWidth: row.compact ? 48 : 64
-            Layout.preferredHeight: row.compact ? 32 : Theme.controlHeight
+            Layout.preferredWidth: 64
+            Layout.minimumWidth: 64
+            Layout.preferredHeight: Theme.controlHeight
             radius: height / 2
             color: row.pointerPressed ? Theme.pressed : (row.hovered ? Theme.hover : "transparent")
             TogglePill {
                 anchors.centerIn: parent
-                width: row.compact ? 42 : implicitWidth
-                height: row.compact ? 26 : implicitHeight
+                // Compact changes row spacing, never the switch target/track.
+                width: implicitWidth
+                height: implicitHeight
+                opacity: row.enabled && row.interactive ? 1.0 : Theme.disabledOpacity
                 checked: row.checked
                 pressed: row.pressed
                 checkedColor: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.accent))

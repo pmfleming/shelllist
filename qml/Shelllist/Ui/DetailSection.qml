@@ -13,13 +13,10 @@ Column {
     Layout.minimumHeight: implicitHeight
     spacing: Theme.spacingSm
 
-    ThemeText {
+    SectionHeading {
         width: parent.width
         visible: section.title.length > 0
-        text: section.title
-        font.pixelSize: Theme.fontSizeHeading
-        font.weight: Theme.fontWeightMedium
-        wrapMode: Text.WordWrap
+        title: section.title
     }
     ColumnLayout {
         id: body

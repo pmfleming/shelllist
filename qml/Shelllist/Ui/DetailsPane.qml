@@ -7,7 +7,7 @@ Rectangle {
     required property ChooserController chooserController
     property real densityScale: 1
     property int sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, densityScale)
-    property int leftMargin: Math.round(Theme.spacingLg * densityScale)
+    property int leftMargin: Theme.inspectorInset
     property int rightMargin: leftMargin
     property int bottomMargin: 2
     property string emptyText: "Select an item"

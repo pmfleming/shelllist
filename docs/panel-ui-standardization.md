@@ -74,7 +74,20 @@ part of these commits.
 
 ### Phase 1 — shared roles
 
-Pending.
+- Added semantic Theme roles, shared `SectionHeading` (optional explicit Help),
+  wrapping `InlineStatus` and `PanelMessage`; no domain state/request ownership.
+- Standard cards/sections use the shared heading. Field, setting and slider label
+  roles agree; compact switches retain 52×32 geometry and do not fade labels.
+- Inspector defaults are symmetric; pending SaveStatus no longer uses success color.
+- Added native shared-role tests for long labels, disabled activation, Help commands,
+  editable-only traversal, Escape discard and wrapping/error-message sizing.
+- Strict lint and the form capture fixture pass. Full suite at this checkpoint:
+  **338 passes, zero failures, one existing renderer skip** (including lifecycle).
+  A pre-existing incoming Bluetooth test exhibited asynchronous page-entry timing;
+  an isolated readiness experiment was reverted to avoid committing another
+  in-progress change. Final acceptance reruns the complete combined working tree.
+- Existing TimeWeather location-fixture `undefined` boolean warnings were present
+  in the phase-0 baseline; they are not newly introduced QML role failures.
 
 ### Phase 2 — pilot forms
 

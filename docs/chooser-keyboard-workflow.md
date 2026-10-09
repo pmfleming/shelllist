@@ -1,5 +1,10 @@
 # Shelllist interaction contract
 
+The current visual roles and deliberate domain exceptions are recorded in
+[Panel UI standardization](panel-ui-standardization.md). Shared headings and
+messages are passive; Help remains a named command, not an editable field.
+Compact toggle rows retain the full 52×32 track and readable passive labels.
+
 **Required for every current and future panel.** This document is the normative
 search/list/field interaction model, superseding older keyboard decisions in
 proposals and reviews. Shared implementation lives in `qml/Shelllist/Ui/`.

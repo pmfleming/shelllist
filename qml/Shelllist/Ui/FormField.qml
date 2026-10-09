@@ -51,8 +51,8 @@ Item {
             Layout.maximumWidth: field.width * 0.24
             visible: field.label.length > 0
             text: field.requiredInput ? qsTr("%1 *").arg(field.label) : field.label
-            font.pixelSize: Theme.formLabelSize
-            font.weight: Theme.fontWeightMedium
+            font.pixelSize: Theme.fieldNameSize
+            font.weight: Theme.fieldNameWeight
             color: Theme.mutedText
             wrapMode: Text.Wrap
             // The native input exposes the full label once, without duplication.

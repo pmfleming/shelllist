@@ -1,0 +1,81 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtTest
+import Shelllist.Ui as Ui
+
+TestCase {
+    id: tests
+    name: "PanelRoles"
+    when: windowShown
+    visible: true
+    width: 560
+    height: 700
+    Component { id: toggleFactory; Ui.ToggleRow { width: 250; title: "A deliberately long translated setting name that must wrap over several lines without shrinking the switch"; compact: true; checked: true; property int activations: 0; onClicked: activations++ } }
+    Component { id: statusFactory; Ui.SaveStatusLabel { valid: true; error: ""; saving: true; text: "Saving…" } }
+    Component { id: messageFactory; Ui.PanelMessage { width: 240; text: "A detailed operation failure must remain visible and wrap instead of being elided to a short, ambiguous fragment." } }
+    Component {
+        id: formFactory
+        Ui.PanelSurface {
+            id: surface
+            width: tests.width; height: tests.height
+            chooserController: Ui.ChooserController { uiActive: true }
+            navigationContent: column
+            Column {
+                id: column
+                width: 300
+                Ui.SectionHeading { objectName: "heading"; width: parent.width; title: "Settings"; helpText: "Routine guidance" }
+                Ui.TextField { objectName: "editable"; width: parent.width; text: "Original" }
+                Ui.InlineStatus { width: parent.width; text: "Pending is not acknowledgement" }
+            }
+        }
+    }
+    function init() { failOnWarning(/.*/); }
+    function test_compactSwitchRetainsSizeAndReadableDisabledLabels() {
+        const row = createTemporaryObject(toggleFactory, tests);
+        verify(waitForRendering(row));
+        const track = findChild(row, "toggleTrack");
+        compare(track.width, 52); compare(track.height, 32);
+        tryVerify(() => row.implicitHeight > Ui.Theme.formHeight, 1000, "long labels expand the row");
+        row.enabled = false;
+        compare(row.opacity, 1, "unavailable controls do not fade their passive labels");
+        compare(track.opacity, Ui.Theme.disabledOpacity);
+        const saved = row.checked;
+        row.Accessible.toggleAction();
+        compare(row.checked, saved, "presentation does not bypass activation guards");
+        compare(row.activations, 0);
+        row.enabled = true;
+        mouseClick(row, row.width - 32, row.height / 2);
+        compare(row.activations, 1);
+    }
+    function test_messagesGrowAndPendingIsNotSuccess() {
+        const status = createTemporaryObject(statusFactory, tests);
+        compare(status.color, Ui.Theme.mutedText, "pending is not success");
+        status.error = "Save failed";
+        compare(status.color, Ui.Theme.danger);
+        const message = createTemporaryObject(messageFactory, tests);
+        verify(waitForRendering(message));
+        verify(message.implicitHeight > 2 * Ui.Theme.cardPadding + Ui.Theme.statusTextSize * 2);
+        const oldHeight = message.implicitHeight;
+        message.width = 140;
+        tryVerify(() => message.implicitHeight > oldHeight);
+        message.text = "";
+        compare(message.implicitHeight, 0);
+    }
+    function test_headingHelpRemainsACommandAndStatusIsNotAnEditor() {
+        const surface = createTemporaryObject(formFactory, tests);
+        const field = findChild(surface, "editable");
+        const heading = findChild(surface, "heading");
+        surface.detailsNavigation.focusContent(true);
+        tryCompare(surface.detailsNavigation, "currentTarget", field);
+        compare(surface.detailsNavigation.availableFields().length, 1);
+        mouseClick(findChild(heading, "sectionHeadingHelp"));
+        verify(heading.helpOpen);
+        surface.detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_End); keyClick(Qt.Key_X);
+        keyClick(Qt.Key_Escape);
+        compare(field.text, "Original");
+        keyClick(Qt.Key_Tab);
+        compare(surface.detailsNavigation.currentTarget, field);
+        compare(surface.detailsNavigation.availableFields().length, 1);
+    }
+}

@@ -30,11 +30,14 @@ Item {
         Column {
             id: labels
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             spacing: Theme.spacingXs
             ThemeText {
                 width: parent.width
                 text: row.title
-                font.pixelSize: row.compact ? Theme.fontSizeLabel : Theme.fontSizeHeading
+                font.pixelSize: Theme.fieldNameSize
+                font.weight: Theme.fieldNameWeight
+                color: Theme.mutedText
                 wrapMode: Text.WordWrap
             }
             ThemeText {
@@ -42,7 +45,7 @@ Item {
                 visible: row.subtitle.length > 0
                 text: row.subtitle
                 color: row.subtitleColor
-                font.pixelSize: Theme.fontSizeLabel
+                font.pixelSize: Theme.statusTextSize
                 wrapMode: Text.WordWrap
             }
         }

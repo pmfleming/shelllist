@@ -38,6 +38,10 @@ Item {
         FieldLabel {
             Layout.preferredWidth: row.labelWidth
             text: row.label
+            font.pixelSize: Theme.fieldNameSize
+            font.weight: Theme.fieldNameWeight
+            wrapMode: Text.Wrap
+            elide: Text.ElideNone
         }
         ValueSlider {
             id: slider
@@ -51,6 +55,7 @@ Item {
         ThemeText {
             Layout.preferredWidth: row.valueWidth
             text: row.valueText
+            font.pixelSize: Theme.formValueSize
             horizontalAlignment: Text.AlignRight
         }
     }
