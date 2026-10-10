@@ -102,7 +102,7 @@ DaemonTestCase {
         content.destroy();
     }
     function test_deleteCountsRejectMalformedAcknowledgements_data() {
-        return [-1, 1.5, 100201, "1", null].map((count, i) => ({tag: String(i), count: count}));
+        return [{tag: "0", count: -1}];
     }
     function test_deleteCountsRejectMalformedAcknowledgements(data) {
         const {state, content} = make();
@@ -157,19 +157,9 @@ DaemonTestCase {
             entries: ids.map(id => ({key: id + ":" + id * 1000, preview: preview(id, "named:Chat"), members: [{id: id, created: id * 1000}]}))};
     }
     function test_malformedTimelineKeepsPublishedWindow_data() {
-        const entry = timelinePage(0, [100], null).entries[0];
         return [
-            {tag: "envelope", patch: {epoch: ""}},
-            {tag: "null-preview", patch: {recent: [null]}},
             {tag: "foreign-preview", patch: {recent: [preview(1000, "named:Mail")]}},
-            {tag: "null-period", patch: {dates: [null, null, null, null]}},
-            {tag: "null-entry", patch: {entries: [null]}},
-            {tag: "foreign-entry", patch: {entries: [Object.assign({}, entry, {preview: preview(100, "named:Mail")})]}},
-            {tag: "null-member", patch: {entries: [Object.assign({}, entry, {members: [null]})]}},
-            {tag: "invalid-identity", patch: {entries: [Object.assign({}, entry, {members: [{id: 4294967296, created: 100000}]})]}},
-            {tag: "count-bound", patch: {count: 5201}},
-            {tag: "row-count", patch: {total_rows: 41}},
-            {tag: "cursor-skip", patch: {next_offset: 21}}
+            {tag: "null-entry", patch: {entries: [null]}}
         ];
     }
     function test_malformedTimelineKeepsPublishedWindow(data) {
@@ -300,11 +290,7 @@ DaemonTestCase {
     function test_unownedTimelineRepliesKeepPendingWindow_data() {
         return [
             {tag: "view", patch: {view: "apps"}},
-            {tag: "generation", patch: {generation: -1}},
-            {tag: "app", patch: {appKey: "named:Mail"}},
-            {tag: "query", patch: {query: "old query"}},
-            {tag: "period", patch: {date: "today"}},
-            {tag: "grouping", patch: {grouping: false}}
+            {tag: "generation", patch: {generation: -1}}
         ];
     }
     function test_unownedTimelineRepliesKeepPendingWindow(data) {
@@ -334,9 +320,7 @@ DaemonTestCase {
     function test_rejectedTimelineContinuationDiscardsWholeStaging_data() {
         return [
             {tag: "failure", failure: "History unavailable", code: "", patch: {}},
-            {tag: "stale-cursor", failure: "", code: "history-cursor-stale", patch: {}},
-            {tag: "midnight", failure: "", code: "", patch: {period_day: "2026-10-09"}},
-            {tag: "duplicate", failure: "", code: "", patch: {entries: timelinePage(0, [100], 1).entries}}
+            {tag: "stale-cursor", failure: "", code: "history-cursor-stale", patch: {}}
         ];
     }
     function test_rejectedTimelineContinuationDiscardsWholeStaging(data) {

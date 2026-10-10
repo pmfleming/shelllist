@@ -205,20 +205,6 @@ DaemonTestCase {
         compare(portalCalls().length, 0);
         compare(reopened.executor.commands.length, 0);
     }
-    function test_networkChangedDenialRetainsManualRetryWithoutExecuting() {
-        const panel = makePanel();
-        panel.controller.portal.launchForConnect("connect-1", "1");
-        reply(panel, {decision:"launch", intent:intent()});
-        panel.controller.backend.acceptSharedResponse(panel.controller.portal.pendingId, {
-            protocol:"nm-api", version:1, ok:false,
-            error:{code:"validation-error", message:"portal connection changed"}
-        }, "");
-        verify(!panel.controller.portal.busy);
-        verify(panel.controller.status.indexOf("changed") >= 0);
-        compare(panel.executor.commands.length, 0);
-        verify(panel.controller.portal.launchManual("2", false));
-        compare(portalCalls().slice(-1)[0].params.mode, "manual");
-    }
     function test_signInUsesAltCommandNotFieldNavigation() {
         const panel = makePanel();
         panel.controller.uiActive = true;

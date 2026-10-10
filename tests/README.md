@@ -7,14 +7,13 @@ implementation tables or freeze visual choices unnecessarily.
 ## Panel standardization acceptance
 
 `docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,
-exceptions and separate source/offscreen/live evidence. `tst_panel_roles.qml`
-covers switch/label readability, fixed feedback, pending versus success,
-inline labels, native identity and editable-only traversal.
-`tst_shared_panel_composition.qml` compares field-family boundaries at common
-widths, caret-only browsing, stable error geometry, retained drafts, readable
-summary fallback and Weather's unchanged frame/metric strip. Manual all-panel
-captures assert fixed status bounds and representative real-consumer error
-transitions. See [current convergence evidence](../docs/shared-panel-ui-convergence.md);
+exceptions and separate source/offscreen/live evidence. Those are historical
+acceptance results, not a claim that every visual matrix remains automated.
+Shared field/command tests retain interaction and native identity;
+`tst_shared_panel_composition.qml` retains readable long-diagnostic fallback.
+The redundant `PanelRoles` suite and per-family/Weather geometry matrices were
+removed in the current pruning pass. Manual all-panel captures still assert fixed
+status bounds and representative real-consumer error transitions. See [current convergence evidence](../docs/shared-panel-ui-convergence.md);
 pruning checkpoints below describe historical source snapshots, not this run.
 The explicit manual capture fixtures cover panels, dense forms and display safety
 states. Generate the local comparison gallery with `tests/build-panel-gallery.py`;
@@ -56,9 +55,9 @@ that prerequisite rather than skipping or weakening its paint assertions.
   and native tray-menu lifetime. Media artwork clearing, plain-text metadata and
   passive enrichment remain.
 - `tst_balanced_dashboard.qml` covers stable category identity, acknowledged
-  workspace activation, chromatic state/contrast and rendered occupancy weight,
-  monitor-local selection/reveal, responsive grouping/overflow and battery
-  geometry/colours/state marks (including unavailable versus zero readings).
+  workspace activation, monitor-local selection/reveal and unavailable versus
+  zero battery readings. Exact chromatic/occupancy paint, whole-bar layout and
+  positive battery-fill matrices are no longer automated here.
   `tst_media_chip.qml` samples narrow seek transport, circular artwork geometry,
   and keeps missing-player controls visible but disabled; system choosers exercise
   panel transport. Its RHI-only artwork pixel check remains an explicit existing
@@ -66,8 +65,8 @@ that prerequisite rather than skipping or weakening its paint assertions.
 - Daemon/session and model suites retain protocol/generation boundaries,
   request churn, stable identities, queued-update cancellation and
   progressive/native list updates. Wi-Fi retains cancellation acknowledgement.
-  Notifications retain atomic center refresh, obsolete-read rejection and live reply focus through a
-  205-record burst.
+  Notifications retain atomic center refresh, obsolete-read rejection, queued
+  revisions, timeline viewport restoration and reply ownership across reconnects.
 - JavaScript retains unsafe-layout/numeric validation, unavailable versus measured
   zero, chart gaps, history/cursor failures, request identity, no-replay rules and
   battery safety. Material contrast covers 150 seed/mode combinations. Native
@@ -79,9 +78,42 @@ Expected negative-test application error logs are distinct from QML engine
 warnings and remain allowed. Offscreen tests do not replace live compositor,
 hardware, IME or screen-reader acceptance.
 
-## Current working-tree pruning checkpoint
+## Current pruning checkpoint — baseline aefcf52
 
-Baseline includes the incoming uncommitted changes, not an older commit.
+Baseline includes the incoming uncommitted changes, not an older historical
+checkpoint. **430 → 288 inventory units: 142 removed (33.02%), 66.98% retained.**
+`round(430 × 0.67) = 288` under the unchanged established counter.
+
+| Inventory unit | Before | After |
+| --- | ---: | ---: |
+| JavaScript assertion sites | 76 | 57 |
+| QML behavioral cases/data rows, including one existing skip | 339 | 216 |
+| Rust tests | 8 | 8 |
+| Python tests | 2 | 2 |
+| Daemon contract suites | 5 | 5 |
+| **Combined inventory units** | **430** | **288** |
+
+The reductions are 123 actual Qt cases and 19 JavaScript assertion sites, mostly
+repeated data rows, UI implementation/geometry checks, obsolete inline-tray tests
+and transport scenarios duplicated by native Qt tests. No counter, discovery,
+build-check or production changes; no new skips or hidden tests. Essential shared
+editing, acknowledgement, destructive confirmation, stale ownership, secrets,
+retry and no-replay workflows remain. The mixed inventory is not branch coverage.
+
+Validation: **311 Qt passes, zero failures, one unchanged renderer skip**
+(215 executed behaviors + 96 lifecycle hooks); all 16 behavioral JavaScript
+scripts plus source-tree imports, eight Rust tests, two Python tests, QML lint
+and native runtime smoke pass. The five retained daemon contract suites and full
+Nix/hardware/RHI gates were not rerun.
+
+See [decisions, retained owners and explicit gaps](test-pruning-current.md).
+Matching baseline/final sources, logs and inventories are in ignored
+`target/test-pruning-aefcf52/`. The older checkpoints below are historical, not
+current coverage promises. This target is not a permanent cap on useful tests.
+
+## Previous working-tree pruning checkpoint
+
+Baseline included the incoming uncommitted changes at that earlier request.
 **365 → 245 inventory units: 120 removed (32.88%), 67.12% retained.**
 This is the nearest-integer 67% target under the existing mixed counter.
 
@@ -107,7 +139,7 @@ scripts, eight Rust tests, two Python tests, QML lint and native runtime smoke.
 The five daemon contract suites remain unchanged and were not rerun; no full Nix
 or hardware/RHI gate is claimed. This mixed count is not a coverage percentage.
 
-See [decisions and coverage trade-offs](test-pruning-current.md). Matching baseline
+The earlier decisions are retained in Git history. Matching historical baseline
 and final logs are in ignored `target/test-pruning-current/` (`before-qml.log`,
 `final-qml.log`, `before.json`, `final-inventory.json`). Earlier files in that
 artifact directory describe previous passes and must not be mixed with these.

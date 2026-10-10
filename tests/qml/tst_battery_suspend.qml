@@ -31,8 +31,6 @@ DaemonTestCase {
         }
     }
 
-    function cleanup() { Ui.Theme.previewColorScheme = Qt.Unknown; }
-
     function suspendState(inhibitors) {
         return {
             available: true,
@@ -73,41 +71,6 @@ DaemonTestCase {
         page.contentY = Math.max(0, page.contentHeight - page.height);
         verify(waitForRendering(panel));
         return panel;
-    }
-
-    function test_mutedCommandsWithoutRetry_data() {
-        return [{tag: "dark", scheme: Qt.Dark}, {tag: "light", scheme: Qt.Light}];
-    }
-
-    function test_mutedCommandsWithoutRetry(data) {
-        Ui.Theme.previewColorScheme = data.scheme;
-        const panel = makePanel();
-        findChild(panel, "batteryDetailPage").contentY = 0;
-        verify(waitForRendering(panel));
-        verify(findChild(panel, "suspendRetryButton") === null);
-        verify(findChild(panel, "suspendStatusRow") === null, "no empty retry row");
-        const colors = [];
-        for (const name of ["keepAwakeButton", "suspendAction-lock", "suspendAction-suspend", "suspendAction-hibernate"]) {
-            const button = findChild(panel, name);
-            compare(button.tone, "normal");
-            const glyph = findChild(button, "controlIcon");
-            compare(glyph.iconColor, button.iconColor);
-            verify(button.iconColor !== button.labelColor);
-            const color = button.iconColor;
-            verify(Math.max(color.r, color.g, color.b) - Math.min(color.r, color.g, color.b) < 0.15);
-            colors.push(String(color));
-        }
-        compare(new Set(colors).size, 4);
-        verify(!findChild(panel, "suspendAction-hibernate").enabled, "capability guard is unchanged");
-        calls = [];
-        findChild(panel, "batterySurface").detailsNavigation.focusContent(true);
-        keyClick(Qt.Key_T, Qt.AltModifier);
-        compare(calls.length, 0, "removed Retry shortcut cannot dispatch");
-        keyClick(Qt.Key_U, Qt.AltModifier);
-        compare(calls.length, 1, "explicit Suspend command remains available");
-        verify(panel.controller.suspendBusy);
-        keyClick(Qt.Key_U, Qt.AltModifier);
-        compare(calls.length, 1, "busy command cannot dispatch twice");
     }
 
     function test_degradedTelemetryAllowsOnlyReleaseThroughKeyboardAndAccessibility() {

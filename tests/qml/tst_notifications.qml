@@ -121,83 +121,6 @@ DaemonTestCase {
     function descendants(item) {
         return Array.from(item.children || []).reduce((items, child) => items.concat(descendants(child)), [item]);
     }
-    function test_previewHierarchyAndPassiveCards_data() {
-        return [{tag: "narrow", width: 900}];
-    }
-    function test_previewHierarchyAndPassiveCards(data) {
-        const controller = makeController(makeState());
-        controller.availableScreenWidth = data.width;
-        controller.uiActive = true; controller.openDetails();
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: controller.currentWindowWidth, height: 600});
-        wait(150);
-        const savedFile = "File saved to '/run/user/1000/clip-daemon/edits/clipboard-45423e6b-447c-4813-8366-3a5e7c545b95.png'.";
-        const entries = [Object.assign(preview(100), {summary: "Chat", body: savedFile, closed_unix_ms: 100001}),
-            Object.assign(preview(3), {summary: "Unique subject", body: "<b>Plain message</b> ".repeat(12)}),
-            Object.assign(preview(2), {summary: "", body: "Copied to clipboard."})];
-        projectTimeline(controller, entries);
-        projectApps(controller, [{key: "Chat", count: 3, total_count: 3, latest: entries[0]}]);
-        for (const tab of ["notifications"]) {
-            controller.setDetailsTab(tab);
-            verify(waitForRendering(content));
-            const label = findChild(content, "notificationAppLabel-Chat");
-            verify(label !== null);
-            compare(label.title, savedFile, "the latest notification's content is primary, without a repeated app-name heading");
-            verify(!label.subtitle.includes(savedFile), "content must not repeat on the metadata line");
-            verify(label.subtitle.endsWith(" · Chat · 3 notifications"));
-            verify(label.titlePixelSize > label.subtitlePixelSize);
-            verify(label.titleColor !== label.subtitleColor);
-            const first = findChild(content, "notificationPreview-100:100000");
-            const next = findChild(content, "notificationPreview-3:3000");
-            const title = findChild(content, "notificationPreviewTitle-3:3000");
-            const body = findChild(content, "notificationPreviewBody-3:3000");
-            const meta = findChild(content, "notificationPreviewMeta-3:3000");
-            verify(!findChild(content, "notificationPreviewTitle-100:100000").visible, "do not promote a file path into a bold headline");
-            compare(findChild(content, "notificationPreviewBody-100:100000").text, savedFile);
-            verify(!findChild(content, "notificationPreviewTitle-2:2000").visible);
-            verify(title.font.pixelSize > body.font.pixelSize && body.font.pixelSize > meta.font.pixelSize);
-            verify(title.font.weight > body.font.weight);
-            verify(body.color !== meta.color);
-            compare(body.textFormat, Text.PlainText);
-            verify(body.lineCount <= 2 && body.height > 0);
-            verify(title.mapToItem(next, 0, 0).x >= 12, "card padding separates content from its edge");
-            verify(next.mapToItem(content, 0, 0).y - first.mapToItem(content, 0, 0).y - first.height > 0, "notifications have separate surfaces and breathing room");
-            verify(first.color.a > 0);
-            verify(!content.detailsNavigation.targets.includes(first));
-            verify(findChild(content, "notificationCard-100:100000:read") === null, "previews have no Message navigation arrow");
-            const deletion = findChild(content, "notificationCard-100:100000:delete");
-            verify(deletion !== null);
-            compare(deletion.border.width, 0);
-            verify(!content.detailsNavigation.targets.includes(deletion));
-            mouseClick(first, 6, 6);
-            compare(controller.detailsTab, "notifications", "cards remain passive");
-        }
-        content.destroy(); wait(0);
-    }
-    function test_appRowUsesLatestContentThenTimeAppAndTotalCount() {
-        const controller = makeController(makeState());
-        controller.uiActive = true;
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller});
-        const latest = Object.assign(preview(100, "Chat"), {created_unix_ms: controller.nowMs - 300000, summary: "Build finished", body: "All tests passed."});
-        projectApps(controller, [{key: "Chat", count: 2, total_count: 47, latest: latest}]);
-        tryVerify(() => findChild(content, "notificationAppLabel-Chat") !== null);
-        const label = findChild(content, "notificationAppLabel-Chat");
-        compare(label.title, "Build finished · All tests passed.");
-        compare(label.subtitle, "5m · Chat · 47 notifications", "show total notifications, not just the filtered count");
-        compare(findChild(content, "notificationAppRow-Chat").accessibleName, label.title + " · " + label.subtitle + " · 2 matching");
-        verify(findChild(content, "notificationSilence-Chat") !== null);
-        verify(findChild(content, "notificationDelete-Chat") !== null);
-        for (const data of [
-            {summary: "Chat", body: "Copied to clipboard.", expected: "Copied to clipboard."},
-            {summary: "Done", body: "Done", expected: "Done"},
-            {summary: "", body: "", expected: "Notification"}
-        ]) {
-            projectApps(controller, [{key: "Chat", count: 2, total_count: 47, latest: Object.assign({}, latest, {summary: data.summary, body: data.body})}]);
-            tryCompare(label, "title", data.expected);
-            compare(label.subtitle, "5m · Chat · 47 notifications");
-            compare(controller.selectedAppKey, "Chat", "preview updates do not change row identity or command scope");
-        }
-        content.destroy(); wait(0);
-    }
     function test_dndAcknowledgementAndRetry() {
         const state = makeState();
         state.backend = createTemporaryObject(fakeBackendComponent, state, {
@@ -255,64 +178,6 @@ DaemonTestCase {
         state.setDraft(key, "Newer draft");
         state.finishReply(key, "Older draft", "");
         compare(state.drafts[key], "Newer draft");
-    }
-    function test_arrivalsRetainAppControlDraftAndDoNotSave() {
-        const state = makeState();
-        state.applySummary({available: true, backend: "native", app_policies: {}});
-        const controller = makeController(state);
-        controller.uiActive = true; controller.openDetails();
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller});
-        tryVerify(() => findChild(content, "notificationTimelineList") !== null);
-        controller.setDetailsTab("controls");
-        tryVerify(() => findChild(content, "notificationAppDelivery") !== null);
-        const field = findChild(content, "notificationAppDelivery");
-        content.detailsNavigation.focusContent(true);
-        tryCompare(content.detailsNavigation, "currentTarget", field);
-        keyClick(Qt.Key_Return); keyClick(Qt.Key_Space);
-        tryCompare(field.popup, "visible", true);
-        keyClick(Qt.Key_Down);
-        const draft = field.value;
-        const before = testCase.calls.filter(call => call.method === "notifications.setAppPolicy").length;
-        projectApps(controller, [app(101, "Chat", 500)]);
-        wait(30);
-        compare(findChild(content, "notificationAppDelivery"), field);
-        verify(field.popup.visible);
-        compare(field.value, draft);
-        verify(!state.appPolicy("Chat").silent);
-        keyClick(Qt.Key_Escape);
-        compare(field.value, "normal");
-        compare(testCase.calls.filter(call => call.method === "notifications.setAppPolicy").length, before);
-        content.destroy(); wait(0);
-    }
-    function test_twoIconTabsHaveNoMessageRouteOrSenderCommands() {
-        const state = makeState();
-        state.notificationActive = {notifications: [Object.assign(notification(100), {actions: [{key: "default", label: "Open"}, {key: "inline-reply", label: "Reply"}]})]};
-        const controller = makeController(state);
-        controller.uiActive = true;
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller});
-        projectTimeline(controller, [preview(100), preview(3)]);
-        const senderCalls = () => testCase.calls.filter(call => ["notifications.invokeAction", "notifications.reply"].includes(call.method)).length;
-        const appReads = () => testCase.calls.filter(call => call.method === "notifications.queryCenter" && call.params.view === "app").length;
-        const before = senderCalls(), beforeReads = appReads();
-        content.listItem.focusList(); keyClick(Qt.Key_Return);
-        tryCompare(controller, "detailsTab", "notifications");
-        tryVerify(() => findChild(content, "notificationPreview-100:100000") !== null);
-        compare(controller.tabs.map(tab => tab.value), ["notifications", "controls"]);
-        verify(controller.tabs.every(tab => !!tab.icon && !!tab.label), "icon-only tabs retain accessible labels");
-        verify(!findChild(content, "notificationCard-100:100000:read"));
-        for (const tab of ["notifications", "controls", "notifications"]) {
-            tryCompare(controller, "detailsTab", tab);
-            keyClick(Qt.Key_O, Qt.AltModifier); keyClick(Qt.Key_R, Qt.AltModifier);
-            verify(!findChild(content, "detailAction:open"));
-            verify(!findChild(content, "notificationReplyInput"));
-            keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        }
-        controller.setDetailsTab("message");
-        compare(controller.detailsTab, "controls", "removed tabs cannot be requested programmatically");
-        wait(180);
-        compare(senderCalls(), before);
-        compare(appReads(), beforeReads, "the removed Message page must not start a background detail reader");
-        content.destroy(); wait(0);
     }
     function test_dateHistoryUsesSharedScrollingAndKeepsAppListFixed() {
         const controller = makeController(makeState());
@@ -424,31 +289,6 @@ DaemonTestCase {
         finishApps(controller, Object.assign(appPage([]), {revision: "3"}));
         compare(controller.catalog.apps.length, 0, "coalescing cannot retain deleted persisted content");
     }
-    function test_appPrependAndPageAppendPreserveViewportAnchor() {
-        const state = makeState();
-        const controller = makeController(state);
-        const apps = Array.from({length: 45}, (_, index) => app(1000 - index, "App" + index, 500));
-        projectApps(controller, apps);
-        controller.uiActive = true;
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
-        const list = findChild(content, "resultListView");
-        tryCompare(list, "count", 45);
-        controller.select(12); wait(30);
-        list.positionViewAtIndex(10, ListView.Beginning);
-        const anchor = content.listItem.sessionState().viewport;
-        verify(anchor !== null);
-        const selected = controller.selectedAppKey;
-        projectApps(controller, [app(2000, "New app")].concat(apps));
-        wait(40);
-        compare(controller.selectedAppKey, selected);
-        compare(content.listItem.sessionState().viewport.key, anchor.key);
-        verify(Math.abs(content.listItem.sessionState().viewport.offset - anchor.offset) < 1);
-        controller.catalog.acceptApps({offset: 46, replacing: false}, appPage(Array.from({length: 50}, (_, index) => app(900 - index, "Older" + index)), "", 46, null, 96));
-        wait(40);
-        compare(content.listItem.sessionState().viewport.key, anchor.key);
-        compare(list.count, 96);
-        content.destroy(); wait(0);
-    }
     function test_keyboardSearchUsesNativeCatalogAndRejectsSupersededReplies() {
         const state = makeState();
         const controller = makeController(state);
@@ -495,34 +335,15 @@ DaemonTestCase {
         compare(catalog.apps.map(app => app.latest.id), [201]);
         compare(catalog.revision, "2");
     }
-    function test_abandonedRefreshNeverPublishesPartialPages_data() {
-        // The visible-window refresh test covers continuation read failure.
-        return [{tag: "epoch"}];
-    }
-    function test_abandonedRefreshNeverPublishesPartialPages(data) {
-        const controller = startCenter(), catalog = controller.catalog;
-        const callsBefore = testCase.calls.length;
-        const visible = JSON.stringify(catalog.apps);
-        finishApps(controller, stagedPage());
-        const continuation = appPage([app(199, "Second")], "", 1, null, 2);
-        continuation.epoch = "after-restart";
-        finishApps(controller, continuation);
-        compare(JSON.stringify(catalog.apps), visible);
-        compare(catalog.staging.length, 0);
-        verify(!catalog.rootBusy);
-        compare(testCase.calls.length - callsBefore, 1, "only the initial continuation, none after abandonment");
-        verify(testCase.calls.slice(callsBefore).every(call => call.method === "notifications.queryCenter"));
-    }
     function test_rejectInvalidCenterPages_data() {
         return [
-            {tag: "missing-page", patch: null},
             {tag: "invalid-id", patch: {apps: [app(4294967296)]}}
         ];
     }
     function test_rejectInvalidCenterPages(data) {
         const controller = startCenter(), catalog = controller.catalog;
         const visible = JSON.stringify(catalog.apps);
-        finishApps(controller, data.patch === null ? null : Object.assign(appPage([app(99)]), data.patch));
+        finishApps(controller, Object.assign(appPage([app(99)]), data.patch));
         compare(JSON.stringify(catalog.apps), visible);
         verify(catalog.rootError.length > 0);
         verify(!catalog.rootBusy);
@@ -530,11 +351,8 @@ DaemonTestCase {
     }
     function test_unownedCenterResponsesCannotRetireAppRead_data() {
         return [
-            {tag: "removed-reader", patch: {view: "app"}},
             {tag: "timeline", patch: {view: "timeline"}},
-            {tag: "group-resolution", patch: {resolve: true}},
-            {tag: "old-generation", patch: {generation: -1}},
-            {tag: "old-query", patch: {query: "obsolete"}}
+            {tag: "old-generation", patch: {generation: -1}}
         ];
     }
     function test_unownedCenterResponsesCannotRetireAppRead(data) {
@@ -552,19 +370,6 @@ DaemonTestCase {
         finishApps(controller, appPage([app(199, "Second")], "", 1, null, 2));
         compare(catalog.apps.map(app => app.key), ["First", "Second"]);
         verify(!catalog.rootBusy);
-    }
-    function test_hidingCenterRetiresStagingWithoutReplayingReads() {
-        const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;
-        const visible = JSON.stringify(catalog.apps);
-        finishApps(controller, stagedPage());
-        const pending = rootRequest(controller), calls = testCase.calls.length;
-        controller.uiActive = false;
-        state.backend.finish(pending, {notification_center: appPage([app(199, "Second")], "", 1, null, 2)}, "", "");
-        compare(JSON.stringify(catalog.apps), visible);
-        compare(catalog.staging.length, 0);
-        verify(!catalog.rootBusy);
-        wait(150);
-        compare(testCase.calls.length, calls);
     }
     function test_stalePagesNeverMixVisibleRevisionsAndGapsRefreshReads() {
         const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;

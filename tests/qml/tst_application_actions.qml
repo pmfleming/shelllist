@@ -146,8 +146,6 @@ DaemonTestCase {
     function test_placementWarningAfterHandoff_data() {
         return [
             {tag: "failed-status-read", status: "failed", statusRead: true},
-            {tag: "unavailable-event", status: "unavailable", statusRead: false},
-            {tag: "placed-event", status: "placed", statusRead: false},
         ];
     }
     function test_placementWarningAfterHandoff(data) {
@@ -182,8 +180,7 @@ DaemonTestCase {
     }
     function test_terminalPlacementWithoutReceipt_data() {
         return [
-            {tag: "failed", dismiss: false}, {tag: "unavailable", dismiss: false},
-            {tag: "placed", dismiss: true}, {tag: "legacy-absent", dismiss: true}
+            {tag: "failed", dismiss: false}
         ];
     }
     function test_terminalPlacementWithoutReceipt(data) {
@@ -191,7 +188,7 @@ DaemonTestCase {
         keyClick(Qt.Key_Return, Qt.ShiftModifier);
         const call = lastCall(Api.methods.execute);
         accept(call);
-        const extra = {placement: data.tag === "legacy-absent" ? null : {status: data.tag}, message: "Launch outcome"};
+        const extra = {placement: {status: data.tag}, message: "Launch outcome"};
         event(call, "completed", extra);
         compare(panel.dismissals, data.dismiss ? 1 : 0);
         compare(panel.controller.uiActive, !data.dismiss);
@@ -205,11 +202,7 @@ DaemonTestCase {
     function test_closeTerminalOutcomesNeverHandOff_data() {
         return [
             {tag: "closed", status: "completed", close: "closed", warning: false},
-            {tag: "still-open", status: "completed", close: "still-open", warning: true},
-            {tag: "unknown", status: "completed", close: "unknown", warning: true},
-            {tag: "missing", status: "completed", close: null, warning: true},
-            {tag: "cancelled", status: "cancelled", close: "closed", warning: true},
-            {tag: "failed", status: "failed", close: "closed", warning: true}
+            {tag: "missing", status: "completed", close: null, warning: true}
         ];
     }
     function test_closeTerminalOutcomesNeverHandOff(data) {
@@ -291,22 +284,6 @@ DaemonTestCase {
         compare(panel.dismissals, 0);
         keyClick(Qt.Key_A, Qt.AltModifier);
         compare(lastCall(Api.methods.execute).params.action, "activate", "Launch remains reachable after the last close");
-    }
-    function test_directCloseFailureKeepsWindowRetryable() {
-        const panel = makePanel();
-        expand(panel);
-        mouseClick(findChild(panel, "closeWindow-w1"));
-        const call = lastCall(Api.methods.execute);
-        accept(call);
-        event(call, "failed", {message: "Window refused to close"});
-        compare(panel.dismissals, 0);
-        compare(panel.controller.selectedApplication.instances.length, 2);
-        verifyStatus(panel, "Window refused to close");
-        const close = findChild(panel, "closeWindow-w1");
-        verify(close.visible && close.enabled);
-        mouseClick(close);
-        compare(calls.filter(c => c.method === Api.methods.execute).length, 2);
-        compare(lastCall(Api.methods.execute).params.window_id, "w1");
     }
     function test_pendingActionDoesNotLockBrowsingOrOtherTargets() {
         const panel = makePanel();

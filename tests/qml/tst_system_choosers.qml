@@ -4,7 +4,6 @@ import Quickshell
 import Shelllist.Bar as Bar
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
-import "ColorContrast.js" as Contrast
 import "imports/Quickshell/Services/SystemTray" as TrayFixture
 import "../../qml/Shelllist/Bar/BarApi.js" as BarApi
 import "../../qml/Shelllist/Bar/SystemEntries.js" as Entries
@@ -50,125 +49,6 @@ DaemonTestCase {
     }
     function player(id, seek) {
         return {id: id, identity: id, title: "Track " + id, playback_status: "Playing", can_control: true, can_pause: true, can_play: true, can_seek: seek};
-    }
-    function test_mediaStatusUsesSharedFooterWithoutAddingInteractions(): void {
-        const root = fixture();
-        root.desktop.media = {available: true, active_player: "one", players: [player("one", true), player("two", true)]};
-        root.chooser.activateUi("");
-        const pane = root.content.listItem;
-        const label = findChild(pane, "feedbackText");
-        verify(label !== null);
-        tryCompare(label, "text", "2 players");
-        compare(pane.statusTone, "info");
-        verify(pane.icon.length > 0);
-        const footer = label.parent.parent.parent;
-        verify(waitForPolish(root.Window.window));
-        const footerY = footer.mapToItem(root, 0, 0).y;
-        const footerHeight = footer.height;
-        pane.focusSearch();
-        for (const letter of "one") keyClick(letter);
-        tryCompare(label, "text", "1 of 2 players");
-        for (const letter of "missing") keyClick(letter);
-        tryCompare(label, "text", "No matching players");
-        keyClick(Qt.Key_A, Qt.ControlModifier);
-        keyClick(Qt.Key_Backspace);
-        tryCompare(label, "text", "2 players");
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Right);
-        tryVerify(() => root.content.detailsItem !== null);
-        verify(pane.listFocused);
-        keyClick(Qt.Key_Return);
-        compare(calls.length, 1);
-        tryCompare(label, "text", "Updating media…");
-        acknowledge(root, calls[0], {});
-        tryCompare(label, "text", "2 players");
-        root.desktop.backend.operationError = "Playback request failed";
-        tryCompare(label, "text", "Playback request failed");
-        compare(pane.statusTone, "error");
-        keyClick(Qt.Key_Left);
-        compare(root.chooser.detailsOpen, false);
-        compare(label.text, "Playback request failed", "errors survive inspector collapse");
-        root.desktop.backend.operationError = "";
-        root.desktop.media = {available: true, active_player: "one", players: [player("one", true)]};
-        tryCompare(label, "text", "1 player");
-        root.desktop.backend.snapshotError = "Cannot read players";
-        tryCompare(label, "text", "Cannot read players");
-        compare(pane.statusTone, "error");
-        root.desktop.backend.snapshotError = "";
-        root.desktop.media = {available: false, players: []};
-        tryCompare(label, "text", "No media players");
-        compare(pane.statusTone, "info");
-        clientReady = false;
-        tryCompare(label, "text", "Media service unavailable");
-        compare(pane.statusTone, "error");
-        verify(waitForPolish(root.Window.window));
-        compare(footer.height, footerHeight);
-        compare(footer.mapToItem(root, 0, 0).y, footerY);
-        compare(calls.length, 1, "status updates never dispatch commands");
-    }
-    function test_mediaArtworkFollowsMetadataWithoutChangingPlayback(): void {
-        const root = fixture();
-        const cover = Qt.resolvedUrl("fixtures/media-cover.svg").toString();
-        const inlineCover = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="white"/></svg>');
-        // All clients use the same metadata path, including browser Media Session
-        // covers. Inspecting a player must not borrow another active player's art.
-        const other = Object.assign(player("other", true), {art_url: inlineCover, control_mode: "automatic"});
-        let current = Object.assign(player("one", true), {art_url: cover, album: "Chapter 5", control_mode: "automatic"});
-        root.desktop.media = {available: true, active_player: "other", pinned_player: null, players: [current, other]};
-        root.chooser.activateUi("");
-        root.chooser.openDetails();
-        tryVerify(() => findChild(root.content.detailsItem, "mediaPlayback") !== null);
-        const card = findChild(root.content.detailsItem, "mediaPlayback");
-        const image = findChild(card, "mediaPlaybackArtwork");
-        const title = findChild(card, "mediaPlaybackTitle");
-        const subtitle = findChild(card, "mediaPlaybackSubtitle");
-        tryCompare(image, "status", Image.Ready);
-        compare(image.source.toString(), cover);
-        compare(image.fillMode, Image.PreserveAspectFit, "covers are contained, never enlarged into a cropped background");
-        compare(image.width, image.height);
-        verify(card.height >= image.height + 32 && card.height < 350, "card fits cover, metadata and numeric timing");
-        compare(subtitle.text, "Chapter 5");
-        for (const identity of ["Zen", "Chrome", "Audible", "Spotify", "Pocket Casts"]) {
-            current = Object.assign({}, current, {identity: identity, title: identity + " current media", art_url: inlineCover});
-            root.desktop.media = {available: true, active_player: "other", pinned_player: null, players: [current, other]};
-            tryCompare(title, "text", identity + " current media");
-            tryCompare(image, "status", Image.Ready);
-            compare(decodeURIComponent(image.source.toString()), decodeURIComponent(inlineCover));
-        }
-        for (const scheme of [Qt.Light, Qt.Dark]) {
-            Ui.Theme.previewColorScheme = scheme;
-            verify(waitForPolish(card.Window.window));
-            const pixels = grabImage(testCase);
-            const point = title.mapToItem(testCase, -4, title.height / 2);
-            const background = pixels.pixel(Math.round(point.x), Math.round(point.y));
-            verify(Contrast.ratio(title.color, background) >= 4.5, "title contrast: " + title.color + " on " + background + " at " + point.x + "," + point.y);
-            verify(Contrast.ratio(subtitle.color, background) >= 4.5, "metadata remains readable in either theme");
-        }
-        current = Object.assign({}, current, {art_url: "", title: "No cover supplied"});
-        root.desktop.media = {available: true, active_player: "other", pinned_player: null, players: [current, other]};
-        tryCompare(image, "status", Image.Null);
-        verify(!card.hasArtwork, "never keep the previous cover when metadata clears it");
-        compare(title.text, "No cover supplied");
-        ignoreWarning(/.*QML (?:QQuick)?Image: Cannot open: .*missing-media-cover\.png/);
-        current = Object.assign({}, current, {art_url: Qt.resolvedUrl("fixtures/missing-media-cover.png").toString()});
-        root.desktop.media = {available: true, active_player: "other", pinned_player: null, players: [current, other]};
-        tryCompare(image, "status", Image.Error);
-        verify(!card.hasArtwork, "failed covers use the same fallback, not stale imagery");
-        compare(title.color, Ui.Theme.selectedText);
-        root.chooser.selectedIndex = 1;
-        tryCompare(title, "text", "Track other");
-        tryCompare(image, "status", Image.Ready);
-        compare(decodeURIComponent(image.source.toString()), decodeURIComponent(inlineCover));
-        // The larger presentation remains passive; Tab still starts at settings.
-        root.content.listItem.focusList();
-        keyClick(Qt.Key_Tab);
-        tryVerify(() => root.content.detailsNavigation.currentTarget !== null);
-        compare(root.content.detailsNavigation.currentTarget.objectName, "mediaPlayerPin");
-        keyClick(Qt.Key_Tab);
-        compare(root.content.detailsNavigation.currentTarget.objectName, "mediaControlMode");
-        root.content.visible = false;
-        tryCompare(image, "status", Image.Null, 1000);
-        compare(calls.length, 0, "artwork updates and field browsing never invoke playback or pinning");
     }
     function test_mediaModeKeyboardDraftAndAcknowledgement(): void {
         const root = fixture();
@@ -258,36 +138,12 @@ DaemonTestCase {
         keyClick(data.key);
         compare(calls.length, 1, "unavailable primary does not dispatch or fall back to inspection");
         compare(root.chooser.detailsOpen, data.expanded);
+        root.desktop.media = {available: true, active_player: active.id, players: [active]};
+        verify(!root.chooser.perform("play-pause", selected.id), "a disappeared player cannot fall through to the active one");
         clientReady = false;
         tryCompare(root.desktop.backend, "ready", false);
         keyClick(data.key);
         compare(calls.length, 1, "disconnected Enter cannot dispatch");
-    }
-    function test_selectedPlayerIsExplicitAndCapabilitiesAreRevalidated(): void {
-        const root = fixture();
-        root.desktop.media = {available: true, active_player: "two", players: [player("one", true), player("two", true)]};
-        root.chooser.activateUi("");
-        tryCompare(root.chooser, "hasSelection", true);
-        compare(root.chooser.selectedResult.id, "one");
-        verify(root.chooser.triggerDetailAction("rewind"), JSON.stringify({busy: root.chooser.actionInFlight, calls: calls, actions: root.chooser.detailActions}));
-        compare(calls.length, 1);
-        compare(calls[0].params.player_id, "one");
-        compare(calls[0].params.offset_seconds, -30);
-        verify(!root.chooser.triggerDetailAction("rewind"), "busy requests are not replayed");
-        acknowledge(root, calls[0], {});
-        root.desktop.media = {available: true, active_player: "two", players: [player("one", false), player("two", true)]};
-        verify(!root.chooser.triggerDetailAction("forward"));
-        root.chooser.openDetails();
-        root.chooser.deactivateUi();
-        root.chooser.activateUi("");
-        root.chooser.restoreUiFocus();
-        wait(30);
-        compare(calls.length, 1, "restoration does not activate playback");
-        root.desktop.media = {available: true, active_player: "two", players: [player("two", true)]};
-        verify(!root.chooser.perform("play-pause", "one"), "a disappeared player cannot fall through to the active one");
-        clientReady = false;
-        tryCompare(root.desktop.backend, "ready", false);
-        verify(!root.chooser.triggerDetailAction("play-pause"), "stale disconnected capabilities cannot dispatch");
     }
     function test_audioBrowseDoesNotMuteAndOnlyAcknowledgementUpdatesState(): void {
         const root = fixture();

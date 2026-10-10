@@ -1,148 +1,189 @@
-# Current test-pruning review
+# Test pruning — baseline aefcf52
 
-## Baseline and counting
+## Baseline, target and result
 
-The baseline is the working tree at the start of this request, including incoming
-uncommitted test changes. `target/test-pruning-current/incoming.patch` and
-`incoming-index.patch` preserve that starting state. The pruning commit includes
-both this pass and the earlier, overlapping test-pruning edits already present in
-the baseline (including the inventory counter and JavaScript tests). The counts
-below measure this pass, not the combined commit against its parent. Unrelated
-`.gitignore`, `flake.nix`, keyboard-contract edits and staged documentation
-deletions are excluded from the commit.
+The baseline is `aefcf52` plus the incoming working-tree changes to two bar
+contract files and `tst_bluetooth_recovery.qml`. Those changes are preserved.
+`target/test-pruning-aefcf52/` contains the starting source archive, incoming
+patches, matching full Qt logs, inventories and validation logs. The pruning
+commit excludes those incoming changes, including the Bluetooth readiness fix.
 
-The unchanged mixed inventory counts JavaScript assertion sites, Qt behavioral
-cases (data rows individually), Rust/Python tests and daemon contract suites.
-Lifecycle hooks are excluded. The explicitly acknowledged, pre-existing software
-renderer skip remains counted, but is not executed coverage.
+The existing `count-test-inventory.py` is unchanged. It counts JavaScript
+assertion sites, Qt behavioral cases (including individual data rows), Rust and
+Python tests, and daemon contract suites. It excludes Qt lifecycle hooks and
+includes the explicitly identified existing renderer skip, **not as executed
+coverage**. Manual captures, smoke/build checks and sibling repositories are not
+additional inventory units. These are mixed units, not independent scenarios or
+a coverage percentage; the same scope and counter measure both snapshots.
 
-- Baseline: **365** units, including **295** Qt cases.
-- Target: round(365 × 0.67) = **245** units.
-- Result: **245** units, including **175** Qt cases; **120 removed**, **0 added**.
-- **32.88% removed / 67.12% retained**. Qt cases alone declined by 40.68%.
-- JavaScript 55, Rust 8, Python 2 and daemon contracts 5 are unchanged.
+| Inventory unit | Before | After | Removed |
+| --- | ---: | ---: | ---: |
+| JavaScript assertion sites | 76 | 57 | 19 |
+| Qt behavioral cases/data rows, including one existing skip | 339 | 216 | 123 |
+| Rust tests | 8 | 8 | 0 |
+| Python tests | 2 | 2 | 0 |
+| Daemon contract suites | 5 | 5 | 0 |
+| **Total** | **430** | **288** | **142** |
 
-This is not a branch-coverage measurement. No discovery filter, counter change,
-new skip or hidden/renamed test helper was used to reach the target.
+`round(430 × 0.67) = 288`: **33.02% removed, 66.98% retained**.
+Qt reports **436 → 311 passes**, with **98 → 96 lifecycle hooks** excluded
+from inventory and the same single software-renderer skip in both runs.
+The baseline passed before any deletion; no failing test was removed to obtain
+a passing result.
 
-## Selection rationale
+These are actual case/site removals, not renamed helpers, packed assertion
+tables, discovery exclusions or newly skipped tests. The only deleted suite is
+`PanelRoles`; its unused fixtures disappear with it. Test runners, inventory
+rules, Lens configuration, build checks and production code are unchanged.
+A few unique guard assertions are retained in existing related workflows rather
+than carrying an otherwise duplicate fixture.
 
-1. Remove layout/token/wording snapshots and broad consumer matrices before
-   shared interaction and domain safety tests. Retain representative narrow UI,
-   painted field contrast and actual artwork loading/fallback.
-2. Prefer one shared field transaction test over the same key sequence repeated
-   in every wrapper. Keep domain-specific leases, acknowledgement, failed drafts,
-   retries, cancellation, secrets, stale identities and uncertain outcomes.
-3. Reduce repeated malformed-payload, icon-candidate and cache invalidation rows.
-   Keep representative invalid identity/ownership, stale epoch/revision,
-   privacy/hide invalidation, bounded cache and failed-draft behavior.
-4. Remove duplicate presentation helpers and implementation-specific proofs such
-   as exact feedback-cache eviction and assertions that a retired owner property
-   does not exist. Do not alter production implementations to satisfy the count.
-5. Preserve unique checks inside related retained workflows: media preferences
-   still require pin acknowledgement and cannot replay on restoration; panel
-   Previous remains usable after changing bar mode; focus-policy changes remain
-   blocked by dirty layouts, trials and disconnection; pending category saves
-   reject late dropdown activation.
+## Decisions and coverage owners
 
-Deleted suites: `ImageAssets`, `ListAlignment`, `SurfaceOutline`,
-`MediaPresentation`, `NotificationActions`. SVG loading remains exercised by
-actual media/notification artwork. Sender action classification remains in
-JavaScript and the expanded-message Qt workflow. Geometry smoke, shared command
-menus and native media targeting remain. Only the deleted notification-actions
-Lens entrypoint was removed; Qt discovery itself is unchanged.
+- **Transport:** remove 16 JavaScript assertion sites duplicating native
+  `DaemonBridge` close/reopen, startup, repeated-close, unexpected-exit and failed
+  drain workflows. Keep all seven native cases, including close from a readiness
+  callback. JavaScript still owns startup failure/no replay, the backoff/exit
+  race, envelope/gap validation, subscription cancellation, detached and stale
+  generations, routed events and bounded startup buffering. The brittle
+  source-extraction duplicate is removed rather than weakening native behavior.
+- **Presentation:** remove exact palette, typography, icon-table, card-inset,
+  plot-style, field-family alignment, Weather-size and status-background tests.
+  Shared `FieldInteraction` remains unchanged (17 cases); `ActionControl`,
+  `MaterialFields`, `CompactFields` and the native field-contrast test remain.
+  The overlong-status readable fallback remains, as do all 150 JavaScript
+  seed/theme contrast combinations. Remove the unused inline `BarTrayItem`
+  fixture; current Tray chooser identity and native-menu lifetime tests remain.
+- **Applications:** sample Close closed/missing outcomes and failed placement
+  instead of all status permutations. Keep real focus/launch handoff,
+  admission-versus-acknowledgement, still-open windows, command removal,
+  concurrent targets, reopening, owned automatic status recovery, malformed
+  reads, transport loss and no replay. Keep stable window IDs and arbitrary
+  desktop commands. Resources keeps field transactions, arriving snapshots,
+  canonical totals, unavailable versus zero and application-owned metadata.
+  Its retained range test checks that stale plots disappear while current
+  readings survive. Pure-model numeric, interval and availability checks remain.
+- **Battery/Bluetooth:** remove theme duplicates and decorative command tests,
+  retaining calibration/critical-policy confirmation, target replacement,
+  degraded telemetry, countdown/unknown outcomes and acknowledged settings.
+  Bluetooth samples malformed adapter values/disconnect and missing audio
+  outcomes; native partial success, captured adapter identity, fresh saves,
+  rename failure/recreation, pairing queue/response identity and secret clearing
+  remain. Remove repeated timeout-widget key sequences; shared sliders and the
+  adapter batch's timeout payload/partial retry still execute. Remove three
+  Bluetooth status-wording/pluralization assertion sites, not visibility policy.
+- **Clipboard:** sample Tab lease submission, Enter retry, fresh/failed Escape
+  discard, Escape confirmation cancellation and Tab/Return deletion. Preserve
+  failed drafts, original revision/fresh lease, conflicts, disconnect recovery,
+  all three save-and-paste outcomes, native search/paging and explicit retry.
+  Remove cache capacity/eviction internals and one image reply-order row;
+  retain stale revision/thumbnail, privacy, hidden invocation and warm-cache
+  behavior. Failed-draft precedence is asserted during the retained warm-cache
+  revisit instead of inside the deleted eviction fixture. Repeated button
+  alignment/activation routes are removed, not the confirmation safety boundary.
+- **Displays:** retain opaque mode IDs, local layout saves, native Preview token,
+  Keep/Revert acknowledgement, last-active-screen protection, mirror promotion,
+  actual placement/drag/cancel, collision guards, dirty close confirmation,
+  hardware-delayed docking, manual/same-preference recovery, independent
+  capabilities, stale topology, expiry and late-preview rollback. Sample
+  enable/keep versus disable/revert rather than the output × input × outcome
+  matrix. Remove per-field duplicate save/discard, focus-widget binding and
+  countdown sizing fixtures; shared binding transactions and the acknowledged
+  global focus workflow remain. The short viewport fixture still exercises the
+  transition from extended to docked.
+- **Notifications:** reduce malformed shape/count and unowned-context matrices
+  to representative payload and ownership failures. Keep record-scoped and
+  app-scoped deletion, cancellation/no replay, late preparation, policy save
+  failure, DND/reply acknowledgement, connection generations, atomic app/timeline
+  publication, queued revisions, native search, stale cursors, duplicate records,
+  local-midnight fences, period navigation and bounded rendering. Remove old
+  Message-tab absence tests, exact text/icon hierarchy, per-app viewport and
+  repeated refresh abandonment fixtures. Timeline viewport restoration and
+  shared model/progressive-selection tests remain. Actual failed icon load and
+  recovery remain, without the source-priority/icon-name table.
+- **Wi-Fi/media:** remove duplicate power-conflict/cancellation fixtures,
+  retaining the power guard inside the real QR workflow and a foreign-cancel
+  check inside keyboard cancellation. Status failure, bounded polling, missed
+  completion, disconnect/no replay, QR secret non-retention and native prompts
+  remain. Portal retains prepare/claim/complete, expiry/URL mismatch, unowned
+  responses, reconnect, suppressed automatic launch, process failure and
+  explicit Sign in. Media retains explicit inspected-player routes,
+  acknowledgement, capability/busy/disconnected guards, settings and native
+  Tray ownership. Disappeared-player rejection is retained in the actual Enter
+  workflow instead of a second controller-only fixture. Artwork loading and
+  passive enrichment still execute in MediaChip/MediaSources.
 
-## Changed Qt suite counts
+## Changed Qt suites
+
+Unlisted suites are unchanged. Counts include data rows, not lifecycle hooks.
 
 | Suite | Before | After |
 | --- | ---: | ---: |
-| ApplicationActions | 15 | 10 |
-| ApplicationDetails | 6 | 2 |
-| ApplicationResources | 8 | 2 |
-| ApplicationSettings | 4 | 2 |
-| BalancedDashboard | 9 | 3 |
-| BarOsdResponsiveness | 2 | 1 |
-| BatterySuspend | 4 | 3 |
-| BluetoothRecovery | 10 | 9 |
-| ChooserKeyboard | 3 | 2 |
-| ChooserMemory | 9 | 4 |
-| ClipboardPreview | 17 | 9 |
-| CompactFields | 3 | 1 |
-| ContentState | 8 | 1 |
-| DaemonSessions | 3 | 2 |
-| Displays | 17 | 13 |
-| DomainWorkflows | 2 | 1 |
-| ImageAssets | 1 | 0 |
-| IpFields | 6 | 4 |
-| ListAlignment | 1 | 0 |
-| MaterialBar | 5 | 3 |
-| MaterialFeedback | 3 | 1 |
-| MaterialFields | 2 | 1 |
-| MediaChip | 4 | 3 |
-| MediaPresentation | 5 | 0 |
-| MediaSources | 3 | 1 |
-| NotificationActions | 1 | 0 |
-| NotificationIcons | 10 | 4 |
-| Notifications | 45 | 19 |
-| ResultListReactivation | 2 | 1 |
-| SurfaceActions | 6 | 3 |
-| SurfaceOutline | 1 | 0 |
-| SystemChoosers | 10 | 7 |
-| WifiOperations | 17 | 13 |
-| WifiPortal | 14 | 11 |
+| ApplicationActions | 23 | 13 |
+| ApplicationResources | 11 | 3 |
+| BalancedDashboard | 13 | 4 |
+| MaterialBar | 3 | 2 |
+| BatteryPresentation | 8 | 4 |
+| BatterySuspend | 5 | 3 |
+| BluetoothRecovery | 28 | 17 |
+| ClipboardPreview | 9 | 6 |
+| ClipboardRecovery | 21 | 14 |
+| Displays | 43 | 24 |
+| NotificationCenter | 33 | 14 |
+| NotificationIcons | 5 | 1 |
+| Notifications | 24 | 13 |
+| PanelRoles | 5 | 0 |
+| SharedPanelComposition | 3 | 1 |
+| SurfaceActions | 4 | 2 |
+| SystemChoosers | 8 | 5 |
+| WifiOperations | 14 | 12 |
+| WifiPortal | 11 | 10 |
 
-Other suites are unchanged by this pass. In particular, shared field interaction,
-clipboard recovery, Wi-Fi prompts, authoritative work-area geometry and native
-reduced-motion failure recovery remain.
+## Deliberate coverage gaps
 
-## Deliberate reductions in direct evidence
+This does **not** prove identical branch coverage. There is less direct evidence
+for exact geometry/paint, switch-label wrapping, heading Help wiring, resource
+chart rendering, positive battery fill levels, icon precedence, whole-bar overflow,
+all action outcome variants, individual display focus-number/timeout widgets,
+cache eviction budgets, both image reply orders, all malformed response shapes,
+all notification ownership dimensions, app-list viewport restoration, mid-refresh
+app epoch/hide cases and claim-denial manual retry. Media-card cross-player artwork
+and light-theme metadata contrast no longer have a dedicated consumer fixture.
 
-There is less direct coverage of exact header/bar alignment, overflow ordering,
-battery fill pixels, light-theme field pixels, exhaustive media identity/timing
-formatting, adapter-specific empty-state wording and service icon selection.
-The JavaScript material contrast matrix still covers both themes across 150
-seed/mode combinations; one representative Qt painted-theme matrix remains.
-
-Also reduced: basic successful memory restoration, repeated consumer tab/draft
-transactions, separate cancellation-forwarding wrapper assertions, Bluetooth
-restore-name composition, numeric focus-setting widget wiring, drag interruption
-variants and duplicate refresh/error/schema combinations. Shared contracts and
-representative domain tests are not proof that every removed branch remains
-covered. Add a focused regression if these boundaries develop a meaningful bug.
-
-Notification hierarchy, passive Read navigation, restored artwork hints,
-expanded-only actions, page/reply transactions, immutable message identity,
-atomic refresh failures, generation/revision fencing and live-update draft focus
-remain under actual Qt tests. Native/protocol, retry and safety coverage took
-priority over visual and implementation-specific matrices.
+Shared tests are not proof of every consumer's wiring. In particular, native
+field binding tests do not directly exercise the removed display numeric Apply
+button or adapter timeout editors. Core safety tests took priority over those
+consumer permutations. Historical UI documents describe broader evidence at their
+original checkpoints, not current coverage. Add focused regressions when these
+boundaries produce meaningful failures; 288 is a checkpoint, not a permanent cap.
 
 ## Validation and reproduction
 
-Final: **258 Qt passes, 0 failures, 1 unchanged renderer skip**: 174 executed
-behaviors and 84 lifecycle hooks. All 16 behavioral JavaScript scripts, 8 Rust
-tests, 2 Python tests, QML lint and native offscreen runtime smoke pass.
-
-The five daemon contract suites were retained, not rerun. Full sibling-aware Nix,
-live hardware/compositor and RHI acceptance were not performed. Runtime smoke
-reported the offscreen plugin's unsupported-window-mask warning, not a failed
-assertion. An initial generic Node invocation omitted required fixture arguments;
-the corrected run uses each script's arguments from `flake.nix`.
-
-From the matching development environment:
+Passed: full Qt suite (**311 passes, zero failures, one unchanged skip**), all
+16 behavioral JavaScript scripts plus source-tree import checking, eight Rust
+tests, two Python tests, strict QML lint and native offscreen runtime smoke.
+The five daemon contract suites are unchanged and **were not rerun**. Full
+sibling-aware Nix/package evaluation, RHI, hardware, IME and screen-reader
+acceptance were not performed. The existing offscreen window-mask warning is
+not a failed assertion.
 
 ```sh
-bash tests/run-qmlquality-tests.sh -o /tmp/pruned-qml.log,txt
+tests/run-qml-tests.sh > /tmp/pruned-qml.log 2>&1
 python3 tests/count-test-inventory.py --qml-log /tmp/pruned-qml.log \
   --expected-qml-skip 'qmltestrunner::MediaChip::test_artworkReallyClipsRoundedCorners()'
-bash tests/run-qmllint.sh
-bash tests/run-runtime-smoke.sh
+tests/run-qmllint.sh
+tests/run-runtime-smoke.sh
 python3 -m unittest discover -s tests -p 'test_*.py'
-# Node script arguments are declared in flake.nix.
-# Run cargo test --offline --locked --manifest-path for each owned Cargo.toml.
+# Node arguments: flake.nix; local executed script: target/test-pruning-aefcf52/run-javascript.sh
+cargo test --offline --locked --manifest-path rust/shelllist-search/Cargo.toml
+cargo test --offline --locked --manifest-path portal-launcher/Cargo.toml
+CARGO_TARGET_DIR="$PWD/target/timezone-test" cargo test --offline --locked \
+  --manifest-path rust/shelllist-timezone-assets/Cargo.toml
 ```
 
-Local evidence: `target/test-pruning-current/{before-qml.log,final-qml.log,
-final-inventory.json,final-lint.log,final-behavior.log,final-rust.log,
-final-smoke.log}`. The local environment wrapper and font configuration used for
-Qt are the same as the baseline. Do not use older `after.json`/`after-qt.log`
-artifacts in that directory as this pass's result.
+Cargo/rustc 1.95.0 were supplied from the installed Nix store; no dependency or
+lockfile update was needed. Timezone assets has zero unit tests. Matching local
+artifacts are `before-qml.log`, `before.json`, `final-qml.log`,
+`final-inventory.json`, `comparison.json`, `javascript.log`, `rust.log`,
+`python.log`, `lint.log` and `smoke.log`. Do not reuse artifacts from an earlier
+pruning directory as this baseline.

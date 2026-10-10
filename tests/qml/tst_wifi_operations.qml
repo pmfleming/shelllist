@@ -94,6 +94,8 @@ DaemonTestCase {
         keyClick(Qt.Key_X, Qt.AltModifier);
         verify(c.connection.cancellationRequested, "active link must not hide pending cancellation");
         verify(c.actionInFlight, "cancel dispatch is not acknowledgement");
+        c.connection.handleEvent({request_id: "other", event: "cancelled"});
+        verify(c.actionInFlight, "foreign cancellation cannot release the guard");
         c.connection.handleEvent({request_id: "connect-owned", event: "cancelled"});
         verify(!c.actionInFlight);
         panel.page.listItem.focusList();
@@ -145,21 +147,6 @@ DaemonTestCase {
             verify(c.backend.isPending("disconnect"), "explicit retry remains available");
         }
     }
-    function test_conflictingMutationsStayGuarded_data() {
-        return [{tag: "qr-connect", id: "qr-connect"}];
-    }
-    function test_conflictingMutationsStayGuarded(data) {
-        const panel = makePanel();
-        panel.controller.backend.setPending(data.id, true);
-        verify(panel.controller.actionInFlight);
-        const power = findChild(panel, "chooserPowerToggle");
-        verify(power.visible);
-        verify(!power.enabled);
-        mouseClick(power);
-        compare(calls.length, 0);
-        verify(findChild(panel, "fieldTrailingAction").enabled);
-        verify(findChild(panel, "chooserRefreshButton").enabled);
-    }
     function statusReply(c, result, id) {
         c.backend.acceptSharedResponse(id || c.connection.recoveryId, {protocol: "nm-api", version: 1, ok: true, data: {result: result}}, "");
     }
@@ -175,18 +162,6 @@ DaemonTestCase {
         verify(!c.actionInFlight);
         compare(c.status, "Link connected; internet unknown");
         compare(calls.filter(function (call) { return call.method === "wifi.connectTarget"; }).length, 0);
-    }
-    function test_slowOperationKeepsGuardUntilCancellationAcknowledgement() {
-        const c = makePanel().controller;
-        c.connection.requestId = "connect-owned";
-        c.connection.checkStatus(true);
-        statusReply(c, {request_id: "connect-owned", status: "running", stream: "wifi.connect", timed_out: true, cancellation_requested: true});
-        verify(c.actionInFlight);
-        verify(c.status.indexOf("timed out") >= 0);
-        c.connection.handleEvent({request_id: "other", event: "cancelled"});
-        verify(c.actionInFlight);
-        c.connection.handleEvent({request_id: "connect-owned", event: "cancelled"});
-        verify(!c.actionInFlight);
     }
     function test_statusFailuresAndLateRepliesCannotUnlockOrRetireNewRead() {
         const c = makePanel().controller;
@@ -277,5 +252,10 @@ DaemonTestCase {
         verify(c.joinScannedQr("WIFI:T:WPA;S:Example;P:secret;;"));
         compare(calls.slice(-1)[0].method, "wifi.qr.connect");
         verify(c.backend.connectStarting);
+        const power = findChild(panel, "chooserPowerToggle");
+        verify(!power.enabled);
+        const before = calls.length;
+        mouseClick(power);
+        compare(calls.length, before, "a QR connection blocks conflicting power writes");
     }
 }

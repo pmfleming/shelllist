@@ -224,10 +224,13 @@ boundary instead of being duplicated in a giant visual test.
 | Media | Ready transport, pin/mode, long failure, passive metadata/artwork | `tst_system_choosers` |
 | Tray | Passive details without duplicate card, stable native-menu routes | `tst_system_choosers` |
 
-Shared `tst_panel_roles`, `tst_field_interaction`, `tst_material_feedback` and
-chooser/command suites cover identity, wrapping, passive roles, browse/edit
-markers, editable-only traversal, Enter/Tab save, Escape discard, snapshot/draft
-isolation, continuous-preview rollback and guarded command activation.
+Shared `tst_field_interaction`, `tst_material_fields`, `tst_material_feedback`
+and chooser/command suites retain editable-only traversal, Enter/Tab save,
+Escape discard, snapshot/draft isolation, continuous-preview rollback and guarded
+activation. The [current pruning review](../tests/test-pruning-current.md)
+records reduced visual evidence: the redundant `PanelRoles` suite and several
+per-consumer geometry, wrapping, palette and icon matrices are removed. Historical
+acceptance results above remain historical; the visual contract is unchanged.
 
 ## Maintainer review / owned exceptions
 

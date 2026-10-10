@@ -595,6 +595,17 @@ acknowledgement, retry, modal and rollback coverage. See the
 
 ## Validation
 
+The [current pruning review](../tests/test-pruning-current.md), measured from
+`aefcf52` plus incoming work, reduces the established inventory **430 → 288**
+without changing this interaction contract. Shared field transactions, native
+domain acknowledgement/recovery and representative destructive/failure paths
+remain. Exact geometry/paint, repeated consumer field permutations, exhaustive
+malformed-response matrices and some presentation/cache internals have less
+direct evidence; the review names those gaps and retained owners. Earlier test
+coverage statements in this document describe their original checkpoints, not a
+promise that every historical scenario is still a separate test. No new skips,
+discovery exclusions or counter changes were introduced.
+
 `tests/qml/tst_field_interaction.qml` checks actual key delivery for transactions,
 wrapping, choice drafts, two-option selectors, live rollback, pointer entry,
 highlight boundaries, source-binding preservation and positional traversal when

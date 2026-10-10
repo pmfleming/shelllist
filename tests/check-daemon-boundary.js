@@ -70,58 +70,8 @@ function bridgeLifecycle() {
         exit(code = 0) { client.process.running = false; client.exited(code); } };
 }
 
-for (const closeDuringStartup of [false, true]) {
-    const f = bridgeLifecycle();
-    f.open();
-    if (!closeDuringStartup) f.client.started();
-    f.close();
-    assert.equal(f.client.ready, false, "closing is immediately unavailable for writes");
-    f.open();
-    f.client.call("new-request", "effect.once", {});
-    if (closeDuringStartup) f.client.started();
-    assert.equal(f.client.lifecycle, "stopping");
-    assert.equal(f.starts.length, 1, "a draining bridge cannot be revived or duplicated");
-    assert.equal(f.writes.length, 0, "new effects never reach the closing pipe");
-    f.exit();
-    assert.equal(f.starts.length, 2, "reopen starts immediately after a clean exit");
-    f.client.started();
-    assert.deepEqual(f.writes.map(message => message.id), ["new-request"]);
-    assert.deepEqual(f.failures, []);
-    assert.equal(f.client.retryTimer.running, false);
-}
-
-{
-    const f = bridgeLifecycle();
-    f.open(); f.client.started(); f.close(); f.exit();
-    assert.equal(f.starts.length, 1, "remaining closed must not restart");
-    assert.equal(f.client.lifecycle, "stopped");
-    assert.deepEqual(f.failures, []);
-}
-
-{
-    const f = bridgeLifecycle();
-    f.open(); f.client.started(); f.close(); f.open();
-    f.client.call("closed-again", "effect.once", {});
-    f.close(); f.exit(); f.open(); f.client.started();
-    assert.deepEqual(f.writes, [], "a second close discards unsent requests");
-}
-
-for (const exitCode of [0, 1]) {
-    const f = bridgeLifecycle();
-    f.open(); f.client.started(); f.exit(exitCode);
-    assert.equal(f.failures.length, 1, "an unsolicited exit, even zero, remains a failure");
-    assert.equal(f.client.retryTimer.running, true);
-}
-
-{
-    const f = bridgeLifecycle();
-    f.open(); f.client.started(); f.close(); f.open();
-    f.client.call("never-replay", "effect.once", {});
-    f.exit(1);
-    assert.equal(f.failures.length, 1, "a crash during intentional shutdown is not hidden");
-    assert.equal(f.client.queuedLines.length, 0);
-}
-
+// Native tst_daemon_bridge.qml owns close/reopen, startup, repeated-close and
+// failed-drain scenarios. Keep the distinct backoff/exit race here.
 for (const backoffExpired of [false, true]) {
     const f = bridgeLifecycle();
     f.open(); f.client.started(); f.client.recover("lost transport");
@@ -135,7 +85,7 @@ for (const backoffExpired of [false, true]) {
     assert.deepEqual(f.failures, ["lost transport"]);
 }
 
-// Exercise compatibility and gap handling through the consumer, rather than
+// Exercise protocol validation and gap handling through the consumer, rather than
 // checking that a particular helper name occurs in the backend's source.
 {
     const received = [], gaps = [], ApiEnvelope = {};

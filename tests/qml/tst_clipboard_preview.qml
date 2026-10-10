@@ -128,10 +128,17 @@ DaemonTestCase {
         tryVerify(() => calls.some(call => call.route.localId === "action-copy"));
         const action = calls.find(call => call.route.localId === "action-copy");
         compare(action.params.entry_id, "second", "warm preview never redirects an action");
+        const state = controller.detailState;
+        state.failedDrafts.first = {target: entries[0], preview: state.cachedPreview(entries[0]).value,
+            draft: "Unsaved", error: "Conflict", direct: true};
+        keyClick(Qt.Key_Up);
+        compare(editor.text, "Unsaved", "a warm preview cannot replace a failed draft");
+        verify(state.editing && state.editDirty);
+        compare(state.editError, "Conflict");
     }
 
     function test_imageRepliesKeepChromeAndDoNotReportUnavailableWhilePending_data() {
-        return [{tag: "details-first", thumbnailFirst: false}, {tag: "thumbnail-first", thumbnailFirst: true}];
+        return [{tag: "thumbnail-first", thumbnailFirst: true}];
     }
     function test_imageRepliesKeepChromeAndDoNotReportUnavailableWhilePending(data) {
         const entries = [entry("first", "image"), entry("second", "image")];
@@ -146,19 +153,11 @@ DaemonTestCase {
         verify(panel.detailsItem.secondaryActions.every(action => !action.enabled));
         keyClick(Qt.Key_E, Qt.AltModifier);
         verify(!calls.some(call => call.route.localId === "action-annotate"));
-        if (data.thumbnailFirst) {
-            thumbnailReply(controller, entries[0]);
-            verify(message.visible);
-            compare(message.text, "Loading preview…");
-            compare(controller.detailState.previewCache.length, 0);
-            detailsReply(controller, entries[0], null);
-        } else {
-            detailsReply(controller, entries[0], null);
-            verify(message.visible);
-            compare(message.text, "Loading preview…");
-            compare(controller.detailState.previewCache.length, 0);
-            thumbnailReply(controller, entries[0]);
-        }
+        thumbnailReply(controller, entries[0]);
+        verify(message.visible);
+        compare(message.text, "Loading preview…");
+        compare(controller.detailState.previewCache.length, 0);
+        detailsReply(controller, entries[0], null);
         tryCompare(image, "status", Image.Ready);
         verify(image.visible && !message.visible);
         compare(controller.detailState.previewCache.length, 1);
@@ -175,49 +174,6 @@ DaemonTestCase {
         tryCompare(image, "status", Image.Ready);
         verify(!message.visible && image.visible);
         compare(previewCalls().length, 0);
-    }
-
-    function test_cacheBoundsRevisionAndFailedDraftPriority() {
-        const entries = [];
-        for (let i = 0; i < 14; i++)
-            entries.push(entry("row-" + i));
-        const controller = makeController(entries);
-        controller.openDetails();
-        for (let i = 0; i < 12; i++) {
-            controller.select(i);
-            controller.detailState.load();
-            detailsReply(controller, entries[i]);
-        }
-        const state = controller.detailState;
-        compare(state.previewCache.length, state.previewCacheLimit);
-        controller.select(0); // Touch the oldest entry: row-1 should now be evicted.
-        compare(state.value.entry.id, "row-0");
-        controller.select(12);
-        state.load();
-        detailsReply(controller, entries[12]);
-        verify(state.cachedPreview(entries[0]) !== null);
-        compare(state.cachedPreview(entries[1]), null);
-        compare(state.cachedPreview(entry("row-0", "text", 2)), null);
-        controller.select(13);
-        state.load();
-        detailsReply(controller, entries[13], "x".repeat(state.previewCacheByteLimit));
-        compare(state.cachedPreview(entries[13]), null, "oversized payloads remain visible but are not retained");
-        verify(state.previewCacheBytes <= state.previewCacheByteLimit);
-        state.clearCache();
-        for (let i = 0; i < 4; i++) {
-            controller.select(i);
-            state.load();
-            detailsReply(controller, entries[i], "x".repeat(400000));
-        }
-        verify(state.previewCache.length < 4, "byte budget evicts before the entry-count limit");
-        verify(state.previewCacheBytes <= state.previewCacheByteLimit);
-
-        state.failedDrafts[entries[3].id] = {target: entries[3], preview: state.value, draft: "Unsaved", error: "Conflict", direct: true};
-        controller.select(2);
-        controller.select(3);
-        verify(state.editing && state.editDirty);
-        compare(state.editDraft, "Unsaved", "a cached acknowledged value cannot replace a failed draft");
-        compare(state.editError, "Conflict");
     }
 
     function test_revisionAndLateThumbnailCannotReuseOldPreview() {
@@ -271,9 +227,8 @@ DaemonTestCase {
     }
 
     function test_cacheInvalidation_data() {
-        // Sample revision, privacy and invocation boundaries rather than each
-        // mutation callback that delegates to the same invalidation path.
-        return ["history", "privacy", "hide"].map(boundary => ({tag: boundary, boundary: boundary}));
+        // Revision changes also have a dedicated stale-thumbnail regression.
+        return ["privacy", "hide"].map(boundary => ({tag: boundary, boundary: boundary}));
     }
     function test_cacheInvalidation(data) {
         const entries = [entry("first"), entry("second")];
@@ -285,7 +240,6 @@ DaemonTestCase {
         controller.detailState.load();
         const pending = controller.detailState.requestId;
         switch (data.boundary) {
-        case "history": controller.handleHistoryChanged("new-revision"); break;
         case "privacy": controller.applySettings({private_mode: true}); break;
         case "hide": controller.deactivateUi(); break;
         }

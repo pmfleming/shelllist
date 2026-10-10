@@ -35,9 +35,7 @@ DaemonTestCase {
         }
     }
     function test_keyboardEditLeaseSavesOnlyOnExplicitCommit_data() {
-        return [{tag: "enter", key: Qt.Key_Return, modifiers: Qt.NoModifier},
-            {tag: "tab", key: Qt.Key_Tab, modifiers: Qt.NoModifier},
-            {tag: "backtab", key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier}];
+        return [{tag: "tab", key: Qt.Key_Tab, modifiers: Qt.NoModifier}];
     }
     function test_keyboardEditLeaseSavesOnlyOnExplicitCommit(data) {
         const controller = makeController();
@@ -90,48 +88,9 @@ DaemonTestCase {
         else
             compare(controller.status, "Clipboard draft discarded");
     }
-    function test_deleteSitsBesideDetailsArrowAndKeepsConfirmation() {
-        const controller = makeController();
-        const pane = createTemporaryObject(paneFactory, testCase, {
-            controller: controller,
-            width: 425,
-            height: 800
-        });
-        views = views.concat([pane]);
-        tryVerify(() => findChild(pane, "clipboardDeleteAction") !== null);
-        const remove = findChild(pane, "clipboardDeleteAction");
-        const details = findChild(pane, "resultDetailsAction");
-        verify(details.visible);
-        for (const width of [425, 360]) {
-            pane.width = width;
-            wait(0);
-            const deleteEdge = remove.mapToItem(pane, remove.width, remove.height / 2);
-            const arrowEdge = details.mapToItem(pane, 0, details.height / 2);
-            verify(arrowEdge.x - deleteEdge.x >= 0 && arrowEdge.x - deleteEdge.x <= 8,
-                "delete stays next to the arrow without overlap");
-            compare(deleteEdge.y, arrowEdge.y);
-        }
-        calls = [];
-        mouseClick(remove);
-        verify(controller.deleteConfirmationOpen);
-        verify(!controller.detailsOpen, "delete must not toggle the adjacent details action");
-        compare(calls.length, 0, "delete still requires confirmation");
-        controller.cancelDelete();
-        controller.actionInFlight = true;
-        verify(!remove.enabled);
-        remove.Accessible.pressAction();
-        verify(!controller.deleteConfirmationOpen);
-        controller.actionInFlight = false;
-        controller.multiSelectMode = true;
-        verify(!remove.visible);
-        verify(!details.visible);
-    }
 
     function test_compactDeleteConfirmation_data() {
-        return [{tag: "pointer-cancel", route: "cancel", width: 650},
-            {tag: "escape", route: "escape", width: 480},
-            {tag: "initial-return-cancels", route: "return", width: 650},
-            {tag: "pointer-delete", route: "delete", width: 480},
+        return [{tag: "escape", route: "escape", width: 480},
             {tag: "tab-return-deletes", route: "tab", width: 650}];
     }
     function test_compactDeleteConfirmation(data) {
@@ -160,14 +119,8 @@ DaemonTestCase {
         compare(cancelCenter.y, deleteCenter.y);
         verify(cancelCenter.x + reject.width / 2 < deleteCenter.x - accept.width / 2);
         compare(calls.length, 0, "opening the confirmation cannot delete");
-        if (data.route === "cancel")
-            mouseClick(reject);
-        else if (data.route === "escape")
+        if (data.route === "escape")
             keyClick(Qt.Key_Escape);
-        else if (data.route === "return")
-            keyClick(Qt.Key_Return);
-        else if (data.route === "delete")
-            mouseClick(accept);
         else {
             keyClick(Qt.Key_Tab);
             verify(accept.activeFocus);
@@ -175,7 +128,7 @@ DaemonTestCase {
         }
         tryCompare(controller, "deleteConfirmationOpen", false);
         const actions = calls.filter(call => call.method === "clipboard.entry.action");
-        const deleting = data.route === "delete" || data.route === "tab";
+        const deleting = data.route === "tab";
         compare(actions.length, deleting ? 1 : 0);
         if (deleting) {
             compare(actions[0].params.action, "delete");
@@ -504,7 +457,7 @@ DaemonTestCase {
     }
 
     function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft_data() {
-        return [{tag: "enter", key: Qt.Key_Return}, {tag: "tab", key: Qt.Key_Tab}];
+        return [{tag: "enter", key: Qt.Key_Return}];
     }
     function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft(data) {
         const controller = makeController();

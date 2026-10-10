@@ -63,30 +63,8 @@ DaemonTestCase {
         compare(panel.surface.detailsNavigation.currentTarget, target);
         return target;
     }
-    function test_compactControlsFitNarrowPanel() {
-        const originalWidth = tests.width;
-        tests.width = 320;
-        try {
-            const panel = make();
-            const mode = findChild(panel, "batteryPowerModeProfile");
-            const card = findChild(panel, "powerModeCard");
-            const position = mode.mapToItem(card, 0, 0);
-            verify(position.x >= 0 && position.x + mode.width <= card.width);
-            panel.controller.selectViewTab("care");
-            verify(waitForRendering(panel));
-            const actions = findChild(panel, "batteryChargingActions");
-            compare(actions.buttons.length, 3);
-            for (const button of actions.buttons) {
-                const p = button.mapToItem(actions, 0, 0);
-                verify(p.x >= 0 && p.x + button.width <= actions.width + 1);
-                verify(button.width >= Ui.Theme.minimumSecondaryActionHeight);
-            }
-        } finally {
-            tests.width = originalWidth;
-        }
-    }
     function test_modeIsFirstCircularAndDeferred_data() {
-        return [{tag: "dark", scheme: Qt.Dark}, {tag: "light", scheme: Qt.Light}];
+        return [{tag: "dark", scheme: Qt.Dark}];
     }
     function test_modeIsFirstCircularAndDeferred(data) {
         Ui.Theme.previewColorScheme = data.scheme;
@@ -138,29 +116,8 @@ DaemonTestCase {
         panel.controller.applyPowerProfile({available: true, profile: "power-saver", profiles: [{name: "power-saver"}, {name: "balanced"}, {name: "performance"}]});
         compare(mode.value, "power-saver");
     }
-    function test_fieldTraversalAndIconOnlyTabs() {
-        const panel = make();
-        const nav = panel.surface.detailsNavigation;
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(nav.currentTarget.objectName, "batteryEnergyPeriod");
-        keyClick(Qt.Key_Tab);
-        compare(nav.currentTarget.objectName, "batteryPowerModeProfile");
-        const tabBar = findChild(panel, "batteryViewTabs");
-        const tabs = [];
-        function collect(item) { if (item instanceof Ui.DetailsTab) tabs.push(item); for (const child of item.children) collect(child); }
-        collect(tabBar);
-        compare(tabs.length, 3);
-        for (const tab of tabs) {
-            verify(tab.icon.length > 0 && tab.Accessible.name.length > 0);
-            const glyph = findChild(tab, "controlIcon");
-            verify(glyph !== null);
-            compare(glyph.parent.label, "");
-        }
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(panel.controller.viewTab, "care");
-    }
     function test_combinedChargingTargetsAndDeferredThresholds_data() {
-        return [{tag: "dark", scheme: Qt.Dark}, {tag: "light", scheme: Qt.Light}];
+        return [{tag: "dark", scheme: Qt.Dark}];
     }
     function test_combinedChargingTargetsAndDeferredThresholds(data) {
         Ui.Theme.previewColorScheme = data.scheme;

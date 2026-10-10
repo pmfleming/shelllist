@@ -457,10 +457,7 @@ DaemonTestCase {
     }
     function test_audioProfilePublishesOnlyFinalOutcome_data() {
         return [
-            {tag: "missing", outcome: null, message: "Audio profile outcome unconfirmed; refresh before retrying"},
-            {tag: "not-applied", outcome: {applied: false, remembered: true}, message: "Audio profile outcome unconfirmed; refresh before retrying"},
-            {tag: "partial", outcome: {applied: true, remembered: false}, message: "Audio profile applied, but could not remember it: Persistence unconfirmed"},
-            {tag: "remembered", outcome: {applied: true, remembered: true}, message: "Bluetooth audio profile updated and remembered"}
+            {tag: "missing", outcome: null, message: "Audio profile outcome unconfirmed; refresh before retrying"}
         ];
     }
     function test_audioProfilePublishesOnlyFinalOutcome(data) {
@@ -477,7 +474,7 @@ DaemonTestCase {
         verify(!backend.requestRunning);
     }
     function test_requestErrorsKeepReadAndMutationFeedbackSeparate_data() {
-        return [{tag: "snapshot", read: true}, {tag: "scan-start", read: true}, {tag: "audio-set-profile", read: false}];
+        return [{tag: "snapshot", read: true}, {tag: "audio-set-profile", read: false}];
     }
     function test_requestErrorsKeepReadAndMutationFeedbackSeparate(data) {
         const controller = makePanel().controller;
@@ -641,8 +638,7 @@ DaemonTestCase {
         compare(adapterCalls().length, 1, "a failed observation never replays an acknowledged write");
     }
     function test_adapterBatchRejectsMalformedAndLostOutcomes_data() {
-        return [ {tag: "missing"}, {tag: "wrong-key"}, {tag: "wrong-value"},
-            {tag: "duplicate"}, {tag: "unknown-state"}, {tag: "disconnect"} ];
+        return [{tag: "wrong-value"}, {tag: "disconnect"}];
     }
     function test_adapterBatchRejectsMalformedAndLostOutcomes(data) {
         const panel = makePanel();
@@ -653,11 +649,7 @@ DaemonTestCase {
         verify(edits.saveBatch("adapter"));
         const response = batchReply("adapter", adapterCalls()[0].params.changes);
         const batch = response.data.adapter_batch;
-        if (data.tag === "missing") delete response.data.adapter_batch;
-        if (data.tag === "wrong-key") batch.key = "another-adapter";
         if (data.tag === "wrong-value") batch.outcomes[0].value = "Other name";
-        if (data.tag === "duplicate") batch.outcomes[1] = batch.outcomes[0];
-        if (data.tag === "unknown-state") batch.outcomes[0].state = "accepted";
         if (data.tag === "disconnect") {
             backend.resetTransportState();
             panel.controller.handleTransportFailure("Disconnected");
@@ -691,7 +683,7 @@ DaemonTestCase {
         }
     }
     function test_adapterFieldTransactionsSubmitOnlySavedFieldsAndKeepCapturedKey_data() {
-        return [{tag: "Enter", saveKey: Qt.Key_Return}, {tag: "Tab", saveKey: Qt.Key_Tab}];
+        return [{tag: "Tab", saveKey: Qt.Key_Tab}];
     }
     function test_adapterFieldTransactionsSubmitOnlySavedFieldsAndKeepCapturedKey(data) {
         const panel = makePanel();
@@ -731,45 +723,6 @@ DaemonTestCase {
         compare(Object.keys(controller.adapterEdits.draft("other").fields).length, 0);
         wait(750);
         compare(adapterCalls().length, 1);
-    }
-    function test_adapterTimeoutSaveAndDiscard_data() {
-        return [{tag: "discoverable", field: "discoverable_timeout"},
-            {tag: "pairable", field: "pairable_timeout"}];
-    }
-    function test_adapterTimeoutSaveAndDiscard(data) {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const backend = findChild(controller, "bluetoothBackend");
-        controller.uiActive = true;
-        const surface = createTemporaryObject(adapterSurfaceComponent, testCase, {controller: controller});
-        wait(0);
-        backend.pending = ({});
-        calls = [];
-        controller.adapterSettingsTab = "pairing";
-        surface.listItem.focusList();
-        keyClick(Qt.Key_Right);
-        tryVerify(() => surface.detailsItem !== null);
-        const slider = findChild(surface.detailsItem, data.tag + "Timeout");
-        for (let i = 0; i < 8 && surface.detailsNavigation.currentTarget !== slider; ++i)
-            keyClick(Qt.Key_Tab);
-        compare(surface.detailsNavigation.currentTarget, slider);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        compare(slider.value, 30);
-        wait(750);
-        compare(adapterCalls().length, 0);
-        keyClick(Qt.Key_Escape);
-        compare(slider.value, 0);
-        compare(adapterCalls().length, 0);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        keyClick(Qt.Key_Return);
-        compare(adapterCalls().length, 1);
-        const changes = {[data.field]: 30};
-        compare(adapterCalls()[0].params, {key: "adapter", changes: changes});
-        backend.acceptSharedResponse("adapter-batch", batchReply("adapter", changes), "");
-        surface.destroy();
-        wait(0);
     }
     function test_renameAcknowledgementAndDisconnectKeepCorrectState() {
         const panel = makePanel();
