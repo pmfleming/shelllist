@@ -72,6 +72,22 @@ TestCase {
         strip.width = 120;
         compare(strip.height, Ui.Theme.statusHeight);
     }
+    function test_statusPanelRemainsPaintedWhenMessagesClear() {
+        const strip = createTemporaryObject(stripFactory, tests, {status: "", icon: ""});
+        const label = findChild(strip, "feedbackText");
+        for (const message of ["", "Capturing…", "", "Capture failed", ""]) {
+            strip.status = message;
+            verify(waitForPolish(strip.Window.window));
+            compare(strip.height, Ui.Theme.statusHeight);
+            compare(strip.border.color, Ui.Theme.border);
+            const pixels = grabImage(strip);
+            compare(pixels.pixel(Math.floor(strip.width / 2), 2), Ui.Theme.surfaceRaised,
+                "the status surface stays painted even without feedback");
+            for (let item = label; item && item !== strip; item = item.parent)
+                compare(item.opacity, 1, "the status row must not fade when feedback clears");
+            compare(label.text, message, "idle does not invent a success or readiness message");
+        }
+    }
     function test_inlineLabelAndResourceReadingFloor() {
         const surface = createTemporaryObject(formFactory, tests);
         verify(waitForRendering(surface));

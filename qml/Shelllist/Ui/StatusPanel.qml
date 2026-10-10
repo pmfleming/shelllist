@@ -24,15 +24,15 @@ Rectangle {
     Layout.preferredHeight: implicitHeight
     Layout.maximumHeight: implicitHeight
     radius: Theme.cardRadius
-    color: feedback.fullText.length ? Theme.surfaceRaised : "transparent"
-    border.color: feedback.fullText.length ? Theme.border : "transparent"
+    // Keep the status surface visible even after transient feedback expires.
+    color: Theme.surfaceRaised
+    border.color: Theme.border
 
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: panel.scaled(Theme.contentMargin)
         anchors.rightMargin: panel.scaled(Theme.contentMargin)
         spacing: panel.scaled(Theme.spacingSm)
-        opacity: feedback.fullText.length ? 1 : 0
 
         Item {
             Layout.preferredWidth: panel.scaled(Theme.iconSize)

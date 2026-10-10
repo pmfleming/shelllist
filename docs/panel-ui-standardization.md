@@ -35,6 +35,9 @@ dirty display layouts and safety consequences remain visible. Keep independent
 error/retry ownership; presentation components never dispatch domain mutations.
 Errors contribute through `FeedbackSource` to a fixed `StatusPanel`/`FeedbackSlot`,
 not auto-expanding rows. Provider and standalone surface hosts own that allocation.
+The shared status panel keeps its surface, border and configured icon visible when
+idle, including after transient messages expire. Its fixed geometry is unchanged;
+empty feedback does not imply success or readiness and adds no focus stops.
 Browsing uses a marker only; editing adds an editor-local background and lower line.
 
 ## Intentional exceptions
