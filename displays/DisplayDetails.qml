@@ -31,6 +31,8 @@ Ui.ActionDetailsPane {
         spacing: pane.sectionSpacing
         ColumnLayout {
             Layout.fillWidth: true
+            // Empty arrangement controls must not consume the settings viewport.
+            Layout.fillHeight: false
             spacing: Ui.Theme.spacingXs
             visible: !pane.controller.globalSettingsOpen && !!pane.controller.selectedOutput && pane.controller.detailsTab === "settings"
             DisplayCanvas {
@@ -40,6 +42,8 @@ Ui.ActionDetailsPane {
             }
             DisplayArrangementControls {
                 Layout.fillWidth: true
+                // Honor zero implicit height instead of reusing the last arranged height.
+                Layout.preferredHeight: implicitHeight
                 controller: pane.controller
             }
         }

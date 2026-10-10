@@ -662,6 +662,9 @@ expiry. `tst_wifi_portal.qml` exercises actual command/navigation keys,
 claim acknowledgement, late replies, failures and UI disappearance.
 
 The display layout diagram and arrangement controls appear only on **Settings**.
+Their group stays content-sized: when placement controls are unavailable (for
+example, only one display is enabled), it cannot consume the settings viewport.
+Content, resolution, refresh, scale and orientation retain their scrolling area.
 **Information** reclaims their entire vertical allocation; hidden arrangement
 commands and the reference field are unavailable there. Tab changes preserve the
 saved layout draft, and dirty/error feedback stays in the status bar on either page.

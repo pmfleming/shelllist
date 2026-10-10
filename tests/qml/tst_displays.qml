@@ -100,6 +100,49 @@ DaemonTestCase {
         tryCompare(panel.detailsItem.parent, "status", Loader.Ready);
         verify(waitForPolish(panel.Window.window));
     }
+    function test_settingsRemainVisibleWithOnlyOneEnabledDisplay_data() {
+        return [
+            {tag: "external", output: "DP-1", height: 780},
+            {tag: "disabled-laptop", output: "eDP-1", height: 780},
+            {tag: "short-external", output: "DP-1", height: 600},
+            {tag: "docked-after-extended", output: "DP-1", height: 780, previouslyExtended: true}
+        ];
+    }
+    function test_settingsRemainVisibleWithOnlyOneEnabledDisplay(data) {
+        const panel = makePanel();
+        panel.height = data.height;
+        const c = panel.controller;
+        if (data.previouslyExtended) {
+            const state = displayState();
+            state.outputs[0].disabled = false;
+            c.applyDisplayPolicy(state);
+        }
+        c.uiActive = true;
+        c.selectOutput(data.output);
+        c.openDetails();
+        waitForDetails(panel);
+        if (data.previouslyExtended) {
+            c.applyDisplayPolicy(displayState());
+            verify(waitForPolish(panel.Window.window));
+        }
+        compare(findChild(panel, "displayArrangementControls").height, 0,
+            "unavailable placement controls must not retain a blank row");
+        const workspace = findChild(panel, "displayLayoutWorkspace");
+        const card = findChild(panel, "displayContentCard");
+        const field = findChild(panel, "displayContentMode");
+        verify(workspace.visible && workspace.width > 0 && workspace.height > 0);
+        verify(card.visible && card.width > 0 && card.height > 0);
+        const point = field.mapToItem(workspace, 0, 0);
+        verify(point.y >= 0 && point.y + field.height <= workspace.height,
+            "display settings must be inside the viewport before focusing an editor");
+        // Going through Information must not let the empty layout expand again.
+        c.detailsTab = "information";
+        verify(waitForPolish(panel.Window.window));
+        c.detailsTab = "settings";
+        verify(waitForPolish(panel.Window.window));
+        verify(workspace.height >= field.height && workspace.visible);
+        compare(calls.length, 0, "layout changes never submit display settings");
+    }
     function test_arrangementFeedbackStaysInStatusBar() {
         const panel = makePanel();
         const c = panel.controller;
