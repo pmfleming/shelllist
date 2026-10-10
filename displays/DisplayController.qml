@@ -54,11 +54,13 @@ Ui.ProviderChooserController {
     readonly property DisplayBackend backend: displayBackend
     readonly property bool dirty: JSON.stringify(draft) !== JSON.stringify(baselineDraft)
     readonly property bool canChange: stateReady && displayPolicyState.available && backend.ready && !actionInFlight && !trial
-    readonly property bool canEdit: canChange && !stale && baselineToken.length > 0
+    readonly property bool dockingApplying: displayPolicyState.docking_state === "applying" || (!displayPolicyState.docking_state && ["pending", "settling"].includes(displayPolicyState.status))
+    readonly property bool dockingFailed: displayPolicyState.docking_state === "failed"
+    readonly property bool canEdit: canChange && !dockingApplying && !stale && baselineToken.length > 0
     readonly property bool dockingPreferenceKnown: typeof (displayPolicyState.policy || {}).prefer_external === "boolean"
     readonly property bool manualDisplayEnablement: (displayPolicyState.layout || {}).manual_enablement === true
-    readonly property string dockingMode: manualDisplayEnablement ? "manual" : !dockingPreferenceKnown ? "" : displayPolicyState.policy.prefer_external ? "auto-off" : "keep-on"
-    readonly property bool canSetPolicy: canChange && !dirty && dockingPreferenceKnown
+    readonly property string dockingMode: manualDisplayEnablement ? "manual" : !dockingPreferenceKnown ? "" : dockingFailed ? "failed" : displayPolicyState.policy.prefer_external ? "auto-off" : "keep-on"
+    readonly property bool canSetPolicy: canChange && !dockingApplying && !dirty && dockingPreferenceKnown
     readonly property var focusState: displayPolicyState.focus || ({available: false})
     readonly property bool canSetFocus: canChange && !dirty && !!focusState.available
     readonly property string validationError: Model.validate(draft, outputs) || Model.arrangementError(draft, baselineDraft)
@@ -80,7 +82,7 @@ Ui.ProviderChooserController {
         return !o.disabled;
     }).length
     readonly property int secondsLeft: trial ? Math.max(0, Math.ceil(trial.expires_at - clock / 1000)) : 0
-    readonly property string statusMessage: displayPolicyError || displayPolicyState.error || (!stateReady ? qsTr("Connecting…") : !displayPolicyState.available ? qsTr("Enable programs.shelllist.displays.enable to manage displays") : stale ? qsTr("Displays changed · reload the layout") : dirty && validationError ? validationError : displayPolicyState.status === "pending" ? qsTr("Applying docking preference…") : displayPolicyState.status === "settling" ? qsTr("Waiting for external display…") : "")
+    readonly property string statusMessage: displayPolicyError || displayPolicyState.error || (!stateReady ? qsTr("Connecting…") : !displayPolicyState.available ? qsTr("Enable programs.shelllist.displays.enable to manage displays") : stale ? qsTr("Displays changed · reload the layout") : dirty && validationError ? validationError : displayPolicyState.status === "settling" ? qsTr("Waiting for external display…") : dockingApplying ? qsTr("Applying docking preference…") : "")
 
     navigationPrimaryEnabled: false
     provider: displayProvider

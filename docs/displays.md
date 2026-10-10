@@ -156,7 +156,16 @@ The daemon acknowledges the cleared override in its policy response; actual
 screen enablement still follows observed telemetry, with pending reconciliation
 shown separately. A missing preference is Not reported, not an invented default.
 Docking does not require a layout-preview baseline; it retains its own readiness,
-pending, draft and trial guards.
+pending, draft and trial guards. Saving keeps layout editing, On/Off, Preview and
+further docking saves locked until the daemon reports observed completion, not
+just a saved preference. The resulting observation refreshes the layout baseline
+before another edit. A daemon-reported failure releases controls for explicit
+recovery: the passive **Failed** choice lets you select and save either preference,
+including the same stored one, to retry; manual On/Off still requires Preview/Keep.
+Automatic fallback on external-display loss remains active even after failure.
+Saved geometry is retained when returning to automation, but retired laptop
+On/Off flags are not replayed on resume/reconnect. Independent focus settings do
+not wait for a docking transition.
 
 The laptop returns automatically when no usable external display remains. A
 policy-disabled laptop stays selectable in the list with **Off · External display

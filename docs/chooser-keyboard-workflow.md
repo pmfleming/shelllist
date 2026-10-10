@@ -740,8 +740,15 @@ policy value. Choosing and saving either docking preference resumes automatic
 control, including the previously saved preference. Escape discards the choice;
 no write occurs on selection alone. Pending/error/trial guards and the native
 fallback remain intact. A docking acknowledgement clears the override immediately,
-without claiming that hardware already changed. Unknown policy is unavailable;
-layout-baseline availability does not gate independent docking/focus settings.
+without claiming that hardware already changed. Daemon `docking_state: applying`
+keeps layout fields, On/Off, Preview and further docking saves unavailable until
+observed `settled` or explicit `failed`; an acknowledgement alone cannot reopen
+these controls. The final observation supplies the next editable baseline. Failed
+shows a passive current-state option so selecting even the same stored policy and
+saving explicitly retries it; manual recovery still requires Preview/Keep. There
+is no QML delay or automatic retry. Native last-screen/unplug fallback is unchanged.
+Unknown policy is unavailable; layout-baseline availability does not gate docking,
+and independent focus settings do not wait for docking hardware completion.
 
 Focus choices and numbers retain field-local edits across incoming observations.
 After a valid save, passive values stay acknowledged until an authoritative update;

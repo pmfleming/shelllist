@@ -15,7 +15,7 @@ Ui.DetailColumnCard {
         Layout.fillWidth: true
         label: qsTr("Laptop screen")
         icon: "monitor"
-        supportingText: qsTr("Manual layout means screen enablement is controlled by the saved layout. Choose and save a docking preference to resume automatic control, even if it matches the previously saved preference. The laptop screen returns if no external display remains active.")
+        supportingText: qsTr("Manual layout means screen enablement is controlled by the saved layout. Choose and save a docking preference to resume automatic control, even if it matches the previously saved preference. If applying a preference fails, select and save either preference to retry. The laptop screen returns if no external display remains active.")
         accessibleName: qsTr("Laptop screen when an external display is available")
         Ui.DropDownList {
             objectName: "dockedLaptopBehavior"
@@ -24,6 +24,10 @@ Ui.DetailColumnCard {
             options: (pane.controller.manualDisplayEnablement ? [{
                 value: "manual",
                 label: pane.controller.selectedOutput && pane.controller.selectedOutput.disabled ? qsTr("Manual layout · Laptop off") : qsTr("Manual layout · Laptop on"),
+                enabled: false
+            }] : pane.controller.dockingFailed ? [{
+                value: "failed",
+                label: (pane.controller.displayPolicyState.policy || {}).prefer_external ? qsTr("Failed · Automatic off") : qsTr("Failed · Keep laptop on"),
                 enabled: false
             }] : []).concat([
                 {
@@ -48,7 +52,7 @@ Ui.DetailColumnCard {
     }
     Ui.FeedbackSource {
         objectName: "dockingSaveStatus"
-        text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.") : !pane.controller.dockingPreferenceKnown ? qsTr("Docking preference not reported") : pane.controller.manualDisplayEnablement ? qsTr("Manual layout controls the laptop screen. Choose a docking preference to resume automatic control.") : ""
-        summaryText: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish layout changes first") : !pane.controller.dockingPreferenceKnown ? qsTr("Docking preference not reported") : qsTr("Manual layout · Docking preference overridden")
+        text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dockingApplying ? qsTr("Applying docking preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.") : !pane.controller.dockingPreferenceKnown ? qsTr("Docking preference not reported") : pane.controller.manualDisplayEnablement ? qsTr("Manual layout controls the laptop screen. Choose a docking preference to resume automatic control.") : ""
+        summaryText: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dockingApplying ? qsTr("Applying docking preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish layout changes first") : !pane.controller.dockingPreferenceKnown ? qsTr("Docking preference not reported") : qsTr("Manual layout · Docking preference overridden")
     }
 }
