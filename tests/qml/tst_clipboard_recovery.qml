@@ -17,10 +17,6 @@ DaemonTestCase {
     }
     Component { id: contentFactory; Clip.ClipboardContent {} }
     Component {
-        id: cardsFactory
-        Clip.ClipboardDetailCards {}
-    }
-    Component {
         id: paneFactory
         Clip.ClipboardListPane {}
     }
@@ -38,7 +34,12 @@ DaemonTestCase {
             }
         }
     }
-    function test_keyboardEditLeaseSavesOnlyOnExplicitCommit() {
+    function test_keyboardEditLeaseSavesOnlyOnExplicitCommit_data() {
+        return [{tag: "enter", key: Qt.Key_Return, modifiers: Qt.NoModifier},
+            {tag: "tab", key: Qt.Key_Tab, modifiers: Qt.NoModifier},
+            {tag: "backtab", key: Qt.Key_Backtab, modifiers: Qt.ShiftModifier}];
+    }
+    function test_keyboardEditLeaseSavesOnlyOnExplicitCommit(data) {
         const controller = makeController();
         const panel = createTemporaryObject(editorPanelFactory, testCase, {controller: controller});
         views = views.concat([panel]);
@@ -55,27 +56,39 @@ DaemonTestCase {
         wait(900); // Longer than the domain's former per-keystroke debounce.
         verify(!calls.some(call => call.method === "clipboard.entry.edit.commit"));
         compare(controller.detailState.editDraft, "Original");
-        keyClick(Qt.Key_Return);
-        verify(panel.detailsNavigation.browsing);
+        keyClick(data.key, data.modifiers);
         verify(controller.detailState.saveInFlight);
         compare(controller.detailState.committedDraft, "Originalx");
     }
-    function test_escapePreservesPreviouslySubmittedFailedClipboardDraft() {
+    function test_escapeDiscardsClipboardDraft_data() {
+        return [{tag: "fresh", failed: false}, {tag: "failed", failed: true}];
+    }
+    function test_escapeDiscardsClipboardDraft(data) {
         const controller = makeController();
-        failEdit(controller);
+        if (data.failed)
+            failEdit(controller);
         const panel = createTemporaryObject(editorPanelFactory, testCase, {controller: controller});
         views = views.concat([panel]);
         panel.detailsNavigation.focusContent(true);
         keyClick(Qt.Key_Return);
         const editor = findChild(panel, "clipboardTextEditor");
-        compare(editor.text, "Keep this draft");
+        if (!data.failed)
+            reply(controller, "edit-begin", {edit: {id: "discard-lease", value: "Original"}});
+        compare(editor.text, data.failed ? "Keep this draft" : "Original");
+        calls = [];
         keyClick(Qt.Key_End);
         keyClick(Qt.Key_X);
         keyClick(Qt.Key_Escape);
-        compare(editor.text, "Keep this draft");
-        compare(controller.detailState.editDraft, "Keep this draft");
-        verify(controller.detailState.editError.length > 0);
-        verify(controller.detailState.failedDrafts.first !== undefined);
+        verify(panel.detailsNavigation.browsing);
+        verify(!controller.detailState.editing && !controller.detailState.editDirty);
+        compare(controller.detailState.editDraft, "");
+        compare(controller.detailState.editError, "");
+        compare(Object.keys(controller.detailState.failedDrafts).length, 0);
+        verify(!calls.some(call => call.method === "clipboard.entry.edit.commit"));
+        if (!data.failed)
+            compare(editor.text, "Original");
+        else
+            compare(controller.status, "Clipboard draft discarded");
     }
     function test_deleteSitsBesideDetailsArrowAndKeepsConfirmation() {
         const controller = makeController();
@@ -122,15 +135,6 @@ DaemonTestCase {
             view.destroy();
         views = [];
         wait(0);
-    }
-    function makeCards(controller) {
-        const cards = createTemporaryObject(cardsFactory, testCase, {
-            controller: controller,
-            width: 600,
-            height: 800
-        });
-        views = views.concat([cards]);
-        return cards;
     }
     function makeController() {
         const controller = createTemporaryObject(controllerFactory, testCase);
@@ -440,21 +444,33 @@ DaemonTestCase {
         verify(!details.saveInFlight);
     }
 
-    function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft() {
+    function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft_data() {
+        return [{tag: "enter", key: Qt.Key_Return}, {tag: "tab", key: Qt.Key_Tab}];
+    }
+    function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft(data) {
         const controller = makeController();
         const details = controller.detailState;
         failEdit(controller);
-        const cards = makeCards(controller);
-        const editor = findChild(cards, "clipboardTextEditor");
+        const pane = makePane(controller);
+        pane.feedbackScope = pane;
+        const feedback = findChild(pane, "feedbackText");
+        compare(feedback.text, "Disk full");
+        const panel = createTemporaryObject(editorPanelFactory, testCase, {controller: controller});
+        views = views.concat([panel]);
+        verify(findChild(panel, "retryClipboardEdit") === null);
+        verify(findChild(panel, "discardClipboardEdit") === null);
+        panel.detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_Return);
+        const editor = findChild(panel, "clipboardTextEditor");
         compare(editor.text, "Keep this draft");
         verify(!editor.readOnly);
-        details.updateEditDraft("Updated failed draft");
+        keyClick(Qt.Key_End);
+        keyClick(Qt.Key_X);
         const previousCalls = calls.length;
         wait(700);
         compare(calls.length, previousCalls); // No automatic retry loop after a failure.
-        const retry = findChild(cards, "retryClipboardEdit");
-        verify(retry.visible && retry.enabled);
-        retry.clicked();
+        compare(details.editDraft, "Keep this draft", "reopened edits stay field-local until save");
+        keyClick(data.key);
         compare(calls[calls.length - 1].method, "clipboard.entry.edit.begin");
         compare(calls[calls.length - 1].params.entry_id, "first");
         compare(calls[calls.length - 1].params.revision, 1);
@@ -467,7 +483,7 @@ DaemonTestCase {
         });
         compare(calls[calls.length - 1].method, "clipboard.entry.edit.commit");
         compare(calls[calls.length - 1].params.edit_id, "lease-2");
-        compare(calls[calls.length - 1].params.value, "Updated failed draft");
+        compare(calls[calls.length - 1].params.value, "Keep this draftx");
         reply(controller, "edit-commit", {
             entry: {
                 entry: {
@@ -475,14 +491,15 @@ DaemonTestCase {
                     revision: 2,
                     kind: "text"
                 },
-                text: "Updated failed draft",
+                text: "Keep this draftx",
                 files: []
             }
         });
         compare(details.editError, "");
         compare(Object.keys(details.failedDrafts).length, 0);
-        compare(editor.text, "Updated failed draft");
+        compare(editor.text, "Keep this draftx");
         verify(!details.saveInFlight);
+        compare(feedback.text, "Clipboard text saved");
     }
     function test_failedDraftSurvivesReloadAndConflictUntilDiscarded() {
         const controller = makeController();
@@ -501,8 +518,11 @@ DaemonTestCase {
         compare(details.editDraft, "Keep this draft");
         verify(details.editing && details.editDirty && !details.editBeginPending);
         compare(details.editError, "Entry changed elsewhere");
-        const cards = makeCards(controller);
-        findChild(cards, "discardClipboardEdit").clicked();
+        const panel = createTemporaryObject(editorPanelFactory, testCase, {controller: controller});
+        views = views.concat([panel]);
+        panel.detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Escape);
         verify(!details.editing && !details.editDirty);
         compare(details.editError, "");
         compare(Object.keys(details.failedDrafts).length, 0);

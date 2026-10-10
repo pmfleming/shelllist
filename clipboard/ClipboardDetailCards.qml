@@ -20,23 +20,6 @@ Ui.DetailFlickable {
     viewMemory: controller.viewMemory
     memoryTab: selectedTab
 
-    Ui.FeedbackSource {
-        active: cards.selectedTab === "data"
-        text: cards.detailState.editError
-        summaryText: qsTr("Clipboard draft not saved")
-        tone: "error"
-    }
-    Ui.RecoveryActions {
-        width: parent.width
-        visible: cards.selectedTab === "data"
-        enabled: cards.detailState.editError.length > 0 && !cards.controller.actionInFlight && !cards.detailState.editBeginPending
-        retryAction.objectName: "retryClipboardEdit"
-        discardAction.objectName: "discardClipboardEdit"
-        discardAction.accessKey: "D"
-        onRetryRequested: cards.detailState.retryEdit()
-        onDiscardRequested: cards.detailState.discardFailedEdit()
-    }
-
     Ui.DetailCard {
         objectName: "clipboardDataCard"
         visible: cards.selectedTab === "data"
@@ -77,12 +60,16 @@ Ui.DetailFlickable {
                     cards.detailState.editDraft = value;
             }
             onEditFinished: function (saved) {
-                if (saved)
-                    cards.detailState.finishDirectEdit();
-                else if (cards.detailState.editError.length === 0)
+                if (saved) {
+                    if (cards.detailState.editError.length > 0)
+                        cards.detailState.retryEdit();
+                    else
+                        cards.detailState.finishDirectEdit();
+                } else if (cards.detailState.editError.length > 0) {
+                    cards.detailState.discardFailedEdit();
+                } else {
                     cards.detailState.cancelEdit();
-                else
-                    cards.detailState.setEditorFocused(false); // Keep a previously submitted failed draft.
+                }
             }
             wrapMode: TextEdit.Wrap
         }

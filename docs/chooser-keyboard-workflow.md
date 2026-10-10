@@ -795,6 +795,22 @@ drafts, never claiming native rollback. Recovery commands stay outside Tab order
 `tst_bluetooth_recovery.qml` covers actual Enter/Tab/Escape, captured identity,
 unloaded editors, partial outcomes, malformed replies and transport loss.
 
+## Clipboard text saves and recovery
+
+Clipboard has no Retry save / Discard draft button row or recovery shortcuts.
+Its shared text editor uses Enter/Tab/Shift+Tab to save and Escape to discard;
+Tab continues ordinary editable-field traversal. Save acknowledgement and failures
+are reported in the list status bar; errors remain available across detail tabs
+and collapsed details. Pending is not success.
+
+A failed save retains the submitted draft without automatic replay. Re-entering
+that editor and saving explicitly retries with a fresh lease for the original
+revision, preserving conflict and busy guards. Discarding that reopened editor
+abandons the failed local draft and reloads the acknowledged value; it never
+claims to roll back a submitted backend write. Merely browsing elsewhere after
+a failure still retains its draft. `tst_clipboard_recovery.qml` covers native
+Enter/Tab/Shift+Tab/Escape, status feedback, fresh-lease retries and conflicts.
+
 ## Submitted clipboard save-and-paste
 
 When Paste submits a dirty edit, the commit includes the captured paste session.

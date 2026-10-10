@@ -34,6 +34,12 @@ Ui.ChooserListPane {
     onSearchActionRequested: controller.selectAllVisible()
     bodySpacing: Math.round(Ui.Theme.spacingMd * densityScale)
 
+    Ui.FeedbackSource {
+        text: pane.controller.detailState.editError
+        summaryText: qsTr("Clipboard draft not saved")
+        tone: "error"
+    }
+
     preserveViewportOnAppend: true
     readonly property bool shouldLoadMore: visible && listNearEnd && controller.canAutoLoadMoreHistory
     onShouldLoadMoreChanged: if (shouldLoadMore)

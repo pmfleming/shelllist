@@ -125,6 +125,7 @@ Item {
         if (saveInFlight || editBeginPending)
             return;
         cancelEdit();
+        controller.status = "Clipboard draft discarded";
         clearPreview();
         scheduleLoad();
     }
