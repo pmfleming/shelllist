@@ -276,7 +276,12 @@ Discovery and loader readiness use the same `DetailsNavigation.fieldBoundary`
 predicate, so command, modal and information-only subtrees stay out of field
 traversal.
 Modal header commands are excluded from panel command discovery and use the
-existing contained native modal traversal. See the
+existing contained native modal traversal. The display-trial dialog opts into
+shared inline header actions: Revert sits beside Keep, retaining initial Revert
+focus and the same Tab/Enter routes. Its larger centered countdown and compact
+card replace the visible instruction paragraph; timeout, stale-state guards and
+daemon rollback are unchanged. Other headers keep their normal two tiers; the
+shared inline option falls back to those tiers when commands cannot fit. See the
 [shared action row](../qml/Shelllist/Ui/SurfaceActionRow.qml).
 
 - Action buttons use **Alt+letter**, not Tab. `ActionControl.accessKey` defines a

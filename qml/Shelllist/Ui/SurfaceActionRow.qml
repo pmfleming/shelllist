@@ -11,6 +11,9 @@ Item {
     property real uiScale: 1
     property bool secondaryVisible: true
     property bool compactSecondaryActions: false
+    // Compact dialogs may keep secondary commands beside the primary. Fall
+    // back to the normal lower tier when their nominal sizes do not fit.
+    property bool inlineSecondaryActions: false
     readonly property real secondaryUiScale: controlHeight / Theme.secondaryActionHeight
     property real identityHeight: Math.round(Theme.primaryActionHeight * uiScale)
     property bool reserveIdentity: false
@@ -40,13 +43,16 @@ Item {
     readonly property int columns: Math.max(1, Math.floor((width + secondaryGap) / (controlHeight + secondaryGap)))
     readonly property int secondaryRows: Math.ceil(visibleSlots / columns)
     readonly property real secondaryHeight: secondaryRows ? secondaryRows * controlHeight + (secondaryRows - 1) * secondaryGap : 0
+    readonly property bool secondaryInline: inlineSecondaryActions && requestedSlots > 0
+        && width >= primaryWidth + (primaryWidth ? gap : 0) + requestedSlots * nominalControlHeight + (requestedSlots - 1) * gap
+    readonly property real topActionsWidth: primaryWidth + (secondaryInline ? visibleSlots * controlHeight + Math.max(0, visibleSlots - 1) * secondaryGap + (primaryWidth ? gap : 0) : 0)
     readonly property bool popupOpen: overflowMenu.visible
     // Repeater.count may change before delegates exist. Track actual lifetime
     // so command discovery never caches missing or destroyed buttons.
     property list<ActionControl> secondaryButtons: []
     readonly property list<ActionControl> buttons: (primaryAction ? [primaryButton] : []).concat(Array.from(secondaryButtons), overflowActions.length ? [moreButton] : [])
     signal triggered(string actionId)
-    implicitHeight: topHeight + (visibleSlots ? (topHeight ? gap : 0) + secondaryHeight : 0)
+    implicitHeight: secondaryInline ? Math.max(topHeight, secondaryHeight) : topHeight + (visibleSlots ? (topHeight ? gap : 0) + secondaryHeight : 0)
     height: implicitHeight
 
     function actionTone(action, primary): string {
@@ -65,7 +71,7 @@ Item {
     // shrinking below the shared minimum. Every line remains right-aligned.
     function secondaryX(index: int): real {
         const lineCount = Math.min(columns, visibleSlots - Math.floor(index / columns) * columns);
-        return Math.max(0, width - lineCount * controlHeight - (lineCount - 1) * secondaryGap) + (index % columns) * (controlHeight + secondaryGap);
+        return Math.max(0, secondaryArea.width - lineCount * controlHeight - (lineCount - 1) * secondaryGap) + (index % columns) * (controlHeight + secondaryGap);
     }
     function secondaryY(index: int): real {
         return Math.floor(index / columns) * (controlHeight + secondaryGap);
@@ -103,9 +109,10 @@ Item {
         onClicked: row.triggered(row.primaryAction.id)
     }
     Item {
-        width: parent.width
+        id: secondaryArea
+        width: row.secondaryInline ? parent.width - row.primaryWidth - (row.primaryWidth ? row.gap : 0) : parent.width
         height: row.secondaryHeight
-        y: row.topHeight + (row.topHeight ? row.gap : 0)
+        y: row.secondaryInline ? (row.height - height) / 2 : row.topHeight + (row.topHeight ? row.gap : 0)
         Repeater {
             model: row.shownSecondary
             onItemAdded: function(index, item) {

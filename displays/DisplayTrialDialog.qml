@@ -9,7 +9,9 @@ Ui.ModalFrame {
     required property DisplayController controller
     objectName: "displayTrialDialog"
     title: qsTr("Keep this layout?")
-    maximumCardWidth: 420
+    maximumCardWidth: 400
+    inlineHeaderActions: true
+    Accessible.description: (detail ? detail + " " : "") + qsTr("Keep this layout with the check button, or undo to revert now. Without confirmation the previous layout is restored automatically.")
     icon: "monitor"
     actions: [
         {id: "confirm", label: qsTr("Keep layout"), icon: "check", enabled: controller.backend.ready && !controller.actionInFlight && !controller.stale && controller.secondsLeft > 0, presentation: {group: "primary"}},
@@ -25,10 +27,12 @@ Ui.ModalFrame {
         width: parent.width
         spacing: Ui.Theme.spacingMd
         Ui.ThemeText {
-            Layout.alignment: Qt.AlignHCenter
+            objectName: "displayTrialCountdown"
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
             text: dialog.controller.secondsLeft > 0 ? dialog.controller.secondsLeft + " s" : qsTr("Reverting…")
             color: Ui.Theme.warning
-            font.pixelSize: Ui.Theme.fontSizeDisplay
+            font.pixelSize: Ui.Theme.fontSizeDisplay * 2
             font.weight: Ui.Theme.fontWeightBold
             Accessible.name: qsTr("Automatic revert countdown")
         }
@@ -43,11 +47,6 @@ Ui.ModalFrame {
                 radius: 2
                 color: Ui.Theme.warning
             }
-        }
-        Ui.ThemeText {
-            Layout.fillWidth: true
-            text: qsTr("Keep this layout with the check button, or undo to revert now. Without confirmation the previous layout is restored automatically.")
-            wrapMode: Text.Wrap
         }
     }
     function focusRevert(): void {

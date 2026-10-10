@@ -7,6 +7,7 @@ Rectangle {
     property string detail: ""
     property string icon: "help"
     property var actions: []
+    property bool inlineHeaderActions: false
     signal actionTriggered(string actionId)
     function focusAction(actionId: string): void {
         header.focusAction(actionId);
@@ -83,6 +84,7 @@ Rectangle {
     }
 
     Rectangle {
+        objectName: "modalCard"
         width: Math.min(parent.width - 2 * frame.minimumOuterMargin, frame.maximumCardWidth)
         implicitHeight: contentColumn.implicitHeight + 2 * frame.verticalCardPadding
         height: Math.min(parent.height - 2 * frame.minimumOuterMargin, implicitHeight)
@@ -118,6 +120,7 @@ Rectangle {
                     title: frame.title
                     icon: frame.icon
                     actions: frame.actions
+                    inlineSecondaryActions: frame.inlineHeaderActions
                     tabFocusEnabled: true
                     onActionTriggered: function(actionId) { frame.actionTriggered(actionId); }
                 }

@@ -163,6 +163,10 @@ Tests.DaemonTestCase {
         trial.layout.trial = {id: "visual-fixture", expires_at: Date.now() / 1000 + 20};
         c.applyDisplayPolicy(trial);
         save(panel.viewport, data.tag + "-trial");
+        const dialog = findChild(panel, "displayTrialDialog");
+        save(findChild(dialog, "modalCard"), data.tag + "-trial-card");
+        panel.height = 480;
+        save(panel.viewport, data.tag + "-short-trial");
         verify(c.trial !== null);
         verify(findChild(panel, "detailAction:revert").activeFocus, "Revert retains initial trial focus");
         compare(calls.filter(call => call.method !== "bar.snapshot").length, 0, "rendering never mutates real or mocked displays");

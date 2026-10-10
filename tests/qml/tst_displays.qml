@@ -990,6 +990,42 @@ DaemonTestCase {
         choice.selected("auto-off");
         compare(calls.length, count, "a layout trial also prevents docking writes");
     }
+    function test_trialDialogIsCompactWithCenteredCountdown_data() {
+        return [{tag: "normal", height: 780}, {tag: "short", height: 480}];
+    }
+    function test_trialDialogIsCompactWithCenteredCountdown(data) {
+        const panel = makePanel();
+        panel.height = data.height;
+        const c = panel.controller;
+        const state = displayState();
+        state.layout.trial = {id: "compact-trial", expires_at: Date.now() / 1000 + 20};
+        c.applyDisplayPolicy(state);
+        c.clock = state.layout.trial.expires_at * 1000 - 6000;
+        const dialog = findChild(panel, "displayTrialDialog");
+        const card = findChild(dialog, "modalCard");
+        const countdown = findChild(dialog, "displayTrialCountdown");
+        const keep = findChild(dialog, "detailAction:confirm");
+        const revert = findChild(dialog, "detailAction:revert");
+        tryCompare(revert, "activeFocus", true);
+        verify(waitForPolish(panel.Window.window));
+        compare(countdown.text, "6 s");
+        verify(countdown.font.pixelSize > Ui.Theme.fontSizeDisplay);
+        compare(countdown.horizontalAlignment, Text.AlignHCenter);
+        fuzzyCompare(countdown.mapToItem(card, countdown.width / 2, 0).x, card.width / 2, 1);
+        fuzzyCompare(keep.mapToItem(card, 0, keep.height / 2).y,
+            revert.mapToItem(card, 0, revert.height / 2).y, 1);
+        verify(revert.mapToItem(card, revert.width, 0).x < keep.mapToItem(card, 0, 0).x);
+        verify(card.width <= 400 && card.height < 190, "no second command tier or instruction paragraph");
+        verify(!findChild(dialog, "detailTitle").truncated, "the smaller card still fits its heading");
+        compare(calls.length, 0, "presentation does not confirm or revert");
+        c.clock = state.layout.trial.expires_at * 1000 + 1;
+        compare(countdown.text, "Reverting…");
+        verify(!keep.enabled && revert.enabled, "expiry blocks Keep without removing Revert");
+        mouseClick(revert);
+        compare(calls.length, 1);
+        compare(calls[0].method, "displayLayout.revert");
+        compare(calls[0].params.id, "compact-trial");
+    }
     function test_draftSurvivesTelemetryAndUsesDaemonToken() {
         const panel = makePanel();
         const c = panel.controller;

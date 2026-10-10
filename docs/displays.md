@@ -223,6 +223,12 @@ claim to lock all focus to one screen.
 
 ## Layout safety and keyboard controls
 
+The timed confirmation uses a compact, content-sized card: Revert and Keep share
+one header row, with a large centered countdown and its progress line below.
+Routine explanatory copy is accessible-only, not a visible paragraph. The timer
+uses twice the theme display-reading size; errors/stale-layout guidance remain
+visible. Revert retains initial focus and the modal's contained Tab traversal.
+
 - Drag screens to a reference edge or use the four direction commands below the
   map. Only enabled independent displays can be arranged.
 - The diagram is an accessible graphic, never a keyboard navigation stop.

@@ -20,6 +20,7 @@ Item {
     property var actions: []
     property bool secondaryVisible: true
     property bool compactSecondaryActions: false
+    property bool inlineSecondaryActions: false
     property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     signal actionTriggered(string actionId)
     property bool tabFocusEnabled: false
@@ -28,7 +29,7 @@ Item {
     height: implicitHeight
 
     RowLayout {
-        width: Math.max(0, parent.width - actionRow.primaryWidth - (actionRow.primaryWidth ? Theme.actionTitleGap * header.uiScale : 0))
+        width: Math.max(0, parent.width - actionRow.topActionsWidth - (actionRow.topActionsWidth ? Theme.actionTitleGap * header.uiScale : 0))
         height: header.headerHeight
         spacing: Math.max(Theme.spacingSm, Math.round(Theme.spacingMd * header.uiScale))
         IconTile {
@@ -110,6 +111,7 @@ Item {
         actions: header.actions
         secondaryVisible: header.secondaryVisible
         compactSecondaryActions: header.compactSecondaryActions
+        inlineSecondaryActions: header.inlineSecondaryActions
         onTriggered: function(actionId) { header.actionTriggered(actionId); }
     }
 }

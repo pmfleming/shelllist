@@ -77,6 +77,34 @@ TestCase {
         keyClick(Qt.Key_X, Qt.AltModifier);
         compare(navigation.calls, 11);
     }
+    function test_inlineActionsAlignWithoutChangingCommandsOrNarrowFallback() {
+        const navigation = createTemporaryObject(navigationComponent, testCase);
+        navigation.focusContent(true);
+        tryCompare(navigation.headerButtons, "length", 2);
+        const primary = findChild(navigation, "detailAction:connect");
+        const secondary = findChild(navigation, "detailAction:forget");
+        const row = navigation.row;
+        verify(secondary.mapToItem(row, 0, 0).y >= primary.y + primary.height,
+            "ordinary headers retain two tiers");
+        row.inlineSecondaryActions = true;
+        verify(waitForPolish(navigation.Window.window));
+        verify(row.secondaryInline);
+        compare(primary.mapToItem(row, 0, primary.height / 2).y,
+            secondary.mapToItem(row, 0, secondary.height / 2).y);
+        verify(secondary.mapToItem(row, secondary.width, 0).x < primary.x);
+        verify(row.topActionsWidth > row.primaryWidth);
+        keyClick(Qt.Key_F, Qt.AltModifier);
+        compare(navigation.lastAction, "forget");
+        compare(navigation.calls, 1);
+        navigation.width = 90;
+        verify(waitForPolish(navigation.Window.window));
+        verify(!row.secondaryInline, "insufficient width restores the lower tier");
+        compare(row.topActionsWidth, row.primaryWidth);
+        verify(secondary.mapToItem(row, 0, 0).y >= primary.y + primary.height);
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        compare(navigation.lastAction, "connect");
+        compare(navigation.calls, 2);
+    }
     function test_letterActivationUsesDisplayedButtons() {
         const navigation = createTemporaryObject(navigationComponent, testCase);
         navigation.focusContent(true);
