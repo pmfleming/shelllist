@@ -192,6 +192,108 @@ DaemonTestCase {
         compare(slot.height, footerHeight);
         compare(calls.length, 0, "feedback and arrangement never submit the draft");
     }
+    function test_enableDisableCommandsPreviewAndAcknowledge_data() {
+        return [
+            {tag: "enable-laptop", index: 0, wasEnabled: false, keyboard: false, keep: true},
+            {tag: "disable-laptop", index: 0, wasEnabled: true, keyboard: true, keep: true},
+            {tag: "enable-external", index: 1, wasEnabled: false, keyboard: true, keep: true},
+            {tag: "disable-external", index: 1, wasEnabled: true, keyboard: false, keep: true},
+            {tag: "revert-enable", index: 0, wasEnabled: false, keyboard: false, keep: false},
+            {tag: "revert-disable", index: 1, wasEnabled: true, keyboard: true, keep: false}
+        ];
+    }
+    function test_enableDisableCommandsPreviewAndAcknowledge(data) {
+        const panel = makePanel();
+        const c = panel.controller;
+        const initial = displayState();
+        initial.outputs[0].disabled = false;
+        initial.outputs[1].disabled = false;
+        initial.outputs[data.index].disabled = !data.wasEnabled;
+        c.applyDisplayPolicy(initial);
+        c.uiActive = true;
+        const name = initial.outputs[data.index].name;
+        c.selectOutput(name);
+        c.openDetails();
+        waitForDetails(panel);
+        // Action descriptors rebuild their delegates when selection/drafts change.
+        const power = () => findChild(panel, "detailAction:toggle-enabled");
+        verify(power().visible && power().enabled);
+        compare(power().Accessible.name, data.wasEnabled ? "Disable" : "Enable");
+        if (data.keyboard) {
+            panel.list.focusSearch();
+            keyClick(Qt.Key_E, Qt.AltModifier);
+        } else {
+            mouseClick(power());
+        }
+        compare(c.selectedDraft.enabled, !data.wasEnabled);
+        tryVerify(() => power()?.Accessible.name === (data.wasEnabled ? "Enable" : "Disable"));
+        compare(c.selectedOutput.disabled, !data.wasEnabled, "toggle changes only the draft before Preview");
+        compare(calls.length, 0);
+        const preview = findChild(panel, "detailAction:preview");
+        verify(preview.enabled);
+        mouseClick(preview);
+        compare(calls.length, 1);
+        compare(calls[0].method, "displayLayout.preview");
+        compare(calls[0].params.outputs.find(output => output.name === name).enabled, !data.wasEnabled);
+        tryVerify(() => power() && !power().enabled, 1000, "no second toggle during an unacknowledged preview");
+        const trial = JSON.parse(JSON.stringify(initial));
+        trial.outputs[data.index].disabled = data.wasEnabled;
+        trial.layout.trial = {id: "enablement-trial", expires_at: Date.now() / 1000 + 20};
+        c.applyDisplayPolicy(trial);
+        c.requestFinished(calls[0].id);
+        const dialog = findChild(panel, "displayTrialDialog");
+        tryVerify(() => dialog.visible);
+        verify(!power().enabled);
+        const action = data.keep ? "confirm" : "revert";
+        mouseClick(findChild(dialog, "detailAction:" + action));
+        compare(calls.length, 2);
+        compare(calls[1].method, "displayLayout." + action);
+        compare(calls[1].params.id, "enablement-trial");
+        const acknowledged = JSON.parse(JSON.stringify(data.keep ? trial : initial));
+        acknowledged.layout.trial = null;
+        acknowledged.layout.manual_enablement = data.keep;
+        c.applyDisplayPolicy(acknowledged);
+        c.requestFinished(calls[1].id);
+        const enabled = data.keep ? !data.wasEnabled : data.wasEnabled;
+        compare(c.selectedDraft.enabled, enabled);
+        compare(c.selectedOutput.disabled, !enabled);
+        tryVerify(() => power()?.Accessible.name === (enabled ? "Disable" : "Enable"));
+        verify(!c.dirty && !c.trial);
+        verify(!dialog.visible);
+    }
+    function test_lastActiveDisplayCannotBeDisabledThroughUi() {
+        const panel = makePanel();
+        const c = panel.controller;
+        const state = displayState();
+        // Disabled outputs can report (0, 0), overlapping the active monitor.
+        state.outputs[1].x = 0;
+        c.applyDisplayPolicy(state);
+        c.uiActive = true;
+        c.selectOutput("DP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        const power = () => findChild(panel, "detailAction:toggle-enabled");
+        verify(power().visible && !power().enabled, "the only enabled screen has no Disable command");
+        mouseClick(power());
+        panel.list.focusSearch();
+        keyClick(Qt.Key_E, Qt.AltModifier);
+        verify(c.selectedDraft.enabled && !c.dirty);
+        compare(calls.length, 0);
+        // An explicit replacement can be staged first, then the old screen disabled.
+        c.selectOutput("eDP-1");
+        tryVerify(() => power()?.enabled);
+        keyClick(Qt.Key_E, Qt.AltModifier);
+        verify(c.selectedDraft.enabled);
+        verify(!c.canPreview && c.validationError.includes("overlaps"));
+        keyClick(Qt.Key_R, Qt.AltModifier);
+        verify(c.canPreview, "placing the enabled laptop beside the external display clears the overlap");
+        verify(c.selectedDraft.x > 0);
+        c.selectOutput("DP-1");
+        tryVerify(() => power()?.enabled);
+        keyClick(Qt.Key_E, Qt.AltModifier);
+        verify(!c.selectedDraft.enabled && c.canPreview);
+        compare(calls.length, 0, "the swap still needs a single guarded Preview");
+    }
     function test_noResetRowAndDiscardOnClose() {
         const panel = makePanel();
         const c = panel.controller;
