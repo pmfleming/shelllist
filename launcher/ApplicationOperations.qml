@@ -39,6 +39,24 @@ Item {
         pending = Object.assign({}, pending, {[record.request.id]: record});
         publish(record);
     }
+    function progressMessage(request: var, params: var): string {
+        const title = request.result.title;
+        switch (params.action) {
+        case "activate":
+            return (request.result.payload.instances || []).length > 0
+                ? qsTr("Focusing %1…").arg(title) : qsTr("Launching %1…").arg(title);
+        case "launch":
+            return qsTr("Launching %1…").arg(title);
+        case "focus-window":
+            return qsTr("Focusing %1…").arg(request.action.label);
+        case "close-window":
+            return qsTr("Closing window of %1…").arg(title);
+        case "close":
+            return qsTr("Closing windows of %1…").arg(title);
+        default:
+            return request.action.label + "…";
+        }
+    }
     function start(request: var, params: var): bool {
         if (busy(request.result.id) || count >= 32)
             return false;
@@ -51,7 +69,8 @@ Item {
             operationId: "", statusRequestId: "", status: "", checks: 0,
             generation: controller.uiGeneration, viewEpoch: controller.actionViewEpoch, handedOff: false,
             windowIds: windowId ? [windowId] : windows.map(window => window.id),
-            message: request.action.label + "…"
+            progressMessage: progressMessage(request, params),
+            message: progressMessage(request, params)
         };
         store(record);
         if (!backend.execute(request.id, params)) {
@@ -87,7 +106,8 @@ Item {
             complete(record, operation, closing);
     }
     function updateActive(record: var, operation: var, closing: bool): void {
-        record.message = record.request.action.label + (record.checks >= 3 ? ": still waiting for confirmation" : "…");
+        record.message = record.checks >= 3
+            ? record.request.action.label + ": still waiting for confirmation" : record.progressMessage;
         // Publish ownership before checked process/D-Bus handoff dismisses the
         // chooser; window placement may still take seconds.
         store(record);

@@ -34,6 +34,7 @@ Ui.ChooserListPane {
     searchActionEnabled: !controller.operationBlocked
     filterText: controller.filterText
     status: controller.selectedActionMessage || controller.status
+    statusSummary: controller.selectedActionMessage || qsTr("Application status")
     onSearchActionRequested: controller.selectCategory(nextCategoryFilter.value)
 
     rowDelegate: Component {

@@ -12,22 +12,6 @@ Ui.DetailFlickable {
     required property var application
     required property real uiScale
 
-    Ui.LabeledAction {
-        objectName: "applicationActionStatus"
-        width: parent.width
-        enabled: page.controller.selectedActionMessage.length > 0
-        label: qsTr("Check status")
-        accessibleName: "Check status"
-        icon: "refresh"
-        accessKey: "K"
-        onClicked: page.controller.operations.check(page.application.id)
-    }
-
-    Ui.FeedbackSource {
-        text: page.controller.selectedActionMessage
-        summaryText: qsTr("Application action · Check status")
-    }
-
     Ui.ThemeText {
         objectName: "applicationDescription"
         visible: !!page.application.comment && page.application.comment !== (page.controller.selectedResult || {}).subtitle

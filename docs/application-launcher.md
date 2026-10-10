@@ -131,7 +131,7 @@ Application execution is asynchronous:
 4. Successful focus or checked launch handoff closes the chooser; close actions update the visible result in place.
 5. Failures and partial-success placement warnings remain visible inline or notify in the background after handoff, without replaying the launch.
 
-Owned operation-status recovery is bounded to ten automatic reads at two-second intervals; Check status remains available afterward. A missing terminal event never clears mutation ownership or replays the action. See [application action outcomes](application-actions.md). Unsafe integer revisions are omitted rather than rounded by JavaScript.
+Owned operation-status recovery is bounded to ten automatic reads at two-second intervals. Initiation, progress and confirmed outcomes appear in the list status bar; there is no manual Check status row or command. A missing terminal event never clears mutation ownership or replays the action. See [application action outcomes](application-actions.md). Unsafe integer revisions are omitted rather than rounded by JavaScript.
 
 ## Resources
 

@@ -81,6 +81,11 @@ DaemonTestCase {
         tryVerify(() => findChild(panel, "closeWindow-w1") !== null);
         waitForRendering(panel);
     }
+    function verifyStatus(panel, message) {
+        const label = findChild(panel.listItem, "feedbackText");
+        verify(label !== null && label.visible);
+        tryCompare(label, "text", message);
+    }
     function test_handoff_data() {
         return [{tag: "focus", launch: false}, {tag: "launch-receipt", launch: true}];
     }
@@ -89,7 +94,10 @@ DaemonTestCase {
         keyClick(Qt.Key_Return, data.launch ? Qt.ShiftModifier : Qt.NoModifier);
         const call = lastCall(Api.methods.execute);
         compare(call.params.action, data.launch ? "launch" : "activate");
+        const progress = data.launch ? "Launching Alpha…" : "Focusing Alpha…";
+        verifyStatus(panel, progress);
         accept(call);
+        verifyStatus(panel, progress);
         compare(panel.dismissals, 0, "Admission is not a successful handoff");
         verify(!panel.controller.navigationBlocked);
         if (data.launch) {
@@ -101,12 +109,39 @@ DaemonTestCase {
             compare(panel.failures.length, 1);
             compare(panel.failures[0].message, "Workspace placement failed");
         } else {
-            event(call, "completed");
+            event(call, "completed", {message: "Focused Alpha"});
+            verifyStatus(panel, "Focused Alpha");
             compare(panel.dismissals, 1);
         }
         verify(!panel.controller.actionInFlight);
         event(call, "completed");
         compare(panel.dismissals, 1, "Duplicate terminal delivery cannot dismiss again");
+    }
+    function test_launchCompletionStatusSurvivesBrowsing() {
+        const panel = makePanel();
+        keyClick(Qt.Key_Return, Qt.ShiftModifier);
+        const call = lastCall(Api.methods.execute);
+        verifyStatus(panel, "Launching Alpha…");
+        accept(call);
+        expand(panel); // Browsing after dispatch must not be dismissed by a late result.
+        verify(findChild(panel, "applicationActionStatus") === null);
+        const reads = calls.filter(c => c.method === Api.methods.operationStatus).length;
+        keyClick(Qt.Key_K, Qt.AltModifier);
+        compare(calls.filter(c => c.method === Api.methods.operationStatus).length, reads);
+        event(call, "completed", {message: "Launched Alpha"});
+        compare(panel.dismissals, 0);
+        verifyStatus(panel, "Launched Alpha");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        tryCompare(panel.controller, "detailsTab", "resources");
+        tryVerify(() => findChild(panel.listItem, "feedbackText").parent.fullText.includes("Launched Alpha"));
+        panel.listItem.focusList();
+        keyClick(Qt.Key_Left);
+        tryCompare(panel.controller, "detailsOpen", false);
+        verifyStatus(panel, "Launched Alpha");
+        keyClick(Qt.Key_Down);
+        compare(panel.controller.selectedResult.id, "Beta");
+        verify(!findChild(panel.listItem, "feedbackText").parent.fullText.includes("Launched Alpha"));
+        compare(calls.filter(c => c.method === Api.methods.execute).length, 1);
     }
     function test_placementWarningAfterHandoff_data() {
         return [
@@ -217,7 +252,9 @@ DaemonTestCase {
         const call = lastCall(Api.methods.execute);
         compare(call.params.window_id, "w1");
         compare(call.params.action, "close-window");
+        verifyStatus(panel, "Closing window of Alpha…");
         accept(call);
+        verifyStatus(panel, "Closing window of Alpha…");
         verify(!findChild(panel, "closeWindow-w1").enabled);
         mouseClick(findChild(panel, "closeWindow-w1"));
         mouseClick(findChild(panel, "focusWindow-w1"));
@@ -239,6 +276,7 @@ DaemonTestCase {
         keyClick(Qt.Key_C, Qt.AltModifier);
         const all = lastCall(Api.methods.execute);
         compare(all.params.action, "close");
+        verifyStatus(panel, "Closing windows of Alpha…");
         compare(c.detailActions.find(a => a.id === "close").label, "Close all windows (1)");
         accept(all);
         event(all, "completed", {message: "Requested windows closed",
@@ -249,6 +287,7 @@ DaemonTestCase {
         verify(findChild(panel, "applicationEmptyState").text.indexOf("No open windows") === 0);
         verify(!c.detailActions.find(a => a.id === "close").enabled);
         verify(c.selectedActionMessage.indexOf("windows closed") >= 0);
+        verifyStatus(panel, "Requested windows closed");
         compare(panel.dismissals, 0);
         keyClick(Qt.Key_A, Qt.AltModifier);
         compare(lastCall(Api.methods.execute).params.action, "activate", "Launch remains reachable after the last close");
@@ -262,7 +301,7 @@ DaemonTestCase {
         event(call, "failed", {message: "Window refused to close"});
         compare(panel.dismissals, 0);
         compare(panel.controller.selectedApplication.instances.length, 2);
-        compare(findChild(panel, "windowActionStatus-w1").text, "Window refused to close");
+        verifyStatus(panel, "Window refused to close");
         const close = findChild(panel, "closeWindow-w1");
         verify(close.visible && close.enabled);
         mouseClick(close);
@@ -325,7 +364,8 @@ DaemonTestCase {
         verify(c.actionInFlight);
         accept(call);
         expand(panel);
-        keyClick(Qt.Key_K, Qt.AltModifier);
+        // Recovery is automatic, not a user command.
+        tryVerify(() => calls.some(call => call.method === Api.methods.operationStatus));
         const check = lastCall(Api.methods.operationStatus);
         compare(check.params.operation_id, operation(call, "accepted").id);
         reply(check, {operation_status: operation(call, "completed", {target_id: "foreign"})});

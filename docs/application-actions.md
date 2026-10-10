@@ -34,9 +34,13 @@ to an application; Close manages its windows without leaving the chooser.
 `ApplicationOperations.qml` retains one in-flight action per application, up to
 32 concurrent targets. Conflicting commands for that app remain disabled;
 search/result browsing, detail-page navigation, refresh and other apps remain
-usable. Screenshot/settings safety guards are unchanged. Per-window feedback and
-the selected application's status explain pending/failure states. Status is
-passive; Check status is a shared circular command (Alt+K), not a field Tab stop.
+usable. Screenshot/settings safety guards are unchanged. The selected application's
+fixed list status bar communicates launch/focus/close initiation, progress and
+confirmed outcomes, including failures and unconfirmed closes. It remains available
+with details collapsed or on any detail tab; full diagnostics remain accessible.
+There is no Check status row, button or Alt+K command. Recovery runs automatically;
+status is passive and adds no field stops. Successful focus/launch still dismisses
+at the existing handoff boundary, without delaying handoff to display completion.
 Removing a focused window-row command returns focus to shared detail browsing.
 
 A view close is not an operation cancellation. The resident backend retains its
@@ -57,14 +61,14 @@ Close into a handoff. Event gaps trigger read-only status/catalog recovery.
 No recovery path replays a launch or close.
 
 Automatic operation-status checks are bounded to ten reads at two-second
-intervals; Check status remains available afterward. Close reconciliation performs
+intervals; an unconfirmed outcome remains in the status bar afterward. Close reconciliation performs
 up to three catalog observations, then relies on normal window events or explicit
 refresh. An absent app in a filtered catalog does not prove its windows closed.
 Feedback retains the latest 64 targets independently of pending ownership;
 updating a target refreshes its position, and opaque keys cannot change the
 cache's prototype. Success and failure share one owned status-read completion
-path. An empty/malformed status response releases that read for bounded polling
-or explicit Check status, without completing or replaying the mutation. Empty
+path. An empty/malformed status response releases that read for bounded automatic
+polling, without completing or replaying the mutation. Empty
 request IDs and obsolete read failures cannot retire a newer read. A failed
 status read does not complete the mutation. Transport loss explicitly reports an unknown outcome; check windows
 before explicitly trying again. There is no misleading Cancel/Undo command.
@@ -77,7 +81,9 @@ background tracking/failure, close acknowledgements versus observed disappearanc
 last-window Launch, native focus recovery, concurrent targets, navigation while
 pending, reopened/navigated views, failed reads and stale/foreign completions.
 It also covers placement partial-success warnings before/after handoff and via
-owned status reads, legacy absent placement, closed/still-open/unknown/missing
+owned status reads, visible status-bar progress/completion (including collapsed
+and tabbed details), removal of Check status and Alt+K, automatic status recovery,
+legacy absent placement, closed/still-open/unknown/missing
 Close observations, cancelled/failed Close, foreign/duplicate outcomes, retained
 window identities and feedback, continued native navigation and the absence of
 automatic relaunch or duplicate refresh/notification. App-daemon tests cover retained

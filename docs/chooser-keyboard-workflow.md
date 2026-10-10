@@ -403,10 +403,12 @@ Focus and launch hand off to the application and dismiss after successful focus
 or checked launch handoff, not mere request admission. Close keeps the chooser
 open: window rows disappear only on authoritative snapshots, and the last window
 leaves “No open windows” with Launch available. Conflicting commands are blocked
-per application, not by freezing result navigation. Check status uses Alt+K and
-read-only recovery; progress text is not a field stop. A missing/malformed status
-reply retires only its owned read so Check status remains usable, never replaying
-the mutation or announcing completion. A removed window command
+per application, not by freezing result navigation. Initiation, progress and
+confirmed completion use the fixed list status bar, including collapsed details
+and all detail tabs. There is no Check status row/button or Alt+K command;
+read-only recovery is automatic and status text is not a field stop. A
+missing/malformed status reply retires only its owned read so bounded automatic
+recovery can continue, never replaying the mutation or announcing completion. A removed window command
 returns to shared detail browsing. Closing a view does not cancel its submitted
 operation, and a late reply cannot dismiss a reopened or newly browsed view.
 Background errors notify without reopening. Active progress and terminal outcomes

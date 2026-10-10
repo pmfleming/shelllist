@@ -163,15 +163,5 @@ ColumnLayout {
                     instanceRow.trigger("close-window");
             }
         }
-        Item {
-            visible: actionStatus.visible
-        }
-        Ui.FeedbackSource {
-            id: actionStatus
-            objectName: "windowActionStatus-" + instanceRow.modelData.id
-            active: !instanceRow.focusSucceeded
-            text: instanceRow.actionMessage
-            summaryText: qsTr("Window %1 · Check status").arg(instanceRow.index + 1)
-        }
     }
 }

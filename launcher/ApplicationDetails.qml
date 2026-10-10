@@ -24,6 +24,13 @@ Ui.ActionDetailsPane {
     subtitle: application.kind === "desktop-shortcut" ? qsTr("Opens in another application") : (application.instances || []).length === 1 ? qsTr("1 open window") : (application.instances || []).length > 1 ? qsTr("%1 open windows").arg(application.instances.length) : application.kind === "desktop-application" ? qsTr("Not running") : qsTr("Window is no longer available")
     actions: controller.detailActions || []
 
+    // Action progress/outcomes belong to the fixed list status bar on every tab.
+    Ui.FeedbackSource {
+        text: pane.controller.selectedActionMessage
+        briefText: pane.controller.operations.busy(pane.selected.id || "")
+            ? qsTr("Application action pending") : qsTr("Application action outcome available")
+    }
+
     Ui.TabbedDetailsStack {
         anchors.fill: parent
         footerHeight: pane.footerHeight
