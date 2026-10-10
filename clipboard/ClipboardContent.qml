@@ -11,7 +11,7 @@ Ui.ProviderChooserSurface {
     navigationEnabled: !controller.deleteMenuOpen && !controller.deleteConfirmationOpen && !controller.bulkDeleteConfirmationOpen && !controller.wipeChallenge
     sessionReady: !controller.refreshInFlight && !controller.revisionRequestId && !controller.detailState.editBeginPending
     readonly property var selectedEntry: content.controller.selectedEntry || ({})
-    readonly property bool actionsEnabled: content.controller.uiActive && content.controller.hasSelection && !content.controller.multiSelectMode && !content.controller.deleteMenuOpen && !content.controller.actionInFlight && !content.controller.wipeChallenge
+    readonly property bool actionsEnabled: content.controller.uiActive && content.controller.hasSelection && !content.controller.multiSelectMode && content.navigationEnabled && !content.controller.actionInFlight
     detailsTabEnabled: content.actionsEnabled && content.controller.detailsOpen
 
     listComponent: Component {
@@ -113,10 +113,14 @@ Ui.ProviderChooserSurface {
         }
     }
     Ui.ConfirmationDialog {
+        objectName: "clipboardDeleteConfirmation"
         visible: content.controller.deleteConfirmationOpen
         z: 120
         title: qsTr("Delete clipboard entry?")
-        detail: "This entry will be permanently removed from Ringboard history."
+        Accessible.description: qsTr("This entry will be permanently removed from Ringboard history.")
+        maximumCardWidth: 520
+        inlineHeaderActions: true
+        actionSummaryVisible: false
         acceptLabel: "Delete"
         onAccepted: content.controller.confirmDelete()
         onCancelled: content.controller.cancelDelete()

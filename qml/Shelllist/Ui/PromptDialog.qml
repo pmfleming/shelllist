@@ -17,6 +17,7 @@ ModalFrame {
     property bool optionChecked: false
     property string optionLabel: ""
     property bool actionsVisible: false
+    property bool actionSummaryVisible: actionsVisible
     property string rejectLabel: "Cancel"
     property string acceptLabel: "Confirm"
     property string acceptTone: "accent"
@@ -107,7 +108,7 @@ ModalFrame {
         }
 
         ThemeText {
-            visible: dialog.actionsVisible
+            visible: dialog.actionSummaryVisible
             Layout.fillWidth: true
             text: dialog.acceptLabel + " · " + dialog.rejectLabel
             wrapMode: Text.Wrap

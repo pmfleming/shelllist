@@ -127,6 +127,65 @@ DaemonTestCase {
         verify(!details.visible);
     }
 
+    function test_compactDeleteConfirmation_data() {
+        return [{tag: "pointer-cancel", route: "cancel", width: 650},
+            {tag: "escape", route: "escape", width: 480},
+            {tag: "initial-return-cancels", route: "return", width: 650},
+            {tag: "pointer-delete", route: "delete", width: 480},
+            {tag: "tab-return-deletes", route: "tab", width: 650}];
+    }
+    function test_compactDeleteConfirmation(data) {
+        const controller = makeController();
+        const content = createTemporaryObject(contentFactory, testCase, {
+            controller: controller, width: data.width, height: 650
+        });
+        views = views.concat([content]);
+        tryVerify(() => content.listItem !== null);
+        content.listItem.focusList();
+        calls = [];
+        keyClick(Qt.Key_Delete);
+        tryCompare(controller, "deleteConfirmationOpen", true);
+        const dialog = findChild(content, "clipboardDeleteConfirmation");
+        const card = findChild(dialog, "modalCard");
+        const accept = findChild(dialog, "detailAction:accept");
+        const reject = findChild(dialog, "detailAction:reject");
+        tryCompare(reject, "activeFocus", true);
+        verify(!content.navigationEnabled);
+        compare(dialog.detail, "");
+        verify(!dialog.actionSummaryVisible);
+        verify(dialog.Accessible.description.indexOf("permanently removed") >= 0);
+        verify(card.width <= 520 && card.height < 180, "compact confirmation uses less space");
+        const cancelCenter = reject.mapToItem(card, reject.width / 2, reject.height / 2);
+        const deleteCenter = accept.mapToItem(card, accept.width / 2, accept.height / 2);
+        compare(cancelCenter.y, deleteCenter.y);
+        verify(cancelCenter.x + reject.width / 2 < deleteCenter.x - accept.width / 2);
+        compare(calls.length, 0, "opening the confirmation cannot delete");
+        if (data.route === "cancel")
+            mouseClick(reject);
+        else if (data.route === "escape")
+            keyClick(Qt.Key_Escape);
+        else if (data.route === "return")
+            keyClick(Qt.Key_Return);
+        else if (data.route === "delete")
+            mouseClick(accept);
+        else {
+            keyClick(Qt.Key_Tab);
+            verify(accept.activeFocus);
+            keyClick(Qt.Key_Return);
+        }
+        tryCompare(controller, "deleteConfirmationOpen", false);
+        const actions = calls.filter(call => call.method === "clipboard.entry.action");
+        const deleting = data.route === "delete" || data.route === "tab";
+        compare(actions.length, deleting ? 1 : 0);
+        if (deleting) {
+            compare(actions[0].params.action, "delete");
+            compare(actions[0].params.entry_id, "first");
+            compare(actions[0].params.revision, 1);
+        } else {
+            verify(content.listItem.listFocused, "cancellation restores list focus");
+        }
+    }
+
     function init() {
         failOnWarning(/.*(TypeError|Binding loop|invalid context).*/);
     }

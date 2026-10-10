@@ -795,6 +795,21 @@ drafts, never claiming native rollback. Recovery commands stay outside Tab order
 `tst_bluetooth_recovery.qml` covers actual Enter/Tab/Escape, captured identity,
 unloaded editors, partial outcomes, malformed replies and transport loss.
 
+## Clipboard deletion confirmation
+
+Single-entry deletion uses a compact shared confirmation dialog: Cancel sits
+beside Delete in the header, with no consequence paragraph or repeated
+“Delete · Cancel” labels. The permanent-removal consequence remains in its
+accessible description; the existing keyboard hint stays visible. Its narrower
+520px maximum card width is clipboard-owned dialog geometry, not smaller text or
+hit targets. Bulk deletion and history-wipe confirmations retain their warnings.
+Cancel receives initial focus; Escape cancels, and native Tab/Return or pointer
+activation selects the intended action. Underlying clipboard action shortcuts
+are disabled while any deletion modal is open. No deletion occurs before
+confirmation, and backend guards are unchanged. `tst_clipboard_recovery.qml`
+covers compact geometry, inline alignment, initial focus, cancellation, focus
+restoration and confirmed deletion at normal/narrow widths.
+
 ## Clipboard text saves and recovery
 
 Clipboard has no Retry save / Discard draft button row or recovery shortcuts.
