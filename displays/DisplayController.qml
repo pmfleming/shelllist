@@ -55,9 +55,12 @@ Ui.ProviderChooserController {
     readonly property bool dirty: JSON.stringify(draft) !== JSON.stringify(baselineDraft)
     readonly property bool canChange: stateReady && displayPolicyState.available && backend.ready && !actionInFlight && !trial
     readonly property bool canEdit: canChange && !stale && baselineToken.length > 0
-    readonly property bool canSetPolicy: canChange && !dirty
+    readonly property bool dockingPreferenceKnown: typeof (displayPolicyState.policy || {}).prefer_external === "boolean"
+    readonly property bool manualDisplayEnablement: (displayPolicyState.layout || {}).manual_enablement === true
+    readonly property string dockingMode: manualDisplayEnablement ? "manual" : !dockingPreferenceKnown ? "" : displayPolicyState.policy.prefer_external ? "auto-off" : "keep-on"
+    readonly property bool canSetPolicy: canChange && !dirty && dockingPreferenceKnown
     readonly property var focusState: displayPolicyState.focus || ({available: false})
-    readonly property bool canSetFocus: canSetPolicy && !!focusState.available
+    readonly property bool canSetFocus: canChange && !dirty && !!focusState.available
     readonly property string validationError: Model.validate(draft, outputs) || Model.arrangementError(draft, baselineDraft)
     readonly property bool canPreview: canEdit && !layoutDragging && !discardPrompt && dirty && validationError.length === 0
     readonly property var placementReferences: Model.placementReferences(draft, selectedName)
@@ -77,7 +80,7 @@ Ui.ProviderChooserController {
         return !o.disabled;
     }).length
     readonly property int secondsLeft: trial ? Math.max(0, Math.ceil(trial.expires_at - clock / 1000)) : 0
-    readonly property string statusMessage: displayPolicyError || displayPolicyState.error || (!stateReady ? qsTr("Connecting…") : !displayPolicyState.available ? qsTr("Enable programs.shelllist.displays.enable to manage displays") : stale ? qsTr("Displays changed · reload the layout") : dirty && validationError ? validationError : displayPolicyState.status === "settling" ? qsTr("Waiting for external display…") : "")
+    readonly property string statusMessage: displayPolicyError || displayPolicyState.error || (!stateReady ? qsTr("Connecting…") : !displayPolicyState.available ? qsTr("Enable programs.shelllist.displays.enable to manage displays") : stale ? qsTr("Displays changed · reload the layout") : dirty && validationError ? validationError : displayPolicyState.status === "pending" ? qsTr("Applying docking preference…") : displayPolicyState.status === "settling" ? qsTr("Waiting for external display…") : "")
 
     navigationPrimaryEnabled: false
     provider: displayProvider

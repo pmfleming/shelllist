@@ -110,6 +110,23 @@ Tests.DaemonTestCase {
         save(panel.viewport, data.tag + "-disabled-layout");
         c.selectOutput("eDP-1");
         save(panel.viewport, data.tag + "-disabled-selected");
+        const manual = JSON.parse(JSON.stringify(docked));
+        manual.policy.prefer_external = false;
+        manual.layout.manual_enablement = true;
+        c.applyDisplayPolicy(manual);
+        const docking = findChild(panel, "dockedLaptopBehavior");
+        compare(docking.value, "manual");
+        save(panel.viewport, data.tag + "-manual-docking");
+        mouseClick(docking);
+        tryCompare(docking.popup, "visible", true);
+        // Popups are reparented into the window overlay, outside the viewport.
+        save(panel.Window.window.contentItem, data.tag + "-manual-docking-options");
+        keyClick(Qt.Key_Escape);
+        const applying = JSON.parse(JSON.stringify(manual));
+        applying.layout.manual_enablement = false;
+        applying.status = "pending";
+        c.applyDisplayPolicy(applying);
+        save(panel.viewport, data.tag + "-docking-applying");
         const mirrored = displayState();
         mirrored.outputs[0].mirror_of = "DP-1";
         mirrored.outputs[1].x = 0;

@@ -59,9 +59,6 @@ ColumnLayout {
                 Accessible.description: setting.entry.help
                 onSelected: function (value) {
                     setting.controller.setFocusSetting(setting.entry.key, Focus.value(setting.entry, value));
-                    currentIndex = Qt.binding(function () {
-                        return choice.optionIndex(choice.value);
-                    });
                 }
             }
             Ui.TextField {
@@ -88,11 +85,22 @@ ColumnLayout {
                     setting.numberDraft = value;
                 }
                 onEditingFinished: save()
-                onTrailingActionRequested: save()
+                onTrailingActionRequested: {
+                    if (editSession.active && editSession.navigation)
+                        editSession.navigation.saveEditor();
+                    else
+                        save();
+                }
                 function save(): void {
                     setting.validationAttempted = true;
-                    if (setting.editable && inputValid && Number(text) !== setting.observed)
-                        setting.controller.setFocusSetting(setting.entry.key, Number(text));
+                    if (!setting.editable || !inputValid)
+                        return;
+                    const requested = Number(text);
+                    // A valid submission is not observed compositor state. Keep
+                    // invalid input for correction, but release submitted text.
+                    setting.numberDraft = null;
+                    if (requested !== setting.observed)
+                        setting.controller.setFocusSetting(setting.entry.key, requested);
                 }
             }
         }

@@ -722,6 +722,30 @@ policy before any persistent trial or compositor write. Missing baseline support
 disables editing. Local stale hints remain conservative presentation guards, not
 authority. Rejection preserves the draft for explicit reload; no automatic replay.
 
+## Display settings state and modification
+
+Display layout fields show the current observation or the explicitly saved local
+layout draft; only Preview/Keep applies that draft. While a policy acknowledgement
+retires a baseline, fields fall back to observation, never fabricated defaults.
+Information and result rows continue to describe observed outputs.
+
+Docking shows **Manual layout · Laptop on/off** when the daemon reports a manual
+enablement override. The manual entry is passive current state, not an editable
+policy value. Choosing and saving either docking preference resumes automatic
+control, including the previously saved preference. Escape discards the choice;
+no write occurs on selection alone. Pending/error/trial guards and the native
+fallback remain intact. A docking acknowledgement clears the override immediately,
+without claiming that hardware already changed. Unknown policy is unavailable;
+layout-baseline availability does not gate independent docking/focus settings.
+
+Focus choices and numbers retain field-local edits across incoming observations.
+After a valid save, passive values stay acknowledged until an authoritative update;
+failures do not leave proposed numbers masquerading as current settings. Invalid
+numbers remain available for correction. Dropdown native indices follow their
+shared choice draft, not a panel-local binding. These controls retain ordinary
+Enter/Tab save, Escape discard, and no-write-on-blur behavior. See `tst_displays.qml`
+for actual keyboard/pointer, state-arrival, retry and capability-boundary tests.
+
 ## Bluetooth signal telemetry
 
 Signal readings are passive row/detail information, never fields or commands.

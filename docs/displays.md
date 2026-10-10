@@ -26,8 +26,8 @@ display disappears.
 The layout diagram sits at the top of expanded monitor details, above the
 Settings/Information pages, rather than below search. It shows every connected
 supported display, including disabled screens and mirrors, and highlights only
-the selected display. It remains visible with one display and on either monitor
-tab, but is absent from the compact list and global focus settings. Independent
+the selected display. It remains visible with one display on Settings, but is
+absent from Information, the compact list and global focus settings. Independent
 screens use their draft desktop positions; disabled screens and mirrors are
 labelled and placed beside the desktop so overlapping coordinates cannot hide
 them. This presentation placement never changes the draft.
@@ -58,7 +58,7 @@ with distinct Preview/Identify symbols and two secondary actions:
 **Settings** contains mirror/extend content selection, resolution/refresh, scale
 and rotation/reflection. Controls preserve advertised backend mode strings.
 There are no X/Y fields or separate Position card; relative arrangement stays
-with the map above both detail pages.
+with the map on Settings.
 **Information** is read-only observed state, including connector, available
 identity metadata, mode, logical size, scale and position and whether it is the
 active monitor. Missing metadata is omitted. Ctrl+Tab cycles Settings and
@@ -73,8 +73,8 @@ one column on narrow outputs and two where space permits. Cards grow with their
 contents; the page scrolls without moving the tabs.
 
 **Preview changes** is enabled only for a valid, changed layout. It previews the
-**whole layout**, not just the selected screen. Unsaved/stale/error status and
-Discard/Reload remain above the tabs. Narrow headers stack the primary button
+**whole layout**, not just the selected screen. Unsaved/stale/error status stays
+in the shared footer; closing a dirty layout offers Discard / Keep editing. Narrow headers stack the primary button
 above the secondary row, and settings scroll while tab controls stay visible.
 
 ## Relative arrangement
@@ -147,6 +147,17 @@ local choice; outside editing the displayed value changes only after daemon
 acknowledgement. A failed save leaves the previous choice selected and reports the
 error so the choice can be retried. This monitor-specific preference stays here rather than in global Focus settings.
 
+When `layout.manual_enablement` is active, the dropdown instead shows **Manual
+layout · Laptop on/off**, using the observed screen state. This is a disabled
+current-state option, not a command to create a manual layout. Choosing either
+docking preference and explicitly saving resumes automatic control—even when it
+matches the previously stored preference. Escape leaves the override intact.
+The daemon acknowledges the cleared override in its policy response; actual
+screen enablement still follows observed telemetry, with pending reconciliation
+shown separately. A missing preference is Not reported, not an invented default.
+Docking does not require a layout-preview baseline; it retains its own readiness,
+pending, draft and trial guards.
+
 The laptop returns automatically when no usable external display remains. A
 policy-disabled laptop stays selectable in the list with **Off · External display
 preferred**. The docking section is absent from external monitors' settings and
@@ -187,6 +198,14 @@ Alt+D opens Diagnostics, and Alt+H shows help for the current field.
 Only reported compositor capabilities are editable; unsupported options are
 labelled unavailable. Controls are locked during layout drafts/trials or loss of
 transport, and a failed save keeps the acknowledged choice visible for retry.
+Numeric fields also return to the observed value after a valid submission; they
+do not present pending or failed writes as compositor state. Invalid input remains
+available for correction. Incoming snapshots update passive controls, but never
+replace an active field-local draft. Escape reveals the latest observed value;
+Enter/Tab and the explicit numeric Apply command retain the shared save boundary.
+Dropdowns retain the shared draft-index binding across saves and incoming updates.
+Layout fields likewise use observed values when no layout draft is available,
+including during policy acknowledgements, rather than temporary 100%/zero defaults.
 
 Only explicitly edited settings become persistent overrides. They survive daemon
 restart and compositor config reload without repeatedly rewriting working values.

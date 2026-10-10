@@ -12,16 +12,10 @@ ColumnLayout {
             name: "",
             modes: []
         })
-    readonly property var draft: controller.selectedDraft || ({
-            mode: "",
-            scale: 1,
-            transform: 0,
-            x: 0,
-            y: 0,
-            enabled: false
-        })
+    // Policy acknowledgements can retire the old baseline before the request
+    // finishes. Until a new draft is available, show observation, not defaults.
+    readonly property var draft: controller.selectedDraft || Model.draft([output])[0]
     spacing: Ui.Theme.spacingMd
-    enabled: controller.canEdit
 
     function focusFirstControl(): void {
         resolution.forceActiveFocus();
@@ -29,6 +23,7 @@ ColumnLayout {
 
     Ui.DetailColumnCard {
         objectName: "displayContentCard"
+        enabled: inspector.controller.canEdit
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         Layout.preferredHeight: implicitHeight
@@ -71,6 +66,7 @@ ColumnLayout {
 
     Ui.DetailColumnCard {
         objectName: "displayModeCard"
+        enabled: inspector.controller.canEdit
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         Layout.preferredHeight: implicitHeight

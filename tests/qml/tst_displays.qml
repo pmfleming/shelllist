@@ -561,6 +561,275 @@ DaemonTestCase {
         verify(c.stale, "external changes to mirroring invalidate the draft");
         compare(calls.length, 0);
     }
+    function test_dockingManualStateCanReturnToTheAlreadySavedPreference() {
+        const panel = makePanel();
+        const c = panel.controller;
+        const state = displayState();
+        state.policy.prefer_external = false;
+        state.layout.manual_enablement = true;
+        c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        c.uiActive = true;
+        c.selectOutput("eDP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        const choice = findChild(panel, "dockedLaptopBehavior");
+        compare(choice.value, "manual");
+        verify(choice.contentItem.text.includes("off"), "the saved preference must not masquerade as the effective mode");
+        verify(!choice.options[choice.currentIndex].enabled, "manual layout is an observed state, not an invented policy command");
+        for (const save of [false, true, true]) {
+            mouseClick(choice);
+            tryCompare(choice.popup, "visible", true);
+            mouseClick(findChild(choice.popup.contentItem, "dropDownOption-" + choice.optionIndex("keep-on")));
+            compare(choice.editSession.displayedValue, "keep-on");
+            const before = calls.length;
+            keyClick(save ? Qt.Key_Return : Qt.Key_Escape);
+            compare(calls.length, before + (save ? 1 : 0));
+            compare(choice.value, "manual", "no optimistic removal of the manual override");
+            if (save) {
+                compare(calls[before].params.prefer_external, false, "an explicit choice can resume the same stored preference");
+                c.requestFailed(calls[before].id, "Policy save failed");
+            }
+        }
+        mouseClick(choice);
+        tryCompare(choice.popup, "visible", true);
+        mouseClick(findChild(choice.popup.contentItem, "dropDownOption-" + choice.optionIndex("keep-on")));
+        keyClick(Qt.Key_Return);
+        state.layout.manual_enablement = false;
+        state.status = "pending";
+        c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        c.requestFinished(calls[calls.length - 1].id);
+        compare(choice.value, "keep-on");
+        verify(c.selectedOutput.disabled, "policy acknowledgement is not evidence that hardware has changed");
+        state.outputs[0].disabled = false;
+        state.status = "all-displays";
+        c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        verify(!c.selectedOutput.disabled);
+        compare(choice.value, "keep-on");
+    }
+    function test_dockingRemainsEditableWithoutLayoutBaseline() {
+        const panel = makePanel();
+        const c = panel.controller;
+        const state = displayState();
+        state.baseline = "";
+        c.applyDisplayPolicy(state);
+        c.uiActive = true;
+        c.selectOutput("eDP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        const choice = findChild(panel, "dockedLaptopBehavior");
+        verify(!findChild(panel, "displayScale").enabled, "layout edits still require a baseline");
+        verify(choice.enabled && choice.interactive, "docking policy has its own availability guard");
+        mouseClick(choice);
+        tryCompare(choice.popup, "visible", true);
+        keyClick(Qt.Key_Escape);
+        compare(calls.length, 0);
+    }
+    function test_focusChoiceRetainsDraftAcrossIncomingStateAfterSave() {
+        const panel = makePanel();
+        const c = panel.controller;
+        const state = focusState();
+        c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        c.uiActive = true;
+        c.openGlobalSettings();
+        waitForDetails(panel);
+        const choice = findChild(panel, "focusSetting-input:follow_mouse");
+        panel.navigation.focusContent();
+        panel.navigation.currentTarget = choice;
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Up);
+        keyClick(Qt.Key_Return);
+        compare(calls.length, 1);
+        compare(choice.value, "1", "pending is not observed state");
+        state.focus.values["input:follow_mouse"] = 0;
+        c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        c.requestFinished(calls[0].id);
+        compare(choice.value, "0");
+        panel.navigation.currentTarget = choice;
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Down);
+        compare(choice.editSession.displayedValue, "2");
+        state.focus.values["input:follow_mouse"] = 3;
+        c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        compare(choice.editSession.displayedValue, "2");
+        compare(choice.currentIndex, 2, "native navigation must follow the draft, not an incoming value");
+        keyClick(Qt.Key_Escape);
+        compare(choice.value, "3");
+        compare(choice.currentIndex, 3, "discard reveals the latest observed state");
+        compare(calls.length, 1);
+    }
+    function test_focusNumberShowsObservedValueUntilAcknowledged() {
+        const panel = makePanel();
+        const c = panel.controller;
+        const state = focusState();
+        c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        c.uiActive = true;
+        c.openGlobalSettings();
+        c.selectFocusPage("focus-pointer");
+        waitForDetails(panel);
+        const field = findChild(panel, "focusNumber-input:follow_mouse_threshold");
+        for (const fail of [true, false]) {
+            panel.navigation.focusContent();
+            panel.navigation.currentTarget = field;
+            keyClick(Qt.Key_Return);
+            keyClick(Qt.Key_A, Qt.ControlModifier);
+            keyClick(Qt.Key_5);
+            const before = calls.length;
+            keyClick(Qt.Key_Return);
+            compare(calls.length, before + 1);
+            compare(calls[before].params.values["input:follow_mouse_threshold"], 5);
+            compare(field.text, "0", "a submitted number is not yet an observed value");
+            if (fail) {
+                c.requestFailed(calls[before].id, "Focus update failed");
+                compare(field.text, "0", "failure retains the authoritative value and permits retry");
+            } else {
+                state.focus.values["input:follow_mouse_threshold"] = 5;
+                c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+                c.requestFinished(calls[before].id);
+                compare(field.text, "5");
+            }
+        }
+        panel.navigation.currentTarget = field;
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_A, Qt.ControlModifier);
+        keyClick(Qt.Key_6);
+        state.focus.values["input:follow_mouse_threshold"] = 8;
+        c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        compare(field.text, "6", "incoming telemetry cannot overwrite an active edit");
+        keyClick(Qt.Key_Escape);
+        compare(field.text, "8");
+        compare(calls.length, 2);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_A, Qt.ControlModifier);
+        for (const key of [Qt.Key_1, Qt.Key_0, Qt.Key_0, Qt.Key_1]) keyClick(key);
+        keyClick(Qt.Key_Return);
+        verify(field.invalid, "out-of-range input remains available for correction");
+        compare(calls.length, 2);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_A, Qt.ControlModifier);
+        keyClick(Qt.Key_9);
+        mouseClick(field.trailingAction);
+        compare(calls.length, 3, "Apply uses the same explicit field save");
+        compare(calls[2].params.values["input:follow_mouse_threshold"], 9);
+        compare(field.text, "8", "Apply must also return to acknowledged state");
+    }
+    function test_layoutFieldsFollowObservedStateAndKeepEditsLocal_data() {
+        return [
+            {tag: "resolution", field: "displayResolution", property: "mode", initial: "1920x1200", expected: "1280x800", draft: "smaller-mode"},
+            {tag: "refresh", field: "displayRefreshRate", property: "mode", initial: "1920x1200@60.00Hz", expected: "faster-mode", draft: "faster-mode"},
+            {tag: "scale", field: "displayScale", property: "scale", initial: "1.25", expected: "1.5", draft: 1.5},
+            {tag: "orientation", field: "displayRotation", property: "transform", initial: "0", expected: "1", draft: 1},
+            {tag: "content", field: "displayContentMode", property: "mirror_of", initial: "", expected: "DP-1", draft: "DP-1"}
+        ];
+    }
+    function test_layoutFieldsFollowObservedStateAndKeepEditsLocal(data) {
+        const panel = makePanel();
+        const c = panel.controller;
+        const state = displayState();
+        state.outputs[0].disabled = false;
+        state.outputs[0].modes.push(
+            {id: "faster-mode", width: 1920, height: 1200, rate: 75, size: "1920x1200"},
+            {id: "smaller-mode", width: 1280, height: 800, rate: 60, size: "1280x800"});
+        c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        c.uiActive = true;
+        c.selectOutput("eDP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        const field = findChild(panel, data.field);
+        compare(field.value, data.initial);
+        const original = c.selectedDraft[data.property];
+        panel.navigation.focusContent();
+        panel.navigation.currentTarget = field;
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        compare(field.editSession.displayedValue, data.expected);
+        keyClick(Qt.Key_Escape);
+        compare(field.value, data.initial);
+        compare(c.selectedDraft[data.property], original);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Return);
+        compare(c.selectedDraft[data.property], data.draft);
+        verify(c.dirty);
+        compare(c.selectedOutput.disabled, false, "observed enablement remains authoritative");
+        compare(calls.length, 0, "layout fields save only to the preview draft");
+        c.reloadDraft();
+        compare(field.value, data.initial);
+        // Observe the equivalent compositor-side change, without a local edit.
+        if (data.property === "mode") {
+            const mode = state.outputs[0].modes.find(mode => mode.id === data.draft);
+            Object.assign(state.outputs[0], {current_mode: mode.id, width: mode.width, height: mode.height, refreshRate: mode.rate});
+        } else {
+            state.outputs[0][data.property] = data.draft;
+        }
+        c.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        compare(field.value, data.expected);
+        verify(!c.dirty);
+        compare(calls.length, 0, "snapshot updates never write back");
+    }
+    function test_policyPendingDoesNotInventLayoutValues() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        c.selectOutput("eDP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        const scale = findChild(panel, "displayScale");
+        const resolution = findChild(panel, "displayResolution");
+        compare(scale.value, "1.25");
+        verify(c.setPreferExternal(false));
+        const state = displayState();
+        state.policy.prefer_external = false;
+        c.applyDisplayPolicy(state);
+        compare(scale.value, "1.25", "pending acknowledgement must not fall back to a fabricated 100% scale");
+        compare(resolution.value, "1920x1200");
+        c.requestFinished(calls[0].id);
+        compare(scale.value, "1.25");
+    }
+    function test_unknownDockingPolicyDoesNotDisableReportedFocusSettings() {
+        const panel = makePanel();
+        const c = panel.controller;
+        const state = focusState();
+        state.policy = {};
+        c.applyDisplayPolicy(state);
+        c.uiActive = true;
+        c.selectOutput("eDP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        const choice = findChild(panel, "dockedLaptopBehavior");
+        compare(choice.value, "");
+        verify(!choice.enabled);
+        verify(!c.setPreferExternal(true));
+        c.openGlobalSettings();
+        verify(c.canSetFocus, "focus capability is independent of a docking preference");
+        compare(findChild(panel, "focusSetting-input:follow_mouse").value, "1");
+        compare(calls.length, 0);
+    }
+    function test_dockingChoicePointerSelection() {
+        const panel = makePanel();
+        const c = panel.controller;
+        const state = displayState();
+        state.policy.prefer_external = false;
+        c.applyDisplayPolicy(state);
+        c.uiActive = true;
+        c.selectOutput("eDP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        const choice = findChild(panel, "dockedLaptopBehavior");
+        verify(choice.enabled && choice.interactive);
+        mouseClick(choice);
+        tryCompare(choice.popup, "visible", true);
+        const option = findChild(choice.popup.contentItem, "dropDownOption-1");
+        verify(option !== null);
+        mouseClick(option);
+        tryCompare(choice.popup, "visible", false);
+        compare(choice.editSession.displayedValue, "auto-off");
+        compare(calls.length, 0, "option selection is a local draft until save");
+        keyClick(Qt.Key_Return);
+        compare(calls.length, 1);
+        compare(calls[0].method, "displayPolicy.set");
+        compare(calls[0].params.prefer_external, true);
+    }
     function test_dockingChoiceWaitsForAcknowledgementAndCanRetry() {
         const panel = makePanel();
         const c = panel.controller;
