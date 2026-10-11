@@ -898,6 +898,20 @@ its circles are not independent commands or switches. The saved selection dot
 is distinct from the draft's tonal highlight. Bottom pages retain shared
 icon-only tabs and full accessible names.
 
+Battery history uses two aligned passive tracks: charge in percent above signed
+battery power in watts. Dusty blue identifies charge (semantic warning colour
+still takes precedence), sage charging above zero, and amber discharging below
+zero, with readable light-theme variants. Short text legends and in/out labels
+supplement colour. Both tracks retain the observed-time axis and missing-sample
+gaps; only charge receives a dotted forecast. Current watts, direction and
+zero-versus-unavailable remain explicit. Hover shows the nearest measurement;
+clicking either track enters the existing pointer-only inspection, with arrows
+and Escape inside that mode. Neither track joins Tab traversal or adds an entry
+command. The shared Range field retains deferred Enter/Tab save and Escape
+discard. `tst_battery_history.qml` covers signed Canvas pixels, palettes, gaps,
+zero/unavailable, forecasts and inspection; `tst_battery_presentation.qml` checks
+actual range transactions and traversal past the passive tracks.
+
 Battery care combines charge notification with protection. The bell's numerical
 target follows acknowledged protection / one-time-full-charge state. Resume/stop
 thresholds remain deferred; separate alert and threshold pending/error state is

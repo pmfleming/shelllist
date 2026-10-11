@@ -55,7 +55,7 @@ Item {
     readonly property real shellOpacity: 0.94
     readonly property color shellColor: withAlpha(window, shellOpacity)
 
-    // All graphs reuse this theme-derived pair. Glyphs/units identify metrics.
+    // Default graph pair; domains may use dedicated semantic palettes.
     readonly property color graphPrimary: accent
     readonly property color graphSecondary: mutedText
     readonly property color resourceCpu: graphPrimary
@@ -65,6 +65,12 @@ Item {
     readonly property color resourceNetworkReceive: graphPrimary
     readonly property color resourceNetworkTransmit: graphSecondary
     readonly property color resourcePower: graphPrimary
+
+    // Battery tracks distinguish charge level from signed power flow. These
+    // low-chroma foregrounds have light variants; labels/direction carry meaning.
+    readonly property color batteryCharge: dark ? "#a4b8d5" : "#506681"
+    readonly property color batteryCharging: dark ? "#9db9a7" : "#506e5b"
+    readonly property color batteryDischarging: dark ? "#c3aa86" : "#806644"
 
     // Forecast artwork has a dark backdrop independently of the desktop palette.
     readonly property color weatherHeroText: "#f4f7fb"

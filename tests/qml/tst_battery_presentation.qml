@@ -116,6 +116,25 @@ DaemonTestCase {
         panel.controller.applyPowerProfile({available: true, profile: "power-saver", profiles: [{name: "power-saver"}, {name: "balanced"}, {name: "performance"}]});
         compare(mode.value, "power-saver");
     }
+    function test_historyRangeRemainsTheOnlyChartField() {
+        const panel = make();
+        const card = findChild(panel, "batteryHistoryCard");
+        const graph = findChild(card, "batteryTimelineGraph");
+        const range = browse(panel, "batteryHistoryRange");
+        verify(!graph.activeFocusOnTab);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Right);
+        compare(range.displayedValue, "24");
+        compare(card.range, "6", "range choice remains a local field draft");
+        keyClick(Qt.Key_Escape);
+        compare(range.displayedValue, "6");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Tab);
+        compare(card.range, "24");
+        compare(panel.surface.detailsNavigation.currentTarget, findChild(panel, "batteryEnergyPeriod"), "Tab continues to energy period, skipping tracks and labels");
+        compare(calls.length, 0, "history presentation never dispatches a battery mutation");
+    }
     function test_combinedChargingTargetsAndDeferredThresholds_data() {
         return [{tag: "dark", scheme: Qt.Dark}];
     }

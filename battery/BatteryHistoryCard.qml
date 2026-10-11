@@ -38,7 +38,7 @@ Rectangle {
         BatterySectionHeading {
             Layout.fillWidth: true
             title: qsTr("Battery history")
-            helpText: qsTr("Clock: time to the battery target. Arrows: power into or out of the battery. Line: observed charge; the dotted extension is a forecast. Colored areas: discharging and charging power. Time excludes suspended intervals.")
+            helpText: qsTr("The upper track shows observed charge in percent; its dotted extension is a forecast. The lower track shows measured power in watts: sage above zero is charging, amber below zero is discharging. Gaps are unobserved, not zero. Both tracks share observed time, excluding suspended intervals. Click either track to inspect the nearest measurement; arrows move the cursor and Escape exits inspection.")
         }
 
         RowLayout {
@@ -46,8 +46,8 @@ Rectangle {
             spacing: Ui.Theme.spacingMd
 
             Ui.GlyphLabel {
-                glyph: card.forecast.seconds > 0 ? "schedule" : (card.battery.plugged ? "power" : "battery_full")
-                color: card.battery.plugged ? Ui.Theme.active : Ui.Theme.accent
+                glyph: card.battery.plugged ? "power" : "battery_full"
+                color: Ui.Theme.batteryCharge
                 font.pixelSize: Ui.Theme.iconSizeLarge
             }
 
@@ -58,20 +58,20 @@ Rectangle {
                 Ui.ThemeText {
                     objectName: "batteryHistoryEstimate"
                     Layout.fillWidth: true
-                    text: card.forecast.seconds > 0 ? "~" + Presentation.duration(card.forecast.seconds) : card.estimateText
-                    font.pixelSize: card.forecast.seconds > 0 ? Ui.Theme.fontSizeTitle : Ui.Theme.fontSizeLabel
+                    text: !card.battery.available ? qsTr("Unavailable") : card.battery.plugged ? qsTr("Plugged in") : qsTr("On battery")
+                    font.pixelSize: Ui.Theme.fontSizeLabel
                     font.weight: Ui.Theme.fontWeightBold
                     wrapMode: Text.WordWrap
                 }
 
-                BatteryIconValue {
+                Ui.ThemeText {
                     objectName: "batteryForecastTarget"
                     Layout.fillWidth: true
-                    visible: card.forecast.seconds > 0
-                    icons: ["arrow_forward", "battery_full"]
-                    text: Number(card.forecast.target ?? 100) + "%"
-                    description: card.estimateText
-                    pixelSize: Ui.Theme.fontSizeCaption
+                    visible: card.battery.available
+                    text: card.forecast.seconds > 0 ? "~" + Presentation.duration(card.forecast.seconds) + " " + card.estimateText : card.estimateText
+                    color: Ui.Theme.mutedText
+                    font.pixelSize: Ui.Theme.metadataSize
+                    wrapMode: Text.WordWrap
                 }
             }
 
@@ -80,17 +80,18 @@ Rectangle {
                 spacing: 2
 
                 Ui.ThemeText {
-                    text: card.powerAvailable ? (card.battery.charging ? "+" : "") + card.battery.power_watts.toFixed(1) + " W" : "— W"
-                    color: card.battery.charging ? Ui.Theme.active : Ui.Theme.resourcePower
+                    objectName: "batteryHistoryPower"
+                    text: card.powerAvailable ? card.battery.power_watts.toFixed(1) + " W" : "— W"
+                    color: !card.powerAvailable || card.battery.power_watts === 0 ? Ui.Theme.mutedText : card.battery.charging ? Ui.Theme.batteryCharging : Ui.Theme.batteryDischarging
                     font.pixelSize: Ui.Theme.fontSizeLabel
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
 
-                BatteryIconValue {
+                Ui.ThemeText {
                     objectName: "batteryPowerDirection"
-                    icons: card.battery.charging ? ["arrow_forward", "battery_full"] : ["battery_full", "arrow_forward"]
-                    description: card.battery.charging ? qsTr("Power into battery") : qsTr("Power from battery")
-                    visible: card.powerAvailable && (card.battery.charging || !card.battery.plugged)
+                    text: !card.powerAvailable ? qsTr("Unavailable") : card.battery.power_watts === 0 ? qsTr("No battery flow") : card.battery.charging ? qsTr("Into battery") : qsTr("From battery")
+                    color: Ui.Theme.mutedText
+                    font.pixelSize: Ui.Theme.metadataSize
                 }
             }
         }
@@ -132,58 +133,65 @@ Rectangle {
             objectName: "batteryTimelineGraph"
             points: card.points
             forecast: card.forecast
-            currentPercentage: card.battery.available ? Number(card.battery.percentage) : -1
-            lineColor: card.battery.warning ? Ui.Theme.warning : Ui.Theme.resourceCpu
+            currentPercentage: card.battery.available && History.nonnegative(card.battery.percentage) && card.battery.percentage <= 100 ? card.battery.percentage : -1
+            lineColor: card.battery.warning ? Ui.Theme.warning : Ui.Theme.batteryCharge
         }
 
+        // Battery-owned chart keys: tiny 2px corners distinguish filled swatches
+        // from line marks without introducing another control/card radius.
         Flow {
             objectName: "batteryHistoryLegend"
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingLg
 
             Row {
-                spacing: 5
+                spacing: Ui.Theme.spacingSm
                 Rectangle {
-                    width: 14
-                    height: 3
+                    width: Ui.Theme.spacingSm
+                    height: width
+                    radius: 2
                     anchors.verticalCenter: parent.verticalCenter
-                    color: graph.lineColor
+                    color: graph.chargingColor
                 }
-                BatteryIconValue {
-                    objectName: "batteryChargeLegend"
-                    icons: ["battery_full"]
-                    description: qsTr("Line: battery charge")
-                }
-            }
-            Row {
-                spacing: 5
-                Rectangle {
-                    width: 9
-                    height: 9
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: Ui.Theme.resourcePower
-                }
-                BatteryIconValue {
-                    objectName: "batteryDischargingLegend"
-                    icons: ["battery_full", "arrow_forward"]
-                    description: qsTr("Discharging power")
-                }
-            }
-            Row {
-                spacing: 5
-                Rectangle {
-                    width: 9
-                    height: 9
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: Ui.Theme.graphSecondary
-                }
-                BatteryIconValue {
+                Ui.ThemeText {
                     objectName: "batteryChargingLegend"
-                    icons: ["arrow_forward", "battery_full"]
-                    description: qsTr("Charging power")
+                    text: qsTr("Charging")
+                    color: Ui.Theme.mutedText
+                    font.pixelSize: Ui.Theme.metadataSize
                 }
             }
-
+            Row {
+                spacing: Ui.Theme.spacingSm
+                Rectangle {
+                    width: Ui.Theme.spacingSm
+                    height: width
+                    radius: 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: graph.dischargingColor
+                }
+                Ui.ThemeText {
+                    objectName: "batteryDischargingLegend"
+                    text: qsTr("Discharging")
+                    color: Ui.Theme.mutedText
+                    font.pixelSize: Ui.Theme.metadataSize
+                }
+            }
+        }
+        Ui.ThemeText {
+            id: inspectionLabel
+            objectName: "batteryHistoryInspection"
+            Layout.fillWidth: true
+            Layout.preferredHeight: 2 * fontMetrics.lineSpacing
+            text: graph.cursorPosition >= 0 ? graph.inspectionText : qsTr("Observed time · suspended intervals excluded")
+            color: Ui.Theme.mutedText
+            font.pixelSize: Ui.Theme.metadataSize
+            wrapMode: Text.Wrap
+            maximumLineCount: 2
+            elide: Text.ElideRight
+            FontMetrics {
+                id: fontMetrics
+                font: inspectionLabel.font
+            }
         }
     }
 }
