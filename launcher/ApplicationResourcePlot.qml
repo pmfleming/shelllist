@@ -15,11 +15,28 @@ Canvas {
     readonly property bool paired: chartStyle === "paired-columns"
     readonly property var segments: series.map(descriptor => Resources.historySegments(points, descriptor.metric, rangeStartMilliseconds, rangeEndMilliseconds))
     readonly property color guideColor: Ui.Theme.border
+    readonly property color gapColor: Ui.Theme.withAlpha(Ui.Theme.text, 0.035)
+    // Shade only gaps in all series. One unavailable series must not obscure
+    // another series' valid observations, including measured zero.
+    readonly property var missingRanges: unobservedRanges()
 
     implicitHeight: Math.round(96 * uiScale)
     antialiasing: true
     Accessible.ignored: true // The owner supplies the metric, scale and coverage.
 
+    function unobservedRanges(): var {
+        const gaps = [];
+        const intervals = [];
+        segments.forEach(metric => metric.forEach(segment => segment.forEach(interval => intervals.push(interval))));
+        intervals.sort((left, right) => left.start - right.start);
+        let cursor = rangeStartMilliseconds;
+        for (const interval of intervals) {
+            if (interval.start > cursor) gaps.push({start: cursor, end: interval.start});
+            cursor = Math.max(cursor, interval.end);
+        }
+        if (cursor < rangeEndMilliseconds) gaps.push({start: cursor, end: rangeEndMilliseconds});
+        return gaps;
+    }
     function xFor(timestamp: real): real {
         return (timestamp - rangeStartMilliseconds) / Math.max(1, rangeEndMilliseconds - rangeStartMilliseconds) * width;
     }
@@ -34,13 +51,17 @@ Canvas {
         const first = segment[0];
         const vertices = [{x: xFor(first.start), y: yFor(first.value, index)}];
         for (const interval of segment) {
-            vertices.push({x: xFor(interval.start), y: yFor(interval.value, index)});
+            if (chartStyle === "steps") vertices.push({x: xFor(interval.start), y: yFor(interval.value, index)});
             vertices.push({x: xFor(interval.end), y: yFor(interval.value, index)});
         }
         context.strokeStyle = series[index].color;
-        context.lineWidth = 2.2 * uiScale;
-        // Retained bucket steps, not smoothing or exact allocation event times.
-        Ui.ChartDrawing.segment(context, vertices, baselineY(), Ui.Theme.withAlpha(series[index].color, 0.16), false);
+        context.lineWidth = 1.6 * uiScale;
+        context.setLineDash(index > 0 ? [4 * uiScale, 3 * uiScale] : []);
+        // Memory retains bucket steps; activity joins observations only inside
+        // a contiguous segment. Never smooth or connect across missing time.
+        const fill = chartStyle === "steps" && index === 0 ? Ui.Theme.withAlpha(series[index].color, 0.08) : null;
+        Ui.ChartDrawing.segment(context, vertices, baselineY(), fill, false);
+        context.setLineDash([]);
     }
     function columnRect(interval: var, index: int): var {
         const left = xFor(interval.start);
@@ -56,7 +77,8 @@ Canvas {
         context.fillStyle = series[index].color;
         segments[index].forEach(segment => segment.forEach(interval => {
             const rect = columnRect(interval, index);
-            context.fillRect(rect.x, rect.y, rect.width, rect.height);
+            // A measured zero gets a baseline mark; missing intervals get none.
+            context.fillRect(rect.x, rect.height === 0 ? rect.y - 1 : rect.y, rect.width, Math.max(1, rect.height));
         }));
     }
     onSegmentsChanged: requestPaint()
@@ -64,6 +86,7 @@ Canvas {
     onChartStyleChanged: requestPaint()
     onUiScaleChanged: requestPaint()
     onGuideColorChanged: requestPaint()
+    onGapColorChanged: requestPaint()
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
     onVisibleChanged: if (visible) requestPaint()
@@ -72,19 +95,17 @@ Canvas {
         const context = getContext("2d");
         context.reset();
         context.clearRect(0, 0, width, height);
+        context.fillStyle = gapColor;
+        missingRanges.forEach(gap => context.fillRect(xFor(gap.start), 3, xFor(gap.end) - xFor(gap.start), Math.max(0, baselineY() - 3)));
         context.strokeStyle = Ui.Theme.withAlpha(guideColor, 0.65);
         context.lineWidth = 1;
+        Ui.ChartDrawing.dashed(context, 0, 3, width, 3, 2, 4);
         context.beginPath();
-        [0, 0.5, 1].forEach(fraction => {
-            const y = 3 + (baselineY() - 3) * fraction;
-            context.moveTo(0, y);
-            context.lineTo(width, y);
-        });
+        context.moveTo(0, baselineY());
+        context.lineTo(width, baselineY());
         context.stroke();
         series.forEach((_descriptor, index) => {
-            // Draw only observed intervals. Missing time stays blank: no hatch,
-            // vertical dashes, carry-forward, or zero substitution.
-            if (chartStyle === "steps") segments[index].forEach(segment => strokeSegment(context, segment, index));
+            if (chartStyle === "steps" || chartStyle === "lines") segments[index].forEach(segment => strokeSegment(context, segment, index));
             else drawColumns(context, index);
         });
     }

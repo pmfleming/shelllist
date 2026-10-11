@@ -1,46 +1,44 @@
 # Application resources
 
-Resources uses five passive **integrated microcards** in the expanded Apps panel:
-Activity and Memory on the first row, Disk I/O and Network on the second, and
-CPU-package power/energy across the third. All five cards have two primary
-readings at one shared value scale. Identified app data belongs to passive
-Application details, not a third power reading or a sixth resource card.
-Each graph fills its card with a small four-pixel scaled inset; compact icon/value
-pairs overlay its left side instead of reserving a separate chart column. Readable
-rows fit inside the card without enforcing an exact upper-half boundary. One
-viewport-derived value size avoids per-card rounding differences; glyphs retain
-a readable floor. Values use a surface-colored outline to remain readable over bars.
-Two reused theme colours distinguish paired series; semantic glyphs and directions
-retain metric identity independently of colour. Disk/network domain
-icons are vertically centered next to their direction readings. There are no repeated
-card titles, separate snapshot/evidence sections or measurement commands.
+Resources uses **History as a list** in the expanded Apps panel: Activity,
+Memory, Disk I/O, Network and Power are five passive rows on one low-tone detail
+surface. Each row has a concise heading and two labeled readings in a compact
+left column; the remaining width belongs to its history. Readings never overlap
+plots. Identified app data remains on Application details, not a third power
+reading or a sixth resource row.
+
+The list measures its shared label/value columns from font metrics rather than
+reserving a percentage of the pane. Desaturated sage/rose, blue/lavender,
+sand/green and teal/lavender pairs distinguish metrics and series. Power uses
+sand; its energy total is neutral and is not a second plotted series. The shared
+Theme owns light/dark variants; Battery and the shell selection accent are
+unchanged. Labels, swatches, secondary dashed lines and paired bar positions
+retain identities independently of color.
 
 ## Viewport layout
 
-The shared `DetailFlickable` remains the navigation/session owner, but its sole
-resource child takes the **viewport height**, not the implicit height of stacked
-charts. The inline range field and timestamp axis retain their allocations;
-exceptional page messages use the fixed list footer. The 2×2 + full-width grid divides the remaining height into
-three equal rows. Cards and plots grow/shrink with the expanded panel and do not
-impose content-sized minimum heights. There is no resource scrolling at supported
-expanded chooser sizes. The real application header and bottom tab bar remain
-outside this budget. No panel-local keyboard model or artificial clipped scroll
-area is introduced.
+The shared `DetailFlickable` remains the navigation/session owner. Five equal-height
+rows fill the available viewport, with font-measured minimum heights to keep
+readings readable. Short panes scroll through the shared page rather than shrink
+or overlap text. The application header and bottom tabs remain outside this budget.
 
-Stable five-card/two-reading repeaters retain instances as descriptors arrive.
-Values, availability and accessible names update without rebuilding plots or
-interrupting a range draft. Normal labels are icons; exceptional unavailable,
-loading, reduced process coverage, shared attribution and nonzero swap remain visible.
-Repeated missing readings share one short card status, while their individual
-dashes and accessible names identify which values are unavailable.
+The right-aligned shared range field omits the redundant visible “Range” label,
+not its accessible name or edit session. One timestamp axis below the list aligns
+with every plot. No repeated history captions, per-row time axes or “Not observed”
+text consume chart space. Exceptional page messages use the fixed list footer.
 
-## Readings and integrated bars
+Stable five-row/two-reading repeaters retain instances as descriptors arrive.
+Values, availability and accessible names update without interrupting a range
+draft. Missing readings show dashes; an unavailable/empty/loading chart uses the
+shared compact `ContentState` without hiding valid sibling readings.
+
+## Readings and histories
 
 - **Activity:** current CPU machine-capacity and GPU engine-activity percentages.
-  One paired-column history on a fixed 0–100% scale, CPU left/GPU right. These
+  Two lines on a fixed 0–100% scale join only contiguous observations. These
   percentages are never summed.
-- **Memory:** current RAM and GPU resident bytes. Both histories use paired
-  interval columns on one zero-based byte scale; GPU memory is not added to RAM.
+- **Memory:** current RAM and GPU resident bytes. Both histories retain bucket
+  steps on one zero-based byte scale; GPU memory is not added to RAM.
   RAM snapshot source is PSS or RSS fallback. Historical samples do not record
   that source and must not inherit it from a later snapshot.
 - **Disk I/O:** estimated selected-period read/write **byte totals**, not current
@@ -70,8 +68,8 @@ they do not share vertical scales across different kinds of measurement.
 
 Availability still requires the domain capability and a finite, nonnegative
 numeric value. Missing, null, invalid or unsupported readings are not zero. A
-missing series shows a dash and a short visible reason without hiding valid
-siblings. The network byte collector is independent of connection attribution;
+missing series shows a dash without hiding valid siblings; an entirely unavailable
+history also shows a concise visible reason. The network byte collector is independent of connection attribution;
 valid footprint measurements do not establish disk-I/O availability.
 
 Small positive power below 0.01 W remains `<0.01 W`; real zero remains `0.00 W`.
@@ -97,11 +95,11 @@ can coexist with an unavailable current reading. Range loading hides old-window
 plots/totals; current snapshots remain independent. Shared `ContentState` provides
 compact text-only loading/empty states inside the available plot area.
 
-Observed/selected durations, including partial coverage, remain in each card's
+Observed/selected durations, including partial coverage, remain in each row's
 accessible summary; there are no visual observation-coverage footers. Missing
 intervals still remain gaps in the charts. Process coverage is distinct:
 reduced/unknown process coverage, shared attribution and nonzero swap stay visible
-through concise shared-footer contributions without resizing the resource grid.
+through concise shared-footer contributions without resizing the resource list.
 
 There is no live-snapshot timestamp in the API. Do not invent age or freshness.
 The running-app snapshot needs no routine caption; stopped apps show a timestamped
@@ -116,35 +114,41 @@ The helper clips both edges, rejects invalid durations/duplicate ends, bounds
 overlapping buckets, and breaks at unsupported/unobserved intervals. No carry-
 forward, smoothing over gaps or zero substitution. Column width follows observed
 duration; paired columns split the bucket width rather than extending into
-neighbouring missing time. Measured zero has zero height, not a decorative pulse.
+neighbouring missing time. Measured zero gets only a baseline mark, not a
+decorative pulse. Lines stop at each segment boundary; memory is not smoothed.
 
-Only subtle horizontal guides remain. Missing intervals are unpainted: there are
-no hatched regions, vertical dashed lines or bottom coverage-band patterns, for
-single or paired series. Gaps remain independent for each series; they are never
-filled with zero, interpolated or carried forward. Canvas repaint clears old marks
-before rendering newly unavailable intervals. Partial history remains visible;
-coverage, scales and independently missing series remain available to accessibility.
+Two subtle horizontal guides identify the baseline and scale maximum. Intervals
+unobserved by every series have faint background shading, with no repeated gap
+text or hatch. Missing series remain independently unpainted; another series'
+valid interval is never shaded as missing. Gaps are never filled with zero,
+interpolated or carried forward. Canvas repaint clears old marks before rendering
+newly unavailable intervals. Coverage, scales and independently missing series
+remain available to accessibility.
 
 ## Interaction and validation
 
 The [shared keyboard contract](chooser-keyboard-workflow.md) remains authoritative.
 The range selector is the sole editable stop. Enter saves; Escape discards;
 Tab/Shift+Tab save and wrap while continuing editing. Pointer choices remain drafts
-until saved. Source bindings, focus and drafts survive arriving snapshots. Cards,
+until saved. Source bindings, focus and drafts survive arriving snapshots. Rows,
 glyphs, bars, scales and statistics are passive and add no navigation commands.
-Page keys retain shared semantics; a viewport-fitted Resources page has no scroll
-distance. There is no chart inspection mode, cleanup action or info disclosure.
+Page keys retain shared semantics and scroll short panes. There is no chart
+inspection mode, cleanup action or info disclosure.
 
-`tests/qml/tst_application_resources.qml` checks real Qt keyboard and pointer
-transactions, arriving snapshots during a draft, independently available totals,
-loading-window transitions, combined CPU/GPU and RAM/GPU bars, and five-card
-geometry inside the **real application detail header/tab stack** at compact,
-standard and large expanded sizes. It verifies no scrolling, full-card plots,
-two left-aligned readings per card, a common value scale, text outlines and
-contained readings. Native tab navigation verifies passive app-data relocation,
-independent component availability and history-owner fencing. Canvas pixel checks verify that missing
-intervals in paired activity and single-series power have no dashed patterns. JavaScript tests retain precision,
-weighting/window/coverage validation and interval clipping.
+`tests/qml/tst_application_resources.qml` checks native range transactions,
+arriving snapshots during a draft, independently available totals, loading-window
+transitions and the real application header/tab stack. Dark/light, normal/short
+cases verify contained readings, disjoint plot slots, a common compact column,
+aligned time axis, readable font floors, short-page scrolling and extra width
+being allocated to charts. Further cases check independently missing series,
+measured zero, union-of-series gap shading and live theme updates. Native tab
+navigation retains passive app-data and history-owner fencing checks. JavaScript
+tests retain precision, weighting/window/coverage validation and interval clipping.
+
+Implementation review evidence is local under `target/resource-history-list/`:
+Qt-rendered dark/light active histories, normal/minimum full detail captures,
+strict lint and the full Qt suite. Synthetic captures are not live telemetry;
+they do not claim a human screen-reader or hardware accessibility review.
 
 ```sh
 node tools/build-typescript.mjs --check

@@ -11,12 +11,11 @@ Ui.DetailFlickable {
     required property var application
     required property real uiScale
 
-    // Keep the shared page/navigation contract, but give the resource grid the
-    // viewport rather than a content-sized history stack. Restored scroll offsets
-    // are clamped to zero by DetailFlickable as the page resizes.
+    // Fill the viewport normally; at short heights keep passive readings at
+    // their readable minimum and use the shared page scrolling/navigation.
     ApplicationResourceHistory {
         width: parent.width
-        height: page.height
+        height: Math.max(page.height, implicitHeight)
         controller: page.controller
         application: page.application
         uiScale: page.uiScale

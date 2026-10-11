@@ -20,19 +20,19 @@ ColumnLayout {
         : latestPoint ? qsTr("App stopped · last observed %1").arg(Qt.formatDateTime(new Date(latestPoint.timestamp_ms), "yyyy-MM-dd HH:mm:ss")) : qsTr("App stopped · no retained measurements")
     readonly property var lanes: [
         lane("activity", qsTr("Activity"), "percent", [
-            series("cpu_percent_of_machine", "CPU", "CPU", "memory", Ui.Theme.resourceCpu, "percent", "applicationCpuActivity", 0),
-            series("gpu_busy_percent", qsTr("GPU activity"), "GPU", "developer_board", Ui.Theme.resourceGpu, "percent", "applicationGpuActivity", 0)]),
+            series("cpu_percent_of_machine", "CPU", "CPU", "memory", Ui.Theme.applicationGraphColors.activity[0], "percent", "applicationCpuActivity", 0),
+            series("gpu_busy_percent", qsTr("GPU activity"), "GPU", "developer_board", Ui.Theme.applicationGraphColors.activity[1], "percent", "applicationGpuActivity", 0)]),
         lane("memory", qsTr("Memory"), "bytes", [
-            series("memory_bytes", "RAM", "RAM", "memory_alt", Ui.Theme.resourceMemory, "bytes", "applicationRam", 0),
-            series("gpu_memory_resident_bytes", qsTr("GPU resident memory"), "GPU", "developer_board", Ui.Theme.resourceGpu, "bytes", "applicationGpuMemory", 0)]),
+            series("memory_bytes", "RAM", "RAM", "memory_alt", Ui.Theme.applicationGraphColors.memory[0], "bytes", "applicationRam", 0),
+            series("gpu_memory_resident_bytes", qsTr("GPU resident memory"), "GPU", "developer_board", Ui.Theme.applicationGraphColors.memory[1], "bytes", "applicationGpuMemory", 0)]),
         lane("storage", qsTr("Disk I/O"), "rate", [
-            series("disk_read_bytes_per_second", qsTr("Disk read"), "↓ R", "arrow_downward", Ui.Theme.resourceDisk, "rate", "applicationIo_disk_read_bytes_per_second", 1),
-            series("disk_write_bytes_per_second", qsTr("Disk write"), "↑ W", "arrow_upward", Ui.Theme.resourceNetworkTransmit, "rate", "applicationIo_disk_write_bytes_per_second", -1)]),
+            series("disk_read_bytes_per_second", qsTr("Disk read"), qsTr("↓ Read"), "arrow_downward", Ui.Theme.applicationGraphColors.storage[0], "rate", "applicationIo_disk_read_bytes_per_second", 1),
+            series("disk_write_bytes_per_second", qsTr("Disk write"), qsTr("↑ Written"), "arrow_upward", Ui.Theme.applicationGraphColors.storage[1], "rate", "applicationIo_disk_write_bytes_per_second", -1)]),
         lane("network", qsTr("Network"), "rate", [
-            series("network_receive_bytes_per_second", qsTr("Network receive"), "↓", "arrow_downward", Ui.Theme.resourceNetworkReceive, "rate", "applicationIo_network_receive_bytes_per_second", 1),
-            series("network_transmit_bytes_per_second", qsTr("Network send"), "↑", "arrow_upward", Ui.Theme.resourceNetworkTransmit, "rate", "applicationIo_network_transmit_bytes_per_second", -1)]),
+            series("network_receive_bytes_per_second", qsTr("Network receive"), qsTr("↓ Received"), "arrow_downward", Ui.Theme.applicationGraphColors.network[0], "rate", "applicationIo_network_receive_bytes_per_second", 1),
+            series("network_transmit_bytes_per_second", qsTr("Network send"), qsTr("↑ Sent"), "arrow_upward", Ui.Theme.applicationGraphColors.network[1], "rate", "applicationIo_network_transmit_bytes_per_second", -1)]),
         lane("energy", qsTr("CPU-package energy"), "power", [
-            series("average_power_watts", application.running ? qsTr("Estimated CPU-package power") : qsTr("Last observed CPU-package power"), "", "bolt", Ui.Theme.resourcePower, "power", "applicationPower", 0)])
+            series("average_power_watts", application.running ? qsTr("Estimated CPU-package power") : qsTr("Last observed CPU-package power"), qsTr("Estimated"), "bolt", Ui.Theme.applicationGraphColors.energy[0], "power", "applicationPower", 0)])
     ]
 
     function currentHas(metric: string): bool {
@@ -74,17 +74,17 @@ ColumnLayout {
     }
     Ui.FormField {
         Layout.fillWidth: true
-        label: qsTr("Range")
         accessibleName: qsTr("Resource history range")
         Ui.SegmentedControl {
             objectName: "applicationHistoryRange"
-            Layout.fillWidth: true
+            Layout.preferredWidth: Math.min(history.width, Ui.Theme.fieldLabelWidth(history.width) * 2)
             options: [{value: "30m", label: "30m"}, {value: "2h", label: "2h"}, {value: "24h", label: "24h"}]
             value: history.controller.historyRange
             onSelected: function (value) { history.controller.selectHistoryRange(value); }
         }
     }
     ApplicationResourceOverview {
+        id: overview
         objectName: "applicationResourceOverview"
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -97,7 +97,10 @@ ColumnLayout {
         uiScale: history.uiScale
     }
     ApplicationResourceTimeAxis {
+        objectName: "applicationResourceTimeAxis"
         Layout.fillWidth: true
+        Layout.leftMargin: overview.plotLeftInset
+        Layout.rightMargin: overview.contentPadding
         rangeStartMilliseconds: history.controller.historyWindowStartMs
         rangeEndMilliseconds: history.controller.historyWindowEndMs
     }

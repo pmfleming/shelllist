@@ -5,8 +5,8 @@ import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "ApplicationResources.js" as Resources
 
-// The information boundary excludes every glyph, value and chart from field
-// traversal. The range selector outside this section is the only editor.
+// One passive list surface. Only the range selector outside this boundary is
+// editable; measurements determine the compact columns, never a pane percentage.
 Ui.DetailSection {
     id: overview
     informationOnly: true
@@ -17,57 +17,86 @@ Ui.DetailSection {
     required property real uiScale
     property bool loading: false
     property bool active: true
-    // Compute once, not from fractionally rounded individual grid cells.
-    readonly property real valueSize: Math.max(Ui.Theme.formValueSize, Math.min(28,
-        Math.floor(((height - 2 * Math.round(8 * uiScale)) / 3 - 2 * Math.round(10 * uiScale)) * 0.20)))
-    readonly property var cards: [
-        {lane: lanes[0], readings: lanes[0].series, glyph: ""},
-        {lane: lanes[1], readings: lanes[1].series, glyph: ""},
-        {lane: lanes[2], readings: lanes[2].series.map(periodReading), glyph: "hard_drive"},
-        {lane: lanes[3], readings: lanes[3].series.map(periodReading), glyph: "lan"},
-        {lane: lanes[4], readings: [lanes[4].series[0], periodReading(lanes[4].series[0])], glyph: ""}
+    readonly property real contentPadding: Math.round(Ui.Theme.cardPadding * uiScale)
+    readonly property real rowGap: Math.round(Ui.Theme.spacingMd * uiScale)
+    readonly property real valueSize: Math.max(Ui.Theme.resourceValueMinimumSize, Math.round(Ui.Theme.formValueSize * uiScale))
+    readonly property real headingSize: Math.max(Ui.Theme.fontSizeLabel, Math.round(Ui.Theme.fontSizeLabel * uiScale))
+    readonly property var allReadings: rows.reduce((values, row) => values.concat(row.readings), [])
+    readonly property real labelWidth: Math.ceil(Math.max(...allReadings.map(reading => labelMetrics.advanceWidth(reading.shortLabel))) + Ui.Theme.spacingSm + Ui.Theme.spacingXs)
+    readonly property real valueWidth: Math.ceil(Math.max(valueMetrics.advanceWidth("999.99 mWh"), ...allReadings.map(reading => valueMetrics.advanceWidth(reading.available ? reading.valueText : "—"))))
+    readonly property real readingWidth: labelWidth + Ui.Theme.spacingSm + valueWidth
+    readonly property real plotLeftInset: contentPadding + readingWidth + rowGap
+    readonly property real minimumRowHeight: Math.ceil(headingMetrics.height + 2 * valueMetrics.height + 4 * Ui.Theme.spacingXs)
+    readonly property real minimumContentHeight: 2 * contentPadding + rows.length * minimumRowHeight
+    readonly property var rows: [
+        {lane: lanes[0], readings: lanes[0].series, glyph: "memory", title: qsTr("Activity")},
+        {lane: lanes[1], readings: lanes[1].series, glyph: "memory_alt", title: qsTr("Memory")},
+        {lane: lanes[2], readings: lanes[2].series.map(periodReading), glyph: "hard_drive", title: qsTr("Disk I/O")},
+        {lane: lanes[3], readings: lanes[3].series.map(periodReading), glyph: "lan", title: qsTr("Network")},
+        {lane: lanes[4], readings: [lanes[4].series[0], periodReading(lanes[4].series[0])], glyph: "bolt", title: qsTr("Power")}
     ]
-    Layout.minimumHeight: 0
-    Layout.preferredHeight: 1
+    Layout.minimumHeight: minimumContentHeight
+    Layout.preferredHeight: minimumContentHeight
 
+    FontMetrics {
+        id: labelMetrics
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.metadataSize
+    }
+    FontMetrics {
+        id: valueMetrics
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: overview.valueSize
+        font.weight: Ui.Theme.fontWeightMedium
+    }
+    FontMetrics {
+        id: headingMetrics
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: overview.headingSize
+        font.weight: Ui.Theme.fontWeightMedium
+    }
     function periodReading(descriptor: var): var {
         const energy = descriptor.kind === "power";
         return Object.assign({}, descriptor, {
             objectName: "resourceTotal_" + descriptor.metric,
             label: energy ? qsTr("Estimated CPU-package energy") : qsTr("Estimated %1 transferred").arg(descriptor.label),
-            icon: energy ? "∑" : descriptor.icon,
+            shortLabel: energy ? qsTr("Est. energy") : descriptor.shortLabel,
             available: !loading && Resources.measured(descriptor.periodValue),
             valueText: descriptor.periodText,
-            color: energy ? Ui.Theme.graphSecondary : descriptor.color,
+            color: energy ? Ui.Theme.mutedText : descriptor.color,
+            plotted: !energy,
             detailText: qsTr("Selected period %1. Current %2. %3").arg(descriptor.observation).arg(descriptor.valueText).arg(descriptor.detailText)
         });
     }
 
-    GridLayout {
-        objectName: "applicationResourceCards"
+    Rectangle {
+        id: surface
+        objectName: "applicationResourceList"
         Layout.fillWidth: true
-        Layout.preferredHeight: overview.height
-        columns: 2
-        uniformCellHeights: true
-        columnSpacing: Math.round(8 * overview.uiScale)
-        rowSpacing: columnSpacing
+        Layout.preferredHeight: Math.max(overview.minimumContentHeight, overview.height)
+        color: Ui.Theme.surface
+        radius: Ui.Theme.cardRadius
+        readonly property real rowHeight: (height - 2 * overview.contentPadding) / overview.rows.length
         Repeater {
-            model: overview.cards.length
-            delegate: ApplicationResourceMicrocard {
+            model: overview.rows.length
+            delegate: ApplicationResourceRow {
                 required property int index
-                readonly property var modelData: overview.cards[index]
-                objectName: "resourceCard_" + modelData.lane.id
-                Layout.columnSpan: index === 4 ? 2 : 1
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.minimumWidth: 0
-                Layout.minimumHeight: 0
-                Layout.preferredWidth: 1
-                Layout.preferredHeight: 1
+                readonly property var modelData: overview.rows[index]
+                objectName: "resourceRow_" + modelData.lane.id
+                x: overview.contentPadding
+                y: overview.contentPadding + index * surface.rowHeight
+                width: Math.max(0, surface.width - 2 * overview.contentPadding)
+                height: surface.rowHeight
                 lane: modelData.lane
                 readings: modelData.readings
                 glyph: modelData.glyph
+                title: modelData.title
+                separatorVisible: index < overview.rows.length - 1
+                readingWidth: overview.readingWidth
+                labelWidth: overview.labelWidth
                 valueSize: overview.valueSize
+                headingSize: overview.headingSize
+                columnGap: overview.rowGap
                 points: overview.points
                 rangeStartMilliseconds: overview.rangeStartMilliseconds
                 rangeEndMilliseconds: overview.rangeEndMilliseconds

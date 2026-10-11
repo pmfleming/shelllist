@@ -72,6 +72,17 @@ Item {
     readonly property color batteryCharging: dark ? "#9db9a7" : "#506e5b"
     readonly property color batteryDischarging: dark ? "#c3aa86" : "#806644"
 
+    // Application history uses muted metric pairs, separate from the shell's
+    // selection accent and Battery's existing graph colors. Dark/light variants
+    // keep small readings legible on the low detail surface.
+    readonly property var applicationGraphColors: ({
+        activity: dark ? ["#a3bba9", "#c1a5b4"] : ["#4e705c", "#855c74"],
+        memory: dark ? ["#a0b6ce", "#b9abc9"] : ["#516f94", "#79638e"],
+        storage: dark ? ["#c8b38f", "#9bb9b0"] : ["#806943", "#50766a"],
+        network: dark ? ["#94bcb8", "#b4accb"] : ["#447873", "#73658f"],
+        energy: dark ? ["#cbb397"] : ["#876744"]
+    })
+
     // Forecast artwork has a dark backdrop independently of the desktop palette.
     readonly property color weatherHeroText: "#f4f7fb"
     readonly property color weatherHeroSecondaryText: "#d6dfec"

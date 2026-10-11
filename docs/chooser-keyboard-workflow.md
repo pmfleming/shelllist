@@ -518,25 +518,25 @@ steal focus or become new Tab stops; stale owner/content completions are rejecte
 by the daemon. Online enrichment is an explicit deployment setting, off by default.
 See [Media presentation and shortcut diagnosis](media.md).
 
-Applications' Resources page has five passive integrated microcards: Activity,
-Memory, Disk I/O, Network and a full-width Power/energy card. Each has two primary
-readings, one shared value scale, meaningful glyphs and two reused theme-derived
-series colours. Icon/value pairs overlay full-card histories; disk/network values
-are period totals. Readable rows take the space they need inside the card rather
-than enforcing an exact upper-half fit. Only horizontal chart guides remain, with
-missing intervals unpainted instead of hatched. Identified app-data bytes belong
-in passive Application details, not the power card. Visible approximation signs
-are omitted; estimated attribution, observation coverage, confidence, units,
-missing data and zero-versus-unavailable semantics remain authoritative.
-The 2×2 + full-width grid fills the expanded detail viewport without scrolling,
-reserving space for the header, bottom tabs, range, time axis and exceptions.
+Applications' Resources page has five passive history rows on one detail surface:
+Activity, Memory, Disk I/O, Network and Power. Compact shared label/value columns
+leave the remaining width for disjoint charts; muted metric pairs, swatches,
+secondary dashes and direction labels distinguish series. Disk/network readings
+are period totals; energy is not a plotted power series. Activity uses lines,
+memory retains bucket steps, and transfer/power histories use interval columns.
+Missing intervals are never bridged or replaced by zero; gaps in all series have
+subtle shading, not repeated text. Identified app-data bytes remain on Application
+details. Estimated attribution, observation coverage, confidence and availability
+semantics remain authoritative.
+Five equal rows fill the viewport, with readable font-measured minimum heights;
+short panes scroll through the shared page. A single time axis aligns with the
+plots. The redundant visible range label is omitted, not its accessible name.
 Its shared 30m / 2h / 24h segmented field is the sole editable stop and controls
 period totals and history, not current snapshots. Pointer choice remains a local
 draft; Enter/Tab saves and requests the new range, Escape or leaving the editor
-discards without a history request. Tab/Shift+Tab wrap on that field; cards,
+discards without a history request. Tab/Shift+Tab wrap on that field; rows,
 glyphs, bars and statistics never become additional stops or click actions.
-PageUp/PageDown retain shared page semantics, with no scroll distance in this
-viewport-fitted page. There is no definitions/caveats
+PageUp/PageDown retain shared page semantics and reveal short-page content. There is no definitions/caveats
 panel, Measurement details command, Alt+H disclosure or new chart-inspection key
 model. Accessible summaries retain full metric identities and observation data;
 unavailable/error/loading states and attribution exceptions stay explicit. See

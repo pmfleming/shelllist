@@ -18,6 +18,6 @@ internal ApplicationResourcePlot ApplicationResourcePlot.qml
 internal ApplicationResourceGlyph ApplicationResourceGlyph.qml
 internal ApplicationResourceTimeAxis ApplicationResourceTimeAxis.qml
 internal ApplicationResourceOverview ApplicationResourceOverview.qml
-internal ApplicationResourceMicrocard ApplicationResourceMicrocard.qml
+internal ApplicationResourceRow ApplicationResourceRow.qml
 ApplicationResources 1.0 ApplicationResources.js
 ApplicationResourcesPage 1.0 ApplicationResourcesPage.qml

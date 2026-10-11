@@ -44,11 +44,12 @@ Browsing uses a marker only; editing adds an editor-local background and lower l
 
 - Weather/time/media heroes retain expressive artwork and larger named reading
   sizes. Hero frames may retain 20px corners; ordinary surrounding cards use 16px.
-- Resource microcards retain their 2×2 plus full-width, viewport-fitted layout,
-  two reused theme series colours, units, missing-data gaps and single editable range selector.
-  Preserve the no-new-help/no-chart-keyboard contract. Prefer reducing chart
-  ornament over shrinking essential values; essential readings have a 14px
-  minimum, while chart ticks may remain 11px. Verify short-height fit separately.
+- Application resources use five passive history rows on one detail surface,
+  measured compact reading columns, desaturated dark/light series pairs and one
+  aligned time axis. Preserve units, independent missing-data gaps and the sole
+  editable range selector, without new Help/chart-keyboard behavior. Essential
+  readings retain a 14px floor; chart ticks may remain 11px. Short panes scroll
+  rather than clipping or shrinking the readings.
 - Calendars, monitor maps, notification previews and charts retain domain content
   geometry. Notification content titles are not structural group headings.
 - Battery's title/percentage is a heading-only header, not an invented chooser
@@ -240,7 +241,7 @@ owns its deliberate content geometry. Desktop/QA owns hardware/live acceptance.
 | Exception | Owner / reason |
 | --- | --- |
 | Weather/time/media heroes, artwork | Time/Weather and Media maintainers; semantic prominence and domain imagery, named size roles |
-| Resource card geometry, 14px essential-value floor, 11px plot annotations | Applications maintainer; viewport fit, metric semantics/gaps, no extra chart interaction |
+| Resource row geometry, 14px essential-value floor, 11px plot annotations | Applications maintainer; viewport fit, metric semantics/gaps, no extra chart interaction |
 | Calendar cells, agenda markers, monitor maps, notification content | Respective domain maintainers; content geometry is not a settings heading or field |
 | Shared inline field composition, including narrow todo input | Shared UI + panel maintainers; wrap the left label without stacking it above the editor |
 | Read-only/unsupported controls and pending state | Domain maintainer; preserve availability/retry/acknowledgement, never imply success or an editable value |
