@@ -11,6 +11,7 @@ ChooserSurface {
     property Item navigationContent: body
     property bool pendingFocus: false
     property bool consumed: false
+    readonly property bool focusReady: visible && enabled && Window.window !== null && navigation.contentReady && !chooserController.navigationBlocked
     property bool feedbackEnabled: false
     property string feedbackText: ""
     property string feedbackSummary: qsTr("Operation needs attention")
@@ -23,11 +24,25 @@ ChooserSurface {
         const memory = chooserController.viewMemory;
         return memory ? JSON.stringify([memory.key, memory.tab]) : "";
     }
+    function requestFocus(): void {
+        if (consumed || !chooserController.uiActive || chooserController.uiSuspending || chooserController.navigationBlocked)
+            return;
+        consumed = true;
+        pendingFocus = true;
+        Qt.callLater(restore, chooserController.uiGeneration);
+    }
+    // A retained or incubated standalone view must not depend on a host signal
+    // delivered before its Connections existed. Wait for attachment/content,
+    // then consume focus once; later input still cancels queued restoration.
+    Component.onCompleted: requestFocus()
+    onFocusReadyChanged: if (focusReady && pendingFocus)
+        Qt.callLater(restore, chooserController.uiGeneration)
     function restore(generation: int): void {
-        if (!pendingFocus || generation !== chooserController.uiGeneration || !chooserController.uiActive || chooserController.uiSuspending)
+        if (!pendingFocus || !focusReady || generation !== chooserController.uiGeneration || !chooserController.uiActive || chooserController.uiSuspending)
             return;
         pendingFocus = false;
-        chooserController.viewMemory.synchronize();
+        if (chooserController.viewMemory)
+            chooserController.viewMemory.synchronize();
         const saved = chooserController.focusMemory;
         region = Number.isFinite(saved.region) ? saved.region : 0;
         if (saved.context === context())
@@ -100,12 +115,11 @@ ChooserSurface {
     Connections {
         target: surface.chooserController
         function onNavigationInteracted(): void { surface.pendingFocus = false; navigation.cancelSessionRestore(); }
-        function onRestoreSessionFocusRequested(): void {
-            if (surface.consumed || !surface.chooserController.uiActive || surface.chooserController.uiSuspending)
-                return;
-            surface.consumed = true;
-            surface.pendingFocus = true;
-            Qt.callLater(surface.restore, surface.chooserController.uiGeneration);
+        function onRestoreSessionFocusRequested(): void { surface.requestFocus(); }
+        function onFocusSearchRequested(): void { surface.requestFocus(); }
+        function onNavigationBlockedChanged(): void {
+            if (surface.chooserController.navigationBlocked)
+                surface.pendingFocus = false;
         }
         function onUiSuspensionRequested(): void {
             surface.snapshot();
@@ -115,6 +129,7 @@ ChooserSurface {
         function onUiActiveChanged(): void {
             surface.pendingFocus = false;
             surface.consumed = false;
+            surface.requestFocus();
         }
     }
 }

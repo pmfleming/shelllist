@@ -32,6 +32,7 @@ Column {
             title: qsTr("Hardware power tuning")
             visible: (pane.controller.powerProfile.battery_aware !== null && pane.controller.powerProfile.battery_aware !== undefined) || (pane.controller.powerProfile.actions || []).length > 0
             Ui.ToggleRow {
+                objectName: "batteryAdaptiveTuning"
                 Layout.fillWidth: true
                 visible: pane.controller.powerProfile.battery_aware !== null && pane.controller.powerProfile.battery_aware !== undefined
                 title: qsTr("Adaptive hardware tuning")
@@ -45,7 +46,9 @@ Column {
                 model: pane.controller.powerProfile.actions || []
                 delegate: Ui.ToggleRow {
                     required property var modelData
+                    objectName: "batteryHardwareAction-" + modelData.name
                     Layout.fillWidth: true
+                    icons: [Presentation.actionIcon(modelData.name)]
                     title: Presentation.actionName(modelData.name)
                     subtitle: modelData.name === "trickle_charge" ? qsTr("Charging behaviour · not a charge limit") : (modelData.description || "")
                     checked: !!modelData.enabled

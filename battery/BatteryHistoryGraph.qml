@@ -31,10 +31,14 @@ Item {
     readonly property real historicalPosition: cursorPosition / historyFraction
     readonly property var inspectedSample: historicalPosition >= 0 && historicalPosition <= 1 ? History.nearestSample(series.segments, historicalPosition) : null
     readonly property var inspectedPower: historicalPosition >= 0 && historicalPosition <= 1 ? History.nearestSample(powerSeries.segments, historicalPosition) : null
+    readonly property string inspectionReading: (inspectedSample ? inspectedSample.value + "%" : qsTr("No charge sample"))
+        + (inspectedPower ? " · " + inspectedPower.value.toFixed(1) + " W " + (inspectedPower.value === 0 ? qsTr("· no flow") : inspectedPower.charging ? qsTr("in") : qsTr("out")) : qsTr(" · No power measurement"))
     readonly property string inspectionText: historicalPosition > 1
         ? qsTr("Estimated · ~%1 %2").arg(Presentation.duration(forecast.seconds)).arg(forecast.target === 0 ? qsTr("to empty") : qsTr("to %1%").arg(forecast.target))
-        : (inspectedSample ? new Date(inspectedSample.timestamp_ms).toLocaleString() + " · " + inspectedSample.value + "%" : qsTr("No charge sample"))
-            + (inspectedPower ? " · " + inspectedPower.value.toFixed(1) + " W " + (inspectedPower.value === 0 ? qsTr("· no flow") : inspectedPower.charging ? qsTr("in") : qsTr("out")) + qsTr(" · nearest measurement") : qsTr(" · No power measurement"))
+        : (inspectedSample ? new Date(inspectedSample.timestamp_ms).toLocaleString() + " · " : "")
+            + inspectionReading + (inspectedPower ? qsTr(" · nearest measurement") : "")
+    readonly property string inspectionSummary: historicalPosition > 1 ? inspectionText
+        : (inspectedSample ? new Date(inspectedSample.timestamp_ms).toLocaleString(Qt.locale(), Locale.ShortFormat) + " · " : "") + inspectionReading
 
     Layout.fillWidth: true
     Layout.preferredHeight: graphHeight

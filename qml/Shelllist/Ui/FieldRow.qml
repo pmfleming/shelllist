@@ -18,7 +18,9 @@ Item {
     property color labelColor: Theme.mutedText
     property color subtitleColor: Theme.mutedText
     property bool separatorVisible: true
-    readonly property real labelColumnWidth: Theme.fieldLabelWidth(width)
+    // Fixed-size editors (switches) leave the remaining width to their labels.
+    property bool fixedEditorWidth: false
+    readonly property real labelColumnWidth: labelHost.width
     readonly property real editorX: editorHost.x
 
     implicitWidth: 320
@@ -30,15 +32,18 @@ Item {
         anchors.fill: parent
         spacing: Theme.spacingMd
         RowLayout {
+            id: labelHost
             visible: row.label.length > 0 || row.icons.length > 0
-            Layout.preferredWidth: row.labelColumnWidth
-            Layout.minimumWidth: row.labelColumnWidth
-            Layout.maximumWidth: row.labelColumnWidth
+            Layout.fillWidth: row.fixedEditorWidth
+            Layout.preferredWidth: row.fixedEditorWidth ? 1 : Theme.fieldLabelWidth(row.width)
+            Layout.minimumWidth: row.fixedEditorWidth ? 0 : Theme.fieldLabelWidth(row.width)
+            Layout.maximumWidth: row.fixedEditorWidth ? Number.POSITIVE_INFINITY : Theme.fieldLabelWidth(row.width)
             spacing: Theme.spacingSm
             Repeater {
                 model: row.icons
                 delegate: GlyphLabel {
                     required property string modelData
+                    objectName: "fieldRowIcon"
                     glyph: modelData
                     Layout.preferredWidth: Theme.formIconSize
                     font.pixelSize: Theme.formIconSize
@@ -61,6 +66,7 @@ Item {
                     Accessible.ignored: true
                 }
                 ThemeText {
+                    objectName: "fieldRowSubtitle"
                     width: parent.width
                     visible: text.length > 0
                     text: row.subtitle
@@ -74,15 +80,15 @@ Item {
         RowLayout {
             id: editorHost
             objectName: "fieldRowEditorHost"
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
+            Layout.fillWidth: !row.fixedEditorWidth
+            Layout.minimumWidth: row.fixedEditorWidth ? implicitWidth : 0
             Layout.maximumWidth: row.width
-            Layout.preferredWidth: 1
+            Layout.preferredWidth: row.fixedEditorWidth ? implicitWidth : 1
             spacing: Theme.spacingSm
             Item {
                 id: editorSpacer
                 Layout.fillWidth: true
-                visible: row.controlItem !== null && !row.controlItem.Layout.fillWidth
+                visible: !row.fixedEditorWidth && row.controlItem !== null && !row.controlItem.Layout.fillWidth
             }
         }
         RowLayout {

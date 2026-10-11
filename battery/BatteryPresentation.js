@@ -78,6 +78,14 @@ function statusMessage(messages, status, fallback) {
     return Object.prototype.hasOwnProperty.call(messages, status) ? messages[status] : fallback;
 }
 
+function actionIcon(action) {
+    return statusMessage({
+        trickle_charge: "battery_charging_full",
+        amdgpu_panel_power: "monitor",
+        amdgpu_dpm: "memory"
+    }, action, "tune");
+}
+
 function actionName(action) {
     return String(action || "").split("_").map(function (part) {
         return part.length > 0 ? part[0].toUpperCase() + part.slice(1) : part;

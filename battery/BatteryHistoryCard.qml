@@ -177,21 +177,12 @@ Rectangle {
                 }
             }
         }
-        Ui.ThemeText {
-            id: inspectionLabel
+        Ui.FeedbackSource {
             objectName: "batteryHistoryInspection"
-            Layout.fillWidth: true
-            Layout.preferredHeight: 2 * fontMetrics.lineSpacing
             text: graph.cursorPosition >= 0 ? graph.inspectionText : qsTr("Observed time · suspended intervals excluded")
-            color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.metadataSize
-            wrapMode: Text.Wrap
-            maximumLineCount: 2
-            elide: Text.ElideRight
-            FontMetrics {
-                id: fontMetrics
-                font: inspectionLabel.font
-            }
+            summaryText: graph.cursorPosition >= 0 ? graph.inspectionSummary : text
+            briefText: graph.cursorPosition >= 0 ? (graph.historicalPosition > 1 ? graph.inspectionText : graph.inspectionReading) : qsTr("Suspended time excluded")
+            priority: graph.cursorPosition >= 0 ? 5 : 0
         }
     }
 }

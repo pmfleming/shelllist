@@ -72,6 +72,12 @@ Item {
     readonly property color batteryCharging: dark ? "#9db9a7" : "#506e5b"
     readonly property color batteryDischarging: dark ? "#c3aa86" : "#806644"
 
+    // Battery mode/sleep glyphs: distinct muted hues without washing them into
+    // the neutral foreground. Darker light-theme variants retain small-icon contrast.
+    readonly property var batteryControlColors: dark
+        ? {"power-saver": "#a8c4ad", balanced: "#a4bbd5", performance: "#d0b58e", hibernate: "#beb0d0"}
+        : {"power-saver": "#47624d", balanced: "#455f7c", performance: "#705735", hibernate: "#66547e"}
+
     // Application history uses muted metric pairs, separate from the shell's
     // selection accent and Battery's existing graph colors. Dark/light variants
     // keep small readings legible on the low detail surface.
@@ -229,7 +235,7 @@ Item {
         return null;
     }
 
-    // One label-column policy for every setting family, including narrow rows.
+    // Label-column policy for expanding editors; fixed switches give labels the remaining width.
     function fieldLabelWidth(availableWidth) {
         return Math.max(70, Math.min(150, Math.floor(availableWidth * 0.30)));
     }

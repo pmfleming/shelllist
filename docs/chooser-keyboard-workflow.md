@@ -79,8 +79,10 @@ browsing. Actions are never traversal stops. Shift+Enter remains available for a
 newline in multiline editors.
 
 `FieldRow` owns the common left-label/right-editor composition used by
-`FormField`, `SettingRow`, sliders and toggles. Labels wrap within the shared
-column; panels must not introduce stacked labels or private breakpoints.
+`FormField`, `SettingRow`, sliders and toggles. Expanding editors retain the shared
+label column; fixed-size switches stay right-aligned while their labels and
+subtitles use all remaining width. Labels wrap only within that available space;
+panels must not introduce stacked labels or private breakpoints.
 Inline icons/names, separators, state badges and disclosed help are passive: the contained shared editor keeps its stable focus identity and
 transaction. A single-line or expanded scrolling `TextEditor` is still one field. IP/DNS errors become visible on explicit save, without
 trapping Tab: saving retains the domain draft, while the existing whole-group
@@ -160,6 +162,14 @@ clamped between the measured edge groups otherwise. Narrow widths reduce gaps an
 omit the numerical date, not actions; below the full strip's minimum width the
 existing explicit overflow scrolls it. Workspace overflow still scrolls independently
 and reveals the active workspace. Neither layout nor reveal dispatches an action.
+
+Standalone panels initialize keyboard browsing on activation once their visible
+content is attached and ready, even if the host's focus request preceded view
+creation. First entry selects the first available editable field; reopening
+restores the saved field. No initial Tab is required. Late duplicate host requests
+must not reset subsequent keyboard/pointer navigation, and closing cancels queued
+focus. Presentation records initialized while inactive are created on activation
+so the first invocation can remember fields without storing unsaved values.
 
 Battery is one direct action with a continuous bottom-up fill and a reserved,
 non-overlapping external state-mark slot. Lightning, plug, check, warning and
@@ -890,8 +900,9 @@ no frontend timestamp classification or extra editable stop is introduced.
 
 Overview begins with one deferred Power mode field, displayed as three circular
 icon choices (leaf / balance scales / speedometer for saver / balanced /
-performance), with very desaturated sage / blue-grey / sand glyphs mixed with
-theme foregrounds. Colour is supplemental; accessible names, the saved dot and
+performance), with distinct desaturated sage / blue-grey / sand glyphs and
+darker light-theme variants, rather than near-neutral foreground blends.
+Colour is supplemental; accessible names, the saved dot and
 draft highlight retain their meanings. The shared `SegmentedControl`
 retains its session, arrow editing and Enter/Tab save / Escape discard behavior;
 its circles are not independent commands or switches. The saved selection dot
@@ -904,7 +915,10 @@ still takes precedence), sage charging above zero, and amber discharging below
 zero, with readable light-theme variants. Short text legends and in/out labels
 supplement colour. Both tracks retain the observed-time axis and missing-sample
 gaps; only charge receives a dotted forecast. Current watts, direction and
-zero-versus-unavailable remain explicit. Hover shows the nearest measurement;
+zero-versus-unavailable remain explicit. The observed-time caveat and hover/inspection
+readings use the shared fixed status bar, not a footer inside the history card;
+operation feedback takes priority and hidden history contributes nothing.
+Hover shows the nearest measurement;
 clicking either track enters the existing pointer-only inspection, with arrows
 and Escape inside that mode. Neither track joins Tab traversal or adds an entry
 command. The shared Range field retains deferred Enter/Tab save and Escape
@@ -931,6 +945,10 @@ native modal traversal, and restore prior focus on dismissal. Closing the panel
 or changing tabs discards the review; replacing the calibration battery cancels
 rather than retargets it. Confirmation rechecks capabilities and busy state.
 
+Hardware-tuning toggles use passive semantic icons for charging, panel power and
+GPU power management, with a tuning-icon fallback for new daemon actions. Their
+labels/subtitles expand up to the unchanged switch hit area; icons add no focus
+stops or writes.
 Routine caveats and source/health/power readings use passive semantic icons with
 accessible descriptions. Section Help is a named Alt+J command, not a field stop
 or hover tooltip. Automatic-sleep integration failures keep a visible warning,

@@ -30,7 +30,7 @@ Ui.DetailColumnCard {
             Layout.preferredWidth: Ui.Theme.formActionSize
             Layout.preferredHeight: Ui.Theme.formActionSize
             icon: "coffee"
-            iconColor: pane.controller.keepAwake ? labelColor : Ui.Theme.mix(Ui.Theme.text, Qt.color(Presentation.profileTint("performance")), 0.35)
+            iconColor: pane.controller.keepAwake ? labelColor : Ui.Theme.batteryControlColors.performance
             iconSize: Ui.Theme.formActionIconSize
             tone: pane.controller.keepAwake ? "accent" : "normal"
             accessibleName: qsTr("Keep awake")
@@ -57,7 +57,7 @@ Ui.DetailColumnCard {
                     enabled: pane.controller.canPowerSuspendAction(action),
                     metadata: {toolTip: Presentation.suspendActionName(action) + " · " + Presentation.suspendCapabilityDescription(pane.controller.powerSuspend, action)},
                     presentation: {group: "toolbar", tone: "normal",
-                        iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(({lock: Presentation.profileTint("power-saver"), suspend: Presentation.profileTint("balanced"), hibernate: "#a39bb0"})[action]), 0.35)}};
+                        iconColor: Ui.Theme.batteryControlColors[({lock: "power-saver", suspend: "balanced", hibernate: "hibernate"})[action]]}};
             })
             onTriggered: function (action) { pane.controller.powerSuspendAction(action); }
         }

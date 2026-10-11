@@ -37,8 +37,12 @@ Item {
         const changed = activeKey !== key;
         const record = records[key];
         const nextTab = validTab(changed ? (record ? record.tab : initialTab) : tab);
-        if (!changed && nextTab === activeTab)
+        if (!changed && nextTab === activeTab) {
+            // Context may have initialized while the controller was inactive.
+            // Materialize its record now so the first invocation can remember fields.
+            rememberPresentation();
             return;
+        }
         contextChanging(changed);
         restoring = true;
         activeKey = key;

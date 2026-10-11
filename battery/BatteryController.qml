@@ -195,8 +195,8 @@ Ui.ChooserController {
             value: profile.name,
             label: labels[profile.name] || profile.name,
             icon: Presentation.profileIcon(profile.name),
-            iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(Presentation.profileTint(profile.name) || Ui.Theme.text), 0.35),
-            selectedIconColor: Ui.Theme.mix(Ui.Theme.selectedText, Qt.color(Presentation.profileTint(profile.name) || Ui.Theme.selectedText), 0.35)
+            iconColor: Ui.Theme.batteryControlColors[profile.name] || Ui.Theme.text,
+            selectedIconColor: Ui.Theme.batteryControlColors[profile.name] || Ui.Theme.selectedText
         };
     })
     readonly property var levelProfileOptions: ["power-saver", "balanced", "performance"].map(function (name) {

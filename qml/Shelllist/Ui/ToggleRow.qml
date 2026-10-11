@@ -28,10 +28,10 @@ PointerActionControl {
         id: layout
         anchors.fill: parent
         label: row.title
+        fixedEditorWidth: true
         icons: row.icons
         subtitle: row.showSubtitle ? row.subtitle : ""
         labelColor: row.tone === "danger" ? Theme.danger : row.tone === "active" ? Theme.active : row.tone === "warning" ? Theme.warning : Theme.mutedText
-        Item { Layout.fillWidth: true }
         Rectangle {
             id: toggleFocus
             Layout.preferredWidth: 64

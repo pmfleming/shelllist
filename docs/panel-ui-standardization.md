@@ -17,7 +17,7 @@ the earlier plan, not acceptance of every consumer or the later revision. The
 | Text/dropdown value | 16px regular; segmented options retain native option styling |
 | Body/error/status | 13px; concise summaries in fixed status geometry; pending is not success |
 | Metadata | 12px; 11px only for nonessential chart ticks/annotations |
-| Form/setting row | Shared `FieldRow`, left label/right editor, `Theme.formHeight` floor; labels may wrap |
+| Form/setting row | Shared `FieldRow`, left label/right editor, `Theme.formHeight` floor; fixed-size switches give labels the remaining width; labels may wrap |
 | Switch | 52×32 track, 16/24px off/on thumb; compact does not shrink the switch |
 | Inspector inset | Symmetric 16px at 1×; shared outer geometry remains unchanged |
 | Card spacing/padding | 12px peers/padding; 24px only for a distinct major group |
