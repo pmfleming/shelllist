@@ -1,0 +1,53 @@
+{
+  "cancelled": {
+    "event": "cancelled",
+    "operation": {
+      "action": "activate",
+      "id": "operation-example",
+      "message": "Application action cancelled",
+      "status": "cancelled",
+      "target_id": "Alpha"
+    },
+    "protocol": "app-api",
+    "stream": "applications.operation",
+    "subscription_id": "subscription-example",
+    "version": 1
+  },
+  "completed": {
+    "event": "completed",
+    "operation": {
+      "action": "activate",
+      "id": "operation-example",
+      "message": "Application action completed",
+      "status": "completed",
+      "target_id": "Alpha"
+    },
+    "protocol": "app-api",
+    "stream": "applications.operation",
+    "subscription_id": "subscription-example",
+    "version": 1
+  },
+  "failed": {
+    "event": "failed",
+    "operation": {
+      "action": "activate",
+      "id": "operation-example",
+      "message": "Application action failed",
+      "status": "failed",
+      "target_id": "Alpha"
+    },
+    "protocol": "app-api",
+    "stream": "applications.operation",
+    "subscription_id": "subscription-example",
+    "version": 1
+  },
+  "gap": {
+    "dropped_events": 4,
+    "event": "resync-required",
+    "protocol": "app-api",
+    "recovery_method": "applications.operation.status",
+    "stream": "applications.operation",
+    "subscription_id": "subscription-example",
+    "version": 1
+  }
+}

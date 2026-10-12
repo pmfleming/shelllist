@@ -839,6 +839,11 @@
               ''
                 mkdir -p test-root/tests
                 cp -r ${./tests/qml} test-root/tests/qml
+                chmod -R u+w test-root/tests
+                # Test the live producer's serializer, not only checked-in QML fakes.
+                ${appDaemon}/bin/app-daemon debug event-contract-fixture > app-events.json
+                diff -u ${./tests/qml/fixtures/app-events.json} app-events.json
+                cp app-events.json test-root/tests/qml/fixtures/app-events.json
                 cp -r ${./qml} test-root/qml
                 chmod -R u+w test-root/qml
                 ln -sfn ${./battery} test-root/qml/Shelllist/Battery
@@ -856,6 +861,7 @@
                 export HOME=$TMPDIR
                 export XDG_CACHE_HOME=$TMPDIR/cache
                 export QT_PLUGIN_PATH=${pkgs.qt6.qtsvg}/lib/qt-6/plugins
+                export QML_XHR_ALLOW_FILE_READ=1
                 export TZDIR=${pkgs.tzdata}/share/zoneinfo
                 export TZ=UTC
                 QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software qmltestrunner \

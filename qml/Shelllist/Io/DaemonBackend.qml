@@ -218,7 +218,7 @@ Item {
     }
 
     function isEventGap(event: var): bool {
-        return event.event === "lagged" || !!(event.data && event.data.resync_required);
+        return event.event === "lagged" || event.event === "resync-required" || !!(event.data && event.data.resync_required);
     }
 
     function acceptSharedEvent(event: var): void {

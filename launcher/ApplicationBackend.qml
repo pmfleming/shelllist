@@ -79,7 +79,9 @@ Io.DaemonBackend {
         if (event.event === "subscribed")
             return;
         if (event.stream === AppApi.streams.operation) {
-            const operation = event.data && event.data.operation;
+            // app-api v1 emits operation payloads at the top level. Retain
+            // nested-envelope compatibility without changing other daemons.
+            const operation = (event.data && event.data.operation) || event.operation;
             if (operation)
                 controller.applyOperation("", operation);
             return;

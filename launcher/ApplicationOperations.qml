@@ -204,6 +204,7 @@ Item {
         }
     }
     Timer {
+        objectName: "applicationOperationPollTimer"
         interval: 2000
         running: Object.values(operations.pending).some(record => record.checks < 10)
         repeat: true
