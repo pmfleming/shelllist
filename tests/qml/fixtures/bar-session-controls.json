@@ -1,0 +1,1061 @@
+{
+  "cases": {
+    "automatic": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "operation": "automatic",
+        "player_id": null
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "media": {
+            "active_player": "org.mpris.MediaPlayer2.contract_one",
+            "available": true,
+            "error": null,
+            "pinned_player": null,
+            "players": [
+              {
+                "album": "",
+                "art_url": "",
+                "artist": "",
+                "can_control": true,
+                "can_next": true,
+                "can_pause": true,
+                "can_play": true,
+                "can_previous": true,
+                "can_seek": true,
+                "content_type": "unknown",
+                "content_type_source": "unknown",
+                "control_mode": "automatic",
+                "desktop_entry": "",
+                "id": "org.mpris.MediaPlayer2.contract_one",
+                "identity": "one",
+                "length_us": 180000000,
+                "metadata_sources": {},
+                "playback_rate": 1.0,
+                "playback_status": "Playing",
+                "position_observed_at_unix_ms": 0,
+                "position_us": 0,
+                "source": null,
+                "title": "Example track"
+              },
+              {
+                "album": "",
+                "art_url": "",
+                "artist": "",
+                "can_control": true,
+                "can_next": true,
+                "can_pause": true,
+                "can_play": true,
+                "can_previous": true,
+                "can_seek": true,
+                "content_type": "unknown",
+                "content_type_source": "unknown",
+                "control_mode": "automatic",
+                "desktop_entry": "",
+                "id": "org.mpris.MediaPlayer2.contract_two",
+                "identity": "two",
+                "length_us": 180000000,
+                "metadata_sources": {},
+                "playback_rate": 1.0,
+                "playback_status": "Playing",
+                "position_observed_at_unix_ms": 0,
+                "position_us": 0,
+                "source": null,
+                "title": "Example track"
+              }
+            ]
+          },
+          "operation": "automatic",
+          "player_id": "org.mpris.MediaPlayer2.contract_one"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "cycle": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "operation": "cycle",
+        "player_id": null
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "media": {
+            "active_player": "org.mpris.MediaPlayer2.contract_two",
+            "available": true,
+            "error": null,
+            "pinned_player": "org.mpris.MediaPlayer2.contract_two",
+            "players": [
+              {
+                "album": "",
+                "art_url": "",
+                "artist": "",
+                "can_control": true,
+                "can_next": true,
+                "can_pause": true,
+                "can_play": true,
+                "can_previous": true,
+                "can_seek": true,
+                "content_type": "unknown",
+                "content_type_source": "unknown",
+                "control_mode": "automatic",
+                "desktop_entry": "",
+                "id": "org.mpris.MediaPlayer2.contract_one",
+                "identity": "one",
+                "length_us": 180000000,
+                "metadata_sources": {},
+                "playback_rate": 1.0,
+                "playback_status": "Playing",
+                "position_observed_at_unix_ms": 0,
+                "position_us": 0,
+                "source": null,
+                "title": "Example track"
+              },
+              {
+                "album": "",
+                "art_url": "",
+                "artist": "",
+                "can_control": true,
+                "can_next": true,
+                "can_pause": true,
+                "can_play": true,
+                "can_previous": true,
+                "can_seek": true,
+                "content_type": "unknown",
+                "content_type_source": "unknown",
+                "control_mode": "automatic",
+                "desktop_entry": "",
+                "id": "org.mpris.MediaPlayer2.contract_two",
+                "identity": "two",
+                "length_us": 180000000,
+                "metadata_sources": {},
+                "playback_rate": 1.0,
+                "playback_status": "Playing",
+                "position_observed_at_unix_ms": 0,
+                "position_us": 0,
+                "source": null,
+                "title": "Example track"
+              }
+            ]
+          },
+          "operation": "cycle",
+          "player_id": "org.mpris.MediaPlayer2.contract_two"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "next": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "operation": "next",
+        "player_id": "org.mpris.MediaPlayer2.contract_one"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": "next",
+          "player_id": "org.mpris.MediaPlayer2.contract_one"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "pause": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "operation": "pause",
+        "player_id": "org.mpris.MediaPlayer2.contract_one"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": "pause",
+          "player_id": "org.mpris.MediaPlayer2.contract_one"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "play": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "operation": "play",
+        "player_id": "org.mpris.MediaPlayer2.contract_one"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": "play",
+          "player_id": "org.mpris.MediaPlayer2.contract_one"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "play-pause": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "operation": "play-pause",
+        "player_id": "org.mpris.MediaPlayer2.contract_one"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": "play-pause",
+          "player_id": "org.mpris.MediaPlayer2.contract_one"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "previous": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "operation": "previous",
+        "player_id": "org.mpris.MediaPlayer2.contract_one"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": "previous",
+          "player_id": "org.mpris.MediaPlayer2.contract_one"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "seek": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "offset_seconds": 10,
+        "operation": "seek",
+        "player_id": "org.mpris.MediaPlayer2.contract_one"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "offset_seconds": 10,
+          "operation": "seek",
+          "player_id": "org.mpris.MediaPlayer2.contract_one"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "select": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "operation": "select",
+        "player_id": "org.mpris.MediaPlayer2.contract_one"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "media": {
+            "active_player": "org.mpris.MediaPlayer2.contract_one",
+            "available": true,
+            "error": null,
+            "pinned_player": "org.mpris.MediaPlayer2.contract_one",
+            "players": [
+              {
+                "album": "",
+                "art_url": "",
+                "artist": "",
+                "can_control": true,
+                "can_next": true,
+                "can_pause": true,
+                "can_play": true,
+                "can_previous": true,
+                "can_seek": true,
+                "content_type": "unknown",
+                "content_type_source": "unknown",
+                "control_mode": "automatic",
+                "desktop_entry": "",
+                "id": "org.mpris.MediaPlayer2.contract_one",
+                "identity": "one",
+                "length_us": 180000000,
+                "metadata_sources": {},
+                "playback_rate": 1.0,
+                "playback_status": "Playing",
+                "position_observed_at_unix_ms": 0,
+                "position_us": 0,
+                "source": null,
+                "title": "Example track"
+              },
+              {
+                "album": "",
+                "art_url": "",
+                "artist": "",
+                "can_control": true,
+                "can_next": true,
+                "can_pause": true,
+                "can_play": true,
+                "can_previous": true,
+                "can_seek": true,
+                "content_type": "unknown",
+                "content_type_source": "unknown",
+                "control_mode": "automatic",
+                "desktop_entry": "",
+                "id": "org.mpris.MediaPlayer2.contract_two",
+                "identity": "two",
+                "length_us": 180000000,
+                "metadata_sources": {},
+                "playback_rate": 1.0,
+                "playback_status": "Playing",
+                "position_observed_at_unix_ms": 0,
+                "position_us": 0,
+                "source": null,
+                "title": "Example track"
+              }
+            ]
+          },
+          "operation": "select",
+          "player_id": "org.mpris.MediaPlayer2.contract_one"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "set-mode": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "mode": "seek",
+        "operation": "set-mode",
+        "player_id": "org.mpris.MediaPlayer2.contract_one"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "media": {
+            "active_player": "org.mpris.MediaPlayer2.contract_one",
+            "available": true,
+            "error": null,
+            "pinned_player": null,
+            "players": [
+              {
+                "album": "",
+                "art_url": "",
+                "artist": "",
+                "can_control": true,
+                "can_next": true,
+                "can_pause": true,
+                "can_play": true,
+                "can_previous": true,
+                "can_seek": true,
+                "content_type": "unknown",
+                "content_type_source": "unknown",
+                "control_mode": "seek",
+                "desktop_entry": "",
+                "id": "org.mpris.MediaPlayer2.contract_one",
+                "identity": "one",
+                "length_us": 180000000,
+                "metadata_sources": {},
+                "playback_rate": 1.0,
+                "playback_status": "Playing",
+                "position_observed_at_unix_ms": 0,
+                "position_us": 0,
+                "source": null,
+                "title": "Example track"
+              },
+              {
+                "album": "",
+                "art_url": "",
+                "artist": "",
+                "can_control": true,
+                "can_next": true,
+                "can_pause": true,
+                "can_play": true,
+                "can_previous": true,
+                "can_seek": true,
+                "content_type": "unknown",
+                "content_type_source": "unknown",
+                "control_mode": "automatic",
+                "desktop_entry": "",
+                "id": "org.mpris.MediaPlayer2.contract_two",
+                "identity": "two",
+                "length_us": 180000000,
+                "metadata_sources": {},
+                "playback_rate": 1.0,
+                "playback_status": "Playing",
+                "position_observed_at_unix_ms": 0,
+                "position_us": 0,
+                "source": null,
+                "title": "Example track"
+              }
+            ]
+          },
+          "operation": "set-mode",
+          "player_id": "org.mpris.MediaPlayer2.contract_one"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "stop": {
+      "failed": {
+        "error": {
+          "code": "media-operation-failed",
+          "message": "Player disappeared; command outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "media.operation",
+      "params": {
+        "operation": "stop",
+        "player_id": "org.mpris.MediaPlayer2.contract_one"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "media.operation parameters are invalid: invalid type: null, expected struct MediaRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": "stop",
+          "player_id": "org.mpris.MediaPlayer2.contract_one"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "updates": {
+      "failed": {
+        "error": {
+          "code": "update-refresh-failed",
+          "message": "Update state unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "updates.refresh",
+      "params": {},
+      "rejected": null,
+      "success": {
+        "data": {
+          "updates": {
+            "available": true,
+            "error": null,
+            "jobs": [],
+            "lanes": [],
+            "ready": false,
+            "state_directory": ""
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "workspace": {
+      "failed": {
+        "error": {
+          "code": "workspace-focus-failed",
+          "message": "Compositor reply lost; focus outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "workspace.focus",
+      "params": {
+        "on_current_monitor": true,
+        "workspace_id": 2
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "workspace.focus parameters are invalid: invalid type: null, expected struct WorkspaceRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "on_current_monitor": true,
+          "operation": "workspace.focus",
+          "workspace_id": 2
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    }
+  },
+  "snapshot": {
+    "data": {
+      "snapshot": {
+        "activity": {
+          "available": false,
+          "error": null,
+          "event_count": 0,
+          "incomplete_todo_count": 0,
+          "locations": [],
+          "lunar": null,
+          "next_event": null,
+          "sources": [],
+          "syncing": false,
+          "weather": {
+            "apparent_temperature_c": 0.0,
+            "available": false,
+            "condition": "",
+            "condition_code": 0,
+            "daily": [],
+            "error": null,
+            "high_c": 0.0,
+            "home": false,
+            "hourly": [],
+            "humidity_percent": 0,
+            "id": "",
+            "is_day": false,
+            "latitude": 0.0,
+            "location": "",
+            "longitude": 0.0,
+            "low_c": 0.0,
+            "precipitation_mm": 0.0,
+            "precipitation_probability": 0,
+            "solar_noon": null,
+            "sunrise_unix_ms": 0,
+            "sunset_unix_ms": 0,
+            "temperature_c": 0.0,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "updated_unix_ms": 0,
+            "utc_offset_seconds": 0,
+            "wind_direction_degrees": 0,
+            "wind_gust_kmh": 0.0,
+            "wind_speed_kmh": 0.0
+          },
+          "weather_locations": [],
+          "world_clocks": []
+        },
+        "audio": {
+          "available": false,
+          "error": null,
+          "input_available": false,
+          "input_muted": false,
+          "muted": false,
+          "sink_description": "",
+          "sink_name": "",
+          "source_description": "",
+          "source_name": "",
+          "volume_percent": 0
+        },
+        "battery": {
+          "available": false,
+          "charging": false,
+          "critical": false,
+          "cycles": null,
+          "devices": [],
+          "error": null,
+          "forecast": {
+            "approximate": false,
+            "estimating": false,
+            "limit": null,
+            "percentage": 0,
+            "scope": "",
+            "seconds": 0.0,
+            "status": "",
+            "target": 0
+          },
+          "health_percent": null,
+          "history": {
+            "active_duration_ms": 0,
+            "current_point": null,
+            "energy": {
+              "activeDurationMs": 0,
+              "bars": [],
+              "intervalMs": 0,
+              "maximum": 0.0,
+              "observedMs": 0,
+              "totalWh": 0.0
+            },
+            "last_charge_timestamp_ms": 0,
+            "latest_timestamp_ms": 0,
+            "points": [],
+            "retention_days": 0
+          },
+          "native_path": "",
+          "operation": {
+            "battery_id": "",
+            "expires_unix_ms": 0,
+            "kind": "",
+            "phase": "",
+            "started_unix_ms": 0
+          },
+          "percentage": 0,
+          "plugged": false,
+          "policy": {
+            "auto_power_saver": true,
+            "critical_percent": 12,
+            "critical_profile": "power-saver",
+            "notify_critical": true,
+            "notify_warning": true,
+            "notify_when_full": true,
+            "recovery_margin_percent": 3,
+            "warning_percent": 25,
+            "warning_profile": "power-saver"
+          },
+          "power_available": false,
+          "power_watts": 0.0,
+          "protection": {
+            "available_behaviours": [],
+            "backend": "",
+            "charge_behaviour": null,
+            "charge_once_active": false,
+            "desired_enabled": false,
+            "desired_end_percent": null,
+            "desired_start_percent": null,
+            "enabled": false,
+            "end_percent": null,
+            "error": null,
+            "managed": false,
+            "start_percent": null,
+            "supported": false,
+            "supports_charge_behaviour": false,
+            "supports_end": false,
+            "supports_start": false,
+            "thresholds_verified": false
+          },
+          "state": "",
+          "time_to_empty_seconds": 0,
+          "time_to_full_seconds": 0,
+          "warning": false
+        },
+        "brightness": {
+          "available": false,
+          "brightness": 0,
+          "device": "",
+          "error": null,
+          "max_brightness": 0,
+          "percent": 0
+        },
+        "compositor": {
+          "animations_enabled": null,
+          "available": false,
+          "error": null,
+          "revision": 0
+        },
+        "display_policy": {
+          "available": false,
+          "baseline": "",
+          "docking_state": "settled",
+          "error": null,
+          "focus": {
+            "available": false,
+            "error": null,
+            "saved": {},
+            "values": {}
+          },
+          "layout": {
+            "manual_enablement": false,
+            "saved": {
+              "outputs": []
+            },
+            "trial": null
+          },
+          "outputs": [],
+          "policy": {
+            "prefer_external": true
+          },
+          "status": ""
+        },
+        "media": {
+          "active_player": "org.mpris.MediaPlayer2.contract_one",
+          "available": true,
+          "error": null,
+          "pinned_player": null,
+          "players": [
+            {
+              "album": "",
+              "art_url": "",
+              "artist": "",
+              "can_control": true,
+              "can_next": true,
+              "can_pause": true,
+              "can_play": true,
+              "can_previous": true,
+              "can_seek": true,
+              "content_type": "unknown",
+              "content_type_source": "unknown",
+              "control_mode": "automatic",
+              "desktop_entry": "",
+              "id": "org.mpris.MediaPlayer2.contract_one",
+              "identity": "one",
+              "length_us": 180000000,
+              "metadata_sources": {},
+              "playback_rate": 1.0,
+              "playback_status": "Playing",
+              "position_observed_at_unix_ms": 0,
+              "position_us": 0,
+              "source": null,
+              "title": "Example track"
+            },
+            {
+              "album": "",
+              "art_url": "",
+              "artist": "",
+              "can_control": true,
+              "can_next": true,
+              "can_pause": true,
+              "can_play": true,
+              "can_previous": true,
+              "can_seek": true,
+              "content_type": "unknown",
+              "content_type_source": "unknown",
+              "control_mode": "automatic",
+              "desktop_entry": "",
+              "id": "org.mpris.MediaPlayer2.contract_two",
+              "identity": "two",
+              "length_us": 180000000,
+              "metadata_sources": {},
+              "playback_rate": 1.0,
+              "playback_status": "Playing",
+              "position_observed_at_unix_ms": 0,
+              "position_us": 0,
+              "source": null,
+              "title": "Example track"
+            }
+          ]
+        },
+        "notification_active": {
+          "available": false,
+          "error": null,
+          "notifications": [],
+          "revision": 0
+        },
+        "notifications": {
+          "alt": "",
+          "app_policies": {},
+          "available": false,
+          "backend": "",
+          "class_name": "",
+          "count": 0,
+          "dnd": false,
+          "dnd_until_unix_ms": null,
+          "error": null,
+          "history_revision": 0,
+          "inhibited": false,
+          "text": "",
+          "tooltip": ""
+        },
+        "osd_hardware": {
+          "available": false,
+          "camera_privacy": false,
+          "caps_lock": false,
+          "error": null,
+          "keyboard_backlight_percent": null,
+          "microphone_privacy": false,
+          "num_lock": false
+        },
+        "power_profile": {
+          "actions": [],
+          "active_holds": [],
+          "available": false,
+          "battery_automation": {
+            "error": null,
+            "level": "",
+            "profile": "",
+            "status": ""
+          },
+          "battery_aware": null,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "",
+          "profile": "",
+          "profiles": [],
+          "version": ""
+        },
+        "power_sleep": {
+          "available": false,
+          "can_hibernate": "",
+          "can_suspend": "",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": false,
+          "operation": {
+            "action": "",
+            "error": null,
+            "id": 0,
+            "job": null,
+            "phase": ""
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 0
+        },
+        "sleep_policy": {
+          "active_profile": "",
+          "available": false,
+          "critical_battery": {
+            "error": null,
+            "phase": "",
+            "remaining_seconds": 0
+          },
+          "error": null,
+          "hibernate_available": false,
+          "hibernate_error": null,
+          "hibernate_ready": false,
+          "last_error": null,
+          "lid": {
+            "available": false,
+            "error": null,
+            "managed": false
+          },
+          "policy": {
+            "battery": {
+              "hibernate_minutes": 0,
+              "sleep_minutes": 30
+            },
+            "critical_battery": {
+              "enabled": false,
+              "grace_seconds": 60,
+              "percent": 5
+            },
+            "lid_action": "system",
+            "plugged": {
+              "hibernate_minutes": 0,
+              "sleep_minutes": 30
+            },
+            "same_profile": true
+          }
+        },
+        "timezone": {
+          "abbreviation": "",
+          "available": false,
+          "city": "",
+          "error": null,
+          "timezone": "",
+          "timezone_region_ids": [],
+          "utc_offset_seconds": 0
+        },
+        "updates": {
+          "available": false,
+          "error": null,
+          "jobs": [],
+          "lanes": [],
+          "ready": false,
+          "state_directory": ""
+        },
+        "workarea": {
+          "available": false,
+          "error": null,
+          "monitors": {},
+          "revision": 0
+        },
+        "workspaces": {
+          "active_window": null,
+          "available": false,
+          "error": null,
+          "focused_monitor": null,
+          "monitors": [],
+          "workspaces": []
+        }
+      }
+    },
+    "ok": true,
+    "protocol": "bar-api",
+    "version": 1
+  }
+}

@@ -6,7 +6,7 @@
 <p>Completed baseline: P0 event delivery and uncertain NM replay prevention; P1 atomic update readiness. P2 app contracts and bar snapshot, control, sleep, display and notification-action fixtures are committed. The remainder of P2 includes the original declaration, validation, bounds and integration gates—not just reply wrappers.</p>
 <h2>Stages</h2>
 <table><thead><tr><th>Stage</th><th>Implementation and exit evidence</th><th>Status</th></tr></thead><tbody>
-<tr><td>P2.1</td><td>Media, workspace and update-refresh request/reply constructors; producer fixtures; native QML success, rejection and no-replay tests; Nix freshness gate.</td><td>In progress</td></tr>
+<tr><td>P2.1</td><td>Media, workspace and update-refresh request/reply constructors; producer fixtures; native QML success, rejection and no-replay tests; Nix freshness gate.</td><td>Complete: typed production replies/errors, generated fixtures, 66 new native QML cases. Full gate: 286 Rust unit tests, both integrations, 691 QML passes (1 skipped).</td></tr>
 <tr><td>P2.2</td><td>Battery controls, calibration, partial outcomes and history contracts. Preserve privileged-helper behavior; test using isolated helpers, never live battery writes.</td><td class="pending">Pending</td></tr>
 <tr><td>P2.3</td><td>Activity/todo and notification-query contracts, including paging/errors; producer-to-consumer fixtures.</td><td class="pending">Pending</td></tr>
 <tr><td>P2.4</td><td>Audit the typed spine and pilot declaration source. Prove registry/dispatch coverage, generated schemas/validators, compatibility, request/result bounds and two-client real-bridge behavior. Preserve legacy formats; no unnegotiated canonical-format switch.</td><td class="pending">Pending</td></tr>
@@ -28,5 +28,5 @@
 </tbody></table>
 <h2>Rules and validation</h2>
 <ul><li>Commit task-specific files only. Preserve unrelated changes in every sibling repository.</li><li>Use live sibling sources through local-build, not stale revision pins.</li><li>Keep v1 payloads, stream names, privilege boundaries and same-user trust assumptions explicit. No effect replay after uncertain execution.</li><li>Run Rust tests, Clippy, formatting, relevant native QML tests, fixture freshness and Nix gates per stage. Record unavailable architecture/environment gates as blockers, not passes.</li><li>Changes to APIs or models must be reflected in production-generated fixtures. Never fabricate replacement wire envelopes inside consumer tests.</li></ul>
-<h2>Commit record</h2><ul><li>Stage 0: this execution ledger establishes stage boundaries; no runtime behavior changed.</li></ul>
+<h2>Commit record</h2><ul><li>Stage 0: <code>418eb6d</code> in Shelllist establishes stage boundaries; no runtime behavior changed.</li><li>P2.1: paired producer/consumer commits contain the implementation and this validation record. Media preference fixtures execute real in-memory selection; playback/focus fixtures execute no desktop effects. Ordinary timeouts and reconnects are checked for no replay.</li></ul>
 </html>
