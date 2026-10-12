@@ -412,7 +412,9 @@ operation. Search, category filtering and refresh remain available.
 Focus and launch hand off to the application and dismiss after successful focus
 or checked launch handoff, not mere request admission. Close keeps the chooser
 open: window rows disappear only on authoritative snapshots, and the last window
-leaves “No open windows” with Launch available. Conflicting commands are blocked
+leaves a passive crossed-window icon (accessible name “No open windows”) with
+Launch available. Missing desktop actions use a passive crossed-extension icon
+centered lower, below App data; neither empty-state mark joins field traversal. Conflicting commands are blocked
 per application, not by freezing result navigation. Initiation, progress and
 confirmed completion use the fixed list status bar, including collapsed details
 and all detail tabs. There is no Check status row/button or Alt+K command;

@@ -34,10 +34,12 @@ revision. The screenshot's browser is an example, not an application-specific la
   classify actions by localized labels, executable name or browser assumptions.
   Shared `ActionButton`/`LabeledAction` accept an optional `iconSource`, retaining
   glyph fallback, fixed circular geometry and accessible command labels.
-- Empty window lists explain Launch; shortcuts explain that content opens in
-  another application, without runtime-window claims. Hide empty action groups;
-  ordinary desktop applications with none show passive supporting text. Missing
-  runtime windows remain explicitly unavailable.
+- Empty window lists use a passive crossed-window icon; shortcuts use an
+  external-open icon without runtime-window claims. Launch guidance and missing
+  runtime-window descriptions remain accessible. Hide empty action groups;
+  ordinary desktop applications with none show a passive crossed-extension icon,
+  centered in the remaining space below App data. Both marks use shared
+  `ContentState`, retain accessible descriptions, and add no command/field stops.
 - The existing `DetailFlickable` bounds and scrolls the whole page: no nested
   field traversal, hard cap on window/actions, or extra scrolling region.
   Window Focus/Close use `SurfaceActionRow` with shared 32px secondary circles
