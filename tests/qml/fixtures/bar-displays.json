@@ -1,0 +1,4140 @@
+{
+  "events": {
+    "confirmed": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-preview",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {
+            "input:follow_mouse": 1
+          },
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 1
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": [
+              {
+                "enabled": true,
+                "mirror_of": "",
+                "mode": "1920x1200@60.00Hz",
+                "name": "eDP-1",
+                "scale": 2.0,
+                "transform": 0,
+                "x": 0,
+                "y": 0
+              }
+            ]
+          },
+          "trial": null
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 2.0,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": "internal"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "expired": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-preview",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {
+            "input:follow_mouse": 1
+          },
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 1
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": {
+            "expires_at": 1,
+            "id": "trial-example",
+            "previous": {
+              "outputs": [
+                {
+                  "enabled": true,
+                  "mirror_of": "",
+                  "mode": "1920x1200@60.00Hz",
+                  "name": "eDP-1",
+                  "scale": 1.25,
+                  "transform": 0,
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            },
+            "proposed": {
+              "outputs": [
+                {
+                  "enabled": true,
+                  "mirror_of": "",
+                  "mode": "1920x1200@60.00Hz",
+                  "name": "eDP-1",
+                  "scale": 2.0,
+                  "transform": 0,
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          }
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 2.0,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": "internal"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "focus": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-initial",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {
+            "input:follow_mouse": 0
+          },
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 0
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": null
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 1.25,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": "internal"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "focusReset": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-initial",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {},
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 1
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": null
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 1.25,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": "internal"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "initial": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-initial",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {
+            "input:follow_mouse": 1
+          },
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 1
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": null
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 1.25,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": "internal"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "policy": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-policy",
+        "docking_state": "applying",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {
+            "input:follow_mouse": 1
+          },
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 1
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": null
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 1.25,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": false
+        },
+        "status": "pending"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "preview": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-preview",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {
+            "input:follow_mouse": 1
+          },
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 1
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": {
+            "expires_at": 2147483647,
+            "id": "trial-example",
+            "previous": {
+              "outputs": [
+                {
+                  "enabled": true,
+                  "mirror_of": "",
+                  "mode": "1920x1200@60.00Hz",
+                  "name": "eDP-1",
+                  "scale": 1.25,
+                  "transform": 0,
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            },
+            "proposed": {
+              "outputs": [
+                {
+                  "enabled": true,
+                  "mirror_of": "",
+                  "mode": "1920x1200@60.00Hz",
+                  "name": "eDP-1",
+                  "scale": 2.0,
+                  "transform": 0,
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          }
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 2.0,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": "internal"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "reverted": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-initial",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {
+            "input:follow_mouse": 1
+          },
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 1
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": null
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 1.25,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": "internal"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "rollback-failed": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-preview",
+        "docking_state": "failed",
+        "error": "Layout rollback failed: compositor unavailable",
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {
+            "input:follow_mouse": 1
+          },
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 1
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": {
+            "expires_at": 2147483647,
+            "id": "trial-example",
+            "previous": {
+              "outputs": [
+                {
+                  "enabled": true,
+                  "mirror_of": "",
+                  "mode": "1920x1200@60.00Hz",
+                  "name": "eDP-1",
+                  "scale": 1.25,
+                  "transform": 0,
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            },
+            "proposed": {
+              "outputs": [
+                {
+                  "enabled": true,
+                  "mirror_of": "",
+                  "mode": "1920x1200@60.00Hz",
+                  "name": "eDP-1",
+                  "scale": 2.0,
+                  "transform": 0,
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          }
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 2.0,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": "error"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "settled": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-policy",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {
+            "input:follow_mouse": 1
+          },
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 1
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": null
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 1.25,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": false
+        },
+        "status": "internal"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "stale": {
+      "data": {
+        "available": true,
+        "baseline": "baseline-external-change",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {
+            "input:follow_mouse": 1
+          },
+          "values": {
+            "cursor:no_warps": false,
+            "input:follow_mouse": 1
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": null
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 1.5,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": "internal"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    }
+  },
+  "replies": {
+    "displayFocus.reset": {
+      "failed": {
+        "error": {
+          "code": "display-focus-failed",
+          "message": "Display control failed: compositor unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": {
+        "unknown": true
+      },
+      "params": {},
+      "recovery": "focusReset",
+      "rejected": {
+        "error": {
+          "code": "display-focus-failed",
+          "message": "unknown field `unknown`, there are no fields"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-initial",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {},
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 1.25,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "uncertain": {
+        "error": {
+          "code": "display-focus-failed",
+          "message": "Focus settings request timed out: deadline has elapsed"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "displayFocus.set": {
+      "failed": {
+        "error": {
+          "code": "display-focus-failed",
+          "message": "Display control failed: compositor unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": {
+        "unknown": true
+      },
+      "params": {
+        "values": {
+          "input:follow_mouse": 0
+        }
+      },
+      "recovery": "focus",
+      "rejected": {
+        "error": {
+          "code": "display-focus-failed",
+          "message": "unknown field `unknown`, expected `values`"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-initial",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 0
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 0
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 1.25,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "uncertain": {
+        "error": {
+          "code": "display-focus-failed",
+          "message": "Focus settings request timed out: deadline has elapsed"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "displayLayout.confirm": {
+      "failed": {
+        "error": {
+          "code": "display-layout-failed",
+          "message": "Display control failed: compositor unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": {
+        "unknown": true
+      },
+      "params": {
+        "id": "trial-example"
+      },
+      "recovery": "confirmed",
+      "rejected": {
+        "error": {
+          "code": "display-layout-failed",
+          "message": "unknown field `unknown`, expected `id`"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-preview",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 1
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": [
+                  {
+                    "enabled": true,
+                    "mirror_of": "",
+                    "mode": "1920x1200@60.00Hz",
+                    "name": "eDP-1",
+                    "scale": 2.0,
+                    "transform": 0,
+                    "x": 0,
+                    "y": 0
+                  }
+                ]
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 2.0,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "uncertain": {
+        "error": {
+          "code": "display-layout-failed",
+          "message": "Display layout request timed out; unconfirmed changes will revert: deadline has elapsed"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "displayLayout.preview": {
+      "failed": {
+        "error": {
+          "code": "display-layout-failed",
+          "message": "Display control failed: compositor unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": {
+        "unknown": true
+      },
+      "params": {
+        "baseline": "baseline-initial",
+        "outputs": [
+          {
+            "enabled": true,
+            "mirror_of": "",
+            "mode": "1920x1200@60.00Hz",
+            "name": "eDP-1",
+            "scale": 2.0,
+            "transform": 0,
+            "x": 0,
+            "y": 0
+          }
+        ]
+      },
+      "recovery": "preview",
+      "rejected": {
+        "error": {
+          "code": "display-layout-failed",
+          "message": "unknown field `unknown`, expected `baseline` or `outputs`"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-preview",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 1
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": {
+                "expires_at": 2147483647,
+                "id": "trial-example",
+                "previous": {
+                  "outputs": [
+                    {
+                      "enabled": true,
+                      "mirror_of": "",
+                      "mode": "1920x1200@60.00Hz",
+                      "name": "eDP-1",
+                      "scale": 1.25,
+                      "transform": 0,
+                      "x": 0,
+                      "y": 0
+                    }
+                  ]
+                },
+                "proposed": {
+                  "outputs": [
+                    {
+                      "enabled": true,
+                      "mirror_of": "",
+                      "mode": "1920x1200@60.00Hz",
+                      "name": "eDP-1",
+                      "scale": 2.0,
+                      "transform": 0,
+                      "x": 0,
+                      "y": 0
+                    }
+                  ]
+                }
+              }
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 2.0,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "uncertain": {
+        "error": {
+          "code": "display-layout-failed",
+          "message": "Display layout request timed out; unconfirmed changes will revert: deadline has elapsed"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "displayLayout.revert": {
+      "failed": {
+        "error": {
+          "code": "display-layout-failed",
+          "message": "Display control failed: compositor unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": {
+        "unknown": true
+      },
+      "params": {
+        "id": "trial-example"
+      },
+      "recovery": "reverted",
+      "rejected": {
+        "error": {
+          "code": "display-layout-failed",
+          "message": "unknown field `unknown`, expected `id`"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-initial",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 1
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 1.25,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "uncertain": {
+        "error": {
+          "code": "display-layout-failed",
+          "message": "Display layout request timed out; unconfirmed changes will revert: deadline has elapsed"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "displayPolicy.set": {
+      "failed": {
+        "error": {
+          "code": "display-policy-failed",
+          "message": "Display control failed: compositor unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": {
+        "unknown": true
+      },
+      "params": {
+        "prefer_external": false
+      },
+      "recovery": "policy",
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "displayPolicy.set parameters are invalid: unknown field `unknown`, expected `prefer_external`"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-policy",
+            "docking_state": "applying",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 1
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 1.25,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": false
+            },
+            "status": "pending"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "uncertain": {
+        "error": {
+          "code": "display-policy-failed",
+          "message": "Preference persistence outcome unknown: deadline has elapsed"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    }
+  },
+  "snapshots": {
+    "confirmed": {
+      "data": {
+        "snapshot": {
+          "activity": {
+            "available": false,
+            "error": null,
+            "event_count": 0,
+            "incomplete_todo_count": 0,
+            "locations": [],
+            "lunar": null,
+            "next_event": null,
+            "sources": [],
+            "syncing": false,
+            "weather": {
+              "apparent_temperature_c": 0.0,
+              "available": false,
+              "condition": "",
+              "condition_code": 0,
+              "daily": [],
+              "error": null,
+              "high_c": 0.0,
+              "home": false,
+              "hourly": [],
+              "humidity_percent": 0,
+              "id": "",
+              "is_day": false,
+              "latitude": 0.0,
+              "location": "",
+              "longitude": 0.0,
+              "low_c": 0.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 0,
+              "solar_noon": null,
+              "sunrise_unix_ms": 0,
+              "sunset_unix_ms": 0,
+              "temperature_c": 0.0,
+              "timezone": "",
+              "timezone_region_ids": [],
+              "updated_unix_ms": 0,
+              "utc_offset_seconds": 0,
+              "wind_direction_degrees": 0,
+              "wind_gust_kmh": 0.0,
+              "wind_speed_kmh": 0.0
+            },
+            "weather_locations": [],
+            "world_clocks": []
+          },
+          "audio": {
+            "available": false,
+            "error": null,
+            "input_available": false,
+            "input_muted": false,
+            "muted": false,
+            "sink_description": "",
+            "sink_name": "",
+            "source_description": "",
+            "source_name": "",
+            "volume_percent": 0
+          },
+          "battery": {
+            "available": false,
+            "charging": false,
+            "critical": false,
+            "cycles": null,
+            "devices": [],
+            "error": null,
+            "forecast": {
+              "approximate": false,
+              "estimating": false,
+              "limit": null,
+              "percentage": 0,
+              "scope": "",
+              "seconds": 0.0,
+              "status": "",
+              "target": 0
+            },
+            "health_percent": null,
+            "history": {
+              "active_duration_ms": 0,
+              "current_point": null,
+              "energy": {
+                "activeDurationMs": 0,
+                "bars": [],
+                "intervalMs": 0,
+                "maximum": 0.0,
+                "observedMs": 0,
+                "totalWh": 0.0
+              },
+              "last_charge_timestamp_ms": 0,
+              "latest_timestamp_ms": 0,
+              "points": [],
+              "retention_days": 0
+            },
+            "native_path": "",
+            "operation": {
+              "battery_id": "",
+              "expires_unix_ms": 0,
+              "kind": "",
+              "phase": "",
+              "started_unix_ms": 0
+            },
+            "percentage": 0,
+            "plugged": false,
+            "policy": {
+              "auto_power_saver": true,
+              "critical_percent": 12,
+              "critical_profile": "power-saver",
+              "notify_critical": true,
+              "notify_warning": true,
+              "notify_when_full": true,
+              "recovery_margin_percent": 3,
+              "warning_percent": 25,
+              "warning_profile": "power-saver"
+            },
+            "power_available": false,
+            "power_watts": 0.0,
+            "protection": {
+              "available_behaviours": [],
+              "backend": "",
+              "charge_behaviour": null,
+              "charge_once_active": false,
+              "desired_enabled": false,
+              "desired_end_percent": null,
+              "desired_start_percent": null,
+              "enabled": false,
+              "end_percent": null,
+              "error": null,
+              "managed": false,
+              "start_percent": null,
+              "supported": false,
+              "supports_charge_behaviour": false,
+              "supports_end": false,
+              "supports_start": false,
+              "thresholds_verified": false
+            },
+            "state": "",
+            "time_to_empty_seconds": 0,
+            "time_to_full_seconds": 0,
+            "warning": false
+          },
+          "brightness": {
+            "available": false,
+            "brightness": 0,
+            "device": "",
+            "error": null,
+            "max_brightness": 0,
+            "percent": 0
+          },
+          "compositor": {
+            "animations_enabled": null,
+            "available": false,
+            "error": null,
+            "revision": 0
+          },
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-preview",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 1
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": [
+                  {
+                    "enabled": true,
+                    "mirror_of": "",
+                    "mode": "1920x1200@60.00Hz",
+                    "name": "eDP-1",
+                    "scale": 2.0,
+                    "transform": 0,
+                    "x": 0,
+                    "y": 0
+                  }
+                ]
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 2.0,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          },
+          "media": {
+            "active_player": null,
+            "available": false,
+            "error": null,
+            "pinned_player": null,
+            "players": []
+          },
+          "notification_active": {
+            "available": false,
+            "error": null,
+            "notifications": [],
+            "revision": 0
+          },
+          "notifications": {
+            "alt": "",
+            "app_policies": {},
+            "available": false,
+            "backend": "",
+            "class_name": "",
+            "count": 0,
+            "dnd": false,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 0,
+            "inhibited": false,
+            "text": "",
+            "tooltip": ""
+          },
+          "osd_hardware": {
+            "available": false,
+            "camera_privacy": false,
+            "caps_lock": false,
+            "error": null,
+            "keyboard_backlight_percent": null,
+            "microphone_privacy": false,
+            "num_lock": false
+          },
+          "power_profile": {
+            "actions": [],
+            "active_holds": [],
+            "available": false,
+            "battery_automation": {
+              "error": null,
+              "level": "",
+              "profile": "",
+              "status": ""
+            },
+            "battery_aware": null,
+            "driver": "",
+            "error": null,
+            "performance_degraded": "",
+            "profile": "",
+            "profiles": [],
+            "version": ""
+          },
+          "power_sleep": {
+            "available": false,
+            "can_hibernate": "",
+            "can_suspend": "",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": false,
+            "operation": {
+              "action": "",
+              "error": null,
+              "id": 0,
+              "job": null,
+              "phase": ""
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          },
+          "sleep_policy": {
+            "active_profile": "",
+            "available": false,
+            "critical_battery": {
+              "error": null,
+              "phase": "",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": false,
+            "hibernate_error": null,
+            "hibernate_ready": false,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": false,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          },
+          "timezone": {
+            "abbreviation": "",
+            "available": false,
+            "city": "",
+            "error": null,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "utc_offset_seconds": 0
+          },
+          "updates": {
+            "available": false,
+            "error": null,
+            "jobs": [],
+            "lanes": [],
+            "ready": false,
+            "state_directory": ""
+          },
+          "workarea": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "revision": 0
+          },
+          "workspaces": {
+            "active_window": null,
+            "available": false,
+            "error": null,
+            "focused_monitor": null,
+            "monitors": [],
+            "workspaces": []
+          }
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "focus": {
+      "data": {
+        "snapshot": {
+          "activity": {
+            "available": false,
+            "error": null,
+            "event_count": 0,
+            "incomplete_todo_count": 0,
+            "locations": [],
+            "lunar": null,
+            "next_event": null,
+            "sources": [],
+            "syncing": false,
+            "weather": {
+              "apparent_temperature_c": 0.0,
+              "available": false,
+              "condition": "",
+              "condition_code": 0,
+              "daily": [],
+              "error": null,
+              "high_c": 0.0,
+              "home": false,
+              "hourly": [],
+              "humidity_percent": 0,
+              "id": "",
+              "is_day": false,
+              "latitude": 0.0,
+              "location": "",
+              "longitude": 0.0,
+              "low_c": 0.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 0,
+              "solar_noon": null,
+              "sunrise_unix_ms": 0,
+              "sunset_unix_ms": 0,
+              "temperature_c": 0.0,
+              "timezone": "",
+              "timezone_region_ids": [],
+              "updated_unix_ms": 0,
+              "utc_offset_seconds": 0,
+              "wind_direction_degrees": 0,
+              "wind_gust_kmh": 0.0,
+              "wind_speed_kmh": 0.0
+            },
+            "weather_locations": [],
+            "world_clocks": []
+          },
+          "audio": {
+            "available": false,
+            "error": null,
+            "input_available": false,
+            "input_muted": false,
+            "muted": false,
+            "sink_description": "",
+            "sink_name": "",
+            "source_description": "",
+            "source_name": "",
+            "volume_percent": 0
+          },
+          "battery": {
+            "available": false,
+            "charging": false,
+            "critical": false,
+            "cycles": null,
+            "devices": [],
+            "error": null,
+            "forecast": {
+              "approximate": false,
+              "estimating": false,
+              "limit": null,
+              "percentage": 0,
+              "scope": "",
+              "seconds": 0.0,
+              "status": "",
+              "target": 0
+            },
+            "health_percent": null,
+            "history": {
+              "active_duration_ms": 0,
+              "current_point": null,
+              "energy": {
+                "activeDurationMs": 0,
+                "bars": [],
+                "intervalMs": 0,
+                "maximum": 0.0,
+                "observedMs": 0,
+                "totalWh": 0.0
+              },
+              "last_charge_timestamp_ms": 0,
+              "latest_timestamp_ms": 0,
+              "points": [],
+              "retention_days": 0
+            },
+            "native_path": "",
+            "operation": {
+              "battery_id": "",
+              "expires_unix_ms": 0,
+              "kind": "",
+              "phase": "",
+              "started_unix_ms": 0
+            },
+            "percentage": 0,
+            "plugged": false,
+            "policy": {
+              "auto_power_saver": true,
+              "critical_percent": 12,
+              "critical_profile": "power-saver",
+              "notify_critical": true,
+              "notify_warning": true,
+              "notify_when_full": true,
+              "recovery_margin_percent": 3,
+              "warning_percent": 25,
+              "warning_profile": "power-saver"
+            },
+            "power_available": false,
+            "power_watts": 0.0,
+            "protection": {
+              "available_behaviours": [],
+              "backend": "",
+              "charge_behaviour": null,
+              "charge_once_active": false,
+              "desired_enabled": false,
+              "desired_end_percent": null,
+              "desired_start_percent": null,
+              "enabled": false,
+              "end_percent": null,
+              "error": null,
+              "managed": false,
+              "start_percent": null,
+              "supported": false,
+              "supports_charge_behaviour": false,
+              "supports_end": false,
+              "supports_start": false,
+              "thresholds_verified": false
+            },
+            "state": "",
+            "time_to_empty_seconds": 0,
+            "time_to_full_seconds": 0,
+            "warning": false
+          },
+          "brightness": {
+            "available": false,
+            "brightness": 0,
+            "device": "",
+            "error": null,
+            "max_brightness": 0,
+            "percent": 0
+          },
+          "compositor": {
+            "animations_enabled": null,
+            "available": false,
+            "error": null,
+            "revision": 0
+          },
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-initial",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 0
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 0
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 1.25,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          },
+          "media": {
+            "active_player": null,
+            "available": false,
+            "error": null,
+            "pinned_player": null,
+            "players": []
+          },
+          "notification_active": {
+            "available": false,
+            "error": null,
+            "notifications": [],
+            "revision": 0
+          },
+          "notifications": {
+            "alt": "",
+            "app_policies": {},
+            "available": false,
+            "backend": "",
+            "class_name": "",
+            "count": 0,
+            "dnd": false,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 0,
+            "inhibited": false,
+            "text": "",
+            "tooltip": ""
+          },
+          "osd_hardware": {
+            "available": false,
+            "camera_privacy": false,
+            "caps_lock": false,
+            "error": null,
+            "keyboard_backlight_percent": null,
+            "microphone_privacy": false,
+            "num_lock": false
+          },
+          "power_profile": {
+            "actions": [],
+            "active_holds": [],
+            "available": false,
+            "battery_automation": {
+              "error": null,
+              "level": "",
+              "profile": "",
+              "status": ""
+            },
+            "battery_aware": null,
+            "driver": "",
+            "error": null,
+            "performance_degraded": "",
+            "profile": "",
+            "profiles": [],
+            "version": ""
+          },
+          "power_sleep": {
+            "available": false,
+            "can_hibernate": "",
+            "can_suspend": "",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": false,
+            "operation": {
+              "action": "",
+              "error": null,
+              "id": 0,
+              "job": null,
+              "phase": ""
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          },
+          "sleep_policy": {
+            "active_profile": "",
+            "available": false,
+            "critical_battery": {
+              "error": null,
+              "phase": "",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": false,
+            "hibernate_error": null,
+            "hibernate_ready": false,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": false,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          },
+          "timezone": {
+            "abbreviation": "",
+            "available": false,
+            "city": "",
+            "error": null,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "utc_offset_seconds": 0
+          },
+          "updates": {
+            "available": false,
+            "error": null,
+            "jobs": [],
+            "lanes": [],
+            "ready": false,
+            "state_directory": ""
+          },
+          "workarea": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "revision": 0
+          },
+          "workspaces": {
+            "active_window": null,
+            "available": false,
+            "error": null,
+            "focused_monitor": null,
+            "monitors": [],
+            "workspaces": []
+          }
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "focusReset": {
+      "data": {
+        "snapshot": {
+          "activity": {
+            "available": false,
+            "error": null,
+            "event_count": 0,
+            "incomplete_todo_count": 0,
+            "locations": [],
+            "lunar": null,
+            "next_event": null,
+            "sources": [],
+            "syncing": false,
+            "weather": {
+              "apparent_temperature_c": 0.0,
+              "available": false,
+              "condition": "",
+              "condition_code": 0,
+              "daily": [],
+              "error": null,
+              "high_c": 0.0,
+              "home": false,
+              "hourly": [],
+              "humidity_percent": 0,
+              "id": "",
+              "is_day": false,
+              "latitude": 0.0,
+              "location": "",
+              "longitude": 0.0,
+              "low_c": 0.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 0,
+              "solar_noon": null,
+              "sunrise_unix_ms": 0,
+              "sunset_unix_ms": 0,
+              "temperature_c": 0.0,
+              "timezone": "",
+              "timezone_region_ids": [],
+              "updated_unix_ms": 0,
+              "utc_offset_seconds": 0,
+              "wind_direction_degrees": 0,
+              "wind_gust_kmh": 0.0,
+              "wind_speed_kmh": 0.0
+            },
+            "weather_locations": [],
+            "world_clocks": []
+          },
+          "audio": {
+            "available": false,
+            "error": null,
+            "input_available": false,
+            "input_muted": false,
+            "muted": false,
+            "sink_description": "",
+            "sink_name": "",
+            "source_description": "",
+            "source_name": "",
+            "volume_percent": 0
+          },
+          "battery": {
+            "available": false,
+            "charging": false,
+            "critical": false,
+            "cycles": null,
+            "devices": [],
+            "error": null,
+            "forecast": {
+              "approximate": false,
+              "estimating": false,
+              "limit": null,
+              "percentage": 0,
+              "scope": "",
+              "seconds": 0.0,
+              "status": "",
+              "target": 0
+            },
+            "health_percent": null,
+            "history": {
+              "active_duration_ms": 0,
+              "current_point": null,
+              "energy": {
+                "activeDurationMs": 0,
+                "bars": [],
+                "intervalMs": 0,
+                "maximum": 0.0,
+                "observedMs": 0,
+                "totalWh": 0.0
+              },
+              "last_charge_timestamp_ms": 0,
+              "latest_timestamp_ms": 0,
+              "points": [],
+              "retention_days": 0
+            },
+            "native_path": "",
+            "operation": {
+              "battery_id": "",
+              "expires_unix_ms": 0,
+              "kind": "",
+              "phase": "",
+              "started_unix_ms": 0
+            },
+            "percentage": 0,
+            "plugged": false,
+            "policy": {
+              "auto_power_saver": true,
+              "critical_percent": 12,
+              "critical_profile": "power-saver",
+              "notify_critical": true,
+              "notify_warning": true,
+              "notify_when_full": true,
+              "recovery_margin_percent": 3,
+              "warning_percent": 25,
+              "warning_profile": "power-saver"
+            },
+            "power_available": false,
+            "power_watts": 0.0,
+            "protection": {
+              "available_behaviours": [],
+              "backend": "",
+              "charge_behaviour": null,
+              "charge_once_active": false,
+              "desired_enabled": false,
+              "desired_end_percent": null,
+              "desired_start_percent": null,
+              "enabled": false,
+              "end_percent": null,
+              "error": null,
+              "managed": false,
+              "start_percent": null,
+              "supported": false,
+              "supports_charge_behaviour": false,
+              "supports_end": false,
+              "supports_start": false,
+              "thresholds_verified": false
+            },
+            "state": "",
+            "time_to_empty_seconds": 0,
+            "time_to_full_seconds": 0,
+            "warning": false
+          },
+          "brightness": {
+            "available": false,
+            "brightness": 0,
+            "device": "",
+            "error": null,
+            "max_brightness": 0,
+            "percent": 0
+          },
+          "compositor": {
+            "animations_enabled": null,
+            "available": false,
+            "error": null,
+            "revision": 0
+          },
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-initial",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {},
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 1.25,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          },
+          "media": {
+            "active_player": null,
+            "available": false,
+            "error": null,
+            "pinned_player": null,
+            "players": []
+          },
+          "notification_active": {
+            "available": false,
+            "error": null,
+            "notifications": [],
+            "revision": 0
+          },
+          "notifications": {
+            "alt": "",
+            "app_policies": {},
+            "available": false,
+            "backend": "",
+            "class_name": "",
+            "count": 0,
+            "dnd": false,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 0,
+            "inhibited": false,
+            "text": "",
+            "tooltip": ""
+          },
+          "osd_hardware": {
+            "available": false,
+            "camera_privacy": false,
+            "caps_lock": false,
+            "error": null,
+            "keyboard_backlight_percent": null,
+            "microphone_privacy": false,
+            "num_lock": false
+          },
+          "power_profile": {
+            "actions": [],
+            "active_holds": [],
+            "available": false,
+            "battery_automation": {
+              "error": null,
+              "level": "",
+              "profile": "",
+              "status": ""
+            },
+            "battery_aware": null,
+            "driver": "",
+            "error": null,
+            "performance_degraded": "",
+            "profile": "",
+            "profiles": [],
+            "version": ""
+          },
+          "power_sleep": {
+            "available": false,
+            "can_hibernate": "",
+            "can_suspend": "",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": false,
+            "operation": {
+              "action": "",
+              "error": null,
+              "id": 0,
+              "job": null,
+              "phase": ""
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          },
+          "sleep_policy": {
+            "active_profile": "",
+            "available": false,
+            "critical_battery": {
+              "error": null,
+              "phase": "",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": false,
+            "hibernate_error": null,
+            "hibernate_ready": false,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": false,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          },
+          "timezone": {
+            "abbreviation": "",
+            "available": false,
+            "city": "",
+            "error": null,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "utc_offset_seconds": 0
+          },
+          "updates": {
+            "available": false,
+            "error": null,
+            "jobs": [],
+            "lanes": [],
+            "ready": false,
+            "state_directory": ""
+          },
+          "workarea": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "revision": 0
+          },
+          "workspaces": {
+            "active_window": null,
+            "available": false,
+            "error": null,
+            "focused_monitor": null,
+            "monitors": [],
+            "workspaces": []
+          }
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "initial": {
+      "data": {
+        "snapshot": {
+          "activity": {
+            "available": false,
+            "error": null,
+            "event_count": 0,
+            "incomplete_todo_count": 0,
+            "locations": [],
+            "lunar": null,
+            "next_event": null,
+            "sources": [],
+            "syncing": false,
+            "weather": {
+              "apparent_temperature_c": 0.0,
+              "available": false,
+              "condition": "",
+              "condition_code": 0,
+              "daily": [],
+              "error": null,
+              "high_c": 0.0,
+              "home": false,
+              "hourly": [],
+              "humidity_percent": 0,
+              "id": "",
+              "is_day": false,
+              "latitude": 0.0,
+              "location": "",
+              "longitude": 0.0,
+              "low_c": 0.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 0,
+              "solar_noon": null,
+              "sunrise_unix_ms": 0,
+              "sunset_unix_ms": 0,
+              "temperature_c": 0.0,
+              "timezone": "",
+              "timezone_region_ids": [],
+              "updated_unix_ms": 0,
+              "utc_offset_seconds": 0,
+              "wind_direction_degrees": 0,
+              "wind_gust_kmh": 0.0,
+              "wind_speed_kmh": 0.0
+            },
+            "weather_locations": [],
+            "world_clocks": []
+          },
+          "audio": {
+            "available": false,
+            "error": null,
+            "input_available": false,
+            "input_muted": false,
+            "muted": false,
+            "sink_description": "",
+            "sink_name": "",
+            "source_description": "",
+            "source_name": "",
+            "volume_percent": 0
+          },
+          "battery": {
+            "available": false,
+            "charging": false,
+            "critical": false,
+            "cycles": null,
+            "devices": [],
+            "error": null,
+            "forecast": {
+              "approximate": false,
+              "estimating": false,
+              "limit": null,
+              "percentage": 0,
+              "scope": "",
+              "seconds": 0.0,
+              "status": "",
+              "target": 0
+            },
+            "health_percent": null,
+            "history": {
+              "active_duration_ms": 0,
+              "current_point": null,
+              "energy": {
+                "activeDurationMs": 0,
+                "bars": [],
+                "intervalMs": 0,
+                "maximum": 0.0,
+                "observedMs": 0,
+                "totalWh": 0.0
+              },
+              "last_charge_timestamp_ms": 0,
+              "latest_timestamp_ms": 0,
+              "points": [],
+              "retention_days": 0
+            },
+            "native_path": "",
+            "operation": {
+              "battery_id": "",
+              "expires_unix_ms": 0,
+              "kind": "",
+              "phase": "",
+              "started_unix_ms": 0
+            },
+            "percentage": 0,
+            "plugged": false,
+            "policy": {
+              "auto_power_saver": true,
+              "critical_percent": 12,
+              "critical_profile": "power-saver",
+              "notify_critical": true,
+              "notify_warning": true,
+              "notify_when_full": true,
+              "recovery_margin_percent": 3,
+              "warning_percent": 25,
+              "warning_profile": "power-saver"
+            },
+            "power_available": false,
+            "power_watts": 0.0,
+            "protection": {
+              "available_behaviours": [],
+              "backend": "",
+              "charge_behaviour": null,
+              "charge_once_active": false,
+              "desired_enabled": false,
+              "desired_end_percent": null,
+              "desired_start_percent": null,
+              "enabled": false,
+              "end_percent": null,
+              "error": null,
+              "managed": false,
+              "start_percent": null,
+              "supported": false,
+              "supports_charge_behaviour": false,
+              "supports_end": false,
+              "supports_start": false,
+              "thresholds_verified": false
+            },
+            "state": "",
+            "time_to_empty_seconds": 0,
+            "time_to_full_seconds": 0,
+            "warning": false
+          },
+          "brightness": {
+            "available": false,
+            "brightness": 0,
+            "device": "",
+            "error": null,
+            "max_brightness": 0,
+            "percent": 0
+          },
+          "compositor": {
+            "animations_enabled": null,
+            "available": false,
+            "error": null,
+            "revision": 0
+          },
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-initial",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 1
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 1.25,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          },
+          "media": {
+            "active_player": null,
+            "available": false,
+            "error": null,
+            "pinned_player": null,
+            "players": []
+          },
+          "notification_active": {
+            "available": false,
+            "error": null,
+            "notifications": [],
+            "revision": 0
+          },
+          "notifications": {
+            "alt": "",
+            "app_policies": {},
+            "available": false,
+            "backend": "",
+            "class_name": "",
+            "count": 0,
+            "dnd": false,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 0,
+            "inhibited": false,
+            "text": "",
+            "tooltip": ""
+          },
+          "osd_hardware": {
+            "available": false,
+            "camera_privacy": false,
+            "caps_lock": false,
+            "error": null,
+            "keyboard_backlight_percent": null,
+            "microphone_privacy": false,
+            "num_lock": false
+          },
+          "power_profile": {
+            "actions": [],
+            "active_holds": [],
+            "available": false,
+            "battery_automation": {
+              "error": null,
+              "level": "",
+              "profile": "",
+              "status": ""
+            },
+            "battery_aware": null,
+            "driver": "",
+            "error": null,
+            "performance_degraded": "",
+            "profile": "",
+            "profiles": [],
+            "version": ""
+          },
+          "power_sleep": {
+            "available": false,
+            "can_hibernate": "",
+            "can_suspend": "",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": false,
+            "operation": {
+              "action": "",
+              "error": null,
+              "id": 0,
+              "job": null,
+              "phase": ""
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          },
+          "sleep_policy": {
+            "active_profile": "",
+            "available": false,
+            "critical_battery": {
+              "error": null,
+              "phase": "",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": false,
+            "hibernate_error": null,
+            "hibernate_ready": false,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": false,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          },
+          "timezone": {
+            "abbreviation": "",
+            "available": false,
+            "city": "",
+            "error": null,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "utc_offset_seconds": 0
+          },
+          "updates": {
+            "available": false,
+            "error": null,
+            "jobs": [],
+            "lanes": [],
+            "ready": false,
+            "state_directory": ""
+          },
+          "workarea": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "revision": 0
+          },
+          "workspaces": {
+            "active_window": null,
+            "available": false,
+            "error": null,
+            "focused_monitor": null,
+            "monitors": [],
+            "workspaces": []
+          }
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "policy": {
+      "data": {
+        "snapshot": {
+          "activity": {
+            "available": false,
+            "error": null,
+            "event_count": 0,
+            "incomplete_todo_count": 0,
+            "locations": [],
+            "lunar": null,
+            "next_event": null,
+            "sources": [],
+            "syncing": false,
+            "weather": {
+              "apparent_temperature_c": 0.0,
+              "available": false,
+              "condition": "",
+              "condition_code": 0,
+              "daily": [],
+              "error": null,
+              "high_c": 0.0,
+              "home": false,
+              "hourly": [],
+              "humidity_percent": 0,
+              "id": "",
+              "is_day": false,
+              "latitude": 0.0,
+              "location": "",
+              "longitude": 0.0,
+              "low_c": 0.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 0,
+              "solar_noon": null,
+              "sunrise_unix_ms": 0,
+              "sunset_unix_ms": 0,
+              "temperature_c": 0.0,
+              "timezone": "",
+              "timezone_region_ids": [],
+              "updated_unix_ms": 0,
+              "utc_offset_seconds": 0,
+              "wind_direction_degrees": 0,
+              "wind_gust_kmh": 0.0,
+              "wind_speed_kmh": 0.0
+            },
+            "weather_locations": [],
+            "world_clocks": []
+          },
+          "audio": {
+            "available": false,
+            "error": null,
+            "input_available": false,
+            "input_muted": false,
+            "muted": false,
+            "sink_description": "",
+            "sink_name": "",
+            "source_description": "",
+            "source_name": "",
+            "volume_percent": 0
+          },
+          "battery": {
+            "available": false,
+            "charging": false,
+            "critical": false,
+            "cycles": null,
+            "devices": [],
+            "error": null,
+            "forecast": {
+              "approximate": false,
+              "estimating": false,
+              "limit": null,
+              "percentage": 0,
+              "scope": "",
+              "seconds": 0.0,
+              "status": "",
+              "target": 0
+            },
+            "health_percent": null,
+            "history": {
+              "active_duration_ms": 0,
+              "current_point": null,
+              "energy": {
+                "activeDurationMs": 0,
+                "bars": [],
+                "intervalMs": 0,
+                "maximum": 0.0,
+                "observedMs": 0,
+                "totalWh": 0.0
+              },
+              "last_charge_timestamp_ms": 0,
+              "latest_timestamp_ms": 0,
+              "points": [],
+              "retention_days": 0
+            },
+            "native_path": "",
+            "operation": {
+              "battery_id": "",
+              "expires_unix_ms": 0,
+              "kind": "",
+              "phase": "",
+              "started_unix_ms": 0
+            },
+            "percentage": 0,
+            "plugged": false,
+            "policy": {
+              "auto_power_saver": true,
+              "critical_percent": 12,
+              "critical_profile": "power-saver",
+              "notify_critical": true,
+              "notify_warning": true,
+              "notify_when_full": true,
+              "recovery_margin_percent": 3,
+              "warning_percent": 25,
+              "warning_profile": "power-saver"
+            },
+            "power_available": false,
+            "power_watts": 0.0,
+            "protection": {
+              "available_behaviours": [],
+              "backend": "",
+              "charge_behaviour": null,
+              "charge_once_active": false,
+              "desired_enabled": false,
+              "desired_end_percent": null,
+              "desired_start_percent": null,
+              "enabled": false,
+              "end_percent": null,
+              "error": null,
+              "managed": false,
+              "start_percent": null,
+              "supported": false,
+              "supports_charge_behaviour": false,
+              "supports_end": false,
+              "supports_start": false,
+              "thresholds_verified": false
+            },
+            "state": "",
+            "time_to_empty_seconds": 0,
+            "time_to_full_seconds": 0,
+            "warning": false
+          },
+          "brightness": {
+            "available": false,
+            "brightness": 0,
+            "device": "",
+            "error": null,
+            "max_brightness": 0,
+            "percent": 0
+          },
+          "compositor": {
+            "animations_enabled": null,
+            "available": false,
+            "error": null,
+            "revision": 0
+          },
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-policy",
+            "docking_state": "applying",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 1
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 1.25,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": false
+            },
+            "status": "pending"
+          },
+          "media": {
+            "active_player": null,
+            "available": false,
+            "error": null,
+            "pinned_player": null,
+            "players": []
+          },
+          "notification_active": {
+            "available": false,
+            "error": null,
+            "notifications": [],
+            "revision": 0
+          },
+          "notifications": {
+            "alt": "",
+            "app_policies": {},
+            "available": false,
+            "backend": "",
+            "class_name": "",
+            "count": 0,
+            "dnd": false,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 0,
+            "inhibited": false,
+            "text": "",
+            "tooltip": ""
+          },
+          "osd_hardware": {
+            "available": false,
+            "camera_privacy": false,
+            "caps_lock": false,
+            "error": null,
+            "keyboard_backlight_percent": null,
+            "microphone_privacy": false,
+            "num_lock": false
+          },
+          "power_profile": {
+            "actions": [],
+            "active_holds": [],
+            "available": false,
+            "battery_automation": {
+              "error": null,
+              "level": "",
+              "profile": "",
+              "status": ""
+            },
+            "battery_aware": null,
+            "driver": "",
+            "error": null,
+            "performance_degraded": "",
+            "profile": "",
+            "profiles": [],
+            "version": ""
+          },
+          "power_sleep": {
+            "available": false,
+            "can_hibernate": "",
+            "can_suspend": "",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": false,
+            "operation": {
+              "action": "",
+              "error": null,
+              "id": 0,
+              "job": null,
+              "phase": ""
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          },
+          "sleep_policy": {
+            "active_profile": "",
+            "available": false,
+            "critical_battery": {
+              "error": null,
+              "phase": "",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": false,
+            "hibernate_error": null,
+            "hibernate_ready": false,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": false,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          },
+          "timezone": {
+            "abbreviation": "",
+            "available": false,
+            "city": "",
+            "error": null,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "utc_offset_seconds": 0
+          },
+          "updates": {
+            "available": false,
+            "error": null,
+            "jobs": [],
+            "lanes": [],
+            "ready": false,
+            "state_directory": ""
+          },
+          "workarea": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "revision": 0
+          },
+          "workspaces": {
+            "active_window": null,
+            "available": false,
+            "error": null,
+            "focused_monitor": null,
+            "monitors": [],
+            "workspaces": []
+          }
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "preview": {
+      "data": {
+        "snapshot": {
+          "activity": {
+            "available": false,
+            "error": null,
+            "event_count": 0,
+            "incomplete_todo_count": 0,
+            "locations": [],
+            "lunar": null,
+            "next_event": null,
+            "sources": [],
+            "syncing": false,
+            "weather": {
+              "apparent_temperature_c": 0.0,
+              "available": false,
+              "condition": "",
+              "condition_code": 0,
+              "daily": [],
+              "error": null,
+              "high_c": 0.0,
+              "home": false,
+              "hourly": [],
+              "humidity_percent": 0,
+              "id": "",
+              "is_day": false,
+              "latitude": 0.0,
+              "location": "",
+              "longitude": 0.0,
+              "low_c": 0.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 0,
+              "solar_noon": null,
+              "sunrise_unix_ms": 0,
+              "sunset_unix_ms": 0,
+              "temperature_c": 0.0,
+              "timezone": "",
+              "timezone_region_ids": [],
+              "updated_unix_ms": 0,
+              "utc_offset_seconds": 0,
+              "wind_direction_degrees": 0,
+              "wind_gust_kmh": 0.0,
+              "wind_speed_kmh": 0.0
+            },
+            "weather_locations": [],
+            "world_clocks": []
+          },
+          "audio": {
+            "available": false,
+            "error": null,
+            "input_available": false,
+            "input_muted": false,
+            "muted": false,
+            "sink_description": "",
+            "sink_name": "",
+            "source_description": "",
+            "source_name": "",
+            "volume_percent": 0
+          },
+          "battery": {
+            "available": false,
+            "charging": false,
+            "critical": false,
+            "cycles": null,
+            "devices": [],
+            "error": null,
+            "forecast": {
+              "approximate": false,
+              "estimating": false,
+              "limit": null,
+              "percentage": 0,
+              "scope": "",
+              "seconds": 0.0,
+              "status": "",
+              "target": 0
+            },
+            "health_percent": null,
+            "history": {
+              "active_duration_ms": 0,
+              "current_point": null,
+              "energy": {
+                "activeDurationMs": 0,
+                "bars": [],
+                "intervalMs": 0,
+                "maximum": 0.0,
+                "observedMs": 0,
+                "totalWh": 0.0
+              },
+              "last_charge_timestamp_ms": 0,
+              "latest_timestamp_ms": 0,
+              "points": [],
+              "retention_days": 0
+            },
+            "native_path": "",
+            "operation": {
+              "battery_id": "",
+              "expires_unix_ms": 0,
+              "kind": "",
+              "phase": "",
+              "started_unix_ms": 0
+            },
+            "percentage": 0,
+            "plugged": false,
+            "policy": {
+              "auto_power_saver": true,
+              "critical_percent": 12,
+              "critical_profile": "power-saver",
+              "notify_critical": true,
+              "notify_warning": true,
+              "notify_when_full": true,
+              "recovery_margin_percent": 3,
+              "warning_percent": 25,
+              "warning_profile": "power-saver"
+            },
+            "power_available": false,
+            "power_watts": 0.0,
+            "protection": {
+              "available_behaviours": [],
+              "backend": "",
+              "charge_behaviour": null,
+              "charge_once_active": false,
+              "desired_enabled": false,
+              "desired_end_percent": null,
+              "desired_start_percent": null,
+              "enabled": false,
+              "end_percent": null,
+              "error": null,
+              "managed": false,
+              "start_percent": null,
+              "supported": false,
+              "supports_charge_behaviour": false,
+              "supports_end": false,
+              "supports_start": false,
+              "thresholds_verified": false
+            },
+            "state": "",
+            "time_to_empty_seconds": 0,
+            "time_to_full_seconds": 0,
+            "warning": false
+          },
+          "brightness": {
+            "available": false,
+            "brightness": 0,
+            "device": "",
+            "error": null,
+            "max_brightness": 0,
+            "percent": 0
+          },
+          "compositor": {
+            "animations_enabled": null,
+            "available": false,
+            "error": null,
+            "revision": 0
+          },
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-preview",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 1
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": {
+                "expires_at": 2147483647,
+                "id": "trial-example",
+                "previous": {
+                  "outputs": [
+                    {
+                      "enabled": true,
+                      "mirror_of": "",
+                      "mode": "1920x1200@60.00Hz",
+                      "name": "eDP-1",
+                      "scale": 1.25,
+                      "transform": 0,
+                      "x": 0,
+                      "y": 0
+                    }
+                  ]
+                },
+                "proposed": {
+                  "outputs": [
+                    {
+                      "enabled": true,
+                      "mirror_of": "",
+                      "mode": "1920x1200@60.00Hz",
+                      "name": "eDP-1",
+                      "scale": 2.0,
+                      "transform": 0,
+                      "x": 0,
+                      "y": 0
+                    }
+                  ]
+                }
+              }
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 2.0,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          },
+          "media": {
+            "active_player": null,
+            "available": false,
+            "error": null,
+            "pinned_player": null,
+            "players": []
+          },
+          "notification_active": {
+            "available": false,
+            "error": null,
+            "notifications": [],
+            "revision": 0
+          },
+          "notifications": {
+            "alt": "",
+            "app_policies": {},
+            "available": false,
+            "backend": "",
+            "class_name": "",
+            "count": 0,
+            "dnd": false,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 0,
+            "inhibited": false,
+            "text": "",
+            "tooltip": ""
+          },
+          "osd_hardware": {
+            "available": false,
+            "camera_privacy": false,
+            "caps_lock": false,
+            "error": null,
+            "keyboard_backlight_percent": null,
+            "microphone_privacy": false,
+            "num_lock": false
+          },
+          "power_profile": {
+            "actions": [],
+            "active_holds": [],
+            "available": false,
+            "battery_automation": {
+              "error": null,
+              "level": "",
+              "profile": "",
+              "status": ""
+            },
+            "battery_aware": null,
+            "driver": "",
+            "error": null,
+            "performance_degraded": "",
+            "profile": "",
+            "profiles": [],
+            "version": ""
+          },
+          "power_sleep": {
+            "available": false,
+            "can_hibernate": "",
+            "can_suspend": "",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": false,
+            "operation": {
+              "action": "",
+              "error": null,
+              "id": 0,
+              "job": null,
+              "phase": ""
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          },
+          "sleep_policy": {
+            "active_profile": "",
+            "available": false,
+            "critical_battery": {
+              "error": null,
+              "phase": "",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": false,
+            "hibernate_error": null,
+            "hibernate_ready": false,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": false,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          },
+          "timezone": {
+            "abbreviation": "",
+            "available": false,
+            "city": "",
+            "error": null,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "utc_offset_seconds": 0
+          },
+          "updates": {
+            "available": false,
+            "error": null,
+            "jobs": [],
+            "lanes": [],
+            "ready": false,
+            "state_directory": ""
+          },
+          "workarea": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "revision": 0
+          },
+          "workspaces": {
+            "active_window": null,
+            "available": false,
+            "error": null,
+            "focused_monitor": null,
+            "monitors": [],
+            "workspaces": []
+          }
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "reverted": {
+      "data": {
+        "snapshot": {
+          "activity": {
+            "available": false,
+            "error": null,
+            "event_count": 0,
+            "incomplete_todo_count": 0,
+            "locations": [],
+            "lunar": null,
+            "next_event": null,
+            "sources": [],
+            "syncing": false,
+            "weather": {
+              "apparent_temperature_c": 0.0,
+              "available": false,
+              "condition": "",
+              "condition_code": 0,
+              "daily": [],
+              "error": null,
+              "high_c": 0.0,
+              "home": false,
+              "hourly": [],
+              "humidity_percent": 0,
+              "id": "",
+              "is_day": false,
+              "latitude": 0.0,
+              "location": "",
+              "longitude": 0.0,
+              "low_c": 0.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 0,
+              "solar_noon": null,
+              "sunrise_unix_ms": 0,
+              "sunset_unix_ms": 0,
+              "temperature_c": 0.0,
+              "timezone": "",
+              "timezone_region_ids": [],
+              "updated_unix_ms": 0,
+              "utc_offset_seconds": 0,
+              "wind_direction_degrees": 0,
+              "wind_gust_kmh": 0.0,
+              "wind_speed_kmh": 0.0
+            },
+            "weather_locations": [],
+            "world_clocks": []
+          },
+          "audio": {
+            "available": false,
+            "error": null,
+            "input_available": false,
+            "input_muted": false,
+            "muted": false,
+            "sink_description": "",
+            "sink_name": "",
+            "source_description": "",
+            "source_name": "",
+            "volume_percent": 0
+          },
+          "battery": {
+            "available": false,
+            "charging": false,
+            "critical": false,
+            "cycles": null,
+            "devices": [],
+            "error": null,
+            "forecast": {
+              "approximate": false,
+              "estimating": false,
+              "limit": null,
+              "percentage": 0,
+              "scope": "",
+              "seconds": 0.0,
+              "status": "",
+              "target": 0
+            },
+            "health_percent": null,
+            "history": {
+              "active_duration_ms": 0,
+              "current_point": null,
+              "energy": {
+                "activeDurationMs": 0,
+                "bars": [],
+                "intervalMs": 0,
+                "maximum": 0.0,
+                "observedMs": 0,
+                "totalWh": 0.0
+              },
+              "last_charge_timestamp_ms": 0,
+              "latest_timestamp_ms": 0,
+              "points": [],
+              "retention_days": 0
+            },
+            "native_path": "",
+            "operation": {
+              "battery_id": "",
+              "expires_unix_ms": 0,
+              "kind": "",
+              "phase": "",
+              "started_unix_ms": 0
+            },
+            "percentage": 0,
+            "plugged": false,
+            "policy": {
+              "auto_power_saver": true,
+              "critical_percent": 12,
+              "critical_profile": "power-saver",
+              "notify_critical": true,
+              "notify_warning": true,
+              "notify_when_full": true,
+              "recovery_margin_percent": 3,
+              "warning_percent": 25,
+              "warning_profile": "power-saver"
+            },
+            "power_available": false,
+            "power_watts": 0.0,
+            "protection": {
+              "available_behaviours": [],
+              "backend": "",
+              "charge_behaviour": null,
+              "charge_once_active": false,
+              "desired_enabled": false,
+              "desired_end_percent": null,
+              "desired_start_percent": null,
+              "enabled": false,
+              "end_percent": null,
+              "error": null,
+              "managed": false,
+              "start_percent": null,
+              "supported": false,
+              "supports_charge_behaviour": false,
+              "supports_end": false,
+              "supports_start": false,
+              "thresholds_verified": false
+            },
+            "state": "",
+            "time_to_empty_seconds": 0,
+            "time_to_full_seconds": 0,
+            "warning": false
+          },
+          "brightness": {
+            "available": false,
+            "brightness": 0,
+            "device": "",
+            "error": null,
+            "max_brightness": 0,
+            "percent": 0
+          },
+          "compositor": {
+            "animations_enabled": null,
+            "available": false,
+            "error": null,
+            "revision": 0
+          },
+          "display_policy": {
+            "available": true,
+            "baseline": "baseline-initial",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": true,
+              "error": null,
+              "saved": {
+                "input:follow_mouse": 1
+              },
+              "values": {
+                "cursor:no_warps": false,
+                "input:follow_mouse": 1
+              }
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [
+              {
+                "availableModes": [
+                  "1920x1200@60.00Hz"
+                ],
+                "current_mode": "1920x1200@60.00Hz",
+                "disabled": false,
+                "focused": false,
+                "height": 1200,
+                "id": 0,
+                "internal": true,
+                "mirrorOf": "",
+                "mirror_of": "",
+                "modes": [
+                  {
+                    "height": 1200,
+                    "id": "1920x1200@60.00Hz",
+                    "rate": 60.0,
+                    "size": "1920x1200",
+                    "width": 1920
+                  }
+                ],
+                "name": "eDP-1",
+                "refreshRate": 60.0,
+                "scale": 1.25,
+                "supported": true,
+                "transform": 0,
+                "width": 1920,
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": "internal"
+          },
+          "media": {
+            "active_player": null,
+            "available": false,
+            "error": null,
+            "pinned_player": null,
+            "players": []
+          },
+          "notification_active": {
+            "available": false,
+            "error": null,
+            "notifications": [],
+            "revision": 0
+          },
+          "notifications": {
+            "alt": "",
+            "app_policies": {},
+            "available": false,
+            "backend": "",
+            "class_name": "",
+            "count": 0,
+            "dnd": false,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 0,
+            "inhibited": false,
+            "text": "",
+            "tooltip": ""
+          },
+          "osd_hardware": {
+            "available": false,
+            "camera_privacy": false,
+            "caps_lock": false,
+            "error": null,
+            "keyboard_backlight_percent": null,
+            "microphone_privacy": false,
+            "num_lock": false
+          },
+          "power_profile": {
+            "actions": [],
+            "active_holds": [],
+            "available": false,
+            "battery_automation": {
+              "error": null,
+              "level": "",
+              "profile": "",
+              "status": ""
+            },
+            "battery_aware": null,
+            "driver": "",
+            "error": null,
+            "performance_degraded": "",
+            "profile": "",
+            "profiles": [],
+            "version": ""
+          },
+          "power_sleep": {
+            "available": false,
+            "can_hibernate": "",
+            "can_suspend": "",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": false,
+            "operation": {
+              "action": "",
+              "error": null,
+              "id": 0,
+              "job": null,
+              "phase": ""
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          },
+          "sleep_policy": {
+            "active_profile": "",
+            "available": false,
+            "critical_battery": {
+              "error": null,
+              "phase": "",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": false,
+            "hibernate_error": null,
+            "hibernate_ready": false,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": false,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          },
+          "timezone": {
+            "abbreviation": "",
+            "available": false,
+            "city": "",
+            "error": null,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "utc_offset_seconds": 0
+          },
+          "updates": {
+            "available": false,
+            "error": null,
+            "jobs": [],
+            "lanes": [],
+            "ready": false,
+            "state_directory": ""
+          },
+          "workarea": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "revision": 0
+          },
+          "workspaces": {
+            "active_window": null,
+            "available": false,
+            "error": null,
+            "focused_monitor": null,
+            "monitors": [],
+            "workspaces": []
+          }
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  }
+}
