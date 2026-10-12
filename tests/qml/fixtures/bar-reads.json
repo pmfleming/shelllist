@@ -1,0 +1,2481 @@
+{
+  "changed": {
+    "activity.changed": {
+      "data": {
+        "available": true,
+        "error": null,
+        "event_count": 1,
+        "incomplete_todo_count": 1,
+        "locations": [
+          {
+            "abbreviation": "JST",
+            "city": "Tokyo",
+            "has_coordinates": false,
+            "has_weather": false,
+            "home": false,
+            "id": "clock:Asia/Tokyo",
+            "label": "Tokyo",
+            "latitude": 0.0,
+            "longitude": 0.0,
+            "lunar": {
+              "age_days": 2.3657004092218976,
+              "approximate": true,
+              "evaluated_unix_ms": 1766400000000,
+              "fraction": 0.08011016715576151,
+              "illumination_percent": 6,
+              "method": "mean-synodic-month",
+              "phase": "waxing-crescent",
+              "time_basis": "utc"
+            },
+            "timezone": "Asia/Tokyo",
+            "timezone_region_ids": [
+              "Asia-Tokyo"
+            ],
+            "utc_offset_seconds": 32400,
+            "weather": null
+          },
+          {
+            "abbreviation": "",
+            "city": "Amsterdam",
+            "has_coordinates": true,
+            "has_weather": true,
+            "home": true,
+            "id": "weather:home",
+            "label": "Amsterdam",
+            "latitude": 52.3676,
+            "longitude": 4.9041,
+            "lunar": {
+              "age_days": 2.3657004092218976,
+              "approximate": true,
+              "evaluated_unix_ms": 1766400000000,
+              "fraction": 0.08011016715576151,
+              "illumination_percent": 6,
+              "method": "mean-synodic-month",
+              "phase": "waxing-crescent",
+              "time_basis": "utc"
+            },
+            "timezone": "Europe/Amsterdam",
+            "timezone_region_ids": [
+              "Europe-Paris"
+            ],
+            "utc_offset_seconds": 3600,
+            "weather": {
+              "apparent_temperature_c": 16.0,
+              "available": true,
+              "condition": "Clear",
+              "condition_code": 0,
+              "daily": [
+                {
+                  "condition": "Clear",
+                  "condition_code": 0,
+                  "date_unix_ms": 1766361600000,
+                  "high_c": 21.0,
+                  "low_c": 13.0,
+                  "precipitation_probability": 5,
+                  "sunrise_unix_ms": 1766385120000,
+                  "sunset_unix_ms": 1766436420000
+                }
+              ],
+              "error": null,
+              "high_c": 21.0,
+              "home": true,
+              "hourly": [
+                {
+                  "condition": "Clear",
+                  "condition_code": 0,
+                  "is_day": true,
+                  "precipitation_mm": 0.0,
+                  "precipitation_probability": 5,
+                  "temperature_c": 17.0,
+                  "time_unix_ms": 1766448000000,
+                  "wind_direction_degrees": 315,
+                  "wind_speed_kmh": 12.0
+                }
+              ],
+              "humidity_percent": 73,
+              "id": "home",
+              "is_day": true,
+              "latitude": 52.3676,
+              "location": "Amsterdam",
+              "longitude": 4.9041,
+              "low_c": 13.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 5,
+              "solar_noon": {
+                "approximate": true,
+                "evaluated_unix_ms": 1766400000000,
+                "local_date": "2025-12-22",
+                "method": "sunrise-sunset-midpoint",
+                "timezone": "Europe/Amsterdam",
+                "unix_ms": 1766410770000,
+                "utc_offset_seconds": 3600
+              },
+              "sunrise_unix_ms": 1766385120000,
+              "sunset_unix_ms": 1766436420000,
+              "temperature_c": 17.0,
+              "timezone": "Europe/Amsterdam",
+              "timezone_region_ids": [
+                "Europe-Paris"
+              ],
+              "updated_unix_ms": 1766400000000,
+              "utc_offset_seconds": 3600,
+              "wind_direction_degrees": 315,
+              "wind_gust_kmh": 18.0,
+              "wind_speed_kmh": 12.0
+            }
+          }
+        ],
+        "lunar": {
+          "age_days": 2.3657004092218976,
+          "approximate": true,
+          "evaluated_unix_ms": 1766400000000,
+          "fraction": 0.08011016715576151,
+          "illumination_percent": 6,
+          "method": "mean-synodic-month",
+          "phase": "waxing-crescent",
+          "time_basis": "utc"
+        },
+        "next_event": {
+          "all_day": false,
+          "calendar_name": "Work",
+          "color": "#7aa2f7",
+          "end_date": null,
+          "end_unix_ms": 1768467600000,
+          "id": "work:meeting:1768464000000",
+          "location": "Room 1",
+          "source_id": "work",
+          "start_date": null,
+          "start_unix_ms": 1768464000000,
+          "timezone": "Europe/Amsterdam",
+          "title": "Planning",
+          "url": ""
+        },
+        "sources": [
+          {
+            "available": true,
+            "error": null,
+            "id": "work",
+            "item_count": 1,
+            "kind": "ics-directory",
+            "name": "Work"
+          }
+        ],
+        "syncing": false,
+        "weather": {
+          "apparent_temperature_c": 16.0,
+          "available": true,
+          "condition": "Clear",
+          "condition_code": 0,
+          "daily": [
+            {
+              "condition": "Clear",
+              "condition_code": 0,
+              "date_unix_ms": 1766361600000,
+              "high_c": 21.0,
+              "low_c": 13.0,
+              "precipitation_probability": 5,
+              "sunrise_unix_ms": 1766385120000,
+              "sunset_unix_ms": 1766436420000
+            }
+          ],
+          "error": null,
+          "high_c": 21.0,
+          "home": true,
+          "hourly": [
+            {
+              "condition": "Clear",
+              "condition_code": 0,
+              "is_day": true,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 5,
+              "temperature_c": 17.0,
+              "time_unix_ms": 1766448000000,
+              "wind_direction_degrees": 315,
+              "wind_speed_kmh": 12.0
+            }
+          ],
+          "humidity_percent": 73,
+          "id": "home",
+          "is_day": true,
+          "latitude": 52.3676,
+          "location": "Amsterdam",
+          "longitude": 4.9041,
+          "low_c": 13.0,
+          "precipitation_mm": 0.0,
+          "precipitation_probability": 5,
+          "solar_noon": {
+            "approximate": true,
+            "evaluated_unix_ms": 1766400000000,
+            "local_date": "2025-12-22",
+            "method": "sunrise-sunset-midpoint",
+            "timezone": "Europe/Amsterdam",
+            "unix_ms": 1766410770000,
+            "utc_offset_seconds": 3600
+          },
+          "sunrise_unix_ms": 1766385120000,
+          "sunset_unix_ms": 1766436420000,
+          "temperature_c": 17.0,
+          "timezone": "Europe/Amsterdam",
+          "timezone_region_ids": [
+            "Europe-Paris"
+          ],
+          "updated_unix_ms": 1766400000000,
+          "utc_offset_seconds": 3600,
+          "wind_direction_degrees": 315,
+          "wind_gust_kmh": 18.0,
+          "wind_speed_kmh": 12.0
+        },
+        "weather_locations": [
+          {
+            "apparent_temperature_c": 16.0,
+            "available": true,
+            "condition": "Clear",
+            "condition_code": 0,
+            "daily": [
+              {
+                "condition": "Clear",
+                "condition_code": 0,
+                "date_unix_ms": 1766361600000,
+                "high_c": 21.0,
+                "low_c": 13.0,
+                "precipitation_probability": 5,
+                "sunrise_unix_ms": 1766385120000,
+                "sunset_unix_ms": 1766436420000
+              }
+            ],
+            "error": null,
+            "high_c": 21.0,
+            "home": true,
+            "hourly": [
+              {
+                "condition": "Clear",
+                "condition_code": 0,
+                "is_day": true,
+                "precipitation_mm": 0.0,
+                "precipitation_probability": 5,
+                "temperature_c": 17.0,
+                "time_unix_ms": 1766448000000,
+                "wind_direction_degrees": 315,
+                "wind_speed_kmh": 12.0
+              }
+            ],
+            "humidity_percent": 73,
+            "id": "home",
+            "is_day": true,
+            "latitude": 52.3676,
+            "location": "Amsterdam",
+            "longitude": 4.9041,
+            "low_c": 13.0,
+            "precipitation_mm": 0.0,
+            "precipitation_probability": 5,
+            "solar_noon": {
+              "approximate": true,
+              "evaluated_unix_ms": 1766400000000,
+              "local_date": "2025-12-22",
+              "method": "sunrise-sunset-midpoint",
+              "timezone": "Europe/Amsterdam",
+              "unix_ms": 1766410770000,
+              "utc_offset_seconds": 3600
+            },
+            "sunrise_unix_ms": 1766385120000,
+            "sunset_unix_ms": 1766436420000,
+            "temperature_c": 17.0,
+            "timezone": "Europe/Amsterdam",
+            "timezone_region_ids": [
+              "Europe-Paris"
+            ],
+            "updated_unix_ms": 1766400000000,
+            "utc_offset_seconds": 3600,
+            "wind_direction_degrees": 315,
+            "wind_gust_kmh": 18.0,
+            "wind_speed_kmh": 12.0
+          }
+        ],
+        "world_clocks": [
+          {
+            "abbreviation": "JST",
+            "city": "Tokyo",
+            "label": "Tokyo",
+            "timezone": "Asia/Tokyo",
+            "timezone_region_ids": [
+              "Asia-Tokyo"
+            ],
+            "utc_offset_seconds": 32400
+          }
+        ]
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "activity.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "audio.changed": {
+      "data": {
+        "available": true,
+        "error": null,
+        "input_available": true,
+        "input_muted": false,
+        "muted": false,
+        "sink_description": "Speakers",
+        "sink_name": "alsa_output.test",
+        "source_description": "Microphone",
+        "source_name": "alsa_input.test",
+        "volume_percent": 50
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "audio.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "battery.changed": {
+      "data": {
+        "available": true,
+        "charging": false,
+        "critical": false,
+        "cycles": 101,
+        "devices": [
+          {
+            "cycles": 101,
+            "energy_full_design_wh": 52.5,
+            "energy_full_wh": 44.75,
+            "energy_now_wh": 35.8,
+            "health_percent": 85,
+            "id": "BAT0",
+            "model": "5B11H56418",
+            "percentage": 80,
+            "power_watts": 8.2,
+            "present": true,
+            "protection": {
+              "available_behaviours": [
+                "auto",
+                "inhibit-charge",
+                "force-discharge"
+              ],
+              "backend": "thinkpad-sysfs",
+              "charge_behaviour": "auto",
+              "charge_once_active": false,
+              "desired_enabled": true,
+              "desired_end_percent": 80,
+              "desired_start_percent": 75,
+              "enabled": true,
+              "end_percent": 80,
+              "error": null,
+              "managed": true,
+              "start_percent": 75,
+              "supported": true,
+              "supports_charge_behaviour": true,
+              "supports_end": true,
+              "supports_start": true,
+              "thresholds_verified": true
+            },
+            "serial": "5878",
+            "state": "discharging",
+            "vendor": "Sunwoda",
+            "voltage_volts": 15.48
+          }
+        ],
+        "error": null,
+        "forecast": {
+          "approximate": true,
+          "estimating": false,
+          "limit": 80,
+          "percentage": 80,
+          "scope": "aggregate",
+          "seconds": 14400.0,
+          "status": "valid",
+          "target": 0
+        },
+        "health_percent": 85,
+        "history": {
+          "active_duration_ms": 900000,
+          "current_point": {
+            "active_time_ms": 930000,
+            "charging": false,
+            "continuous": true,
+            "mode": "discharging",
+            "percentage": 80,
+            "plugged": false,
+            "power_valid": true,
+            "power_watts": 8.2,
+            "time_to_full_seconds": null,
+            "timestamp_ms": 1768464930000
+          },
+          "energy": {
+            "activeDurationMs": 0,
+            "bars": [],
+            "intervalMs": 900000,
+            "maximum": 0.0,
+            "observedMs": 0,
+            "totalWh": -0.0
+          },
+          "last_charge_timestamp_ms": 1768464000000,
+          "latest_timestamp_ms": 1768464900000,
+          "points": [],
+          "retention_days": 7
+        },
+        "native_path": "BAT0",
+        "operation": {
+          "battery_id": "",
+          "expires_unix_ms": 0,
+          "kind": "",
+          "phase": "",
+          "started_unix_ms": 0
+        },
+        "percentage": 80,
+        "plugged": false,
+        "policy": {
+          "auto_power_saver": true,
+          "critical_percent": 12,
+          "critical_profile": "power-saver",
+          "notify_critical": true,
+          "notify_warning": true,
+          "notify_when_full": true,
+          "recovery_margin_percent": 3,
+          "warning_percent": 25,
+          "warning_profile": "power-saver"
+        },
+        "power_available": true,
+        "power_watts": 8.2,
+        "protection": {
+          "available_behaviours": [
+            "auto",
+            "inhibit-charge",
+            "force-discharge"
+          ],
+          "backend": "thinkpad-sysfs",
+          "charge_behaviour": "auto",
+          "charge_once_active": false,
+          "desired_enabled": true,
+          "desired_end_percent": 80,
+          "desired_start_percent": 75,
+          "enabled": true,
+          "end_percent": 80,
+          "error": null,
+          "managed": true,
+          "start_percent": 75,
+          "supported": true,
+          "supports_charge_behaviour": true,
+          "supports_end": true,
+          "supports_start": true,
+          "thresholds_verified": true
+        },
+        "state": "discharging",
+        "time_to_empty_seconds": 14400,
+        "time_to_full_seconds": 0,
+        "warning": false
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "battery.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "brightness.changed": {
+      "data": {
+        "available": true,
+        "brightness": 500,
+        "device": "amdgpu_bl1",
+        "error": null,
+        "max_brightness": 1000,
+        "percent": 50
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "brightness.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "compositor.changed": {
+      "data": {
+        "animations_enabled": false,
+        "available": true,
+        "error": null,
+        "revision": 1
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "compositor.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "display-policy.changed": {
+      "data": {
+        "available": true,
+        "baseline": "",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": true,
+          "error": null,
+          "saved": {},
+          "values": {
+            "input:follow_mouse": 1,
+            "misc:mouse_move_focuses_monitor": true
+          }
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": null
+        },
+        "outputs": [
+          {
+            "availableModes": [
+              "1920x1200@60.00Hz"
+            ],
+            "current_mode": "1920x1200@60.00Hz",
+            "disabled": true,
+            "focused": false,
+            "height": 1200,
+            "id": 0,
+            "internal": true,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
+            "name": "eDP-1",
+            "refreshRate": 60.0,
+            "scale": 1.25,
+            "supported": true,
+            "transform": 0,
+            "width": 1920,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "availableModes": [
+              "3840x2160@59.940Hz",
+              "3840x2160@60.00Hz",
+              "2560x1440@120.00Hz"
+            ],
+            "current_mode": "3840x2160@59.940Hz",
+            "disabled": false,
+            "focused": false,
+            "height": 2160,
+            "id": 1,
+            "internal": false,
+            "mirrorOf": "",
+            "mirror_of": "",
+            "modes": [
+              {
+                "height": 2160,
+                "id": "3840x2160@59.940Hz",
+                "rate": 59.94,
+                "size": "3840x2160",
+                "width": 3840
+              },
+              {
+                "height": 2160,
+                "id": "3840x2160@60.00Hz",
+                "rate": 60.0,
+                "size": "3840x2160",
+                "width": 3840
+              },
+              {
+                "height": 1440,
+                "id": "2560x1440@120.00Hz",
+                "rate": 120.0,
+                "size": "2560x1440",
+                "width": 2560
+              }
+            ],
+            "name": "DP-1",
+            "refreshRate": 59.94,
+            "scale": 1.5,
+            "supported": true,
+            "transform": 0,
+            "width": 3840,
+            "x": 1536,
+            "y": 0
+          }
+        ],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": "external"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "media.changed": {
+      "data": {
+        "active_player": "org.mpris.MediaPlayer2.spotify",
+        "available": true,
+        "error": null,
+        "pinned_player": null,
+        "players": [
+          {
+            "album": "Album",
+            "art_url": "",
+            "artist": "Artist",
+            "can_control": true,
+            "can_next": true,
+            "can_pause": true,
+            "can_play": true,
+            "can_previous": true,
+            "can_seek": true,
+            "content_type": "music",
+            "content_type_source": "url",
+            "control_mode": "automatic",
+            "desktop_entry": "spotify",
+            "id": "org.mpris.MediaPlayer2.spotify",
+            "identity": "Spotify",
+            "length_us": 240000000,
+            "metadata_sources": {},
+            "playback_rate": 1.0,
+            "playback_status": "playing",
+            "position_observed_at_unix_ms": 1234567890000,
+            "position_us": 60000000,
+            "source": {
+              "service": "spotify",
+              "url": "spotify:track:example"
+            },
+            "title": "Track"
+          }
+        ]
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "media.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "notifications.active.changed": {
+      "data": {
+        "available": true,
+        "error": null,
+        "notifications": [
+          {
+            "actions": [
+              {
+                "key": "default",
+                "label": "Open"
+              }
+            ],
+            "app_icon": "calendar",
+            "app_name": "Calendar",
+            "body": "Meeting starts soon",
+            "created_unix_ms": 1768463900000,
+            "dnd_bypass": false,
+            "expires_unix_ms": null,
+            "group_key": "calendar",
+            "hints": {
+              "category": "calendar",
+              "desktop_entry": "calendar",
+              "image_data_present": false,
+              "image_path": "",
+              "resident": false,
+              "sound_file": "",
+              "sound_name": "",
+              "suppress_sound": false,
+              "transient": false,
+              "urgency": 1
+            },
+            "id": 1,
+            "identity_icon": "",
+            "snoozed_until_unix_ms": null,
+            "source_monitor": "eDP-1",
+            "summary": "Planning",
+            "toast_expires_unix_ms": 1768463905000,
+            "toast_visible": true,
+            "updated_unix_ms": 1768463900000
+          }
+        ],
+        "revision": 1
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "notifications.active.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "notifications.changed": {
+      "data": {
+        "alt": "dnd-notification",
+        "app_policies": {},
+        "available": true,
+        "backend": "native",
+        "class_name": "dnd-notification",
+        "count": 1,
+        "dnd": true,
+        "dnd_until_unix_ms": 1768467500000,
+        "error": null,
+        "history_revision": 1,
+        "inhibited": false,
+        "text": "1",
+        "tooltip": "1 Notification"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "notifications.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "osd-hardware.changed": {
+      "data": {
+        "available": true,
+        "camera_privacy": true,
+        "caps_lock": false,
+        "error": null,
+        "keyboard_backlight_percent": 50,
+        "microphone_privacy": false,
+        "num_lock": true
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "osd-hardware.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "power-profile.changed": {
+      "data": {
+        "actions": [
+          {
+            "description": "Panel power savings",
+            "enabled": true,
+            "name": "amdgpu_panel_power"
+          }
+        ],
+        "active_holds": [
+          {
+            "application_id": "org.example.Compiler",
+            "profile": "performance",
+            "reason": "Building"
+          }
+        ],
+        "available": true,
+        "battery_automation": {
+          "error": null,
+          "level": "normal",
+          "profile": "",
+          "status": "waiting"
+        },
+        "battery_aware": true,
+        "driver": "amd_pstate",
+        "error": null,
+        "performance_degraded": "",
+        "profile": "balanced",
+        "profiles": [
+          {
+            "driver": "amd_pstate",
+            "name": "balanced",
+            "platform_driver": "platform_profile"
+          }
+        ],
+        "version": "0.30"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "power-profile.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "power-sleep.changed": {
+      "data": {
+        "available": true,
+        "can_hibernate": "challenge",
+        "can_suspend": "yes",
+        "diagnostics": {
+          "disk_swap_available": null,
+          "guidance": [],
+          "hardware": null,
+          "hibernate_issues": [],
+          "resume_device_configured": null,
+          "supported_suspend_modes": [],
+          "suspend_mode": null
+        },
+        "error": null,
+        "inhibitors": [
+          {
+            "mode": "delay",
+            "pid": 4242,
+            "uid": 1000,
+            "what": "sleep",
+            "who": "Backup",
+            "why": "Writing snapshot"
+          }
+        ],
+        "keep_awake": false,
+        "lock_before_sleep": true,
+        "operation": {
+          "action": "",
+          "error": null,
+          "id": 0,
+          "job": null,
+          "phase": ""
+        },
+        "preparing_for_sleep": false,
+        "resume_generation": 0
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "power-sleep.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "sleep-policy.changed": {
+      "data": {
+        "active_profile": "shared",
+        "available": true,
+        "critical_battery": {
+          "error": null,
+          "phase": "disabled",
+          "remaining_seconds": 0
+        },
+        "error": null,
+        "hibernate_available": true,
+        "hibernate_error": null,
+        "hibernate_ready": true,
+        "last_error": null,
+        "lid": {
+          "available": true,
+          "error": null,
+          "managed": true
+        },
+        "policy": {
+          "battery": {
+            "hibernate_minutes": 120,
+            "sleep_minutes": 30
+          },
+          "critical_battery": {
+            "enabled": false,
+            "grace_seconds": 60,
+            "percent": 5
+          },
+          "lid_action": "profile",
+          "plugged": {
+            "hibernate_minutes": 180,
+            "sleep_minutes": 60
+          },
+          "same_profile": true
+        }
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "sleep-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "timezone.changed": {
+      "data": {
+        "abbreviation": "CEST",
+        "available": true,
+        "city": "Amsterdam",
+        "error": null,
+        "timezone": "Europe/Amsterdam",
+        "timezone_region_ids": [
+          "Africa-Johannesburg",
+          "Europe-Paris"
+        ],
+        "utc_offset_seconds": 7200
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "timezone.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "updates.changed": {
+      "data": {
+        "available": true,
+        "error": null,
+        "jobs": [
+          {
+            "error": null,
+            "exit_code": 0,
+            "finished_at": 124,
+            "name": "system",
+            "operation": "run-delayed",
+            "phase": "ready",
+            "started_at": 123,
+            "status": "completed"
+          }
+        ],
+        "lanes": [
+          {
+            "auto_apply": false,
+            "base_hash": "def",
+            "created_at": 123,
+            "name": "delayed",
+            "ready": true,
+            "revision": "abc",
+            "system": "/nix/store/system"
+          }
+        ],
+        "ready": true,
+        "state_directory": "/var/lib/nixos-delayed-updates-v2"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "updates.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "workarea.changed": {
+      "data": {
+        "available": true,
+        "error": null,
+        "monitors": {
+          "eDP-1": {
+            "bottom": 0.0,
+            "left": 0.0,
+            "right": 0.0,
+            "top": 28.0
+          }
+        },
+        "revision": 1
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "workarea.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "workspaces.changed": {
+      "data": {
+        "active_window": {
+          "address": "0x123",
+          "class_name": "com.mitchellh.ghostty",
+          "floating": false,
+          "fullscreen": false,
+          "initial_class": "ghostty",
+          "title": "Terminal",
+          "workspace_id": 1
+        },
+        "available": true,
+        "error": null,
+        "focused_monitor": "eDP-1",
+        "monitors": [
+          {
+            "active_workspace_id": 1,
+            "focused": true,
+            "id": 0,
+            "name": "eDP-1"
+          }
+        ],
+        "workspaces": [
+          {
+            "fullscreen": false,
+            "id": 1,
+            "last_window_title": "Terminal",
+            "monitor": "eDP-1",
+            "name": "1",
+            "urgent": false,
+            "windows": 1
+          }
+        ]
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "workspaces.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    }
+  },
+  "lagged": {
+    "activity.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "activity.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "audio.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "audio.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "battery.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "battery.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "brightness.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "brightness.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "compositor.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "compositor.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "display-policy.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "media.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "media.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "notifications.active.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "notifications.active.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "notifications.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "notifications.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "osd-hardware.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "osd-hardware.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "power-profile.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "power-profile.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "power-sleep.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "power-sleep.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "sleep-policy.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "sleep-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "timezone.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "timezone.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "updates.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "updates.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "workarea.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "workarea.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "workspaces.changed": {
+      "data": {
+        "missed": 4
+      },
+      "event": "lagged",
+      "protocol": "bar-api",
+      "stream": "workspaces.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    }
+  },
+  "snapshot": {
+    "data": {
+      "snapshot": {
+        "activity": {
+          "available": true,
+          "error": null,
+          "event_count": 1,
+          "incomplete_todo_count": 1,
+          "locations": [
+            {
+              "abbreviation": "JST",
+              "city": "Tokyo",
+              "has_coordinates": false,
+              "has_weather": false,
+              "home": false,
+              "id": "clock:Asia/Tokyo",
+              "label": "Tokyo",
+              "latitude": 0.0,
+              "longitude": 0.0,
+              "lunar": {
+                "age_days": 2.3657004092218976,
+                "approximate": true,
+                "evaluated_unix_ms": 1766400000000,
+                "fraction": 0.08011016715576151,
+                "illumination_percent": 6,
+                "method": "mean-synodic-month",
+                "phase": "waxing-crescent",
+                "time_basis": "utc"
+              },
+              "timezone": "Asia/Tokyo",
+              "timezone_region_ids": [
+                "Asia-Tokyo"
+              ],
+              "utc_offset_seconds": 32400,
+              "weather": null
+            },
+            {
+              "abbreviation": "",
+              "city": "Amsterdam",
+              "has_coordinates": true,
+              "has_weather": true,
+              "home": true,
+              "id": "weather:home",
+              "label": "Amsterdam",
+              "latitude": 52.3676,
+              "longitude": 4.9041,
+              "lunar": {
+                "age_days": 2.3657004092218976,
+                "approximate": true,
+                "evaluated_unix_ms": 1766400000000,
+                "fraction": 0.08011016715576151,
+                "illumination_percent": 6,
+                "method": "mean-synodic-month",
+                "phase": "waxing-crescent",
+                "time_basis": "utc"
+              },
+              "timezone": "Europe/Amsterdam",
+              "timezone_region_ids": [
+                "Europe-Paris"
+              ],
+              "utc_offset_seconds": 3600,
+              "weather": {
+                "apparent_temperature_c": 16.0,
+                "available": true,
+                "condition": "Clear",
+                "condition_code": 0,
+                "daily": [
+                  {
+                    "condition": "Clear",
+                    "condition_code": 0,
+                    "date_unix_ms": 1766361600000,
+                    "high_c": 21.0,
+                    "low_c": 13.0,
+                    "precipitation_probability": 5,
+                    "sunrise_unix_ms": 1766385120000,
+                    "sunset_unix_ms": 1766436420000
+                  }
+                ],
+                "error": null,
+                "high_c": 21.0,
+                "home": true,
+                "hourly": [
+                  {
+                    "condition": "Clear",
+                    "condition_code": 0,
+                    "is_day": true,
+                    "precipitation_mm": 0.0,
+                    "precipitation_probability": 5,
+                    "temperature_c": 17.0,
+                    "time_unix_ms": 1766448000000,
+                    "wind_direction_degrees": 315,
+                    "wind_speed_kmh": 12.0
+                  }
+                ],
+                "humidity_percent": 73,
+                "id": "home",
+                "is_day": true,
+                "latitude": 52.3676,
+                "location": "Amsterdam",
+                "longitude": 4.9041,
+                "low_c": 13.0,
+                "precipitation_mm": 0.0,
+                "precipitation_probability": 5,
+                "solar_noon": {
+                  "approximate": true,
+                  "evaluated_unix_ms": 1766400000000,
+                  "local_date": "2025-12-22",
+                  "method": "sunrise-sunset-midpoint",
+                  "timezone": "Europe/Amsterdam",
+                  "unix_ms": 1766410770000,
+                  "utc_offset_seconds": 3600
+                },
+                "sunrise_unix_ms": 1766385120000,
+                "sunset_unix_ms": 1766436420000,
+                "temperature_c": 17.0,
+                "timezone": "Europe/Amsterdam",
+                "timezone_region_ids": [
+                  "Europe-Paris"
+                ],
+                "updated_unix_ms": 1766400000000,
+                "utc_offset_seconds": 3600,
+                "wind_direction_degrees": 315,
+                "wind_gust_kmh": 18.0,
+                "wind_speed_kmh": 12.0
+              }
+            }
+          ],
+          "lunar": {
+            "age_days": 2.3657004092218976,
+            "approximate": true,
+            "evaluated_unix_ms": 1766400000000,
+            "fraction": 0.08011016715576151,
+            "illumination_percent": 6,
+            "method": "mean-synodic-month",
+            "phase": "waxing-crescent",
+            "time_basis": "utc"
+          },
+          "next_event": {
+            "all_day": false,
+            "calendar_name": "Work",
+            "color": "#7aa2f7",
+            "end_date": null,
+            "end_unix_ms": 1768467600000,
+            "id": "work:meeting:1768464000000",
+            "location": "Room 1",
+            "source_id": "work",
+            "start_date": null,
+            "start_unix_ms": 1768464000000,
+            "timezone": "Europe/Amsterdam",
+            "title": "Planning",
+            "url": ""
+          },
+          "sources": [
+            {
+              "available": true,
+              "error": null,
+              "id": "work",
+              "item_count": 1,
+              "kind": "ics-directory",
+              "name": "Work"
+            }
+          ],
+          "syncing": false,
+          "weather": {
+            "apparent_temperature_c": 16.0,
+            "available": true,
+            "condition": "Clear",
+            "condition_code": 0,
+            "daily": [
+              {
+                "condition": "Clear",
+                "condition_code": 0,
+                "date_unix_ms": 1766361600000,
+                "high_c": 21.0,
+                "low_c": 13.0,
+                "precipitation_probability": 5,
+                "sunrise_unix_ms": 1766385120000,
+                "sunset_unix_ms": 1766436420000
+              }
+            ],
+            "error": null,
+            "high_c": 21.0,
+            "home": true,
+            "hourly": [
+              {
+                "condition": "Clear",
+                "condition_code": 0,
+                "is_day": true,
+                "precipitation_mm": 0.0,
+                "precipitation_probability": 5,
+                "temperature_c": 17.0,
+                "time_unix_ms": 1766448000000,
+                "wind_direction_degrees": 315,
+                "wind_speed_kmh": 12.0
+              }
+            ],
+            "humidity_percent": 73,
+            "id": "home",
+            "is_day": true,
+            "latitude": 52.3676,
+            "location": "Amsterdam",
+            "longitude": 4.9041,
+            "low_c": 13.0,
+            "precipitation_mm": 0.0,
+            "precipitation_probability": 5,
+            "solar_noon": {
+              "approximate": true,
+              "evaluated_unix_ms": 1766400000000,
+              "local_date": "2025-12-22",
+              "method": "sunrise-sunset-midpoint",
+              "timezone": "Europe/Amsterdam",
+              "unix_ms": 1766410770000,
+              "utc_offset_seconds": 3600
+            },
+            "sunrise_unix_ms": 1766385120000,
+            "sunset_unix_ms": 1766436420000,
+            "temperature_c": 17.0,
+            "timezone": "Europe/Amsterdam",
+            "timezone_region_ids": [
+              "Europe-Paris"
+            ],
+            "updated_unix_ms": 1766400000000,
+            "utc_offset_seconds": 3600,
+            "wind_direction_degrees": 315,
+            "wind_gust_kmh": 18.0,
+            "wind_speed_kmh": 12.0
+          },
+          "weather_locations": [
+            {
+              "apparent_temperature_c": 16.0,
+              "available": true,
+              "condition": "Clear",
+              "condition_code": 0,
+              "daily": [
+                {
+                  "condition": "Clear",
+                  "condition_code": 0,
+                  "date_unix_ms": 1766361600000,
+                  "high_c": 21.0,
+                  "low_c": 13.0,
+                  "precipitation_probability": 5,
+                  "sunrise_unix_ms": 1766385120000,
+                  "sunset_unix_ms": 1766436420000
+                }
+              ],
+              "error": null,
+              "high_c": 21.0,
+              "home": true,
+              "hourly": [
+                {
+                  "condition": "Clear",
+                  "condition_code": 0,
+                  "is_day": true,
+                  "precipitation_mm": 0.0,
+                  "precipitation_probability": 5,
+                  "temperature_c": 17.0,
+                  "time_unix_ms": 1766448000000,
+                  "wind_direction_degrees": 315,
+                  "wind_speed_kmh": 12.0
+                }
+              ],
+              "humidity_percent": 73,
+              "id": "home",
+              "is_day": true,
+              "latitude": 52.3676,
+              "location": "Amsterdam",
+              "longitude": 4.9041,
+              "low_c": 13.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 5,
+              "solar_noon": {
+                "approximate": true,
+                "evaluated_unix_ms": 1766400000000,
+                "local_date": "2025-12-22",
+                "method": "sunrise-sunset-midpoint",
+                "timezone": "Europe/Amsterdam",
+                "unix_ms": 1766410770000,
+                "utc_offset_seconds": 3600
+              },
+              "sunrise_unix_ms": 1766385120000,
+              "sunset_unix_ms": 1766436420000,
+              "temperature_c": 17.0,
+              "timezone": "Europe/Amsterdam",
+              "timezone_region_ids": [
+                "Europe-Paris"
+              ],
+              "updated_unix_ms": 1766400000000,
+              "utc_offset_seconds": 3600,
+              "wind_direction_degrees": 315,
+              "wind_gust_kmh": 18.0,
+              "wind_speed_kmh": 12.0
+            }
+          ],
+          "world_clocks": [
+            {
+              "abbreviation": "JST",
+              "city": "Tokyo",
+              "label": "Tokyo",
+              "timezone": "Asia/Tokyo",
+              "timezone_region_ids": [
+                "Asia-Tokyo"
+              ],
+              "utc_offset_seconds": 32400
+            }
+          ]
+        },
+        "audio": {
+          "available": true,
+          "error": null,
+          "input_available": true,
+          "input_muted": false,
+          "muted": false,
+          "sink_description": "Speakers",
+          "sink_name": "alsa_output.test",
+          "source_description": "Microphone",
+          "source_name": "alsa_input.test",
+          "volume_percent": 50
+        },
+        "battery": {
+          "available": true,
+          "charging": false,
+          "critical": false,
+          "cycles": 101,
+          "devices": [
+            {
+              "cycles": 101,
+              "energy_full_design_wh": 52.5,
+              "energy_full_wh": 44.75,
+              "energy_now_wh": 35.8,
+              "health_percent": 85,
+              "id": "BAT0",
+              "model": "5B11H56418",
+              "percentage": 80,
+              "power_watts": 8.2,
+              "present": true,
+              "protection": {
+                "available_behaviours": [
+                  "auto",
+                  "inhibit-charge",
+                  "force-discharge"
+                ],
+                "backend": "thinkpad-sysfs",
+                "charge_behaviour": "auto",
+                "charge_once_active": false,
+                "desired_enabled": true,
+                "desired_end_percent": 80,
+                "desired_start_percent": 75,
+                "enabled": true,
+                "end_percent": 80,
+                "error": null,
+                "managed": true,
+                "start_percent": 75,
+                "supported": true,
+                "supports_charge_behaviour": true,
+                "supports_end": true,
+                "supports_start": true,
+                "thresholds_verified": true
+              },
+              "serial": "5878",
+              "state": "discharging",
+              "vendor": "Sunwoda",
+              "voltage_volts": 15.48
+            }
+          ],
+          "error": null,
+          "forecast": {
+            "approximate": true,
+            "estimating": false,
+            "limit": 80,
+            "percentage": 80,
+            "scope": "aggregate",
+            "seconds": 14400.0,
+            "status": "valid",
+            "target": 0
+          },
+          "health_percent": 85,
+          "history": {
+            "active_duration_ms": 900000,
+            "current_point": {
+              "active_time_ms": 930000,
+              "charging": false,
+              "continuous": true,
+              "mode": "discharging",
+              "percentage": 80,
+              "plugged": false,
+              "power_valid": true,
+              "power_watts": 8.2,
+              "time_to_full_seconds": null,
+              "timestamp_ms": 1768464930000
+            },
+            "energy": {
+              "activeDurationMs": 0,
+              "bars": [],
+              "intervalMs": 900000,
+              "maximum": 0.0,
+              "observedMs": 0,
+              "totalWh": -0.0
+            },
+            "last_charge_timestamp_ms": 1768464000000,
+            "latest_timestamp_ms": 1768464900000,
+            "points": [],
+            "retention_days": 7
+          },
+          "native_path": "BAT0",
+          "operation": {
+            "battery_id": "",
+            "expires_unix_ms": 0,
+            "kind": "",
+            "phase": "",
+            "started_unix_ms": 0
+          },
+          "percentage": 80,
+          "plugged": false,
+          "policy": {
+            "auto_power_saver": true,
+            "critical_percent": 12,
+            "critical_profile": "power-saver",
+            "notify_critical": true,
+            "notify_warning": true,
+            "notify_when_full": true,
+            "recovery_margin_percent": 3,
+            "warning_percent": 25,
+            "warning_profile": "power-saver"
+          },
+          "power_available": true,
+          "power_watts": 8.2,
+          "protection": {
+            "available_behaviours": [
+              "auto",
+              "inhibit-charge",
+              "force-discharge"
+            ],
+            "backend": "thinkpad-sysfs",
+            "charge_behaviour": "auto",
+            "charge_once_active": false,
+            "desired_enabled": true,
+            "desired_end_percent": 80,
+            "desired_start_percent": 75,
+            "enabled": true,
+            "end_percent": 80,
+            "error": null,
+            "managed": true,
+            "start_percent": 75,
+            "supported": true,
+            "supports_charge_behaviour": true,
+            "supports_end": true,
+            "supports_start": true,
+            "thresholds_verified": true
+          },
+          "state": "discharging",
+          "time_to_empty_seconds": 14400,
+          "time_to_full_seconds": 0,
+          "warning": false
+        },
+        "brightness": {
+          "available": true,
+          "brightness": 500,
+          "device": "amdgpu_bl1",
+          "error": null,
+          "max_brightness": 1000,
+          "percent": 50
+        },
+        "compositor": {
+          "animations_enabled": false,
+          "available": true,
+          "error": null,
+          "revision": 1
+        },
+        "display_policy": {
+          "available": true,
+          "baseline": "",
+          "docking_state": "settled",
+          "error": null,
+          "focus": {
+            "available": true,
+            "error": null,
+            "saved": {},
+            "values": {
+              "input:follow_mouse": 1,
+              "misc:mouse_move_focuses_monitor": true
+            }
+          },
+          "layout": {
+            "manual_enablement": false,
+            "saved": {
+              "outputs": []
+            },
+            "trial": null
+          },
+          "outputs": [
+            {
+              "availableModes": [
+                "1920x1200@60.00Hz"
+              ],
+              "current_mode": "1920x1200@60.00Hz",
+              "disabled": true,
+              "focused": false,
+              "height": 1200,
+              "id": 0,
+              "internal": true,
+              "mirrorOf": "",
+              "mirror_of": "",
+              "modes": [
+                {
+                  "height": 1200,
+                  "id": "1920x1200@60.00Hz",
+                  "rate": 60.0,
+                  "size": "1920x1200",
+                  "width": 1920
+                }
+              ],
+              "name": "eDP-1",
+              "refreshRate": 60.0,
+              "scale": 1.25,
+              "supported": true,
+              "transform": 0,
+              "width": 1920,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "availableModes": [
+                "3840x2160@59.940Hz",
+                "3840x2160@60.00Hz",
+                "2560x1440@120.00Hz"
+              ],
+              "current_mode": "3840x2160@59.940Hz",
+              "disabled": false,
+              "focused": false,
+              "height": 2160,
+              "id": 1,
+              "internal": false,
+              "mirrorOf": "",
+              "mirror_of": "",
+              "modes": [
+                {
+                  "height": 2160,
+                  "id": "3840x2160@59.940Hz",
+                  "rate": 59.94,
+                  "size": "3840x2160",
+                  "width": 3840
+                },
+                {
+                  "height": 2160,
+                  "id": "3840x2160@60.00Hz",
+                  "rate": 60.0,
+                  "size": "3840x2160",
+                  "width": 3840
+                },
+                {
+                  "height": 1440,
+                  "id": "2560x1440@120.00Hz",
+                  "rate": 120.0,
+                  "size": "2560x1440",
+                  "width": 2560
+                }
+              ],
+              "name": "DP-1",
+              "refreshRate": 59.94,
+              "scale": 1.5,
+              "supported": true,
+              "transform": 0,
+              "width": 3840,
+              "x": 1536,
+              "y": 0
+            }
+          ],
+          "policy": {
+            "prefer_external": true
+          },
+          "status": "external"
+        },
+        "media": {
+          "active_player": "org.mpris.MediaPlayer2.spotify",
+          "available": true,
+          "error": null,
+          "pinned_player": null,
+          "players": [
+            {
+              "album": "Album",
+              "art_url": "",
+              "artist": "Artist",
+              "can_control": true,
+              "can_next": true,
+              "can_pause": true,
+              "can_play": true,
+              "can_previous": true,
+              "can_seek": true,
+              "content_type": "music",
+              "content_type_source": "url",
+              "control_mode": "automatic",
+              "desktop_entry": "spotify",
+              "id": "org.mpris.MediaPlayer2.spotify",
+              "identity": "Spotify",
+              "length_us": 240000000,
+              "metadata_sources": {},
+              "playback_rate": 1.0,
+              "playback_status": "playing",
+              "position_observed_at_unix_ms": 1234567890000,
+              "position_us": 60000000,
+              "source": {
+                "service": "spotify",
+                "url": "spotify:track:example"
+              },
+              "title": "Track"
+            }
+          ]
+        },
+        "notification_active": {
+          "available": true,
+          "error": null,
+          "notifications": [
+            {
+              "actions": [
+                {
+                  "key": "default",
+                  "label": "Open"
+                }
+              ],
+              "app_icon": "calendar",
+              "app_name": "Calendar",
+              "body": "Meeting starts soon",
+              "created_unix_ms": 1768463900000,
+              "dnd_bypass": false,
+              "expires_unix_ms": null,
+              "group_key": "calendar",
+              "hints": {
+                "category": "calendar",
+                "desktop_entry": "calendar",
+                "image_data_present": false,
+                "image_path": "",
+                "resident": false,
+                "sound_file": "",
+                "sound_name": "",
+                "suppress_sound": false,
+                "transient": false,
+                "urgency": 1
+              },
+              "id": 1,
+              "identity_icon": "",
+              "snoozed_until_unix_ms": null,
+              "source_monitor": "eDP-1",
+              "summary": "Planning",
+              "toast_expires_unix_ms": 1768463905000,
+              "toast_visible": true,
+              "updated_unix_ms": 1768463900000
+            }
+          ],
+          "revision": 1
+        },
+        "notifications": {
+          "alt": "dnd-notification",
+          "app_policies": {},
+          "available": true,
+          "backend": "native",
+          "class_name": "dnd-notification",
+          "count": 1,
+          "dnd": true,
+          "dnd_until_unix_ms": 1768467500000,
+          "error": null,
+          "history_revision": 1,
+          "inhibited": false,
+          "text": "1",
+          "tooltip": "1 Notification"
+        },
+        "osd_hardware": {
+          "available": true,
+          "camera_privacy": true,
+          "caps_lock": false,
+          "error": null,
+          "keyboard_backlight_percent": 50,
+          "microphone_privacy": false,
+          "num_lock": true
+        },
+        "power_profile": {
+          "actions": [
+            {
+              "description": "Panel power savings",
+              "enabled": true,
+              "name": "amdgpu_panel_power"
+            }
+          ],
+          "active_holds": [
+            {
+              "application_id": "org.example.Compiler",
+              "profile": "performance",
+              "reason": "Building"
+            }
+          ],
+          "available": true,
+          "battery_automation": {
+            "error": null,
+            "level": "normal",
+            "profile": "",
+            "status": "waiting"
+          },
+          "battery_aware": true,
+          "driver": "amd_pstate",
+          "error": null,
+          "performance_degraded": "",
+          "profile": "balanced",
+          "profiles": [
+            {
+              "driver": "amd_pstate",
+              "name": "balanced",
+              "platform_driver": "platform_profile"
+            }
+          ],
+          "version": "0.30"
+        },
+        "power_sleep": {
+          "available": true,
+          "can_hibernate": "challenge",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [
+            {
+              "mode": "delay",
+              "pid": 4242,
+              "uid": 1000,
+              "what": "sleep",
+              "who": "Backup",
+              "why": "Writing snapshot"
+            }
+          ],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "",
+            "error": null,
+            "id": 0,
+            "job": null,
+            "phase": ""
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 0
+        },
+        "sleep_policy": {
+          "active_profile": "shared",
+          "available": true,
+          "critical_battery": {
+            "error": null,
+            "phase": "disabled",
+            "remaining_seconds": 0
+          },
+          "error": null,
+          "hibernate_available": true,
+          "hibernate_error": null,
+          "hibernate_ready": true,
+          "last_error": null,
+          "lid": {
+            "available": true,
+            "error": null,
+            "managed": true
+          },
+          "policy": {
+            "battery": {
+              "hibernate_minutes": 120,
+              "sleep_minutes": 30
+            },
+            "critical_battery": {
+              "enabled": false,
+              "grace_seconds": 60,
+              "percent": 5
+            },
+            "lid_action": "profile",
+            "plugged": {
+              "hibernate_minutes": 180,
+              "sleep_minutes": 60
+            },
+            "same_profile": true
+          }
+        },
+        "timezone": {
+          "abbreviation": "CEST",
+          "available": true,
+          "city": "Amsterdam",
+          "error": null,
+          "timezone": "Europe/Amsterdam",
+          "timezone_region_ids": [
+            "Africa-Johannesburg",
+            "Europe-Paris"
+          ],
+          "utc_offset_seconds": 7200
+        },
+        "updates": {
+          "available": true,
+          "error": null,
+          "jobs": [
+            {
+              "error": null,
+              "exit_code": 0,
+              "finished_at": 124,
+              "name": "system",
+              "operation": "run-delayed",
+              "phase": "ready",
+              "started_at": 123,
+              "status": "completed"
+            }
+          ],
+          "lanes": [
+            {
+              "auto_apply": false,
+              "base_hash": "def",
+              "created_at": 123,
+              "name": "delayed",
+              "ready": true,
+              "revision": "abc",
+              "system": "/nix/store/system"
+            }
+          ],
+          "ready": true,
+          "state_directory": "/var/lib/nixos-delayed-updates-v2"
+        },
+        "workarea": {
+          "available": true,
+          "error": null,
+          "monitors": {
+            "eDP-1": {
+              "bottom": 0.0,
+              "left": 0.0,
+              "right": 0.0,
+              "top": 28.0
+            }
+          },
+          "revision": 1
+        },
+        "workspaces": {
+          "active_window": {
+            "address": "0x123",
+            "class_name": "com.mitchellh.ghostty",
+            "floating": false,
+            "fullscreen": false,
+            "initial_class": "ghostty",
+            "title": "Terminal",
+            "workspace_id": 1
+          },
+          "available": true,
+          "error": null,
+          "focused_monitor": "eDP-1",
+          "monitors": [
+            {
+              "active_workspace_id": 1,
+              "focused": true,
+              "id": 0,
+              "name": "eDP-1"
+            }
+          ],
+          "workspaces": [
+            {
+              "fullscreen": false,
+              "id": 1,
+              "last_window_title": "Terminal",
+              "monitor": "eDP-1",
+              "name": "1",
+              "urgent": false,
+              "windows": 1
+            }
+          ]
+        }
+      }
+    },
+    "ok": true,
+    "protocol": "bar-api",
+    "version": 1
+  },
+  "subscribed": {
+    "activity.changed": {
+      "data": {
+        "available": false,
+        "error": null,
+        "event_count": 0,
+        "incomplete_todo_count": 0,
+        "locations": [],
+        "lunar": null,
+        "next_event": null,
+        "sources": [],
+        "syncing": false,
+        "weather": {
+          "apparent_temperature_c": 0.0,
+          "available": false,
+          "condition": "",
+          "condition_code": 0,
+          "daily": [],
+          "error": null,
+          "high_c": 0.0,
+          "home": false,
+          "hourly": [],
+          "humidity_percent": 0,
+          "id": "",
+          "is_day": false,
+          "latitude": 0.0,
+          "location": "",
+          "longitude": 0.0,
+          "low_c": 0.0,
+          "precipitation_mm": 0.0,
+          "precipitation_probability": 0,
+          "solar_noon": null,
+          "sunrise_unix_ms": 0,
+          "sunset_unix_ms": 0,
+          "temperature_c": 0.0,
+          "timezone": "",
+          "timezone_region_ids": [],
+          "updated_unix_ms": 0,
+          "utc_offset_seconds": 0,
+          "wind_direction_degrees": 0,
+          "wind_gust_kmh": 0.0,
+          "wind_speed_kmh": 0.0
+        },
+        "weather_locations": [],
+        "world_clocks": []
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "activity.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "audio.changed": {
+      "data": {
+        "available": false,
+        "error": null,
+        "input_available": false,
+        "input_muted": false,
+        "muted": false,
+        "sink_description": "",
+        "sink_name": "",
+        "source_description": "",
+        "source_name": "",
+        "volume_percent": 0
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "audio.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "battery.changed": {
+      "data": {
+        "available": false,
+        "charging": false,
+        "critical": false,
+        "cycles": null,
+        "devices": [],
+        "error": null,
+        "forecast": {
+          "approximate": false,
+          "estimating": false,
+          "limit": null,
+          "percentage": 0,
+          "scope": "",
+          "seconds": 0.0,
+          "status": "",
+          "target": 0
+        },
+        "health_percent": null,
+        "history": {
+          "active_duration_ms": 0,
+          "current_point": null,
+          "energy": {
+            "activeDurationMs": 0,
+            "bars": [],
+            "intervalMs": 0,
+            "maximum": 0.0,
+            "observedMs": 0,
+            "totalWh": 0.0
+          },
+          "last_charge_timestamp_ms": 0,
+          "latest_timestamp_ms": 0,
+          "points": [],
+          "retention_days": 0
+        },
+        "native_path": "",
+        "operation": {
+          "battery_id": "",
+          "expires_unix_ms": 0,
+          "kind": "",
+          "phase": "",
+          "started_unix_ms": 0
+        },
+        "percentage": 0,
+        "plugged": false,
+        "policy": {
+          "auto_power_saver": true,
+          "critical_percent": 12,
+          "critical_profile": "power-saver",
+          "notify_critical": true,
+          "notify_warning": true,
+          "notify_when_full": true,
+          "recovery_margin_percent": 3,
+          "warning_percent": 25,
+          "warning_profile": "power-saver"
+        },
+        "power_available": false,
+        "power_watts": 0.0,
+        "protection": {
+          "available_behaviours": [],
+          "backend": "",
+          "charge_behaviour": null,
+          "charge_once_active": false,
+          "desired_enabled": false,
+          "desired_end_percent": null,
+          "desired_start_percent": null,
+          "enabled": false,
+          "end_percent": null,
+          "error": null,
+          "managed": false,
+          "start_percent": null,
+          "supported": false,
+          "supports_charge_behaviour": false,
+          "supports_end": false,
+          "supports_start": false,
+          "thresholds_verified": false
+        },
+        "state": "",
+        "time_to_empty_seconds": 0,
+        "time_to_full_seconds": 0,
+        "warning": false
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "battery.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "brightness.changed": {
+      "data": {
+        "available": false,
+        "brightness": 0,
+        "device": "",
+        "error": null,
+        "max_brightness": 0,
+        "percent": 0
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "brightness.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "compositor.changed": {
+      "data": {
+        "animations_enabled": null,
+        "available": false,
+        "error": null,
+        "revision": 0
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "compositor.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "display-policy.changed": {
+      "data": {
+        "available": false,
+        "baseline": "",
+        "docking_state": "settled",
+        "error": null,
+        "focus": {
+          "available": false,
+          "error": null,
+          "saved": {},
+          "values": {}
+        },
+        "layout": {
+          "manual_enablement": false,
+          "saved": {
+            "outputs": []
+          },
+          "trial": null
+        },
+        "outputs": [],
+        "policy": {
+          "prefer_external": true
+        },
+        "status": ""
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "display-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "media.changed": {
+      "data": {
+        "active_player": null,
+        "available": false,
+        "error": null,
+        "pinned_player": null,
+        "players": []
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "media.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "notifications.active.changed": {
+      "data": {
+        "available": false,
+        "error": null,
+        "notifications": [],
+        "revision": 0
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "notifications.active.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "notifications.changed": {
+      "data": {
+        "alt": "",
+        "app_policies": {},
+        "available": false,
+        "backend": "",
+        "class_name": "",
+        "count": 0,
+        "dnd": false,
+        "dnd_until_unix_ms": null,
+        "error": null,
+        "history_revision": 0,
+        "inhibited": false,
+        "text": "",
+        "tooltip": ""
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "notifications.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "osd-hardware.changed": {
+      "data": {
+        "available": false,
+        "camera_privacy": false,
+        "caps_lock": false,
+        "error": null,
+        "keyboard_backlight_percent": null,
+        "microphone_privacy": false,
+        "num_lock": false
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "osd-hardware.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "power-profile.changed": {
+      "data": {
+        "actions": [],
+        "active_holds": [],
+        "available": false,
+        "battery_automation": {
+          "error": null,
+          "level": "",
+          "profile": "",
+          "status": ""
+        },
+        "battery_aware": null,
+        "driver": "",
+        "error": null,
+        "performance_degraded": "",
+        "profile": "",
+        "profiles": [],
+        "version": ""
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "power-profile.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "power-sleep.changed": {
+      "data": {
+        "available": false,
+        "can_hibernate": "",
+        "can_suspend": "",
+        "diagnostics": {
+          "disk_swap_available": null,
+          "guidance": [],
+          "hardware": null,
+          "hibernate_issues": [],
+          "resume_device_configured": null,
+          "supported_suspend_modes": [],
+          "suspend_mode": null
+        },
+        "error": null,
+        "inhibitors": [],
+        "keep_awake": false,
+        "lock_before_sleep": false,
+        "operation": {
+          "action": "",
+          "error": null,
+          "id": 0,
+          "job": null,
+          "phase": ""
+        },
+        "preparing_for_sleep": false,
+        "resume_generation": 0
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "power-sleep.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "sleep-policy.changed": {
+      "data": {
+        "active_profile": "",
+        "available": false,
+        "critical_battery": {
+          "error": null,
+          "phase": "",
+          "remaining_seconds": 0
+        },
+        "error": null,
+        "hibernate_available": false,
+        "hibernate_error": null,
+        "hibernate_ready": false,
+        "last_error": null,
+        "lid": {
+          "available": false,
+          "error": null,
+          "managed": false
+        },
+        "policy": {
+          "battery": {
+            "hibernate_minutes": 0,
+            "sleep_minutes": 30
+          },
+          "critical_battery": {
+            "enabled": false,
+            "grace_seconds": 60,
+            "percent": 5
+          },
+          "lid_action": "system",
+          "plugged": {
+            "hibernate_minutes": 0,
+            "sleep_minutes": 30
+          },
+          "same_profile": true
+        }
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "sleep-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "timezone.changed": {
+      "data": {
+        "abbreviation": "",
+        "available": false,
+        "city": "",
+        "error": null,
+        "timezone": "",
+        "timezone_region_ids": [],
+        "utc_offset_seconds": 0
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "timezone.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "updates.changed": {
+      "data": {
+        "available": false,
+        "error": null,
+        "jobs": [],
+        "lanes": [],
+        "ready": false,
+        "state_directory": ""
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "updates.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "workarea.changed": {
+      "data": {
+        "available": false,
+        "error": null,
+        "monitors": {},
+        "revision": 0
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "workarea.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "workspaces.changed": {
+      "data": {
+        "active_window": null,
+        "available": false,
+        "error": null,
+        "focused_monitor": null,
+        "monitors": [],
+        "workspaces": []
+      },
+      "event": "subscribed",
+      "protocol": "bar-api",
+      "stream": "workspaces.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    }
+  }
+}
