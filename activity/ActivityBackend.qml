@@ -11,13 +11,16 @@ Io.DaemonBackend {
     active: controller.uiActive
 
     readonly property bool snapshotLoading: isPending("activity-snapshot")
+    property string latestRangeRequestId: ""
 
     function snapshot(): bool {
         controller.snapshotReadError = "";
         return call("activity-snapshot", ActivityApi.methods.snapshot, {});
     }
     function queryRange(fromDate: date, toDate: date): bool {
-        return callSequenced("activity-range", ActivityApi.methods.queryRange, {
+        const id = nextRequestId("activity-range");
+        latestRangeRequestId = id;
+        return call(id, ActivityApi.methods.queryRange, {
             from_unix_ms: fromDate.getTime(),
             to_unix_ms: toDate.getTime()
         });
@@ -48,6 +51,10 @@ Io.DaemonBackend {
 
     function finish(id: string, envelope: var, transportError: string): void {
         const kind = requestKind(id);
+        // Distinct transport IDs do not imply response ordering. A previous
+        // month's result/error must not replace the user's newer range.
+        if (kind === "activity-range" && id !== latestRangeRequestId)
+            return;
         const error = responseError(envelope, transportError, "Activity operation failed");
         if (error.length > 0) {
             controller.lastError = error;
@@ -79,6 +86,8 @@ Io.DaemonBackend {
         controller.handleEvent(event);
     }
     onSendFailed: function (id, message) {
+        if (requestKind(id) === "activity-range" && id !== latestRangeRequestId)
+            return;
         controller.lastError = message;
         if (requestKind(id) === "activity-snapshot")
             controller.snapshotReadError = message;
@@ -88,6 +97,7 @@ Io.DaemonBackend {
         }
     }
     onTransportFailed: function (message) {
+        latestRangeRequestId = "";
         controller.lastError = message;
         controller.snapshotReadError = message;
         controller.rangeReadError = message;

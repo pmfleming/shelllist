@@ -868,6 +868,12 @@
                 ${barDaemon}/bin/bar-daemon debug battery-contract-fixture > bar-battery.json
                 diff -u ${./tests/qml/fixtures/bar-battery.json} bar-battery.json
                 cp bar-battery.json test-root/tests/qml/fixtures/bar-battery.json
+                ${barDaemon}/bin/bar-daemon debug activity-contract-fixture > bar-activity.json
+                diff -u ${./tests/qml/fixtures/bar-activity.json} bar-activity.json
+                cp bar-activity.json test-root/tests/qml/fixtures/bar-activity.json
+                ${barDaemon}/bin/bar-daemon debug query-contract-fixture > bar-notification-queries.json
+                diff -u ${./tests/qml/fixtures/bar-notification-queries.json} bar-notification-queries.json
+                cp bar-notification-queries.json test-root/tests/qml/fixtures/bar-notification-queries.json
                 cp -r ${./qml} test-root/qml
                 chmod -R u+w test-root/qml
                 ln -sfn ${./battery} test-root/qml/Shelllist/Battery
