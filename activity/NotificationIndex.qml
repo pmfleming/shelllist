@@ -86,17 +86,6 @@ Item {
         width: parent.width
         spacing: Ui.Theme.spacingSm
         NotificationAppHeader { width: parent.width; controller: page.controller }
-        Ui.FeedbackSource {
-            text: page.timeline.error
-            summaryText: qsTr("Notification history unavailable")
-            tone: "error"
-        }
-        Ui.LabeledAction {
-            width: parent.width; enabled: !!page.timeline.error
-            icon: "refresh"; label: qsTr("Retry notification history"); accessKey: "T"
-            uiScale: Ui.Theme.expandedSecondaryActionScale
-            onClicked: page.timeline.refresh()
-        }
         Ui.ContentState {
             width: parent.width
             visible: page.timeline.totalCount === 0

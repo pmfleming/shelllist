@@ -30,7 +30,7 @@ Item {
     readonly property bool hasMore: snapshot.next_offset !== null && snapshot.next_offset !== undefined
     function invalidate(clear: bool): void {
         generation++; busy = false; staging = null;
-        if (clear) { snapshot = ({}); entries = []; expandedStacks = ({}); collapsed = true; }
+        if (clear) { snapshot = ({}); entries = []; expandedStacks = ({}); collapsed = true; error = ""; }
         refresh();
     }
     function refresh(): void { dirty = true; if (active) debounce.restart(); }

@@ -8,10 +8,23 @@ Ui.ProviderChooserSurface {
     id: content
     required property NotificationController controller
     chooserController: controller
+    feedbackScope: content
     navigationEnabled: !controller.notificationState.deleteConfirmation
     detailsTabEnabled: navigationEnabled && controller.detailsOpen && controller.hasSelection && !controller.settingsOpen
     commandsWithoutDetails: controller.hasSelection && !controller.settingsOpen
     additionalCommandItem: collapsedCommands
+    // Read failures belong to the surface, including collapsed details and the
+    // controls tab. Recovery policy stays native; Refresh/F5 requests a new read.
+    Ui.FeedbackSource {
+        text: content.controller.catalog.rootError
+        summaryText: qsTr("Notification list unavailable")
+        tone: "error"
+    }
+    Ui.FeedbackSource {
+        text: content.controller.timeline.error
+        summaryText: qsTr("Notification history unavailable")
+        tone: "error"
+    }
     Ui.CommandGroup {
         id: collapsedCommands
         visible: content.commandsWithoutDetails && !content.controller.detailsOpen
@@ -50,7 +63,8 @@ Ui.ProviderChooserSurface {
         searchActionToolTip: qsTr("Notification settings")
         onSearchActionRequested: content.controller.openSettings()
         refreshing: content.controller.catalog.rootBusy
-        status: content.controller.notificationState.lastError || content.controller.catalog.rootError || content.controller.screenshotStatus
+        status: content.controller.notificationState.lastError || content.controller.screenshotStatus
+        statusTone: content.controller.notificationState.lastError ? "error" : "info"
         emptyState: content.controller.catalog.rootError ? "unavailable" : refreshing ? "loading" : !content.controller.notificationState.notifications.available ? "unavailable" : filterText.trim() ? "filtered" : "empty"
         emptyText: content.controller.catalog.rootError || (emptyState === "loading" ? qsTr("Loading notifications…") : emptyState === "unavailable" ? qsTr("Notifications unavailable") : emptyState === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
         emptyIcon: "notifications_none"

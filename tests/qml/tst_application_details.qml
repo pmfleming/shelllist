@@ -124,6 +124,35 @@ DaemonTestCase {
         compare(panel.controller.dispatched[1].action, "close-window");
         compare(panel.controller.dispatched[1].window_id, "window-1");
     }
+    function test_headerHasNoOverflowAndPageOwnsExtraActions() {
+        const panel = make(application("desktop-application", 1, 1));
+        const navigation = panel.detailsNavigation;
+        for (const tab of ["application", "resources", "settings"]) {
+            tryCompare(panel.controller, "detailsTab", tab);
+            tryVerify(() => navigation.contentReady);
+            verify(!findChild(panel.detailsItem, "surfaceActionMore").visible);
+            compare(panel.detailsItem.actions.map(action => action.id), ["activate", "launch", "close"]);
+            keyClick(Qt.Key_M, Qt.AltModifier);
+            verify(!navigation.commandMenuOpen, "Alt+M cannot open removed header overflow");
+            if (tab === "application") {
+                const command = findChild(panel, "desktopAction-action-0Button");
+                mouseClick(command);
+                compare(panel.controller.dispatched.length, 1);
+                compare(panel.controller.dispatched[0].desktop_action_id, "action-0");
+            } else {
+                verify(findChild(panel, "desktopAction-action-0Button") === null);
+                verify(findChild(panel, "focusWindow-window-0") === null);
+                verify(!navigation.contentCommands.some(command => command.objectName.startsWith("desktopAction-")
+                    || command.objectName.startsWith("focusWindow-") || command.objectName.startsWith("closeWindow-")));
+            }
+            keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        }
+        tryCompare(panel.controller, "detailsTab", "application");
+        tryVerify(() => navigation.contentReady && findChild(panel, "desktopAction-action-0Button") !== null);
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        chooseCommand(panel, "Open custom project");
+        compare(panel.controller.dispatched.length, 2, "Application-tab command is restored after switching tabs");
+    }
     function test_altJRetainsAllDesktopAndWindowCommands() {
         const panel = make(application("desktop-application", 1, 12));
         keyClick(Qt.Key_J, Qt.AltModifier);

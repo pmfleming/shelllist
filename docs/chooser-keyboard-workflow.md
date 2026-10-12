@@ -388,6 +388,13 @@ catalog read. Native tests cover that ownership boundary and timeline validation
 Dropdown values/options share passive `DropDownLabel` composition; icons and saved
 checks retain their existing identities and do not become additional field stops.
 
+Notification history has no Retry row or Alt+T command. Read failures use shared
+surface-owned `FeedbackSource` contributions in the fixed list status bar, also
+on App controls and with details collapsed. Cached rows remain; Refresh/F5 starts
+another read without replaying mutations. Bounded read contention recovery and
+read deadlines belong to `bar-daemon`; the frontend retains transport, ownership
+and stale-window guards, not a storage retry loop.
+
 Native windows stage refreshes atomically and fence stale revisions, epochs,
 queries, period changes and local-midnight rollover. Frontend notification readers
 share wire-shape validation, not request ownership or publication. Timeline
@@ -432,6 +439,12 @@ See [application action outcomes](application-actions.md) for ownership,
 acknowledgement, recovery bounds and interaction tests.
 
 ## Application detail commands
+
+The Applications header exposes only Focus/Launch, New tile and Close all windows;
+there is no header More menu or Alt+M route. Individual-window and desktop-defined
+commands belong only to the Application tab, including its shared Alt+J content
+menu. Switching to Resources or Settings removes those page-local commands without
+changing submitted operations, backend guards or the remaining header shortcuts.
 
 Application window and desktop-action groups use passive shared `DetailColumnCard`
 containers and remain information/commands only, not editable fields. Each

@@ -52,6 +52,11 @@ revision. The screenshot's browser is an example, not an application-specific la
 
 ## Commands and safety
 
+The application header has no ellipsis/More menu. Only Focus/Launch, New tile
+and Close all windows remain there. Individual-window and desktop-defined actions
+are available only on the Application tab, directly or through its shared Alt+J
+content menu, not from Resources or Settings. Alt+M has no application-header menu.
+
 Each window exposes Focus and Close (×) directly; no per-window ellipsis remains.
 The pair reuses the former Focus/More footprint. Content-mode `SurfaceActionRow`
 keeps stable button identities and joins `DetailsNavigation`'s content-command

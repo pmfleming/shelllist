@@ -188,6 +188,94 @@ DaemonTestCase {
         return {view: "timeline", epoch: "epoch", revision: "1", query: "", app_key: "named:Chat", date: "older", period_day: "2026-10-08", recent: [1000,999,998].map(id => preview(id, "named:Chat")), dates: ["today", "week", "month", "older"].map(key => ({key: key, count: key === "older" ? 40 : 0})), count: 40, total_rows: 40, offset: offset, next_offset: next, anchor_reached: true,
             entries: ids.map(id => ({key: id + ":" + id * 1000, preview: preview(id, "named:Chat"), members: [{id: id, created: id * 1000}]}))};
     }
+    function test_historyFailureUsesFooterAndF5WithoutRetryRowOrAutomaticReplay() {
+        const {state, controller, content} = make();
+        const timeline = controller.timeline;
+        const timelineRequest = () => Object.keys(state.backend.requests).find(id => {
+            const context = state.backend.requests[id].center;
+            return context?.view === "timeline" && context.generation === timeline.generation;
+        });
+        keyClick(Qt.Key_Right);
+        tryVerify(() => !!timelineRequest());
+        const value = Object.assign(timelinePage(0, [], null), {date: "", count: 0, total_rows: 0});
+        state.backend.finish(timelineRequest(), {notification_center: value}, "", "");
+        tryVerify(() => findChild(content, "notificationTimelineList") !== null);
+        const list = findChild(content, "notificationTimelineList");
+        tryCompare(controller, "detailsExpansionProgress", 1);
+        tryCompare(list, "count", 4);
+        verify(waitForRendering(content));
+        const geometry = {y: list.y, height: list.height};
+        const footer = findChild(content.listItem, "feedbackText").parent;
+        verify(!content.detailsNavigation.contentCommands.some(command => command.accessKey === "T"));
+        keyClick(Qt.Key_F5);
+        tryVerify(() => !!timelineRequest());
+        const failedId = timelineRequest();
+        state.backend.finish(failedId, {}, "Database read failed", "history-unavailable");
+        tryCompare(timeline, "busy", false);
+        compare(timeline.snapshot, value, "failed refresh keeps the published cards");
+        tryVerify(() => footer.fullText.includes("Database read failed"));
+        compare(footer.messageTone, "error");
+        compare(list.y, geometry.y, "error does not insert a detail row");
+        compare(list.height, geometry.height, "error does not resize the history viewport");
+        const readCount = calls.filter(c => c.method === "notifications.queryCenter").length;
+        keyClick(Qt.Key_T, Qt.AltModifier);
+        wait(300);
+        compare(calls.filter(c => c.method === "notifications.queryCenter").length, readCount, "no frontend retry loop or Alt+T command");
+
+        keyClick(Qt.Key_F5);
+        tryVerify(() => !!timelineRequest());
+        const retryId = timelineRequest();
+        verify(retryId !== failedId);
+        state.backend.finish(failedId, {notification_center: value}, "Late error", "history-unavailable");
+        verify(timeline.busy, "late response cannot retire the manual refresh");
+        state.backend.finish(retryId, {notification_center: value}, "", "");
+        compare(timeline.error, "");
+        tryVerify(() => !footer.fullText.includes("Database read failed"));
+        compare(timeline.snapshot, value);
+
+        keyClick(Qt.Key_F5);
+        tryVerify(() => !!timelineRequest());
+        state.backend.finish(timelineRequest(), {}, "Read still unavailable", "history-unavailable");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        tryCompare(controller, "detailsTab", "controls");
+        tryVerify(() => footer.fullText.includes("Read still unavailable"));
+        content.listItem.focusList();
+        keyClick(Qt.Key_Left);
+        tryCompare(controller, "detailsOpen", false);
+        tryVerify(() => footer.fullText.includes("Read still unavailable"));
+        keyClick(Qt.Key_Down);
+        compare(controller.selectedAppKey, "named:Mail");
+        compare(timeline.error, "", "another app must not inherit the failed read");
+        compare(calls.filter(c => ["notifications.delete", "notifications.setAppPolicy"].includes(c.method)).length, 0);
+        content.destroy();
+    }
+    function test_catalogFailureStaysInFooterWithCachedAppsAndRefreshRecovery() {
+        const {state, controller, content} = make();
+        const catalog = controller.catalog;
+        const rootRequest = () => Object.keys(state.backend.requests).find(id => {
+            const context = state.backend.requests[id].center;
+            return context?.view === "apps" && context.generation === catalog.rootGeneration;
+        });
+        tryVerify(() => !!rootRequest());
+        const saved = catalog.apps.slice();
+        state.backend.finish(rootRequest(), {}, "History storage unavailable", "history-unavailable");
+        const footer = findChild(content.listItem, "feedbackText").parent;
+        tryVerify(() => footer.fullText.includes("History storage unavailable"));
+        compare(footer.messageTone, "error");
+        compare(catalog.apps, saved);
+        verify(!catalog.rootBusy);
+        const count = calls.filter(c => c.method === "notifications.queryCenter").length;
+        wait(300);
+        compare(calls.filter(c => c.method === "notifications.queryCenter").length, count);
+        keyClick(Qt.Key_F5);
+        tryVerify(() => !!rootRequest());
+        state.backend.finish(rootRequest(), {notification_center: {view: "apps", epoch: "epoch", revision: "1", query: "", apps: saved,
+            offset: 0, next_offset: null, total_apps: saved.length, anchor_reached: true}}, "", "");
+        compare(catalog.rootError, "");
+        tryVerify(() => !footer.fullText.includes("History storage unavailable"));
+        compare(catalog.apps, saved);
+        content.destroy();
+    }
     function test_malformedTimelineKeepsPublishedWindow_data() {
         return [
             {tag: "foreign-preview", patch: {recent: [preview(1000, "named:Mail")]}},

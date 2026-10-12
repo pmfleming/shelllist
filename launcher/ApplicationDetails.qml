@@ -22,7 +22,9 @@ Ui.ActionDetailsPane {
     iconBorderColor: "transparent"
     title: selected.title || "Application"
     subtitle: application.kind === "desktop-shortcut" ? qsTr("Opens in another application") : (application.instances || []).length === 1 ? qsTr("1 open window") : (application.instances || []).length > 1 ? qsTr("%1 open windows").arg(application.instances.length) : application.kind === "desktop-application" ? qsTr("Not running") : qsTr("Window is no longer available")
-    actions: controller.detailActions || []
+    // Window and desktop actions live only on the Application page, including
+    // its shared Alt+J command menu; do not duplicate them in header overflow.
+    actions: (controller.detailActions || []).filter(action => action.presentation.group === "primary" || action.presentation.group === "toolbar")
 
     // Action progress/outcomes belong to the fixed list status bar on every tab.
     Ui.FeedbackSource {

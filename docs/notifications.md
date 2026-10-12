@@ -74,6 +74,24 @@ partial failures leave the previous snapshot.
 Deletion invalidates readers to prevent old responses from restoring removed
 records. The record identity is always `(id, created_unix_ms)`.
 
+Read failures contribute through shared `FeedbackSource` to the fixed list status
+bar, including cached rows, collapsed details and App controls. The permanent
+Retry notification history row and Alt+T command are removed. Refresh/F5 requests
+another read; it never replays deletion, policy changes or sender actions. Failed
+refreshes keep the published window, not an empty-success replacement. Changing
+applications clears the previous application's timeline error.
+
+Recovery is native-owned: `bar-daemon` bounds `notifications.queryCenter` admission
+and completion to three seconds, waiting for brief reader contention and retrying
+only SQLite BUSY/LOCKED reads (three attempts, 50/100ms backoff). Invalid queries,
+stale cursors, corruption and prior failed-write fences are not retried as storage
+failures. Cancellation skips abandoned queued reads and further retry attempts;
+blocking storage already running may finish but its abandoned reply is discarded.
+There is no frontend storage retry timer. The existing native transport handles
+connection/timeouts; frontend owners fence late replies and request fresh reads
+on reconnection or revision/cursor invalidation. Exhausted failures stay explicit
+until a fresh read; permanent storage faults still require repair, not replay.
+
 ## Icon identity
 
 The daemon captures desktop-file `Icon=` independently of content image hints and

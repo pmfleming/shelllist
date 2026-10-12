@@ -20,13 +20,15 @@ ChooserSurface {
     readonly property real uiScale: 1
     readonly property ChooserListPane listItem: chooser.listItem
     readonly property Item detailsItem: chooser.detailsItem
+    // Surface-owned failures may outlive the visible detail page.
+    property Item feedbackScope: detailsItem
 
     // All provider panels share the existing fixed list footer for transient
     // field/operation feedback, including asynchronously loaded subpages.
     Binding {
         target: surface.listItem
         property: "feedbackScope"
-        value: surface.detailsItem
+        value: surface.feedbackScope
         when: surface.listItem !== null
         restoreMode: Binding.RestoreBindingOrValue
     }
