@@ -1,0 +1,776 @@
+{
+  "audio.adjust": {
+    "failed": {
+      "error": {
+        "code": "audio-operation-failed",
+        "message": "PipeWire disconnected before readback"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "invalid_params": {
+      "delta_percent": "loud"
+    },
+    "limited": {
+      "data": {
+        "audio": {
+          "available": true,
+          "error": null,
+          "input_available": true,
+          "input_muted": false,
+          "muted": false,
+          "sink_description": "Speakers",
+          "sink_name": "alsa_output.test",
+          "source_description": "Microphone",
+          "source_name": "alsa_input.test",
+          "volume_percent": 100
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "params": {
+      "delta_percent": 15
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "audio.adjust parameters are invalid: invalid type: string \"loud\", expected i16"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "success": {
+      "data": {
+        "audio": {
+          "available": true,
+          "error": null,
+          "input_available": true,
+          "input_muted": false,
+          "muted": false,
+          "sink_description": "Speakers",
+          "sink_name": "alsa_output.test",
+          "source_description": "Microphone",
+          "source_name": "alsa_input.test",
+          "volume_percent": 65
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  },
+  "audio.setInputMuted": {
+    "failed": {
+      "error": {
+        "code": "audio-operation-failed",
+        "message": "PipeWire disconnected before readback"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "invalid_params": {
+      "muted": "true"
+    },
+    "limited": {
+      "data": {
+        "audio": {
+          "available": true,
+          "error": null,
+          "input_available": true,
+          "input_muted": true,
+          "muted": false,
+          "sink_description": "Speakers",
+          "sink_name": "alsa_output.test",
+          "source_description": "Microphone",
+          "source_name": "alsa_input.test",
+          "volume_percent": 100
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "params": {
+      "muted": null
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "audio.setInputMuted parameters are invalid: invalid type: string \"true\", expected a boolean"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "success": {
+      "data": {
+        "audio": {
+          "available": true,
+          "error": null,
+          "input_available": true,
+          "input_muted": true,
+          "muted": false,
+          "sink_description": "Speakers",
+          "sink_name": "alsa_output.test",
+          "source_description": "Microphone",
+          "source_name": "alsa_input.test",
+          "volume_percent": 65
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  },
+  "audio.setMuted": {
+    "failed": {
+      "error": {
+        "code": "audio-operation-failed",
+        "message": "PipeWire disconnected before readback"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "invalid_params": {
+      "muted": "true"
+    },
+    "limited": {
+      "data": {
+        "audio": {
+          "available": true,
+          "error": null,
+          "input_available": true,
+          "input_muted": false,
+          "muted": true,
+          "sink_description": "Speakers",
+          "sink_name": "alsa_output.test",
+          "source_description": "Microphone",
+          "source_name": "alsa_input.test",
+          "volume_percent": 100
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "params": {
+      "muted": null
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "audio.setMuted parameters are invalid: invalid type: string \"true\", expected a boolean"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "success": {
+      "data": {
+        "audio": {
+          "available": true,
+          "error": null,
+          "input_available": true,
+          "input_muted": false,
+          "muted": true,
+          "sink_description": "Speakers",
+          "sink_name": "alsa_output.test",
+          "source_description": "Microphone",
+          "source_name": "alsa_input.test",
+          "volume_percent": 65
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  },
+  "brightness.adjust": {
+    "failed": {
+      "error": {
+        "code": "brightness-operation-failed",
+        "message": "backlight readback failed: device disappeared"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "invalid_params": {
+      "delta_percent": "bright"
+    },
+    "limited": {
+      "data": {
+        "brightness": {
+          "available": true,
+          "brightness": 2,
+          "device": "amdgpu_bl1",
+          "error": null,
+          "max_brightness": 3,
+          "percent": 67
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "params": {
+      "delta_percent": 15
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "brightness.adjust parameters are invalid: invalid type: string \"bright\", expected i16"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "success": {
+      "data": {
+        "brightness": {
+          "available": true,
+          "brightness": 650,
+          "device": "amdgpu_bl1",
+          "error": null,
+          "max_brightness": 1000,
+          "percent": 65
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  },
+  "brightness.set": {
+    "failed": {
+      "error": {
+        "code": "brightness-operation-failed",
+        "message": "backlight readback failed: device disappeared"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "invalid_params": {
+      "percent": "bright"
+    },
+    "limited": {
+      "data": {
+        "brightness": {
+          "available": true,
+          "brightness": 2,
+          "device": "amdgpu_bl1",
+          "error": null,
+          "max_brightness": 3,
+          "percent": 67
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "params": {
+      "percent": 65
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "brightness.set parameters are invalid: invalid type: string \"bright\", expected u8"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "success": {
+      "data": {
+        "brightness": {
+          "available": true,
+          "brightness": 650,
+          "device": "amdgpu_bl1",
+          "error": null,
+          "max_brightness": 1000,
+          "percent": 65
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  },
+  "powerProfile.resumeAutomatic": {
+    "failed": {
+      "error": {
+        "code": "power-profile-operation-failed",
+        "message": "Power Profiles operation rejected"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "invalid_params": null,
+    "limited": {
+      "data": {
+        "power_profile": {
+          "actions": [
+            {
+              "description": "",
+              "enabled": false,
+              "name": "amdgpu_panel_power"
+            }
+          ],
+          "active_holds": [],
+          "available": true,
+          "battery_automation": {
+            "error": null,
+            "level": "warning",
+            "profile": "power-saver",
+            "status": "active"
+          },
+          "battery_aware": null,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "high-operating-temperature",
+          "profile": "power-saver",
+          "profiles": [
+            {
+              "driver": "",
+              "name": "power-saver",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "balanced",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "performance",
+              "platform_driver": ""
+            }
+          ],
+          "version": ""
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "params": {},
+    "rejected": null,
+    "success": {
+      "data": {
+        "power_profile": {
+          "actions": [
+            {
+              "description": "",
+              "enabled": false,
+              "name": "amdgpu_panel_power"
+            }
+          ],
+          "active_holds": [],
+          "available": true,
+          "battery_automation": {
+            "error": null,
+            "level": "warning",
+            "profile": "power-saver",
+            "status": "active"
+          },
+          "battery_aware": false,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "",
+          "profile": "power-saver",
+          "profiles": [
+            {
+              "driver": "",
+              "name": "power-saver",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "balanced",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "performance",
+              "platform_driver": ""
+            }
+          ],
+          "version": ""
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  },
+  "powerProfile.set": {
+    "failed": {
+      "error": {
+        "code": "power-profile-operation-failed",
+        "message": "Power Profiles operation rejected"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "invalid_params": {
+      "profile": false
+    },
+    "limited": {
+      "data": {
+        "power_profile": {
+          "actions": [
+            {
+              "description": "",
+              "enabled": false,
+              "name": "amdgpu_panel_power"
+            }
+          ],
+          "active_holds": [],
+          "available": true,
+          "battery_automation": {
+            "error": null,
+            "level": "warning",
+            "profile": "power-saver",
+            "status": "paused"
+          },
+          "battery_aware": null,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "high-operating-temperature",
+          "profile": "performance",
+          "profiles": [
+            {
+              "driver": "",
+              "name": "power-saver",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "balanced",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "performance",
+              "platform_driver": ""
+            }
+          ],
+          "version": ""
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "params": {
+      "profile": "performance"
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "powerProfile.set parameters are invalid: invalid type: boolean `false`, expected a string"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "success": {
+      "data": {
+        "power_profile": {
+          "actions": [
+            {
+              "description": "",
+              "enabled": false,
+              "name": "amdgpu_panel_power"
+            }
+          ],
+          "active_holds": [],
+          "available": true,
+          "battery_automation": {
+            "error": null,
+            "level": "warning",
+            "profile": "power-saver",
+            "status": "paused"
+          },
+          "battery_aware": false,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "",
+          "profile": "performance",
+          "profiles": [
+            {
+              "driver": "",
+              "name": "power-saver",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "balanced",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "performance",
+              "platform_driver": ""
+            }
+          ],
+          "version": ""
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  },
+  "powerProfile.setActionEnabled": {
+    "failed": {
+      "error": {
+        "code": "power-profile-operation-failed",
+        "message": "Power Profiles operation rejected"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "invalid_params": {
+      "action": "amdgpu_panel_power",
+      "enabled": "true"
+    },
+    "limited": {
+      "data": {
+        "power_profile": {
+          "actions": [
+            {
+              "description": "",
+              "enabled": true,
+              "name": "amdgpu_panel_power"
+            }
+          ],
+          "active_holds": [],
+          "available": true,
+          "battery_automation": {
+            "error": null,
+            "level": "normal",
+            "profile": "",
+            "status": "waiting"
+          },
+          "battery_aware": null,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "high-operating-temperature",
+          "profile": "balanced",
+          "profiles": [
+            {
+              "driver": "",
+              "name": "power-saver",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "balanced",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "performance",
+              "platform_driver": ""
+            }
+          ],
+          "version": ""
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "params": {
+      "action": "amdgpu_panel_power",
+      "enabled": true
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "powerProfile.setActionEnabled parameters are invalid: invalid type: string \"true\", expected a boolean"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "success": {
+      "data": {
+        "power_profile": {
+          "actions": [
+            {
+              "description": "",
+              "enabled": true,
+              "name": "amdgpu_panel_power"
+            }
+          ],
+          "active_holds": [],
+          "available": true,
+          "battery_automation": {
+            "error": null,
+            "level": "normal",
+            "profile": "",
+            "status": "waiting"
+          },
+          "battery_aware": false,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "",
+          "profile": "balanced",
+          "profiles": [
+            {
+              "driver": "",
+              "name": "power-saver",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "balanced",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "performance",
+              "platform_driver": ""
+            }
+          ],
+          "version": ""
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  },
+  "powerProfile.setBatteryAware": {
+    "failed": {
+      "error": {
+        "code": "power-profile-operation-failed",
+        "message": "Power Profiles operation rejected"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "invalid_params": {
+      "enabled": "true"
+    },
+    "limited": {
+      "data": {
+        "power_profile": {
+          "actions": [
+            {
+              "description": "",
+              "enabled": false,
+              "name": "amdgpu_panel_power"
+            }
+          ],
+          "active_holds": [],
+          "available": true,
+          "battery_automation": {
+            "error": null,
+            "level": "normal",
+            "profile": "",
+            "status": "waiting"
+          },
+          "battery_aware": null,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "high-operating-temperature",
+          "profile": "balanced",
+          "profiles": [
+            {
+              "driver": "",
+              "name": "power-saver",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "balanced",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "performance",
+              "platform_driver": ""
+            }
+          ],
+          "version": ""
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "params": {
+      "enabled": true
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "powerProfile.setBatteryAware parameters are invalid: invalid type: string \"true\", expected a boolean"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "success": {
+      "data": {
+        "power_profile": {
+          "actions": [
+            {
+              "description": "",
+              "enabled": false,
+              "name": "amdgpu_panel_power"
+            }
+          ],
+          "active_holds": [],
+          "available": true,
+          "battery_automation": {
+            "error": null,
+            "level": "normal",
+            "profile": "",
+            "status": "waiting"
+          },
+          "battery_aware": true,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "",
+          "profile": "balanced",
+          "profiles": [
+            {
+              "driver": "",
+              "name": "power-saver",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "balanced",
+              "platform_driver": ""
+            },
+            {
+              "driver": "",
+              "name": "performance",
+              "platform_driver": ""
+            }
+          ],
+          "version": ""
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  }
+}
