@@ -1,0 +1,2413 @@
+{
+  "critical": {
+    "cancelled": {
+      "data": {
+        "active_profile": "shared",
+        "available": true,
+        "critical_battery": {
+          "error": "Cancellation requested. An already dispatched sleep request cannot be undone.",
+          "phase": "cancelled",
+          "remaining_seconds": 0
+        },
+        "error": null,
+        "hibernate_available": true,
+        "hibernate_error": null,
+        "hibernate_ready": true,
+        "last_error": null,
+        "lid": {
+          "available": false,
+          "error": null,
+          "managed": false
+        },
+        "policy": {
+          "battery": {
+            "hibernate_minutes": 0,
+            "sleep_minutes": 30
+          },
+          "critical_battery": {
+            "enabled": true,
+            "grace_seconds": 60,
+            "percent": 5
+          },
+          "lid_action": "system",
+          "plugged": {
+            "hibernate_minutes": 0,
+            "sleep_minutes": 30
+          },
+          "same_profile": true
+        }
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "sleep-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "countdown": {
+      "data": {
+        "active_profile": "shared",
+        "available": true,
+        "critical_battery": {
+          "error": null,
+          "phase": "countdown",
+          "remaining_seconds": 45
+        },
+        "error": null,
+        "hibernate_available": true,
+        "hibernate_error": null,
+        "hibernate_ready": true,
+        "last_error": null,
+        "lid": {
+          "available": false,
+          "error": null,
+          "managed": false
+        },
+        "policy": {
+          "battery": {
+            "hibernate_minutes": 0,
+            "sleep_minutes": 30
+          },
+          "critical_battery": {
+            "enabled": true,
+            "grace_seconds": 60,
+            "percent": 5
+          },
+          "lid_action": "system",
+          "plugged": {
+            "hibernate_minutes": 0,
+            "sleep_minutes": 30
+          },
+          "same_profile": true
+        }
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "sleep-policy.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    }
+  },
+  "events": {
+    "hibernate": {
+      "accepted": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": null,
+            "id": 1,
+            "job": null,
+            "phase": "accepted"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 0
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "cancelled-before-dispatch": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": "Sleep request cancelled before dispatch",
+            "id": 4,
+            "job": null,
+            "phase": "failed"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "completed": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": null,
+            "id": 1,
+            "job": "/org/freedesktop/systemd1/job/42",
+            "phase": "completed"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "dispatching": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": null,
+            "id": 1,
+            "job": null,
+            "phase": "dispatching"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 0
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "interrupted-dispatch": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": "Sleep dispatch was interrupted; outcome unknown",
+            "id": 5,
+            "job": null,
+            "phase": "unknown"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "job-failed": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": "systemd-hibernate.service: failed. Inspect this unit's journal for the sleep failure.",
+            "id": 2,
+            "job": "/org/freedesktop/systemd1/job/43",
+            "phase": "failed"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "monitor-lost": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": "Sleep outcome monitor unavailable; outcome unknown",
+            "id": 6,
+            "job": null,
+            "phase": "unknown"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "preflight-failed": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": "Keep awake is enabled; turn it off before sleeping",
+            "id": 3,
+            "job": null,
+            "phase": "failed"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "preparing": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": null,
+            "id": 1,
+            "job": "/org/freedesktop/systemd1/job/42",
+            "phase": "preparing"
+          },
+          "preparing_for_sleep": true,
+          "resume_generation": 0
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "reply-lost": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": "logind reply lost; outcome unknown",
+            "id": 7,
+            "job": null,
+            "phase": "unknown"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "requested": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": null,
+            "id": 1,
+            "job": null,
+            "phase": "requested"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 0
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "returned": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "hibernate",
+            "error": null,
+            "id": 1,
+            "job": "/org/freedesktop/systemd1/job/42",
+            "phase": "returned"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      }
+    },
+    "suspend": {
+      "accepted": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": null,
+            "id": 1,
+            "job": null,
+            "phase": "accepted"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 0
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "cancelled-before-dispatch": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": "Sleep request cancelled before dispatch",
+            "id": 4,
+            "job": null,
+            "phase": "failed"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "completed": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": null,
+            "id": 1,
+            "job": "/org/freedesktop/systemd1/job/42",
+            "phase": "completed"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "dispatching": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": null,
+            "id": 1,
+            "job": null,
+            "phase": "dispatching"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 0
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "interrupted-dispatch": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": "Sleep dispatch was interrupted; outcome unknown",
+            "id": 5,
+            "job": null,
+            "phase": "unknown"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "job-failed": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": "systemd-suspend.service: failed. Inspect this unit's journal for the sleep failure.",
+            "id": 2,
+            "job": "/org/freedesktop/systemd1/job/43",
+            "phase": "failed"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "monitor-lost": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": "Sleep outcome monitor unavailable; outcome unknown",
+            "id": 6,
+            "job": null,
+            "phase": "unknown"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "preflight-failed": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": "Keep awake is enabled; turn it off before sleeping",
+            "id": 3,
+            "job": null,
+            "phase": "failed"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "preparing": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": null,
+            "id": 1,
+            "job": "/org/freedesktop/systemd1/job/42",
+            "phase": "preparing"
+          },
+          "preparing_for_sleep": true,
+          "resume_generation": 0
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "reply-lost": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": "logind reply lost; outcome unknown",
+            "id": 7,
+            "job": null,
+            "phase": "unknown"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "requested": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": null,
+            "id": 1,
+            "job": null,
+            "phase": "requested"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 0
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      },
+      "returned": {
+        "data": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "suspend",
+            "error": null,
+            "id": 1,
+            "job": "/org/freedesktop/systemd1/job/42",
+            "phase": "returned"
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 1
+        },
+        "event": "changed",
+        "protocol": "bar-api",
+        "stream": "power-sleep.changed",
+        "subscription_id": "subscription-example",
+        "version": 1
+      }
+    }
+  },
+  "recovery": {
+    "hibernate": {
+      "data": {
+        "snapshot": {
+          "activity": {
+            "available": false,
+            "error": null,
+            "event_count": 0,
+            "incomplete_todo_count": 0,
+            "locations": [],
+            "lunar": null,
+            "next_event": null,
+            "sources": [],
+            "syncing": false,
+            "weather": {
+              "apparent_temperature_c": 0.0,
+              "available": false,
+              "condition": "",
+              "condition_code": 0,
+              "daily": [],
+              "error": null,
+              "high_c": 0.0,
+              "home": false,
+              "hourly": [],
+              "humidity_percent": 0,
+              "id": "",
+              "is_day": false,
+              "latitude": 0.0,
+              "location": "",
+              "longitude": 0.0,
+              "low_c": 0.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 0,
+              "solar_noon": null,
+              "sunrise_unix_ms": 0,
+              "sunset_unix_ms": 0,
+              "temperature_c": 0.0,
+              "timezone": "",
+              "timezone_region_ids": [],
+              "updated_unix_ms": 0,
+              "utc_offset_seconds": 0,
+              "wind_direction_degrees": 0,
+              "wind_gust_kmh": 0.0,
+              "wind_speed_kmh": 0.0
+            },
+            "weather_locations": [],
+            "world_clocks": []
+          },
+          "audio": {
+            "available": false,
+            "error": null,
+            "input_available": false,
+            "input_muted": false,
+            "muted": false,
+            "sink_description": "",
+            "sink_name": "",
+            "source_description": "",
+            "source_name": "",
+            "volume_percent": 0
+          },
+          "battery": {
+            "available": false,
+            "charging": false,
+            "critical": false,
+            "cycles": null,
+            "devices": [],
+            "error": null,
+            "forecast": {
+              "approximate": false,
+              "estimating": false,
+              "limit": null,
+              "percentage": 0,
+              "scope": "",
+              "seconds": 0.0,
+              "status": "",
+              "target": 0
+            },
+            "health_percent": null,
+            "history": {
+              "active_duration_ms": 0,
+              "current_point": null,
+              "energy": {
+                "activeDurationMs": 0,
+                "bars": [],
+                "intervalMs": 0,
+                "maximum": 0.0,
+                "observedMs": 0,
+                "totalWh": 0.0
+              },
+              "last_charge_timestamp_ms": 0,
+              "latest_timestamp_ms": 0,
+              "points": [],
+              "retention_days": 0
+            },
+            "native_path": "",
+            "operation": {
+              "battery_id": "",
+              "expires_unix_ms": 0,
+              "kind": "",
+              "phase": "",
+              "started_unix_ms": 0
+            },
+            "percentage": 0,
+            "plugged": false,
+            "policy": {
+              "auto_power_saver": true,
+              "critical_percent": 12,
+              "critical_profile": "power-saver",
+              "notify_critical": true,
+              "notify_warning": true,
+              "notify_when_full": true,
+              "recovery_margin_percent": 3,
+              "warning_percent": 25,
+              "warning_profile": "power-saver"
+            },
+            "power_available": false,
+            "power_watts": 0.0,
+            "protection": {
+              "available_behaviours": [],
+              "backend": "",
+              "charge_behaviour": null,
+              "charge_once_active": false,
+              "desired_enabled": false,
+              "desired_end_percent": null,
+              "desired_start_percent": null,
+              "enabled": false,
+              "end_percent": null,
+              "error": null,
+              "managed": false,
+              "start_percent": null,
+              "supported": false,
+              "supports_charge_behaviour": false,
+              "supports_end": false,
+              "supports_start": false,
+              "thresholds_verified": false
+            },
+            "state": "",
+            "time_to_empty_seconds": 0,
+            "time_to_full_seconds": 0,
+            "warning": false
+          },
+          "brightness": {
+            "available": false,
+            "brightness": 0,
+            "device": "",
+            "error": null,
+            "max_brightness": 0,
+            "percent": 0
+          },
+          "compositor": {
+            "animations_enabled": null,
+            "available": false,
+            "error": null,
+            "revision": 0
+          },
+          "display_policy": {
+            "available": false,
+            "baseline": "",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": false,
+              "error": null,
+              "saved": {},
+              "values": {}
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": ""
+          },
+          "media": {
+            "active_player": null,
+            "available": false,
+            "error": null,
+            "pinned_player": null,
+            "players": []
+          },
+          "notification_active": {
+            "available": false,
+            "error": null,
+            "notifications": [],
+            "revision": 0
+          },
+          "notifications": {
+            "alt": "",
+            "app_policies": {},
+            "available": false,
+            "backend": "",
+            "class_name": "",
+            "count": 0,
+            "dnd": false,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 0,
+            "inhibited": false,
+            "text": "",
+            "tooltip": ""
+          },
+          "osd_hardware": {
+            "available": false,
+            "camera_privacy": false,
+            "caps_lock": false,
+            "error": null,
+            "keyboard_backlight_percent": null,
+            "microphone_privacy": false,
+            "num_lock": false
+          },
+          "power_profile": {
+            "actions": [],
+            "active_holds": [],
+            "available": false,
+            "battery_automation": {
+              "error": null,
+              "level": "",
+              "profile": "",
+              "status": ""
+            },
+            "battery_aware": null,
+            "driver": "",
+            "error": null,
+            "performance_degraded": "",
+            "profile": "",
+            "profiles": [],
+            "version": ""
+          },
+          "power_sleep": {
+            "available": true,
+            "can_hibernate": "yes",
+            "can_suspend": "yes",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": true,
+            "operation": {
+              "action": "hibernate",
+              "error": "logind reply lost; outcome unknown",
+              "id": 7,
+              "job": null,
+              "phase": "unknown"
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 1
+          },
+          "sleep_policy": {
+            "active_profile": "",
+            "available": false,
+            "critical_battery": {
+              "error": null,
+              "phase": "",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": false,
+            "hibernate_error": null,
+            "hibernate_ready": false,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": false,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          },
+          "timezone": {
+            "abbreviation": "",
+            "available": false,
+            "city": "",
+            "error": null,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "utc_offset_seconds": 0
+          },
+          "updates": {
+            "available": false,
+            "error": null,
+            "jobs": [],
+            "lanes": [],
+            "ready": false,
+            "state_directory": ""
+          },
+          "workarea": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "revision": 0
+          },
+          "workspaces": {
+            "active_window": null,
+            "available": false,
+            "error": null,
+            "focused_monitor": null,
+            "monitors": [],
+            "workspaces": []
+          }
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    },
+    "suspend": {
+      "data": {
+        "snapshot": {
+          "activity": {
+            "available": false,
+            "error": null,
+            "event_count": 0,
+            "incomplete_todo_count": 0,
+            "locations": [],
+            "lunar": null,
+            "next_event": null,
+            "sources": [],
+            "syncing": false,
+            "weather": {
+              "apparent_temperature_c": 0.0,
+              "available": false,
+              "condition": "",
+              "condition_code": 0,
+              "daily": [],
+              "error": null,
+              "high_c": 0.0,
+              "home": false,
+              "hourly": [],
+              "humidity_percent": 0,
+              "id": "",
+              "is_day": false,
+              "latitude": 0.0,
+              "location": "",
+              "longitude": 0.0,
+              "low_c": 0.0,
+              "precipitation_mm": 0.0,
+              "precipitation_probability": 0,
+              "solar_noon": null,
+              "sunrise_unix_ms": 0,
+              "sunset_unix_ms": 0,
+              "temperature_c": 0.0,
+              "timezone": "",
+              "timezone_region_ids": [],
+              "updated_unix_ms": 0,
+              "utc_offset_seconds": 0,
+              "wind_direction_degrees": 0,
+              "wind_gust_kmh": 0.0,
+              "wind_speed_kmh": 0.0
+            },
+            "weather_locations": [],
+            "world_clocks": []
+          },
+          "audio": {
+            "available": false,
+            "error": null,
+            "input_available": false,
+            "input_muted": false,
+            "muted": false,
+            "sink_description": "",
+            "sink_name": "",
+            "source_description": "",
+            "source_name": "",
+            "volume_percent": 0
+          },
+          "battery": {
+            "available": false,
+            "charging": false,
+            "critical": false,
+            "cycles": null,
+            "devices": [],
+            "error": null,
+            "forecast": {
+              "approximate": false,
+              "estimating": false,
+              "limit": null,
+              "percentage": 0,
+              "scope": "",
+              "seconds": 0.0,
+              "status": "",
+              "target": 0
+            },
+            "health_percent": null,
+            "history": {
+              "active_duration_ms": 0,
+              "current_point": null,
+              "energy": {
+                "activeDurationMs": 0,
+                "bars": [],
+                "intervalMs": 0,
+                "maximum": 0.0,
+                "observedMs": 0,
+                "totalWh": 0.0
+              },
+              "last_charge_timestamp_ms": 0,
+              "latest_timestamp_ms": 0,
+              "points": [],
+              "retention_days": 0
+            },
+            "native_path": "",
+            "operation": {
+              "battery_id": "",
+              "expires_unix_ms": 0,
+              "kind": "",
+              "phase": "",
+              "started_unix_ms": 0
+            },
+            "percentage": 0,
+            "plugged": false,
+            "policy": {
+              "auto_power_saver": true,
+              "critical_percent": 12,
+              "critical_profile": "power-saver",
+              "notify_critical": true,
+              "notify_warning": true,
+              "notify_when_full": true,
+              "recovery_margin_percent": 3,
+              "warning_percent": 25,
+              "warning_profile": "power-saver"
+            },
+            "power_available": false,
+            "power_watts": 0.0,
+            "protection": {
+              "available_behaviours": [],
+              "backend": "",
+              "charge_behaviour": null,
+              "charge_once_active": false,
+              "desired_enabled": false,
+              "desired_end_percent": null,
+              "desired_start_percent": null,
+              "enabled": false,
+              "end_percent": null,
+              "error": null,
+              "managed": false,
+              "start_percent": null,
+              "supported": false,
+              "supports_charge_behaviour": false,
+              "supports_end": false,
+              "supports_start": false,
+              "thresholds_verified": false
+            },
+            "state": "",
+            "time_to_empty_seconds": 0,
+            "time_to_full_seconds": 0,
+            "warning": false
+          },
+          "brightness": {
+            "available": false,
+            "brightness": 0,
+            "device": "",
+            "error": null,
+            "max_brightness": 0,
+            "percent": 0
+          },
+          "compositor": {
+            "animations_enabled": null,
+            "available": false,
+            "error": null,
+            "revision": 0
+          },
+          "display_policy": {
+            "available": false,
+            "baseline": "",
+            "docking_state": "settled",
+            "error": null,
+            "focus": {
+              "available": false,
+              "error": null,
+              "saved": {},
+              "values": {}
+            },
+            "layout": {
+              "manual_enablement": false,
+              "saved": {
+                "outputs": []
+              },
+              "trial": null
+            },
+            "outputs": [],
+            "policy": {
+              "prefer_external": true
+            },
+            "status": ""
+          },
+          "media": {
+            "active_player": null,
+            "available": false,
+            "error": null,
+            "pinned_player": null,
+            "players": []
+          },
+          "notification_active": {
+            "available": false,
+            "error": null,
+            "notifications": [],
+            "revision": 0
+          },
+          "notifications": {
+            "alt": "",
+            "app_policies": {},
+            "available": false,
+            "backend": "",
+            "class_name": "",
+            "count": 0,
+            "dnd": false,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 0,
+            "inhibited": false,
+            "text": "",
+            "tooltip": ""
+          },
+          "osd_hardware": {
+            "available": false,
+            "camera_privacy": false,
+            "caps_lock": false,
+            "error": null,
+            "keyboard_backlight_percent": null,
+            "microphone_privacy": false,
+            "num_lock": false
+          },
+          "power_profile": {
+            "actions": [],
+            "active_holds": [],
+            "available": false,
+            "battery_automation": {
+              "error": null,
+              "level": "",
+              "profile": "",
+              "status": ""
+            },
+            "battery_aware": null,
+            "driver": "",
+            "error": null,
+            "performance_degraded": "",
+            "profile": "",
+            "profiles": [],
+            "version": ""
+          },
+          "power_sleep": {
+            "available": true,
+            "can_hibernate": "yes",
+            "can_suspend": "yes",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": true,
+            "operation": {
+              "action": "suspend",
+              "error": "logind reply lost; outcome unknown",
+              "id": 7,
+              "job": null,
+              "phase": "unknown"
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 1
+          },
+          "sleep_policy": {
+            "active_profile": "",
+            "available": false,
+            "critical_battery": {
+              "error": null,
+              "phase": "",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": false,
+            "hibernate_error": null,
+            "hibernate_ready": false,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": false,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          },
+          "timezone": {
+            "abbreviation": "",
+            "available": false,
+            "city": "",
+            "error": null,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "utc_offset_seconds": 0
+          },
+          "updates": {
+            "available": false,
+            "error": null,
+            "jobs": [],
+            "lanes": [],
+            "ready": false,
+            "state_directory": ""
+          },
+          "workarea": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "revision": 0
+          },
+          "workspaces": {
+            "active_window": null,
+            "available": false,
+            "error": null,
+            "focused_monitor": null,
+            "monitors": [],
+            "workspaces": []
+          }
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 1
+    }
+  },
+  "replies": {
+    "powerSleep.cancelCritical": {
+      "failed": {
+        "error": {
+          "code": "critical-battery-cancel-failed",
+          "message": "no critical battery countdown is pending"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": null,
+      "params": {},
+      "rejected": null,
+      "success": {
+        "data": {
+          "sleep_policy": {
+            "active_profile": "shared",
+            "available": true,
+            "critical_battery": {
+              "error": "Cancellation requested. An already dispatched sleep request cannot be undone.",
+              "phase": "cancelled",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": true,
+            "hibernate_error": null,
+            "hibernate_ready": true,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": true,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "powerSleep.hibernate": {
+      "failed": {
+        "error": {
+          "code": "power-sleep-operation-failed",
+          "message": "Sleep control rejected: service unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": null,
+      "params": {},
+      "rejected": null,
+      "success": {
+        "data": {
+          "operation": "hibernate",
+          "power_sleep": {
+            "available": true,
+            "can_hibernate": "yes",
+            "can_suspend": "yes",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": true,
+            "operation": {
+              "action": "hibernate",
+              "error": null,
+              "id": 1,
+              "job": null,
+              "phase": "accepted"
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "uncertain": {
+        "error": {
+          "code": "power-sleep-operation-failed",
+          "message": "logind reply lost; outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "powerSleep.idle": {
+      "failed": {
+        "error": {
+          "code": "automatic-sleep-failed",
+          "message": "Sleep control rejected: service unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": {
+        "unexpected": true
+      },
+      "params": {
+        "episode": 1,
+        "generation": "generation-example",
+        "sleep_minutes": 30
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "powerSleep.idle parameters are invalid: unknown field `unexpected`, expected one of `sleep_minutes`, `generation`, `episode`"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "power_sleep": {
+            "available": true,
+            "can_hibernate": "yes",
+            "can_suspend": "yes",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": true,
+            "operation": {
+              "action": "suspend",
+              "error": null,
+              "id": 1,
+              "job": null,
+              "phase": "accepted"
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "powerSleep.lock": {
+      "failed": {
+        "error": {
+          "code": "power-sleep-operation-failed",
+          "message": "Sleep control rejected: service unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": null,
+      "params": {},
+      "rejected": null,
+      "success": {
+        "data": {
+          "operation": "lock",
+          "power_sleep": {
+            "available": true,
+            "can_hibernate": "yes",
+            "can_suspend": "yes",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": true,
+            "operation": {
+              "action": "",
+              "error": null,
+              "id": 0,
+              "job": null,
+              "phase": ""
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "powerSleep.setCriticalPolicy": {
+      "failed": {
+        "error": {
+          "code": "critical-battery-policy-failed",
+          "message": "Sleep control rejected: service unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": {
+        "unexpected": true
+      },
+      "params": {
+        "enabled": true,
+        "grace_seconds": 60,
+        "percent": 10
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "powerSleep.setCriticalPolicy parameters are invalid: unknown field `unexpected`, expected one of `enabled`, `percent`, `grace_seconds`"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "sleep_policy": {
+            "active_profile": "shared",
+            "available": true,
+            "critical_battery": {
+              "error": null,
+              "phase": "armed",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": true,
+            "hibernate_error": null,
+            "hibernate_ready": true,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "critical_battery": {
+                "enabled": true,
+                "grace_seconds": 60,
+                "percent": 10
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "powerSleep.setKeepAwake": {
+      "failed": {
+        "error": {
+          "code": "keep-awake-failed",
+          "message": "Sleep control rejected: service unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": {
+        "unexpected": true
+      },
+      "params": {
+        "enabled": true
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "powerSleep.setKeepAwake parameters are invalid: unknown field `unexpected`, expected `enabled`"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "power_sleep": {
+            "available": true,
+            "can_hibernate": "yes",
+            "can_suspend": "yes",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": true,
+            "lock_before_sleep": true,
+            "operation": {
+              "action": "",
+              "error": null,
+              "id": 0,
+              "job": null,
+              "phase": ""
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "powerSleep.setPolicy": {
+      "failed": {
+        "error": {
+          "code": "sleep-policy-failed",
+          "message": "Sleep control rejected: service unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": {
+        "unexpected": true
+      },
+      "params": {
+        "battery": {
+          "hibernate_minutes": 0,
+          "sleep_minutes": 15
+        },
+        "critical_battery": {
+          "enabled": false,
+          "grace_seconds": 60,
+          "percent": 5
+        },
+        "lid_action": "system",
+        "plugged": {
+          "hibernate_minutes": 0,
+          "sleep_minutes": 30
+        },
+        "same_profile": true
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "powerSleep.setPolicy parameters are invalid: unknown field `unexpected`, expected one of `lid_action`, `critical_battery`, `same_profile`, `battery`, `plugged`"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "sleep_policy": {
+            "active_profile": "shared",
+            "available": true,
+            "critical_battery": {
+              "error": null,
+              "phase": "armed",
+              "remaining_seconds": 0
+            },
+            "error": null,
+            "hibernate_available": true,
+            "hibernate_error": null,
+            "hibernate_ready": true,
+            "last_error": null,
+            "lid": {
+              "available": false,
+              "error": null,
+              "managed": false
+            },
+            "policy": {
+              "battery": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 15
+              },
+              "critical_battery": {
+                "enabled": true,
+                "grace_seconds": 60,
+                "percent": 5
+              },
+              "lid_action": "system",
+              "plugged": {
+                "hibernate_minutes": 0,
+                "sleep_minutes": 30
+              },
+              "same_profile": true
+            }
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "powerSleep.suspend": {
+      "failed": {
+        "error": {
+          "code": "power-sleep-operation-failed",
+          "message": "Sleep control rejected: service unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "invalid_params": null,
+      "params": {},
+      "rejected": null,
+      "success": {
+        "data": {
+          "operation": "suspend",
+          "power_sleep": {
+            "available": true,
+            "can_hibernate": "yes",
+            "can_suspend": "yes",
+            "diagnostics": {
+              "disk_swap_available": null,
+              "guidance": [],
+              "hardware": null,
+              "hibernate_issues": [],
+              "resume_device_configured": null,
+              "supported_suspend_modes": [],
+              "suspend_mode": null
+            },
+            "error": null,
+            "inhibitors": [],
+            "keep_awake": false,
+            "lock_before_sleep": true,
+            "operation": {
+              "action": "suspend",
+              "error": null,
+              "id": 1,
+              "job": null,
+              "phase": "accepted"
+            },
+            "preparing_for_sleep": false,
+            "resume_generation": 0
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "uncertain": {
+        "error": {
+          "code": "power-sleep-operation-failed",
+          "message": "logind reply lost; outcome unknown"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    }
+  },
+  "snapshot": {
+    "data": {
+      "snapshot": {
+        "activity": {
+          "available": false,
+          "error": null,
+          "event_count": 0,
+          "incomplete_todo_count": 0,
+          "locations": [],
+          "lunar": null,
+          "next_event": null,
+          "sources": [],
+          "syncing": false,
+          "weather": {
+            "apparent_temperature_c": 0.0,
+            "available": false,
+            "condition": "",
+            "condition_code": 0,
+            "daily": [],
+            "error": null,
+            "high_c": 0.0,
+            "home": false,
+            "hourly": [],
+            "humidity_percent": 0,
+            "id": "",
+            "is_day": false,
+            "latitude": 0.0,
+            "location": "",
+            "longitude": 0.0,
+            "low_c": 0.0,
+            "precipitation_mm": 0.0,
+            "precipitation_probability": 0,
+            "solar_noon": null,
+            "sunrise_unix_ms": 0,
+            "sunset_unix_ms": 0,
+            "temperature_c": 0.0,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "updated_unix_ms": 0,
+            "utc_offset_seconds": 0,
+            "wind_direction_degrees": 0,
+            "wind_gust_kmh": 0.0,
+            "wind_speed_kmh": 0.0
+          },
+          "weather_locations": [],
+          "world_clocks": []
+        },
+        "audio": {
+          "available": false,
+          "error": null,
+          "input_available": false,
+          "input_muted": false,
+          "muted": false,
+          "sink_description": "",
+          "sink_name": "",
+          "source_description": "",
+          "source_name": "",
+          "volume_percent": 0
+        },
+        "battery": {
+          "available": false,
+          "charging": false,
+          "critical": false,
+          "cycles": null,
+          "devices": [],
+          "error": null,
+          "forecast": {
+            "approximate": false,
+            "estimating": false,
+            "limit": null,
+            "percentage": 0,
+            "scope": "",
+            "seconds": 0.0,
+            "status": "",
+            "target": 0
+          },
+          "health_percent": null,
+          "history": {
+            "active_duration_ms": 0,
+            "current_point": null,
+            "energy": {
+              "activeDurationMs": 0,
+              "bars": [],
+              "intervalMs": 0,
+              "maximum": 0.0,
+              "observedMs": 0,
+              "totalWh": 0.0
+            },
+            "last_charge_timestamp_ms": 0,
+            "latest_timestamp_ms": 0,
+            "points": [],
+            "retention_days": 0
+          },
+          "native_path": "",
+          "operation": {
+            "battery_id": "",
+            "expires_unix_ms": 0,
+            "kind": "",
+            "phase": "",
+            "started_unix_ms": 0
+          },
+          "percentage": 0,
+          "plugged": false,
+          "policy": {
+            "auto_power_saver": true,
+            "critical_percent": 12,
+            "critical_profile": "power-saver",
+            "notify_critical": true,
+            "notify_warning": true,
+            "notify_when_full": true,
+            "recovery_margin_percent": 3,
+            "warning_percent": 25,
+            "warning_profile": "power-saver"
+          },
+          "power_available": false,
+          "power_watts": 0.0,
+          "protection": {
+            "available_behaviours": [],
+            "backend": "",
+            "charge_behaviour": null,
+            "charge_once_active": false,
+            "desired_enabled": false,
+            "desired_end_percent": null,
+            "desired_start_percent": null,
+            "enabled": false,
+            "end_percent": null,
+            "error": null,
+            "managed": false,
+            "start_percent": null,
+            "supported": false,
+            "supports_charge_behaviour": false,
+            "supports_end": false,
+            "supports_start": false,
+            "thresholds_verified": false
+          },
+          "state": "",
+          "time_to_empty_seconds": 0,
+          "time_to_full_seconds": 0,
+          "warning": false
+        },
+        "brightness": {
+          "available": false,
+          "brightness": 0,
+          "device": "",
+          "error": null,
+          "max_brightness": 0,
+          "percent": 0
+        },
+        "compositor": {
+          "animations_enabled": null,
+          "available": false,
+          "error": null,
+          "revision": 0
+        },
+        "display_policy": {
+          "available": false,
+          "baseline": "",
+          "docking_state": "settled",
+          "error": null,
+          "focus": {
+            "available": false,
+            "error": null,
+            "saved": {},
+            "values": {}
+          },
+          "layout": {
+            "manual_enablement": false,
+            "saved": {
+              "outputs": []
+            },
+            "trial": null
+          },
+          "outputs": [],
+          "policy": {
+            "prefer_external": true
+          },
+          "status": ""
+        },
+        "media": {
+          "active_player": null,
+          "available": false,
+          "error": null,
+          "pinned_player": null,
+          "players": []
+        },
+        "notification_active": {
+          "available": false,
+          "error": null,
+          "notifications": [],
+          "revision": 0
+        },
+        "notifications": {
+          "alt": "",
+          "app_policies": {},
+          "available": false,
+          "backend": "",
+          "class_name": "",
+          "count": 0,
+          "dnd": false,
+          "dnd_until_unix_ms": null,
+          "error": null,
+          "history_revision": 0,
+          "inhibited": false,
+          "text": "",
+          "tooltip": ""
+        },
+        "osd_hardware": {
+          "available": false,
+          "camera_privacy": false,
+          "caps_lock": false,
+          "error": null,
+          "keyboard_backlight_percent": null,
+          "microphone_privacy": false,
+          "num_lock": false
+        },
+        "power_profile": {
+          "actions": [],
+          "active_holds": [],
+          "available": false,
+          "battery_automation": {
+            "error": null,
+            "level": "",
+            "profile": "",
+            "status": ""
+          },
+          "battery_aware": null,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "",
+          "profile": "",
+          "profiles": [],
+          "version": ""
+        },
+        "power_sleep": {
+          "available": true,
+          "can_hibernate": "yes",
+          "can_suspend": "yes",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": true,
+          "operation": {
+            "action": "",
+            "error": null,
+            "id": 0,
+            "job": null,
+            "phase": ""
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 0
+        },
+        "sleep_policy": {
+          "active_profile": "shared",
+          "available": true,
+          "critical_battery": {
+            "error": null,
+            "phase": "",
+            "remaining_seconds": 0
+          },
+          "error": null,
+          "hibernate_available": true,
+          "hibernate_error": null,
+          "hibernate_ready": true,
+          "last_error": null,
+          "lid": {
+            "available": false,
+            "error": null,
+            "managed": false
+          },
+          "policy": {
+            "battery": {
+              "hibernate_minutes": 0,
+              "sleep_minutes": 30
+            },
+            "critical_battery": {
+              "enabled": true,
+              "grace_seconds": 60,
+              "percent": 5
+            },
+            "lid_action": "system",
+            "plugged": {
+              "hibernate_minutes": 0,
+              "sleep_minutes": 30
+            },
+            "same_profile": true
+          }
+        },
+        "timezone": {
+          "abbreviation": "",
+          "available": false,
+          "city": "",
+          "error": null,
+          "timezone": "",
+          "timezone_region_ids": [],
+          "utc_offset_seconds": 0
+        },
+        "updates": {
+          "available": false,
+          "error": null,
+          "jobs": [],
+          "lanes": [],
+          "ready": false,
+          "state_directory": ""
+        },
+        "workarea": {
+          "available": false,
+          "error": null,
+          "monitors": {},
+          "revision": 0
+        },
+        "workspaces": {
+          "active_window": null,
+          "available": false,
+          "error": null,
+          "focused_monitor": null,
+          "monitors": [],
+          "workspaces": []
+        }
+      }
+    },
+    "ok": true,
+    "protocol": "bar-api",
+    "version": 1
+  }
+}
