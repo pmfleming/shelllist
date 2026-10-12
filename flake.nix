@@ -859,6 +859,9 @@
                 ${barDaemon}/bin/bar-daemon debug display-contract-fixture > bar-displays.json
                 diff -u ${./tests/qml/fixtures/bar-displays.json} bar-displays.json
                 cp bar-displays.json test-root/tests/qml/fixtures/bar-displays.json
+                ${barDaemon}/bin/bar-daemon debug notification-contract-fixture > bar-notification-actions.json
+                diff -u ${./tests/qml/fixtures/bar-notification-actions.json} bar-notification-actions.json
+                cp bar-notification-actions.json test-root/tests/qml/fixtures/bar-notification-actions.json
                 cp -r ${./qml} test-root/qml
                 chmod -R u+w test-root/qml
                 ln -sfn ${./battery} test-root/qml/Shelllist/Battery

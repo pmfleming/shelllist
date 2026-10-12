@@ -1,0 +1,985 @@
+{
+  "events": {
+    "closed": {
+      "data": {
+        "available": true,
+        "error": null,
+        "notifications": [],
+        "revision": 3
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "notifications.active.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "dnd": {
+      "data": {
+        "alt": "dnd-notification",
+        "app_policies": {},
+        "available": true,
+        "backend": "native",
+        "class_name": "dnd-notification",
+        "count": 1,
+        "dnd": true,
+        "dnd_until_unix_ms": null,
+        "error": null,
+        "history_revision": 1,
+        "inhibited": false,
+        "text": "1",
+        "tooltip": "1 Notification"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "notifications.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "dndCleared": {
+      "data": {
+        "alt": "notification",
+        "app_policies": {},
+        "available": true,
+        "backend": "native",
+        "class_name": "notification",
+        "count": 1,
+        "dnd": false,
+        "dnd_until_unix_ms": null,
+        "error": null,
+        "history_revision": 1,
+        "inhibited": false,
+        "text": "1",
+        "tooltip": "1 Notification"
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "notifications.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    },
+    "replaced": {
+      "data": {
+        "available": true,
+        "error": null,
+        "notifications": [
+          {
+            "actions": [
+              {
+                "key": "open",
+                "label": "Open"
+              },
+              {
+                "key": "inline-reply",
+                "label": "Reply"
+              }
+            ],
+            "app_icon": "",
+            "app_name": "Contract Chat",
+            "body": "Example body",
+            "created_unix_ms": 1700000001000,
+            "dnd_bypass": false,
+            "expires_unix_ms": null,
+            "group_key": "Contract Chat",
+            "hints": {
+              "category": "",
+              "desktop_entry": "",
+              "image_data_present": false,
+              "image_path": "",
+              "resident": false,
+              "sound_file": "",
+              "sound_name": "",
+              "suppress_sound": false,
+              "transient": false,
+              "urgency": 0
+            },
+            "id": 1,
+            "identity_icon": "",
+            "snoozed_until_unix_ms": null,
+            "source_monitor": "",
+            "summary": "A message",
+            "toast_expires_unix_ms": null,
+            "toast_visible": true,
+            "updated_unix_ms": 1700000001000
+          }
+        ],
+        "revision": 2
+      },
+      "event": "changed",
+      "protocol": "bar-api",
+      "stream": "notifications.active.changed",
+      "subscription_id": "subscription-example",
+      "version": 1
+    }
+  },
+  "replies": {
+    "cancelDelete": {
+      "failed": {
+        "error": {
+          "code": "native-notifications-required",
+          "message": "native notifications are disabled"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.delete",
+      "params": {
+        "cancel": true,
+        "token": "delete-example"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "notifications.delete parameters are invalid: invalid type: null, expected struct DeleteRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "stale": null,
+      "success": {
+        "data": {
+          "cancelled": true
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "clear": {
+      "failed": {
+        "error": {
+          "code": "notification-operation-failed",
+          "message": "Notification operation unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.clear",
+      "params": {},
+      "rejected": null,
+      "stale": null,
+      "success": {
+        "data": {
+          "closed": 1,
+          "operation": "clear"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "clearGroup": {
+      "failed": {
+        "error": {
+          "code": "notification-operation-failed",
+          "message": "Notification operation unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.clearGroup",
+      "params": {
+        "group_key": "Contract Chat"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "notifications.clearGroup parameters are invalid: invalid type: null, expected struct GroupRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "stale": null,
+      "success": {
+        "data": {
+          "closed": 1,
+          "group_key": "Contract Chat",
+          "operation": "clear-group"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "delete": {
+      "failed": {
+        "error": {
+          "code": "notification-delete-failed",
+          "message": "Delete confirmation expired; request a new confirmation"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.delete",
+      "params": {
+        "cancel": false,
+        "token": "delete-example"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "notifications.delete parameters are invalid: invalid type: null, expected struct DeleteRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "stale": null,
+      "success": {
+        "data": {
+          "deleted": 1
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "dismiss": {
+      "failed": {
+        "error": {
+          "code": "notification-operation-failed",
+          "message": "Notification operation unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.dismiss",
+      "params": {
+        "id": 1
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "notifications.dismiss parameters are invalid: invalid type: null, expected struct NotificationRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "stale": {
+        "error": {
+          "code": "notification-not-found",
+          "message": "notification 1 is not active"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "id": 1,
+          "operation": "dismiss"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "invokeAction": {
+      "failed": {
+        "error": {
+          "code": "notification-operation-failed",
+          "message": "Notification operation unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.invokeAction",
+      "params": {
+        "action_key": "open",
+        "activation_token": null,
+        "id": 1
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "notifications.invokeAction parameters are invalid: invalid type: null, expected struct ActionRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "stale": {
+        "error": {
+          "code": "notification-action-not-found",
+          "message": "notification or action is unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "action_key": "open",
+          "id": 1,
+          "operation": "invoke-action"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "prepareDelete": {
+      "failed": {
+        "error": {
+          "code": "notification-delete-failed",
+          "message": "Notification operation unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.prepareDelete",
+      "params": {
+        "app_key": null,
+        "selected": null
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "notifications.prepareDelete parameters are invalid: invalid type: null, expected struct DeleteScope"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "stale": null,
+      "success": {
+        "data": {
+          "delete_confirmation": {
+            "app_key": null,
+            "count": 1,
+            "expires_unix_ms": 4102444800000,
+            "selected": null,
+            "token": "delete-example"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "reply": {
+      "failed": {
+        "error": {
+          "code": "notification-not-found",
+          "message": "notification 1 is not active"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.reply",
+      "params": {
+        "id": 1,
+        "text": "Hello"
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "notifications.reply parameters are invalid: invalid type: null, expected struct ReplyRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "stale": {
+        "error": {
+          "code": "notification-not-found",
+          "message": "notification 1 is not active"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "id": 1,
+          "operation": "reply"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "setAppPolicy": {
+      "failed": {
+        "error": {
+          "code": "notification-policy-failed",
+          "message": "Notification operation unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.setAppPolicy",
+      "params": {
+        "app_key": "named:contract chat",
+        "policy": {
+          "bypass_dnd": false,
+          "group_similar": true,
+          "silent": true,
+          "until_unix_ms": null
+        }
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "notifications.setAppPolicy parameters are invalid: invalid type: null, expected struct PolicyRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "stale": null,
+      "success": {
+        "data": {
+          "notifications": {
+            "alt": "notification",
+            "app_policies": {
+              "named:contract chat": {
+                "bypass_dnd": false,
+                "group_similar": true,
+                "silent": true,
+                "until_unix_ms": null
+              }
+            },
+            "available": true,
+            "backend": "native",
+            "class_name": "notification",
+            "count": 1,
+            "dnd": false,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 2,
+            "inhibited": false,
+            "text": "1",
+            "tooltip": "1 Notification"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "setDnd": {
+      "failed": {
+        "error": {
+          "code": "notification-operation-failed",
+          "message": "Notification operation unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.setDnd",
+      "params": {
+        "enabled": true,
+        "until_unix_ms": null
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "notifications.setDnd parameters are invalid: invalid type: null, expected struct DndRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "stale": null,
+      "success": {
+        "data": {
+          "notifications": {
+            "alt": "dnd-notification",
+            "app_policies": {},
+            "available": true,
+            "backend": "native",
+            "class_name": "dnd-notification",
+            "count": 1,
+            "dnd": true,
+            "dnd_until_unix_ms": null,
+            "error": null,
+            "history_revision": 1,
+            "inhibited": false,
+            "text": "1",
+            "tooltip": "1 Notification"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "snooze": {
+      "failed": {
+        "error": {
+          "code": "notification-operation-failed",
+          "message": "Notification operation unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.snooze",
+      "params": {
+        "id": 1,
+        "until_unix_ms": 4102444800000
+      },
+      "rejected": {
+        "error": {
+          "code": "validation-error",
+          "message": "notifications.snooze parameters are invalid: invalid type: null, expected struct SnoozeRequest"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "stale": {
+        "error": {
+          "code": "notification-snooze-failed",
+          "message": "notification is unavailable or duration has elapsed"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "id": 1,
+          "operation": "snooze",
+          "until_unix_ms": 4102444800000
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "toggleDnd": {
+      "failed": {
+        "error": {
+          "code": "notification-operation-failed",
+          "message": "Notification operation unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.toggleDnd",
+      "params": {},
+      "rejected": null,
+      "stale": null,
+      "success": {
+        "data": {
+          "enabled": true,
+          "operation": "toggle-dnd"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "togglePanel": {
+      "failed": {
+        "error": {
+          "code": "notification-operation-failed",
+          "message": "Notification operation unavailable"
+        },
+        "ok": false,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "method": "notifications.togglePanel",
+      "params": {},
+      "rejected": null,
+      "stale": null,
+      "success": {
+        "data": {
+          "operation": "toggle-panel"
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    }
+  },
+  "snapshot": {
+    "data": {
+      "snapshot": {
+        "activity": {
+          "available": false,
+          "error": null,
+          "event_count": 0,
+          "incomplete_todo_count": 0,
+          "locations": [],
+          "lunar": null,
+          "next_event": null,
+          "sources": [],
+          "syncing": false,
+          "weather": {
+            "apparent_temperature_c": 0.0,
+            "available": false,
+            "condition": "",
+            "condition_code": 0,
+            "daily": [],
+            "error": null,
+            "high_c": 0.0,
+            "home": false,
+            "hourly": [],
+            "humidity_percent": 0,
+            "id": "",
+            "is_day": false,
+            "latitude": 0.0,
+            "location": "",
+            "longitude": 0.0,
+            "low_c": 0.0,
+            "precipitation_mm": 0.0,
+            "precipitation_probability": 0,
+            "solar_noon": null,
+            "sunrise_unix_ms": 0,
+            "sunset_unix_ms": 0,
+            "temperature_c": 0.0,
+            "timezone": "",
+            "timezone_region_ids": [],
+            "updated_unix_ms": 0,
+            "utc_offset_seconds": 0,
+            "wind_direction_degrees": 0,
+            "wind_gust_kmh": 0.0,
+            "wind_speed_kmh": 0.0
+          },
+          "weather_locations": [],
+          "world_clocks": []
+        },
+        "audio": {
+          "available": false,
+          "error": null,
+          "input_available": false,
+          "input_muted": false,
+          "muted": false,
+          "sink_description": "",
+          "sink_name": "",
+          "source_description": "",
+          "source_name": "",
+          "volume_percent": 0
+        },
+        "battery": {
+          "available": false,
+          "charging": false,
+          "critical": false,
+          "cycles": null,
+          "devices": [],
+          "error": null,
+          "forecast": {
+            "approximate": false,
+            "estimating": false,
+            "limit": null,
+            "percentage": 0,
+            "scope": "",
+            "seconds": 0.0,
+            "status": "",
+            "target": 0
+          },
+          "health_percent": null,
+          "history": {
+            "active_duration_ms": 0,
+            "current_point": null,
+            "energy": {
+              "activeDurationMs": 0,
+              "bars": [],
+              "intervalMs": 0,
+              "maximum": 0.0,
+              "observedMs": 0,
+              "totalWh": 0.0
+            },
+            "last_charge_timestamp_ms": 0,
+            "latest_timestamp_ms": 0,
+            "points": [],
+            "retention_days": 0
+          },
+          "native_path": "",
+          "operation": {
+            "battery_id": "",
+            "expires_unix_ms": 0,
+            "kind": "",
+            "phase": "",
+            "started_unix_ms": 0
+          },
+          "percentage": 0,
+          "plugged": false,
+          "policy": {
+            "auto_power_saver": true,
+            "critical_percent": 12,
+            "critical_profile": "power-saver",
+            "notify_critical": true,
+            "notify_warning": true,
+            "notify_when_full": true,
+            "recovery_margin_percent": 3,
+            "warning_percent": 25,
+            "warning_profile": "power-saver"
+          },
+          "power_available": false,
+          "power_watts": 0.0,
+          "protection": {
+            "available_behaviours": [],
+            "backend": "",
+            "charge_behaviour": null,
+            "charge_once_active": false,
+            "desired_enabled": false,
+            "desired_end_percent": null,
+            "desired_start_percent": null,
+            "enabled": false,
+            "end_percent": null,
+            "error": null,
+            "managed": false,
+            "start_percent": null,
+            "supported": false,
+            "supports_charge_behaviour": false,
+            "supports_end": false,
+            "supports_start": false,
+            "thresholds_verified": false
+          },
+          "state": "",
+          "time_to_empty_seconds": 0,
+          "time_to_full_seconds": 0,
+          "warning": false
+        },
+        "brightness": {
+          "available": false,
+          "brightness": 0,
+          "device": "",
+          "error": null,
+          "max_brightness": 0,
+          "percent": 0
+        },
+        "compositor": {
+          "animations_enabled": null,
+          "available": false,
+          "error": null,
+          "revision": 0
+        },
+        "display_policy": {
+          "available": false,
+          "baseline": "",
+          "docking_state": "settled",
+          "error": null,
+          "focus": {
+            "available": false,
+            "error": null,
+            "saved": {},
+            "values": {}
+          },
+          "layout": {
+            "manual_enablement": false,
+            "saved": {
+              "outputs": []
+            },
+            "trial": null
+          },
+          "outputs": [],
+          "policy": {
+            "prefer_external": true
+          },
+          "status": ""
+        },
+        "media": {
+          "active_player": null,
+          "available": false,
+          "error": null,
+          "pinned_player": null,
+          "players": []
+        },
+        "notification_active": {
+          "available": true,
+          "error": null,
+          "notifications": [
+            {
+              "actions": [
+                {
+                  "key": "open",
+                  "label": "Open"
+                },
+                {
+                  "key": "inline-reply",
+                  "label": "Reply"
+                }
+              ],
+              "app_icon": "",
+              "app_name": "Contract Chat",
+              "body": "Example body",
+              "created_unix_ms": 1700000000000,
+              "dnd_bypass": false,
+              "expires_unix_ms": null,
+              "group_key": "Contract Chat",
+              "hints": {
+                "category": "",
+                "desktop_entry": "",
+                "image_data_present": false,
+                "image_path": "",
+                "resident": false,
+                "sound_file": "",
+                "sound_name": "",
+                "suppress_sound": false,
+                "transient": false,
+                "urgency": 0
+              },
+              "id": 1,
+              "identity_icon": "",
+              "snoozed_until_unix_ms": null,
+              "source_monitor": "",
+              "summary": "A message",
+              "toast_expires_unix_ms": null,
+              "toast_visible": true,
+              "updated_unix_ms": 1700000000000
+            }
+          ],
+          "revision": 1
+        },
+        "notifications": {
+          "alt": "notification",
+          "app_policies": {},
+          "available": true,
+          "backend": "native",
+          "class_name": "notification",
+          "count": 1,
+          "dnd": false,
+          "dnd_until_unix_ms": null,
+          "error": null,
+          "history_revision": 1,
+          "inhibited": false,
+          "text": "1",
+          "tooltip": "1 Notification"
+        },
+        "osd_hardware": {
+          "available": false,
+          "camera_privacy": false,
+          "caps_lock": false,
+          "error": null,
+          "keyboard_backlight_percent": null,
+          "microphone_privacy": false,
+          "num_lock": false
+        },
+        "power_profile": {
+          "actions": [],
+          "active_holds": [],
+          "available": false,
+          "battery_automation": {
+            "error": null,
+            "level": "",
+            "profile": "",
+            "status": ""
+          },
+          "battery_aware": null,
+          "driver": "",
+          "error": null,
+          "performance_degraded": "",
+          "profile": "",
+          "profiles": [],
+          "version": ""
+        },
+        "power_sleep": {
+          "available": false,
+          "can_hibernate": "",
+          "can_suspend": "",
+          "diagnostics": {
+            "disk_swap_available": null,
+            "guidance": [],
+            "hardware": null,
+            "hibernate_issues": [],
+            "resume_device_configured": null,
+            "supported_suspend_modes": [],
+            "suspend_mode": null
+          },
+          "error": null,
+          "inhibitors": [],
+          "keep_awake": false,
+          "lock_before_sleep": false,
+          "operation": {
+            "action": "",
+            "error": null,
+            "id": 0,
+            "job": null,
+            "phase": ""
+          },
+          "preparing_for_sleep": false,
+          "resume_generation": 0
+        },
+        "sleep_policy": {
+          "active_profile": "",
+          "available": false,
+          "critical_battery": {
+            "error": null,
+            "phase": "",
+            "remaining_seconds": 0
+          },
+          "error": null,
+          "hibernate_available": false,
+          "hibernate_error": null,
+          "hibernate_ready": false,
+          "last_error": null,
+          "lid": {
+            "available": false,
+            "error": null,
+            "managed": false
+          },
+          "policy": {
+            "battery": {
+              "hibernate_minutes": 0,
+              "sleep_minutes": 30
+            },
+            "critical_battery": {
+              "enabled": false,
+              "grace_seconds": 60,
+              "percent": 5
+            },
+            "lid_action": "system",
+            "plugged": {
+              "hibernate_minutes": 0,
+              "sleep_minutes": 30
+            },
+            "same_profile": true
+          }
+        },
+        "timezone": {
+          "abbreviation": "",
+          "available": false,
+          "city": "",
+          "error": null,
+          "timezone": "",
+          "timezone_region_ids": [],
+          "utc_offset_seconds": 0
+        },
+        "updates": {
+          "available": false,
+          "error": null,
+          "jobs": [],
+          "lanes": [],
+          "ready": false,
+          "state_directory": ""
+        },
+        "workarea": {
+          "available": false,
+          "error": null,
+          "monitors": {},
+          "revision": 0
+        },
+        "workspaces": {
+          "active_window": null,
+          "available": false,
+          "error": null,
+          "focused_monitor": null,
+          "monitors": [],
+          "workspaces": []
+        }
+      }
+    },
+    "ok": true,
+    "protocol": "bar-api",
+    "version": 1
+  }
+}
