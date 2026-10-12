@@ -865,6 +865,9 @@
                 ${barDaemon}/bin/bar-daemon debug session-control-contract-fixture > bar-session-controls.json
                 diff -u ${./tests/qml/fixtures/bar-session-controls.json} bar-session-controls.json
                 cp bar-session-controls.json test-root/tests/qml/fixtures/bar-session-controls.json
+                ${barDaemon}/bin/bar-daemon debug battery-contract-fixture > bar-battery.json
+                diff -u ${./tests/qml/fixtures/bar-battery.json} bar-battery.json
+                cp bar-battery.json test-root/tests/qml/fixtures/bar-battery.json
                 cp -r ${./qml} test-root/qml
                 chmod -R u+w test-root/qml
                 ln -sfn ${./battery} test-root/qml/Shelllist/Battery

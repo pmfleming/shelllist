@@ -144,6 +144,10 @@ Ui.ChooserController {
     property int alertSentRevision: 0
     property string thresholdSaveError: ""
     property string alertSaveError: ""
+    // A failed response does not prove a write was not applied. Only a newer
+    // user revision or an explicit flush may retry; reconnect/debounce may not.
+    property int thresholdFailedRevision: -1
+    property int alertFailedRevision: -1
     property var batteryHistory: ({
             points: [],
             last_charge_timestamp_ms: 0,
@@ -462,11 +466,13 @@ Ui.ChooserController {
         if (domain === "threshold") {
             thresholdOperationActive = false;
             thresholdSaveError = message;
+            thresholdFailedRevision = thresholdSentRevision;
             if (thresholdRevision !== thresholdSentRevision)
                 scheduleThresholdSave(false);
         } else {
             alertOperationActive = false;
             alertSaveError = message;
+            alertFailedRevision = alertSentRevision;
             if (alertRevision !== alertSentRevision)
                 finishAlertEditingIfIdle();
         }
@@ -497,10 +503,12 @@ Ui.ChooserController {
         if (thresholdOperationActive) {
             thresholdOperationActive = false;
             thresholdSaveError = message;
+            thresholdFailedRevision = thresholdSentRevision;
         }
         if (alertOperationActive) {
             alertOperationActive = false;
             alertSaveError = message;
+            alertFailedRevision = alertSentRevision;
         }
     }
 
@@ -517,7 +525,7 @@ Ui.ChooserController {
 
     function scheduleThresholdSave(immediate: bool): void {
         thresholdAutoSave.stop();
-        if (thresholdEditing || !thresholdDraftValid || !thresholdDraftDirty)
+        if (thresholdEditing || !thresholdDraftValid || !thresholdDraftDirty || thresholdRevision <= thresholdFailedRevision)
             return;
         if (immediate)
             flushThresholdPolicy();
@@ -587,7 +595,7 @@ Ui.ChooserController {
     }
 
     function finishAlertEditingIfIdle(): void {
-        if (!alertEditing && alertDraftValid && alertDraftDirty)
+        if (!alertEditing && alertDraftValid && alertDraftDirty && alertRevision > alertFailedRevision)
             alertAutoSave.restart();
     }
 
@@ -844,14 +852,20 @@ Ui.ChooserController {
         id: thresholdAutoSave
         interval: 500
         repeat: false
-        onTriggered: controller.flushThresholdPolicy()
+        onTriggered: {
+            if (controller.thresholdRevision > controller.thresholdFailedRevision)
+                controller.flushThresholdPolicy();
+        }
     }
 
     Timer {
         id: alertAutoSave
         interval: 500
         repeat: false
-        onTriggered: controller.flushAlertPolicy()
+        onTriggered: {
+            if (controller.alertRevision > controller.alertFailedRevision)
+                controller.flushAlertPolicy();
+        }
     }
 
     Timer {
