@@ -844,6 +844,9 @@
                 ${appDaemon}/bin/app-daemon debug event-contract-fixture > app-events.json
                 diff -u ${./tests/qml/fixtures/app-events.json} app-events.json
                 cp app-events.json test-root/tests/qml/fixtures/app-events.json
+                ${appDaemon}/bin/app-daemon debug reply-contract-fixture > app-replies.json
+                diff -u ${./tests/qml/fixtures/app-replies.json} app-replies.json
+                cp app-replies.json test-root/tests/qml/fixtures/app-replies.json
                 cp -r ${./qml} test-root/qml
                 chmod -R u+w test-root/qml
                 ln -sfn ${./battery} test-root/qml/Shelllist/Battery

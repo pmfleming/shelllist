@@ -1,0 +1,490 @@
+{
+  "applications.energyOverview": {
+    "data": {
+      "energy_overview": {
+        "applications": [],
+        "energy_confidence": "",
+        "energy_source": "",
+        "since_ms": 0,
+        "total_energy_mwh": 0.0,
+        "until_ms": 0
+      }
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  },
+  "applications.execute": {
+    "data": {
+      "operation": {
+        "action": "activate",
+        "id": "operation-example",
+        "message": "Application action accepted",
+        "status": "accepted",
+        "target_id": "Alpha"
+      }
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  },
+  "applications.history": {
+    "data": {
+      "history": {
+        "has_more": false,
+        "next_cursor": null,
+        "points": [],
+        "summary": {
+          "energy_confidence": "",
+          "metrics": {},
+          "revision": "history-example",
+          "weighting": "",
+          "window_end_ms": 0,
+          "window_start_ms": 0
+        },
+        "target_id": "Alpha"
+      }
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  },
+  "applications.operation.status": {
+    "data": {
+      "operation_status": {
+        "action": "activate",
+        "id": "operation-example",
+        "message": "Application action completed",
+        "status": "completed",
+        "target_id": "Alpha"
+      }
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  },
+  "applications.query": {
+    "data": {
+      "applications": {
+        "applications": [
+          {
+            "attributed_fraction": 0.0,
+            "battery_percent": 0.0,
+            "battery_percent_per_hour": 0.0,
+            "cancelled_write_bytes": 0,
+            "categories": [],
+            "category": "shell",
+            "comment": "",
+            "cpu_percent": 0.0,
+            "cpu_percent_of_machine": 0.0,
+            "default_workspace_id": "1",
+            "desktop_actions": [],
+            "disk_read_bytes": 0,
+            "disk_read_bytes_per_second": 0.0,
+            "disk_space_permanent_bytes": 0,
+            "disk_space_temporary_bytes": 0,
+            "disk_space_total_bytes": 0,
+            "disk_write_bytes": 0,
+            "disk_write_bytes_per_second": 0.0,
+            "energy_confidence": "",
+            "energy_mwh": 0.0,
+            "energy_source": "",
+            "estimated_app_power_watts": 0.0,
+            "focused": false,
+            "generic_name": "Example application",
+            "gpu_busy_percent": 0.0,
+            "gpu_memory_allocated_bytes": 0,
+            "gpu_memory_bytes": 0,
+            "gpu_memory_resident_bytes": 0,
+            "gpu_percent": 0.0,
+            "icon": "",
+            "id": "Alpha",
+            "instances": [],
+            "keywords": [],
+            "kind": "desktop-application",
+            "logical_read_bytes": 0,
+            "logical_read_bytes_per_second": 0.0,
+            "logical_write_bytes": 0,
+            "logical_write_bytes_per_second": 0.0,
+            "major_faults_per_second": 0.0,
+            "match_kind": "all",
+            "match_score": 0,
+            "measurement": {
+              "attribution_method": "",
+              "coverage": 0.0,
+              "disk_space_scope": "",
+              "gpu_available": false,
+              "memory_source": "",
+              "network_available": false,
+              "network_bytes_available": false,
+              "network_connections_available": false,
+              "referenced_files_available": false,
+              "resources_shared": false,
+              "sample_interval_ms": 0,
+              "storage_available": false
+            },
+            "memory_bytes": 0,
+            "memory_cgroup_bytes": 0,
+            "memory_private_bytes": 0,
+            "memory_pss_bytes": 0,
+            "memory_rss_bytes": 0,
+            "memory_swap_bytes": 0,
+            "metric_availability": {
+              "attributed_fraction": false,
+              "average_power_watts": false,
+              "battery_percent": false,
+              "battery_percent_per_hour": false,
+              "cancelled_write_bytes": false,
+              "cpu_percent": false,
+              "cpu_percent_of_machine": false,
+              "disk_read_bytes": false,
+              "disk_read_bytes_per_second": false,
+              "disk_space_permanent_bytes": false,
+              "disk_space_temporary_bytes": false,
+              "disk_space_total_bytes": false,
+              "disk_write_bytes": false,
+              "disk_write_bytes_per_second": false,
+              "energy_mwh": false,
+              "estimated_app_power_watts": false,
+              "gpu_busy_percent": false,
+              "gpu_memory_allocated_bytes": false,
+              "gpu_memory_bytes": false,
+              "gpu_memory_resident_bytes": false,
+              "gpu_percent": false,
+              "logical_read_bytes": false,
+              "logical_read_bytes_per_second": false,
+              "logical_write_bytes": false,
+              "logical_write_bytes_per_second": false,
+              "major_faults_per_second": false,
+              "memory_bytes": false,
+              "memory_cgroup_bytes": false,
+              "memory_private_bytes": false,
+              "memory_pss_bytes": false,
+              "memory_rss_bytes": false,
+              "memory_swap_bytes": false,
+              "network_connection_count": false,
+              "network_receive_bytes": false,
+              "network_receive_bytes_per_second": false,
+              "network_transmit_bytes": false,
+              "network_transmit_bytes_per_second": false,
+              "open_file_disk_bytes": false,
+              "power_watts": false,
+              "process_count": false,
+              "read_operations": false,
+              "read_operations_per_second": false,
+              "referenced_file_disk_bytes": false,
+              "referenced_file_permanent_bytes": false,
+              "referenced_file_temporary_bytes": false,
+              "thread_count": false,
+              "write_operations": false,
+              "write_operations_per_second": false
+            },
+            "name": "Alpha",
+            "network_connection_count": 0,
+            "network_receive_bytes": 0,
+            "network_receive_bytes_per_second": 0.0,
+            "network_transmit_bytes": 0,
+            "network_transmit_bytes_per_second": 0.0,
+            "open_file_disk_bytes": 0,
+            "power_watts": 0.0,
+            "process_count": 0,
+            "read_operations": 0,
+            "read_operations_per_second": 0.0,
+            "referenced_file_disk_bytes": 0,
+            "referenced_file_permanent_bytes": 0,
+            "referenced_file_temporary_bytes": 0,
+            "revision": 41,
+            "running": false,
+            "running_count": 0,
+            "runtime_score": 0,
+            "score": 0,
+            "startup_class": "Alpha",
+            "system_power_watts": 0.0,
+            "thread_count": 0,
+            "write_operations": 0,
+            "write_operations_per_second": 0.0
+          }
+        ],
+        "generation": 7,
+        "has_more": false,
+        "hyprland_available": true,
+        "revision": 41
+      }
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  },
+  "applications.refresh": {
+    "data": {
+      "applications": {
+        "applications": [
+          {
+            "attributed_fraction": 0.0,
+            "battery_percent": 0.0,
+            "battery_percent_per_hour": 0.0,
+            "cancelled_write_bytes": 0,
+            "categories": [],
+            "category": "shell",
+            "comment": "",
+            "cpu_percent": 0.0,
+            "cpu_percent_of_machine": 0.0,
+            "default_workspace_id": "1",
+            "desktop_actions": [],
+            "disk_read_bytes": 0,
+            "disk_read_bytes_per_second": 0.0,
+            "disk_space_permanent_bytes": 0,
+            "disk_space_temporary_bytes": 0,
+            "disk_space_total_bytes": 0,
+            "disk_write_bytes": 0,
+            "disk_write_bytes_per_second": 0.0,
+            "energy_confidence": "",
+            "energy_mwh": 0.0,
+            "energy_source": "",
+            "estimated_app_power_watts": 0.0,
+            "focused": false,
+            "generic_name": "Example application",
+            "gpu_busy_percent": 0.0,
+            "gpu_memory_allocated_bytes": 0,
+            "gpu_memory_bytes": 0,
+            "gpu_memory_resident_bytes": 0,
+            "gpu_percent": 0.0,
+            "icon": "",
+            "id": "Alpha",
+            "instances": [],
+            "keywords": [],
+            "kind": "desktop-application",
+            "logical_read_bytes": 0,
+            "logical_read_bytes_per_second": 0.0,
+            "logical_write_bytes": 0,
+            "logical_write_bytes_per_second": 0.0,
+            "major_faults_per_second": 0.0,
+            "match_kind": "all",
+            "match_score": 0,
+            "measurement": {
+              "attribution_method": "",
+              "coverage": 0.0,
+              "disk_space_scope": "",
+              "gpu_available": false,
+              "memory_source": "",
+              "network_available": false,
+              "network_bytes_available": false,
+              "network_connections_available": false,
+              "referenced_files_available": false,
+              "resources_shared": false,
+              "sample_interval_ms": 0,
+              "storage_available": false
+            },
+            "memory_bytes": 0,
+            "memory_cgroup_bytes": 0,
+            "memory_private_bytes": 0,
+            "memory_pss_bytes": 0,
+            "memory_rss_bytes": 0,
+            "memory_swap_bytes": 0,
+            "metric_availability": {
+              "attributed_fraction": false,
+              "average_power_watts": false,
+              "battery_percent": false,
+              "battery_percent_per_hour": false,
+              "cancelled_write_bytes": false,
+              "cpu_percent": false,
+              "cpu_percent_of_machine": false,
+              "disk_read_bytes": false,
+              "disk_read_bytes_per_second": false,
+              "disk_space_permanent_bytes": false,
+              "disk_space_temporary_bytes": false,
+              "disk_space_total_bytes": false,
+              "disk_write_bytes": false,
+              "disk_write_bytes_per_second": false,
+              "energy_mwh": false,
+              "estimated_app_power_watts": false,
+              "gpu_busy_percent": false,
+              "gpu_memory_allocated_bytes": false,
+              "gpu_memory_bytes": false,
+              "gpu_memory_resident_bytes": false,
+              "gpu_percent": false,
+              "logical_read_bytes": false,
+              "logical_read_bytes_per_second": false,
+              "logical_write_bytes": false,
+              "logical_write_bytes_per_second": false,
+              "major_faults_per_second": false,
+              "memory_bytes": false,
+              "memory_cgroup_bytes": false,
+              "memory_private_bytes": false,
+              "memory_pss_bytes": false,
+              "memory_rss_bytes": false,
+              "memory_swap_bytes": false,
+              "network_connection_count": false,
+              "network_receive_bytes": false,
+              "network_receive_bytes_per_second": false,
+              "network_transmit_bytes": false,
+              "network_transmit_bytes_per_second": false,
+              "open_file_disk_bytes": false,
+              "power_watts": false,
+              "process_count": false,
+              "read_operations": false,
+              "read_operations_per_second": false,
+              "referenced_file_disk_bytes": false,
+              "referenced_file_permanent_bytes": false,
+              "referenced_file_temporary_bytes": false,
+              "thread_count": false,
+              "write_operations": false,
+              "write_operations_per_second": false
+            },
+            "name": "Alpha",
+            "network_connection_count": 0,
+            "network_receive_bytes": 0,
+            "network_receive_bytes_per_second": 0.0,
+            "network_transmit_bytes": 0,
+            "network_transmit_bytes_per_second": 0.0,
+            "open_file_disk_bytes": 0,
+            "power_watts": 0.0,
+            "process_count": 0,
+            "read_operations": 0,
+            "read_operations_per_second": 0.0,
+            "referenced_file_disk_bytes": 0,
+            "referenced_file_permanent_bytes": 0,
+            "referenced_file_temporary_bytes": 0,
+            "revision": 41,
+            "running": false,
+            "running_count": 0,
+            "runtime_score": 0,
+            "score": 0,
+            "startup_class": "Alpha",
+            "system_power_watts": 0.0,
+            "thread_count": 0,
+            "write_operations": 0,
+            "write_operations_per_second": 0.0
+          }
+        ],
+        "generation": 7,
+        "has_more": false,
+        "hyprland_available": true,
+        "revision": 41
+      }
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  },
+  "applications.revision": {
+    "data": {
+      "revision": 41
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  },
+  "applications.settings.update": {
+    "data": {
+      "settings": {
+        "category": "code",
+        "target_id": "Alpha",
+        "workspace_id": "3"
+      }
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  },
+  "cancel-operation": {
+    "data": {
+      "cancelled": "operation-example",
+      "kind": "operation"
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  },
+  "cancel-subscription": {
+    "data": {
+      "cancelled": "subscription-example",
+      "kind": "subscription"
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  },
+  "errors": {
+    "daemon-unavailable": {
+      "error": {
+        "code": "daemon-unavailable",
+        "message": "Example daemon-unavailable",
+        "retryable": false
+      },
+      "ok": false,
+      "protocol": "app-api",
+      "version": 1
+    },
+    "operation-failed": {
+      "error": {
+        "code": "operation-failed",
+        "message": "Example operation-failed",
+        "retryable": false
+      },
+      "ok": false,
+      "protocol": "app-api",
+      "version": 1
+    },
+    "request-not-found": {
+      "error": {
+        "code": "request-not-found",
+        "message": "Example request-not-found",
+        "retryable": false
+      },
+      "ok": false,
+      "protocol": "app-api",
+      "version": 1
+    },
+    "subscription-unavailable": {
+      "error": {
+        "code": "subscription-unavailable",
+        "message": "Example subscription-unavailable",
+        "retryable": false
+      },
+      "ok": false,
+      "protocol": "app-api",
+      "version": 1
+    },
+    "unsupported-method": {
+      "error": {
+        "code": "unsupported-method",
+        "message": "Example unsupported-method",
+        "retryable": false
+      },
+      "ok": false,
+      "protocol": "app-api",
+      "version": 1
+    },
+    "unsupported-stream": {
+      "error": {
+        "code": "unsupported-stream",
+        "message": "Example unsupported-stream",
+        "retryable": false
+      },
+      "ok": false,
+      "protocol": "app-api",
+      "version": 1
+    },
+    "validation-error": {
+      "error": {
+        "code": "validation-error",
+        "message": "Example validation-error",
+        "retryable": false
+      },
+      "ok": false,
+      "protocol": "app-api",
+      "version": 1
+    }
+  },
+  "subscribe": {
+    "data": {
+      "subscription": {
+        "id": "subscription-example"
+      }
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 1
+  }
+}

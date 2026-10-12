@@ -77,6 +77,13 @@ DaemonTestCase {
         request.send();
         return JSON.parse(request.responseText)[name];
     }
+    function deliverProducerReply(call, method) {
+        const request = new XMLHttpRequest();
+        request.open("GET", Qt.resolvedUrl("fixtures/app-replies.json"), false);
+        request.send();
+        Io.DaemonSessions.sessions["app-daemon"].client.response(call.id,
+            JSON.parse(request.responseText)[method], "", call.route);
+    }
     function deliverProducerEvent(call, value) {
         const route = Object.assign({}, call.route, {kind: "base-subscription", localId: "session-subscribe"});
         Io.DaemonSessions.sessions["app-daemon"].client.eventReceived(value, route);
@@ -86,7 +93,7 @@ DaemonTestCase {
         const call = lastCall(Api.methods.execute);
         compare(call.params.target_id, value.operation.target_id);
         compare(call.params.action, value.operation.action);
-        reply(call, {operation: Object.assign({}, value.operation, {status: "accepted"})});
+        deliverProducerReply(call, Api.methods.execute);
         const timer = findChild(panel.controller.operations, "applicationOperationPollTimer");
         verify(timer !== null);
         timer.running = false; // Break the timer binding: polling cannot hide lost pushes.
@@ -130,7 +137,7 @@ DaemonTestCase {
         compare(calls.filter(call => call.method === Api.methods.operationStatus).length, 1);
         verify(panel.controller.actionInFlight, "A gap is not an operation failure");
         tryVerify(() => calls.filter(call => call.method === Api.methods.query).length === queries + 1);
-        reply(status, {operation_status: value.operation});
+        deliverProducerReply(status, Api.methods.operationStatus);
         verify(!panel.controller.actionInFlight);
         compare(panel.dismissals, 1);
         compare(calls.filter(call => call.method === Api.methods.execute).length, 1, "Recovery never replays the effect");
