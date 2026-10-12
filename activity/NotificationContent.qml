@@ -115,9 +115,17 @@ Ui.ProviderChooserSurface {
         objectName: "notificationDeleteConfirmation"
         visible: !!content.controller.notificationState.deleteConfirmation
         z: 120
-        title: qsTr("Delete %1 notifications?").arg(content.controller.notificationState.deleteConfirmation?.count || 0)
+        title: {
+            const state = content.controller.notificationState;
+            const count = state.deleteConfirmation?.count || 0;
+            if (state.deleteScope.selected)
+                return qsTr("Delete this notification?");
+            if (state.deleteScope.app_key)
+                return (count === 1 ? qsTr("Delete %n %1 notification?", "", count) : qsTr("Delete %n %1 notifications?", "", count)).arg(state.deleteLabel);
+            return count === 1 ? qsTr("Delete %n notification?", "", count) : qsTr("Delete all %n notifications?", "", count);
+        }
         detail: content.controller.notificationState.deleteLabel + qsTr("\nIncludes notifications outside the current search. App preferences are unchanged. This cannot be undone.")
-        acceptLabel: qsTr("Delete")
+        acceptLabel: content.controller.notificationState.deleteScope.app_key ? qsTr("Delete") : qsTr("Delete all")
         onAccepted: content.controller.notificationState.confirmDelete()
         onCancelled: content.controller.notificationState.cancelDelete()
     }

@@ -139,6 +139,50 @@ DaemonTestCase {
         }
     }
 
+    function test_bulkAndWipeCompactConfirmations_data() {
+        return [{tag: "selected-one", count: 1}, {tag: "selected-many", count: 3}, {tag: "wipe", count: 0}];
+    }
+    function test_bulkAndWipeCompactConfirmations(data) {
+        const controller = makeController();
+        const content = createTemporaryObject(contentFactory, testCase, {controller: controller, width: 560, height: 650});
+        views = views.concat([content]);
+        tryVerify(() => content.listItem !== null);
+        content.listItem.focusList();
+        const entries = {};
+        for (let i = 0; i < data.count; ++i) entries["entry-" + i] = {id: "entry-" + i, revision: i + 1};
+        controller.multiSelectedIds = entries;
+        const open = () => {
+            if (data.count) controller.requestBulkDelete();
+            else controller.applyWipeChallenge({id: "owned-wipe"});
+        };
+        calls = [];
+        open();
+        const modal = findChild(content, data.count ? "clipboardBulkDeleteConfirmation" : "clipboardWipeConfirmation");
+        tryCompare(findChild(modal, "detailAction:reject"), "activeFocus", true);
+        verify(modal.compactPresentation && !modal.actionSummaryVisible);
+        verify(!findChild(modal, "modalDetail").visible);
+        verify(modal.Accessible.description.includes("permanently"));
+        compare(modal.title, data.count ? "Delete " + data.count + " clipboard " + (data.count === 1 ? "entry?" : "entries?") : "Clear all clipboard history?");
+        compare(calls.length, 0);
+        keyClick(Qt.Key_Escape);
+        verify(!modal.visible);
+        compare(calls.length, 0, "cancel never commits deletion");
+        open();
+        tryCompare(findChild(modal, "detailAction:reject"), "activeFocus", true);
+        keyClick(Qt.Key_Tab);
+        verify(findChild(modal, "detailAction:accept").activeFocus);
+        keyClick(Qt.Key_Return);
+        if (data.count) {
+            const write = calls.find(call => call.method === "clipboard.entries.delete");
+            verify(!!write);
+            compare(write.params.entries, Object.values(entries).map(e => ({entry_id: e.id, revision: e.revision})));
+        } else {
+            const write = calls.find(call => call.method === "clipboard.history.wipe.commit");
+            verify(!!write);
+            compare(write.params, {challenge_id: "owned-wipe", response: "WIPE"});
+        }
+    }
+
     function init() {
         failOnWarning(/.*(TypeError|Binding loop|invalid context).*/);
     }

@@ -1,3 +1,41 @@
+# Compact confirmation review and implementation
+
+`docs/reviews/confirmation-review.html` is a self-contained, offline review:
+23 actual Qt state captures grouped into 17 inventory items, proposed HTML
+replacements, per-item comments/approval, browser-local autosave and JSON
+export/import. Export decisions to share feedback; the HTML is not rewritten by
+browser edits. The approved revision-2 proposal is preserved as a before-change
+archive; its replacement illustrations are not implementation screenshots.
+Revision 2 uses the corrected compact Clipboard target: one question, inline
+right-hand Cancel/Approve controls, and no explanatory paragraph or repeated
+labels. Its feedback namespace is separate from revision 1; the previous HTML
+is preserved as `confirmation-review-v1.html` so old approvals cannot implicitly
+approve revised designs.
+
+Capture the implemented QML (light/dark, 23 states, 90 PNGs):
+
+```sh
+mkdir -p target/confirmation-implementation/captures
+tests/run-qmlquality-tests.sh -input tests/manual/tst_confirmation_review.qml -o target/confirmation-implementation/captures.log,txt
+```
+
+`build-confirmation-review.py` is the historical proposal builder; it refuses to
+overwrite the approved archive from implemented sources. Actual interaction tests
+live in `tests/qml/tst_compact_confirmations.qml` and the Clipboard, Notifications,
+Battery and Displays consumer suites.
+
+The explicit fixture uses real registered panel components with synthetic data
+and recording transports; it never accepts prompts or performs live mutations.
+It captures Clipboard, Notifications, Bluetooth's seven pairing kinds and Forget,
+Wi-Fi Forget variants, Battery safety reviews, Display trial/discard, and the
+Applications empty states from the supplied reference. The builder embeds both
+cropped dialogs and full panel context. Its `REFERENCE` path identifies the
+user-supplied target image. After-change evidence lives in ignored
+`target/confirmation-implementation/`; the archived proposal follows the existing
+ignored `docs/reviews/` convention. Captures use synthetic snapshots only, not real
+hardware mutations. Shared native tests additionally cover narrow/light/dark
+question wrapping, same-row action placement, focus, validation and cancellation.
+
 # Panel standardization acceptance
 
 The current twelve-panel matrix, exceptions and evidence limits are in

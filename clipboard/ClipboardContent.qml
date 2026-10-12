@@ -119,13 +119,12 @@ Ui.ProviderChooserSurface {
         title: qsTr("Delete clipboard entry?")
         Accessible.description: qsTr("This entry will be permanently removed from Ringboard history.")
         maximumCardWidth: 520
-        inlineHeaderActions: true
-        actionSummaryVisible: false
         acceptLabel: "Delete"
         onAccepted: content.controller.confirmDelete()
         onCancelled: content.controller.cancelDelete()
     }
     Ui.ConfirmationDialog {
+        objectName: "clipboardBulkDeleteConfirmation"
         visible: content.controller.bulkDeleteConfirmationOpen
         z: 120
         title: content.controller.multiSelectedCount === 1 ? qsTr("Delete %n clipboard entry?", "", content.controller.multiSelectedCount) : qsTr("Delete %n clipboard entries?", "", content.controller.multiSelectedCount)
@@ -135,9 +134,10 @@ Ui.ProviderChooserSurface {
         onCancelled: content.controller.cancelBulkDelete()
     }
     Ui.ConfirmationDialog {
+        objectName: "clipboardWipeConfirmation"
         visible: !!content.controller.wipeChallenge
         z: 120
-        title: qsTr("Clear clipboard history?")
+        title: qsTr("Clear all clipboard history?")
         detail: "This permanently removes regular and favorite entries plus generated previews."
         acceptLabel: "Clear all"
         onAccepted: content.controller.confirmWipe()

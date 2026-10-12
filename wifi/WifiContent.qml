@@ -48,17 +48,25 @@ ProviderChooserSurface {
     }
 
     PromptDialog {
+        objectName: "wifiPrompt"
+        compactPresentation: content.controller.prompt.mode === "confirm-forget"
         visible: content.controller.prompt.open
         title: content.controller.prompt.title
         detail: content.controller.prompt.detail
         inputText: content.controller.prompt.text
         password: content.controller.prompt.password
+        inputLabel: compactPresentation ? qsTr("Type FORGET") : password ? qsTr("Password") : qsTr("Value")
+        readonly property bool forgetResponseValid: content.controller.prompt.text.trim().toLowerCase() === "forget"
+        inputValid: !compactPresentation || content.controller.prompt.text.length === 0 || forgetResponseValid
+        acceptEnabled: !compactPresentation || forgetResponseValid
         optionVisible: content.controller.prompt.mode === "daemon-secret" && content.controller.prompt.saveSecretSupported
         optionChecked: content.controller.prompt.saveSecret
         optionLabel: "Save in the desktop keyring"
         actionsVisible: true
         rejectLabel: "Cancel"
-        acceptLabel: content.controller.prompt.mode === "confirm-forget" ? "Confirm" : "Continue"
+        acceptLabel: compactPresentation ? qsTr("Forget") : qsTr("Continue")
+        acceptTone: compactPresentation ? "danger" : "accent"
+        instruction: compactPresentation ? qsTr("Enter confirm   •   Esc cancel") : qsTr("Enter continue   •   Esc cancel")
         onInputEdited: function (text) {
             content.controller.prompt.text = text;
         }

@@ -1,6 +1,7 @@
 import QtQuick
 
 PromptDialog {
+    compactPresentation: true
     inputVisible: false
     actionsVisible: true
     acceptLabel: "Remove"

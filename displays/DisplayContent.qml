@@ -35,15 +35,18 @@ Ui.ProviderChooserSurface {
     }
     Ui.PromptDialog {
         objectName: "discardDisplayDraft"
+        compactPresentation: true
         visible: content.controller.discardPrompt
         title: qsTr("Discard layout changes?")
+        detail: qsTr("Only your unpreviewed layout changes will be discarded.")
         inputVisible: false
         actionsVisible: true
         enterEnabled: false
-        instruction: ""
+        instruction: qsTr("Esc keep editing")
         rejectLabel: qsTr("Keep editing")
         acceptLabel: qsTr("Discard")
         acceptTone: "warning"
+        acceptIcon: "undo"
         onAccepted: content.controller.discardAndClose()
         onCancelled: {
             content.controller.discardPrompt = false;

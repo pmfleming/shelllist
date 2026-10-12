@@ -37,7 +37,11 @@ measurement, aggregation or sampling behavior changes. See
   validation, retries and safety guards. The shared footer retains full accessible
   text; concise summaries are not replacements for those authoritative values.
 - Safety messages outrank ordinary feedback. Countdown summaries retain time and
-  the AC/cancel escape. Required confirmations are unchanged.
+  the AC/cancel escape. Required confirmations retain their domain behavior; the
+  subsequently approved compact-confirmation presentation removes visible
+  explanation/duplicate labels, keeps accessible descriptions and places
+  Cancel/Approve together beside one short question. This is a presentation
+  change, not removal of confirmation, validation or rollback.
 - Explicit Help can disclose content; automatic status does not resize rows.
   Recovery commands retain their geometry and are disabled outside their existing
   availability conditions, rather than appearing and moving subsequent controls.

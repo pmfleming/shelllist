@@ -4,6 +4,8 @@ import Shelllist.Ui as Ui
 
 Ui.PromptDialog {
     id: prompt
+    objectName: "bluetoothPairingPrompt"
+    compactPresentation: true
 
     required property BluetoothController controller
     readonly property var request: controller.pairingPrompt || ({})
@@ -16,11 +18,13 @@ Ui.PromptDialog {
     }) || ({})
     readonly property string deviceName: requestDevice.name || "Bluetooth device"
     readonly property var headings: ({
-            "confirmation": "Confirm pairing code",
-            "authorization": "Allow pairing?",
-            "service-authorization": "Allow Bluetooth service?",
-            "pin-code": "Enter PIN",
-            "passkey": "Enter passkey"
+            "confirmation": qsTr("Code matches %1?").arg(deviceName),
+            "authorization": qsTr("Pair with %1?").arg(deviceName),
+            "service-authorization": qsTr("Allow %1 service access?").arg(deviceName),
+            "pin-code": qsTr("Enter device PIN"),
+            "passkey": qsTr("Enter device passkey"),
+            "display-pin": qsTr("Enter this code on %1").arg(deviceName),
+            "display-passkey": qsTr("Enter this code on %1").arg(deviceName)
         })
 
     visible: controller.pairingPromptOpen
@@ -42,7 +46,7 @@ Ui.PromptDialog {
     acceptEnabled: valueValid && !controller.pairingResponsePending
     escapeEnabled: responseRequired
     enterEnabled: responseRequired && !controller.pairingResponsePending
-    instruction: responseRequired ? "Enter confirm   •   Esc reject" : "Waiting for the remote device…"
+    instruction: responseRequired ? "Enter confirm   •   Esc reject" : ""
     onInputEdited: function (text) {
         controller.pairingInput = text;
     }
@@ -62,6 +66,7 @@ Ui.PromptDialog {
     }
 
     Ui.ThemeText {
+        objectName: "bluetoothPairingCode"
         visible: !prompt.inputRequired && (prompt.request.value || "").length > 0
         Layout.fillWidth: true
         text: prompt.request.value || ""
@@ -72,9 +77,10 @@ Ui.PromptDialog {
         horizontalAlignment: Text.AlignHCenter
     }
     Ui.ThemeText {
+        objectName: "bluetoothPairingProgress"
         visible: prompt.kind === "display-passkey" && Number(prompt.request.entered || 0) > 0
         Layout.fillWidth: true
-        text: Number(prompt.request.entered || 0) + " of 6 digits entered"
+        text: qsTr("%1 / 6 digits").arg(Number(prompt.request.entered || 0))
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption
         horizontalAlignment: Text.AlignHCenter

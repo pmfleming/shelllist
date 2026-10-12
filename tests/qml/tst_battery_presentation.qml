@@ -360,6 +360,9 @@ DaemonTestCase {
         const modal = findChild(panel, "batterySafetyReview");
         keyClick(Qt.Key_C, Qt.AltModifier);
         tryVerify(() => modal.visible);
+        verify(modal.compactPresentation && !modal.actionSummaryVisible);
+        verify(!findChild(modal, "modalDetail").visible);
+        verify(modal.Accessible.description.includes("power supply connected"));
         verify(panel.controller.navigationBlocked);
         compare(calls.length, 0);
         keyClick(Qt.Key_O, Qt.AltModifier);
@@ -389,7 +392,12 @@ DaemonTestCase {
         keyClick(Qt.Key_Return);
         const modal = findChild(panel, "batterySafetyReview");
         tryVerify(() => modal.visible);
-        verify(modal.detail.includes("one automatic power manager"));
+        verify(modal.Accessible.description.includes("one automatic power manager"));
+        verify(!findChild(modal, "modalDetail").visible);
+        verify(waitForPolish(panel.Window.window));
+        const title = findChild(modal, "detailTitle");
+        compare(title.elide, Text.ElideNone);
+        verify(title.contentHeight <= title.height + 1, "the complete safety question wraps at battery-panel width");
         verify(!critical.checked);
         compare(calls.length, 0);
         keyClick(Qt.Key_Escape);

@@ -290,8 +290,9 @@ existing contained native modal traversal. The display-trial dialog opts into
 shared inline header actions: Revert sits beside Keep, retaining initial Revert
 focus and the same Tab/Enter routes. Its larger centered countdown and compact
 card replace the visible instruction paragraph; timeout, stale-state guards and
-daemon rollback are unchanged. Other headers keep their normal two tiers; the
-shared inline option falls back to those tiers when commands cannot fit. See the
+daemon rollback are unchanged. Ordinary panel headers keep their normal two tiers;
+approved compact confirmations also opt into inline actions as documented below.
+The shared inline option falls back to those tiers when commands cannot fit. See the
 [shared action row](../qml/Shelllist/Ui/SurfaceActionRow.qml).
 
 - Action buttons use **Alt+letter**, not Tab. `ActionControl.accessKey` defines a
@@ -818,20 +819,53 @@ drafts, never claiming native rollback. Recovery commands stay outside Tab order
 `tst_bluetooth_recovery.qml` covers actual Enter/Tab/Escape, captured identity,
 unloaded editors, partial outcomes, malformed replies and transport loss.
 
-## Clipboard deletion confirmation
+## Compact confirmation presentation
 
-Single-entry deletion uses a compact shared confirmation dialog: Cancel sits
-beside Delete in the header, with no consequence paragraph or repeated
-“Delete · Cancel” labels. The permanent-removal consequence remains in its
-accessible description; the existing keyboard hint stays visible. Its narrower
-520px maximum card width is clipboard-owned dialog geometry, not smaller text or
-hit targets. Bulk deletion and history-wipe confirmations retain their warnings.
-Cancel receives initial focus; Escape cancels, and native Tab/Return or pointer
-activation selects the intended action. Underlying clipboard action shortcuts
-are disabled while any deletion modal is open. No deletion occurs before
-confirmation, and backend guards are unchanged. `tst_clipboard_recovery.qml`
-covers compact geometry, inline alignment, initial focus, cancellation, focus
-restoration and confirmed deletion at normal/narrow widths.
+The approved confirmation target is Clipboard's single-entry dialog: question
+icon, one short question, then Cancel immediately left of Approve at the right
+of the same header. No consequence paragraph, repeated action summary or button
+captions. The existing compact keyboard hint remains. Shared
+`ModalFrame.compactPresentation` keeps `detail` in `Accessible.description`
+without displaying it, enables inline header actions and wraps long questions
+at normal text size. `PromptDialog` suppresses its action summary in this mode;
+`ConfirmationDialog` opts in by default. Existing narrow action-row fallback
+and contained modal scrolling remain available; ordinary panel headers still
+elide and ordinary prompts retain their presentation unless explicitly opted in.
+
+Clipboard single/selected/history deletion, native notification record/app/global
+deletion, Bluetooth Forget and pairing, Wi-Fi Forget, Battery calibration/critical
+protection, and Display draft discard use this shared composition. Notification
+questions retain the actual snapshot count and scope with correct singular copy.
+The existing display trial already matches: Revert/Keep and its countdown are
+unchanged. Clipboard's scope chooser, ordinary Wi-Fi credential/QR forms and
+Applications' passive empty-state icons are not redesigned.
+
+Required fields and pairing codes are functional content, not explanation.
+Bluetooth retains PIN/passkey masking and validation, prominent comparison/remote
+codes and entered-digit progress. Display-only pairing has no invented local
+accept/reject command or waiting paragraph; the full device/service description
+remains accessible. Wi-Fi's challenge is labeled **Type FORGET**; approval stays
+disabled until the existing trimmed, case-insensitive challenge is valid. Typing
+never submits; controller validation remains authoritative. Password/enterprise
+and other credential forms retain their existing noncompact layout.
+
+Cancel receives initial focus for action-only prompts; required-input prompts
+focus their editor. Escape cancels and native contained Tab/Return or pointer
+activation chooses the action. Display draft discard keeps `enterEnabled: false`
+and uses an Undo glyph; its hint describes only Escape, never a new implicit
+Enter-to-discard shortcut. Underlying panel field/command shortcuts remain blocked.
+These presentation changes do not remove token/challenge expiry, captured request
+identity, pending/validation/capability guards, acknowledgement, retry or rollback.
+Battery safety prerequisites and destructive consequences stay in accessible
+text, not visible explanatory paragraphs.
+
+Clipboard single deletion retains its existing 520px maximum card width. No
+smaller fonts/hit targets or new panel-local key model are introduced.
+`tst_compact_confirmations.qml` checks actual native focus/keys, normal/narrow
+light/dark layout, Bluetooth pairing/Forget and Wi-Fi challenge/credential routes.
+`tst_clipboard_recovery`, `tst_notification_center`, `tst_battery_presentation` and
+`tst_displays` retain actual consumer cancel/confirm, native IDs/tokens, modal
+blocking, policy guards, draft-only discard and display rollback coverage.
 
 ## Clipboard text saves and recovery
 

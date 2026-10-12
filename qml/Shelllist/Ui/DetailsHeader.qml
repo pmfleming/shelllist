@@ -21,7 +21,8 @@ Item {
     property bool secondaryVisible: true
     property bool compactSecondaryActions: false
     property bool inlineSecondaryActions: false
-    property int headerHeight: Math.max(56, Math.round(64 * uiScale))
+    property bool wrapTitle: false
+    property int headerHeight: Math.max(56, Math.round(64 * uiScale), wrapTitle ? Math.ceil(titleText.implicitHeight) : 0)
     signal actionTriggered(string actionId)
     property bool tabFocusEnabled: false
     function focusAction(actionId: string): void { actionRow.focusAction(actionId); }
@@ -71,7 +72,8 @@ Item {
                 textFormat: Text.PlainText
                 font.weight: Theme.fontWeightBold
                 font.pixelSize: header.titlePixelSize
-                elide: Text.ElideRight
+                wrapMode: header.wrapTitle ? Text.Wrap : Text.NoWrap
+                elide: header.wrapTitle ? Text.ElideNone : Text.ElideRight
             }
             RowLayout {
                 anchors.top: titleText.bottom

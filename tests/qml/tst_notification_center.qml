@@ -92,13 +92,45 @@ DaemonTestCase {
         state.backend.finish(request(state, "delete"), {cancelled: true}, "", "");
         content.listItem.focusList(); keyClick(Qt.Key_D, Qt.AltModifier);
         state.backend.finish(request(state, "prepare-delete"), {delete_confirmation: Object.assign({}, challenge, {token: "second", app_key: "named:Chat"})}, "", "");
-        state.confirmDelete();
+        const modal = findChild(content, "notificationDeleteConfirmation");
+        tryCompare(findChild(modal, "detailAction:reject"), "activeFocus", true);
+        verify(modal.compactPresentation && !modal.actionSummaryVisible);
+        verify(!findChild(modal, "modalDetail").visible);
+        keyClick(Qt.Key_Tab);
+        verify(findChild(modal, "detailAction:accept").activeFocus);
+        keyClick(Qt.Key_Return);
         verify(state.deletePending);
         compare(calls.filter(c => c.method === "notifications.delete").pop().params, {token: "second", cancel: false});
         const before = calls.length; state.confirmDelete(); compare(calls.length, before);
         state.backend.finish(request(state, "delete"), {}, "Connection lost; refresh before retrying", "");
         verify(!state.deletePending); verify(state.lastError.length > 0);
         compare(controller.visibleApps.length, 2, "failure cannot optimistically remove notifications");
+        content.destroy();
+    }
+    function test_compactDeleteScopeTitles_data() {
+        return [{tag: "record", app: "named:Mail", selected: true, count: 1, title: "Delete this notification?"},
+            {tag: "app-one", app: "named:Mail", count: 1, title: "Delete 1 Mail notification?"},
+            {tag: "app-many", app: "named:Mail", count: 12, title: "Delete 12 Mail notifications?"},
+            {tag: "global-one", app: null, count: 1, title: "Delete 1 notification?"},
+            {tag: "global", app: null, count: 47, title: "Delete all 47 notifications?"}];
+    }
+    function test_compactDeleteScopeTitles(data) {
+        const {state, content} = make();
+        const record = data.selected ? preview(101, data.app) : null;
+        verify(state.prepareDelete(data.app || "", record, data.app ? "Mail" : "All notifications"));
+        state.backend.finish(request(state, "prepare-delete"), {delete_confirmation: {
+            token: "scope", count: data.count, app_key: data.app,
+            selected: record ? {id: record.id, created: record.created_unix_ms} : null,
+            expires_unix_ms: Date.now() + 60000
+        }}, "", "");
+        const modal = findChild(content, "notificationDeleteConfirmation");
+        tryCompare(findChild(modal, "detailAction:reject"), "activeFocus", true);
+        compare(modal.title, data.title);
+        verify(!findChild(modal, "modalDetail").visible);
+        verify(modal.Accessible.description.includes("outside the current search"));
+        compare(calls.filter(c => c.method === "notifications.delete").length, 0);
+        keyClick(Qt.Key_Escape);
+        compare(calls.filter(c => c.method === "notifications.delete").pop().params, {token: "scope", cancel: true});
         content.destroy();
     }
     function test_deleteCountsRejectMalformedAcknowledgements_data() {

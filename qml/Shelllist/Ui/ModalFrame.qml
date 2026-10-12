@@ -7,7 +7,10 @@ Rectangle {
     property string detail: ""
     property string icon: "help"
     property var actions: []
-    property bool inlineHeaderActions: false
+    // Approved confirmation composition; details remain in accessibility.
+    // Ordinary credential forms, menus and the display trial keep their layout.
+    property bool compactPresentation: false
+    property bool inlineHeaderActions: compactPresentation
     signal actionTriggered(string actionId)
     function focusAction(actionId: string): void {
         header.focusAction(actionId);
@@ -121,13 +124,15 @@ Rectangle {
                     icon: frame.icon
                     actions: frame.actions
                     inlineSecondaryActions: frame.inlineHeaderActions
+                    wrapTitle: frame.compactPresentation
                     tabFocusEnabled: true
                     onActionTriggered: function(actionId) { frame.actionTriggered(actionId); }
                 }
 
                 ThemeText {
+                    objectName: "modalDetail"
                     width: parent.width
-                    visible: frame.detail.length > 0
+                    visible: !frame.compactPresentation && frame.detail.length > 0
                     text: frame.detail
                     color: Theme.mutedText
                     font.pixelSize: Theme.fontSizeLabel

@@ -56,7 +56,12 @@ Browsing uses a marker only; editing adds an editor-local background and lower l
   primary action. Its circular power selector remains one deferred field.
 - The top bar, native tray menus, OSD, required-input dialogs and toasts retain
   their own documented density and input boundaries. Panel roles must not
-  unconditionally restyle those contexts.
+  unconditionally restyle those contexts. Approved compact confirmations use
+  one short wrapping question with Cancel/Approve together on the right; visible
+  consequence paragraphs and repeated command labels are omitted, while full
+  descriptions remain accessible. Only the explicitly opted-in required-input
+  flows share this presentation. Codes, fields, trial countdowns and all domain
+  guards are retained; see the interaction contract's compact-confirmation section.
 
 ## Execution and evidence
 

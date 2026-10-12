@@ -17,7 +17,7 @@ ModalFrame {
     property bool optionChecked: false
     property string optionLabel: ""
     property bool actionsVisible: false
-    property bool actionSummaryVisible: actionsVisible
+    property bool actionSummaryVisible: actionsVisible && !compactPresentation
     property string rejectLabel: "Cancel"
     property string acceptLabel: "Confirm"
     property string acceptTone: "accent"
@@ -82,6 +82,7 @@ ModalFrame {
             supportingText: dialog.inputSupportingText
             TextField {
                 id: promptInput
+                objectName: "promptInput"
                 Layout.fillWidth: true
                 text: dialog.inputText
                 password: dialog.password
@@ -108,6 +109,7 @@ ModalFrame {
         }
 
         ThemeText {
+            objectName: "promptActionSummary"
             visible: dialog.actionSummaryVisible
             Layout.fillWidth: true
             text: dialog.acceptLabel + " · " + dialog.rejectLabel
@@ -116,6 +118,7 @@ ModalFrame {
         }
 
         ThemeText {
+            objectName: "promptInstruction"
             visible: dialog.instruction.length > 0
             Layout.fillWidth: true
             text: dialog.instruction

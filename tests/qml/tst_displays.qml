@@ -43,6 +43,32 @@ DaemonTestCase {
             outputs: [{ id: 0, name: "eDP-1", width: 1920, height: 1200, refreshRate: 60, x: 0, y: 0, scale: 1.25, transform: 0, disabled: true, supported: true, internal: true, mirror_of: "", current_mode: "1920x1200@60.00Hz", modes: [{id: "1920x1200@60.00Hz", width: 1920, height: 1200, rate: 60, size: "1920x1200"}] },
                 { id: 1, name: "DP-1", width: 3840, height: 2160, refreshRate: 60, x: 1536, y: 0, scale: 1.5, transform: 0, disabled: false, supported: true, internal: false, mirror_of: "", current_mode: "3840x2160@60.00Hz", modes: [{id: "3840x2160@60.00Hz", width: 3840, height: 2160, rate: 60, size: "3840x2160"}] }] };
     }
+    function test_compactDiscardKeepsNativeCancelAndExplicitApproval() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        c.openDetails();
+        waitForDetails(panel);
+        c.edit("DP-1", "scale", 2);
+        verify(c.dirty);
+        c.closeDetails();
+        const modal = findChild(panel, "discardDisplayDraft");
+        tryCompare(findChild(modal, "detailAction:reject"), "activeFocus", true);
+        verify(modal.compactPresentation && !modal.actionSummaryVisible);
+        verify(!findChild(modal, "modalDetail").visible);
+        verify(!modal.enterEnabled, "no new Enter-to-discard shortcut");
+        compare(findChild(modal, "detailAction:accept").icon, "undo");
+        keyClick(Qt.Key_Escape);
+        verify(c.dirty && c.detailsOpen && !c.discardPrompt);
+        compare(calls.length, 0);
+        c.closeDetails();
+        tryCompare(findChild(modal, "detailAction:reject"), "activeFocus", true);
+        keyClick(Qt.Key_Tab);
+        verify(findChild(modal, "detailAction:accept").activeFocus);
+        keyClick(Qt.Key_Return);
+        verify(!c.dirty && !c.detailsOpen && !c.discardPrompt);
+        compare(calls.length, 0, "discard affects only the local draft");
+    }
     function test_normalizedModesRemainLocalUntilPreview() {
         const panel = makePanel();
         const c = panel.controller;

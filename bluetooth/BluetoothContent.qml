@@ -36,6 +36,7 @@ Ui.ProviderChooserSurface {
     }
 
     Ui.ConfirmationDialog {
+        objectName: "bluetoothForgetConfirmation"
         visible: content.controller.confirmationOpen
         z: 120
         title: (content.controller.pendingConfirmationAction || ({})).confirmation ? content.controller.pendingConfirmationAction.confirmation.title : "Confirm Bluetooth action"
