@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Shelllist architecture execution ledger</title>
+<style>body{font:16px/1.5 system-ui;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#202530}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccd1da;padding:.6rem;text-align:left;vertical-align:top}code{font-size:.9em}.pending{color:#795500}</style>
+<h1>Architecture execution ledger</h1>
+<p>Source-backed rollout of the architecture implementation plan. Each stage ends with scoped commits and its acceptance tests. Pending entries are commitments, not claims of implemented behavior. Existing functionality must be revalidated before a stage is marked complete.</p>
+<p>Completed baseline: P0 event delivery and uncertain NM replay prevention; P1 atomic update readiness. P2 app contracts and bar snapshot, control, sleep, display and notification-action fixtures are committed. The remainder of P2 includes the original declaration, validation, bounds and integration gates—not just reply wrappers.</p>
+<h2>Stages</h2>
+<table><thead><tr><th>Stage</th><th>Implementation and exit evidence</th><th>Status</th></tr></thead><tbody>
+<tr><td>P2.1</td><td>Media, workspace and update-refresh request/reply constructors; producer fixtures; native QML success, rejection and no-replay tests; Nix freshness gate.</td><td>In progress</td></tr>
+<tr><td>P2.2</td><td>Battery controls, calibration, partial outcomes and history contracts. Preserve privileged-helper behavior; test using isolated helpers, never live battery writes.</td><td class="pending">Pending</td></tr>
+<tr><td>P2.3</td><td>Activity/todo and notification-query contracts, including paging/errors; producer-to-consumer fixtures.</td><td class="pending">Pending</td></tr>
+<tr><td>P2.4</td><td>Audit the typed spine and pilot declaration source. Prove registry/dispatch coverage, generated schemas/validators, compatibility, request/result bounds and two-client real-bridge behavior. Preserve legacy formats; no unnegotiated canonical-format switch.</td><td class="pending">Pending</td></tr>
+<tr><td>P3.1</td><td>Shared service mechanics built on existing owner/task/admission primitives; app pilot with two-owner, cancellation and saturation tests.</td><td class="pending">Pending</td></tr>
+<tr><td>P3.2</td><td>Migrate bar, clip and BT adapters in separately validated daemon commits. Preserve stream strategies, ownership and interface signatures.</td><td class="pending">Pending</td></tr>
+<tr><td>P3.3</td><td>NM adapter integration; retain blocking lanes, control actor, secret ownership and unit-returning Cancel compatibility.</td><td class="pending">Pending</td></tr>
+<tr><td>P4.1</td><td>Audit/revalidate ordinary request deadline isolation and explicit uncertain outcomes against concurrent healthy requests.</td><td class="pending">Pending</td></tr>
+<tr><td>P4.2</td><td>Long/interactive operation lifecycle and battery authorization budget/cancellation; slow fake authorization and apply-then-disconnect tests.</td><td class="pending">Pending</td></tr>
+<tr><td>P4.3</td><td>Subscription/control readiness timeouts and late-result cleanup; no orphaned subscriptions. Measure before adding proxy caches.</td><td class="pending">Pending</td></tr>
+<tr><td>P5.1</td><td>Deterministic event/lag baseline and metrics; domain-specific bar sources with race-free snapshot/subscription handoff.</td><td class="pending">Pending</td></tr>
+<tr><td>P5.2</td><td>Domain-local, single-flight recovery and generation/revision fencing; burst isolation tests.</td><td class="pending">Pending</td></tr>
+<tr><td>P5.3</td><td>Monitor availability and failure/restart policy; panic and process-loss fault injection. Evaluate, but do not automatically perform, process extraction.</td><td class="pending">Pending</td></tr>
+<tr><td>P6.1</td><td>Record and align actual compiler/build inputs and shared dependency requirements; executable drift checks with explicit exceptions.</td><td class="pending">Pending</td></tr>
+<tr><td>P6.2</td><td>Record workspace scope decision and validate locked source capture/packages on supported architectures. Repository/history merging and archival deletion require separate approval.</td><td class="pending">Pending</td></tr>
+<tr><td>P7.1</td><td>Shared surface catalog validation/generation, typed factories and eager/lazy/resident semantics; all surfaces and deep links tested.</td><td class="pending">Pending</td></tr>
+<tr><td>P7.2</td><td>Send-time request metadata and explicit conflict domains, including Wi-Fi. Recheck concurrent WifiPromptPolicy.ts work before editing overlapping code.</td><td class="pending">Pending</td></tr>
+<tr><td>P7.3</td><td>Small controller extractions, argument-array tool capabilities, deterministic unavailable behavior, sink log defaults and secret-redaction tests; TS freshness.</td><td class="pending">Pending</td></tr>
+<tr><td>P7.4</td><td>Screen property listeners and measured watchdog policy; resize, empty lists, reconnect and resume tests before reducing polling.</td><td class="pending">Pending</td></tr>
+</tbody></table>
+<h2>Rules and validation</h2>
+<ul><li>Commit task-specific files only. Preserve unrelated changes in every sibling repository.</li><li>Use live sibling sources through local-build, not stale revision pins.</li><li>Keep v1 payloads, stream names, privilege boundaries and same-user trust assumptions explicit. No effect replay after uncertain execution.</li><li>Run Rust tests, Clippy, formatting, relevant native QML tests, fixture freshness and Nix gates per stage. Record unavailable architecture/environment gates as blockers, not passes.</li><li>Changes to APIs or models must be reflected in production-generated fixtures. Never fabricate replacement wire envelopes inside consumer tests.</li></ul>
+<h2>Commit record</h2><ul><li>Stage 0: this execution ledger establishes stage boundaries; no runtime behavior changed.</li></ul>
+</html>
