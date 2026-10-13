@@ -17,6 +17,9 @@ Column {
     }
     BatterySuspendPolicyPane {
         controller: pane.controller
+    }
+    BatteryCriticalProtectionPane {
+        controller: pane.controller
         onCriticalEnableRequested: pane.criticalEnableRequested()
     }
 

@@ -54,12 +54,31 @@ Retry/reset-looking button or Alt+T command; explicit lock/sleep commands remain
 available under their existing capability and operation guards. Pending, error
 and unknown-outcome diagnostics still contribute to the fixed surface footer.
 
-A battery–link–plug row links source profiles. Passive battery/plug headings
-replace repeated subtitles; delay editors retain explicit setting names. Monitor
-+ skip conveys the lid exception; wake + cancelled timer and low-battery + sleep
-convey the delayed-hibernation caveats. Section Help explains these symbols.
+The Power page uses three sibling shared task cards: **Lock & suspend** for
+immediate commands, **Automatic sleep** for lid/source policies, and **Critical
+protection** for low-battery safeguards. Battery levels, automatic power profiles
+and hardware tuning continue below them, unchanged. No new tab or global Apply
+control is introduced; all cards share the existing controller/operation owners.
 
-Critical-battery hibernation retains its explicit name, warning threshold, grace
+“Same settings on battery & AC” visibly names the link switch. Passive source
+headings say “Battery & plugged in”, or “On battery” and “Plugged in” with both
+profiles visible when unlinked. “Current” follows the reported active profile,
+not a guessed source. Labels wrap without shrinking the switch. “Suspend after”
+and “Then hibernate” keep full inactivity/suspended-time meanings in accessibility
+and Automatic sleep Help. Help also explains docking, System default, the lid
+profile exception, waking, low battery and Keep awake; the old caveat pictogram
+strip is removed. Source labels and headings are not editable stops.
+
+Automatic sleep ends with compact diagnostic Details and Retry settings commands;
+Retry retains Alt+R and the original dirty/error/critical-only guards, including
+critical-only retry when managed sleep is unavailable. Details remains in the
+shared Alt+J command menu. Neither enters field Tab traversal.
+
+Critical protection uses “Hibernate at critical battery”, revealing “At or below”
+and “Warn for” only when enabled. Its independent Help explains prerequisites,
+AC escape and per-episode behavior. The reserved “Cancel this battery episode”
+command retains Alt+C, its full accessible name and in-flight/phase guards.
+Critical-battery hibernation retains its warning threshold, grace
 period, countdown, cancellation and failure handling. Enabling first reviews the
 single-power-manager / working-hibernation requirements in a shared confirmation;
 this review is not a claim of detected readiness. Disabling is immediate.
@@ -79,7 +98,18 @@ resting geometry and transactions. `BatteryIconValue` is passive;
 `tst_battery_presentation.qml` exercises the actual panel's circular selection,
 deferred pointer/keyboard edits, saved-versus-draft state, traversal, icon-only
 tabs, merged charging state, confirmation modality/identity and error disclosure.
+It also covers sibling task-card composition at 453/340px in both themes, long
+labels, linked/unlinked field traversal, deferred sleep edits, independent critical
+confirmation/retry while managed sleep is unavailable, and countdown cancellation.
 `tst_battery_suspend.qml` retains degraded telemetry, acknowledgement, inhibitor
 and wire-contract checks. JS checks retain threshold/alert identity races and
 history discontinuities. Run the shared Qt interaction suite and strict QML lint
 when changing the reusable control presentation.
+
+Task-card validation: an isolated HEAD checkout plus only this change passed
+strict QML lint and the full Qt suite (617 passed, zero failures, one existing
+renderer skip), with `QML_XHR_ALLOW_FILE_READ=1` for local protocol fixtures.
+Ignored evidence in `target/suspend-task-cards/` includes 28 native offscreen
+captures: 453/340px, light/dark, shared/separate profiles, Keep awake, unavailable
+managed sleep and critical countdown. These use synthetic state and recording
+transports, not real sleep/hibernate requests or hardware acceptance.

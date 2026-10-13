@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Battery as Battery
+import Shelllist.Ui as Ui
 
 DaemonTestCase {
     id: tests
@@ -25,7 +26,10 @@ DaemonTestCase {
         }
     }
     function init() { failOnWarning(/.*/); }
-    function cleanup() { tests.width = 453; }
+    function cleanup() {
+        tests.width = 453;
+        Ui.Theme.previewColorScheme = Qt.Unknown;
+    }
     function battery(id = "BAT0", once = false) {
         return {available: true, percentage: 87, plugged: true, charging: true,
             power_available: true, power_watts: 8.4,
@@ -63,6 +67,138 @@ DaemonTestCase {
         for (let i = 0; i < 24 && panel.surface.detailsNavigation.currentTarget !== target; i++) keyClick(Qt.Key_Tab);
         compare(panel.surface.detailsNavigation.currentTarget, target);
         return target;
+    }
+    function reveal(panel, item) {
+        const page = findChild(panel, "batteryDetailPage");
+        page.contentY = Math.max(0, Math.min(page.contentHeight - page.height, item.mapToItem(page.contentItem, 0, 0).y - Ui.Theme.spacingMd));
+        verify(waitForRendering(panel));
+    }
+    function test_sleepTaskCards_data() {
+        return [
+            {tag: "normal-dark", width: 453, scheme: Qt.Dark},
+            {tag: "normal-light", width: 453, scheme: Qt.Light},
+            {tag: "narrow-dark", width: 340, scheme: Qt.Dark},
+            {tag: "narrow-light", width: 340, scheme: Qt.Light}
+        ];
+    }
+    function test_sleepTaskCards(data) {
+        tests.width = data.width;
+        Ui.Theme.previewColorScheme = data.scheme;
+        const panel = make("power");
+        const commands = findChild(panel, "powerSuspendCard");
+        const automatic = findChild(panel, "automaticSuspendCard");
+        const critical = findChild(panel, "criticalProtectionCard");
+        verify(commands && automatic && critical);
+        compare(commands.parent, automatic.parent);
+        compare(automatic.parent, critical.parent, "three sibling cards, not nested tonal surfaces");
+        verify(commands.y + commands.height <= automatic.y);
+        verify(automatic.y + automatic.height <= critical.y);
+        compare(findChild(automatic, "criticalBatteryEnabled"), null);
+        verify(findChild(critical, "criticalBatteryEnabled") !== null);
+        compare(findChild(panel, "suspendSameProfile").title, "Same settings on battery & AC");
+        compare(findChild(panel, "suspendProfileHeading-battery").text, "Battery & plugged in");
+        verify(!findChild(panel, "criticalBatteryPercent").visible);
+        verify(!findChild(panel, "suspendProfileCurrent-battery").visible, "unknown source is not reported as current");
+        const closedHeight = critical.height;
+        const policy = JSON.parse(JSON.stringify(panel.controller.suspendPolicyDraft));
+        policy.same_profile = false;
+        policy.critical_battery.enabled = true;
+        panel.controller.applySuspendPolicy({available: true, active_profile: "plugged", hibernate_available: true, lid: {available: true}, policy: policy});
+        verify(waitForRendering(panel));
+        compare(findChild(panel, "suspendProfileHeading-battery").text, "On battery");
+        compare(findChild(panel, "suspendProfileHeading-plugged").text, "Plugged in");
+        verify(!findChild(panel, "suspendProfileCurrent-battery").visible);
+        verify(findChild(panel, "suspendProfileCurrent-plugged").visible);
+        verify(findChild(panel, "suspendDelay-plugged").visible);
+        verify(critical.height > closedHeight);
+        const link = findChild(panel, "suspendSameProfile");
+        link.title = "Use the same automatic sleep and hibernation settings on battery and when connected to an external power supply";
+        verify(waitForRendering(panel));
+        verify(link.height >= link.implicitHeight);
+        verify(link.focusSurface.width >= 52, "long labels must not shrink the switch");
+        verify(link.focusSurface.mapToItem(panel, 0, 0).x + link.focusSurface.width <= panel.width, "switch stays inside the narrow panel");
+        compare(findChild(panel, "suspendDelay-battery").Accessible.name, "On battery: suspend after inactivity");
+        compare(findChild(panel, "hibernateDelay-plugged").Accessible.name, "Plugged in: time suspended before hibernating");
+        compare(findChild(panel, "criticalBatteryGrace").Accessible.name, "Critical-battery warning period");
+        for (const name of ["suspendDelay-battery", "hibernateDelay-plugged", "criticalBatteryGrace"]) {
+            const field = findChild(panel, name);
+            const card = name.startsWith("critical") ? critical : automatic;
+            const point = field.mapToItem(card, 0, 0);
+            verify(field.width > 0 && point.x >= 0 && point.x + field.width <= card.width + 1, name + " stays inside its card");
+            verify(field.mapToItem(panel, 0, 0).x + field.width <= panel.width, name + " is not clipped by the narrow viewport");
+        }
+        compare(calls.length, 0, "layout, headings and incoming state never write settings");
+    }
+    function test_sleepFieldTransactionsAndLinkedTraversal() {
+        const panel = make("power");
+        const sleep = browse(panel, "suspendDelay-battery");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        compare(calls.length, 0);
+        keyClick(Qt.Key_Escape);
+        compare(sleep.value, "30");
+        compare(sleep.editSession.displayedValue, "30");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Tab);
+        compare(calls.length, 1);
+        compare(calls[0].method, "powerSleep.setPolicy");
+        compare(calls[0].params.battery.sleep_minutes, 45);
+        compare(calls[0].params.same_profile, true, "daemon retains responsibility for applying the linked profile");
+        verify(!sleep.interactive, "submitted policy keeps its pending guard");
+        panel.controller.suspendPolicyFinished();
+        calls = [];
+        browse(panel, "suspendSameProfile");
+        keyClick(Qt.Key_Return);
+        compare(calls.length, 1);
+        compare(calls[0].params.same_profile, false);
+        panel.controller.suspendPolicyFinished();
+        verify(waitForRendering(panel));
+        browse(panel, "hibernateDelay-battery");
+        keyClick(Qt.Key_Tab);
+        compare(panel.surface.detailsNavigation.currentTarget, findChild(panel, "suspendDelay-plugged"), "source headings are passive");
+        keyClick(Qt.Key_Tab);
+        compare(panel.surface.detailsNavigation.currentTarget, findChild(panel, "hibernateDelay-plugged"));
+        keyClick(Qt.Key_Tab);
+        compare(panel.surface.detailsNavigation.currentTarget, findChild(panel, "criticalBatteryEnabled"), "Help and recovery commands are not field stops");
+        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
+        compare(panel.surface.detailsNavigation.currentTarget, findChild(panel, "hibernateDelay-plugged"));
+        compare(calls.length, 1, "traversal does not save or relink profiles");
+    }
+    function test_independentCriticalProtectionAndRecovery() {
+        const panel = make("power");
+        panel.controller.applySuspendPolicy({available: false, error: "Managed idle sleep unavailable", policy: panel.controller.suspendPolicyDraft});
+        const toggle = browse(panel, "criticalBatteryEnabled");
+        verify(toggle.interactive);
+        verify(!findChild(panel, "lidCloseAction").interactive);
+        keyClick(Qt.Key_Return);
+        const modal = findChild(panel, "batterySafetyReview");
+        tryVerify(() => modal.visible);
+        keyClick(Qt.Key_R, Qt.AltModifier);
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        compare(panel.controller.viewTab, "power");
+        compare(calls.length, 0);
+        modal.focusAction("accept");
+        keyClick(Qt.Key_Space);
+        tryCompare(panel.controller, "suspendPolicySaving", true);
+        compare(calls.length, 1);
+        compare(calls[0].method, "powerSleep.setCriticalPolicy");
+        panel.controller.suspendPolicyFailed("reply lost");
+        verify(findChild(panel, "suspendPolicyRetry").enabled, "critical-only retry is independent of managed sleep");
+        wait(0);
+        compare(calls.length, 1, "failed settings are not replayed automatically");
+        panel.surface.detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_R, Qt.AltModifier);
+        compare(calls.length, 2);
+        compare(calls[1].method, "powerSleep.setCriticalPolicy");
+        panel.controller.suspendPolicyFinished();
+        panel.controller.applySuspendPolicy({available: false, policy: panel.controller.suspendPolicyDraft, critical_battery: {phase: "countdown", remaining_seconds: 42}});
+        tryVerify(() => findChild(panel, "feedbackText").text.includes("42"));
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        compare(calls.length, 3);
+        compare(calls[2].method, "powerSleep.cancelCritical");
+        verify(!findChild(panel, "criticalBatteryCancel").enabled, "pending cancellation cannot be repeated");
     }
     function test_powerModeDraftAndAcknowledgement() {
         const panel = make();
@@ -254,9 +390,7 @@ DaemonTestCase {
         compare(findChild(panel, "suspendPolicyStatus").text, "Automatic sleep unavailable");
         verify(!findChild(panel, "lidCloseAction").interactive);
         const details = findChild(panel, "suspendPolicyDetails");
-        const page = findChild(panel, "batteryDetailPage");
-        page.contentY = page.contentHeight - page.height;
-        verify(waitForRendering(panel));
+        reveal(panel, details);
         mouseClick(details, details.width / 2, details.height / 2);
         verify(findChild(panel, "suspendPolicyDiagnostic").visible);
         verify(findChild(panel, "suspendPolicyDiagnostic").text.includes("nested or inline"));

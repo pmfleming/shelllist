@@ -10,6 +10,7 @@ internal BatteryLevelsPane BatteryLevelsPane.qml
 internal BatteryProfileSelector BatteryProfileSelector.qml
 internal BatterySuspendPane BatterySuspendPane.qml
 internal BatterySuspendPolicyPane BatterySuspendPolicyPane.qml
+internal BatteryCriticalProtectionPane BatteryCriticalProtectionPane.qml
 BatteryBackend 1.0 BatteryBackend.qml
 BatteryContent 1.0 BatteryContent.qml
 BatteryController 1.0 BatteryController.qml

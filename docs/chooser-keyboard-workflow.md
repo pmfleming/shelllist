@@ -1018,8 +1018,21 @@ Hardware-tuning toggles use passive semantic icons for charging, panel power and
 GPU power management, with a tuning-icon fallback for new daemon actions. Their
 labels/subtitles expand up to the unchanged switch hit area; icons add no focus
 stops or writes.
-Routine caveats and source/health/power readings use passive semantic icons with
-accessible descriptions. Section Help is a named Alt+J command, not a field stop
+The Power page separates Lock & suspend, Automatic sleep and Critical protection
+into sibling shared task cards, retaining the same controller and safety owners.
+“Same settings on battery & AC” names the link switch; passive source headings
+show “Battery & plugged in” or both “On battery” / “Plugged in” profiles. The
+reported source supplies the passive Current mark; unknown is not guessed.
+Suspend after / Then hibernate retain full time semantics in accessibility and
+Help. The docking/wake/low-battery caveat strip is replaced by explicit Help.
+Critical threshold/grace fields appear only when enabled; their reveal and profile
+linking retain ordinary editable-only traversal. Compact Details / Retry settings
+(Alt+R) commands remain outside Tab, with independent diagnostic and saved-failure
+guards. Cancel this battery episode retains Alt+C, its full accessible name and
+original phase/busy guard. Battery automation and hardware tuning still follow.
+
+Health/power readings use passive semantic icons with accessible descriptions.
+Section Help is a named Alt+J command, not a field stop
 or hover tooltip. Automatic-sleep integration failures keep a visible warning,
 with the original diagnostic behind Details; independent critical protection
 retains its own availability guards. Profile holds, degraded performance,
