@@ -11,7 +11,7 @@ DaemonTestCase {
     }
     function backend(client) { return findChild(client, "compositorMotionBackend"); }
     function update(client, value) {
-        backend(client).acceptSharedEvent({protocol: "bar-api", version: 1,
+        backend(client).acceptSharedEvent({protocol: "bar-api", version: 2,
             stream: "compositor.changed", event: "changed", data: Object.assign({revision: client.revision + 1}, value)});
     }
     function test_nativeSnapshotEventsRecoveryAndNoFrontendPolling() {
@@ -21,11 +21,11 @@ DaemonTestCase {
         const transport = backend(client);
         compare(Array.from(transport.streams), ["compositor.changed"]);
         transport.acceptSharedResponse("compositor-snapshot", {
-            protocol: "bar-api", version: 1, ok: true,
+            protocol: "bar-api", version: 2, ok: true,
             data: {snapshot: {compositor: {available: true, revision: 1, animations_enabled: false, error: null}}}
         }, "");
         verify(client.reduced && client.available);
-        transport.acceptSharedEvent({protocol: "bar-api", version: 1,
+        transport.acceptSharedEvent({protocol: "bar-api", version: 2,
             stream: "workarea.changed", event: "changed", data: {revision: 99, animations_enabled: true}});
         compare(client.revision, 1, "a different projection cannot alter motion");
         transport.acceptSharedResponse("compositor-snapshot", null, "read failed");
@@ -45,8 +45,8 @@ DaemonTestCase {
         verify(client.reduced, "unknown observations retain the local last-known value");
         update(client, {available: true, animations_enabled: "false"});
         verify(client.reduced, "malformed booleans are not coerced");
-        transport.acceptSharedEvent({protocol: "bar-api", version: 1,
-            stream: "compositor.changed", event: "lagged"});
+        transport.acceptSharedEvent({protocol: "bar-api", version: 2,
+            stream: "compositor.changed", event: "gap", data: {missed: "1", reason: "subscriber-lagged"}});
         compare(calls[calls.length - 1].method, "bar.snapshot");
         update(client, {available: true, animations_enabled: true, error: null});
         verify(!client.reduced && client.available, "new authoritative preference applies");

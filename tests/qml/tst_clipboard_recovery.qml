@@ -222,7 +222,7 @@ DaemonTestCase {
     function reply(controller, id, data, error) {
         findChild(controller, "clipboardBackend").acceptSharedResponse(id, {
             protocol: "clip-api",
-            version: 1,
+            version: 2,
             ok: !error,
             data: data || {},
             error: error ? {

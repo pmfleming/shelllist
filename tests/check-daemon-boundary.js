@@ -91,14 +91,14 @@ for (const backoffExpired of [false, true]) {
     const received = [], gaps = [], ApiEnvelope = {};
     install(ApiEnvelope, source("qml/Shelllist/Core/ApiEnvelope.qml"));
     const backend = { Core: { ApiEnvelope }, expectedProtocol: "test-api", expectedVersion: 1,
-        daemonName: "test-daemon", console: quietConsole, requestPolicy: null,
+        daemonName: "test-daemon", console: quietConsole, requestPolicy: null, validateEvent: null,
         eventReceived: event => received.push(event), eventGapDetected: stream => gaps.push(stream) };
     install(backend, source("qml/Shelllist/Io/DaemonBackend.qml"));
     const event = { protocol: "test-api", version: 1, stream: "updates", event: "changed", data: {} };
     backend.acceptSharedEvent({ ...event, protocol: "wrong-api" });
     backend.acceptSharedEvent({ ...event, version: 2 });
     backend.acceptSharedEvent({ ...event, stream: "" });
-    backend.acceptSharedEvent({ ...event, event: "lagged" });
+    backend.acceptSharedEvent({ ...event, event: "gap" });
     backend.acceptSharedEvent(event);
     assert.deepEqual({received, gaps}, {received: [event], gaps: ["updates"]},
         "compatible updates are delivered; gaps request resynchronization instead");

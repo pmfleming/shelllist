@@ -55,10 +55,12 @@ TestCase {
     function test_submitsEveryRequestedSecret() {
         prompt.openDaemonSecretPrompt({
             request_id: "secret-1",
-            setting_name: "802-1x",
-            secret_keys: ["password", "private-key-password"],
-            primary_secret_key: "password",
-            save_supported: true
+            data: {
+                setting_name: "802-1x",
+                secret_keys: ["password", "private-key-password"],
+                primary_secret_key: "password",
+                save_supported: true
+            }
         });
         compare(prompt.credentialFields.length, 2);
         prompt.saveSecret = true;

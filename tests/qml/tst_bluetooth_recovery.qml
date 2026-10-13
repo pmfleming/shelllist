@@ -245,7 +245,7 @@ DaemonTestCase {
         controller.pairingInput = "123456";
         verify(controller.respondPairing(true));
         findChild(controller, "bluetoothBackend").acceptSharedResponse("pairing-response", {
-            protocol: "bt-api", version: 1, ok: false,
+            protocol: "bt-api", version: 2, ok: false,
             error: {code: "pairing-response-rejected", message: "Try again"}
         }, "");
         verify(!controller.pairingResponsePending);
@@ -266,7 +266,7 @@ DaemonTestCase {
         compare(controller.respondingPairingId, "a");
         findChild(controller, "bluetoothBackend").acceptSharedResponse("pairing-response", {
             protocol: "bt-api",
-            version: 1,
+            version: 2,
             ok: true,
             data: {}
         }, "");
@@ -392,7 +392,7 @@ DaemonTestCase {
         compare(calls.length, 0);
         profile.selected("aac");
         backend.acceptSharedResponse("audio-set-profile", {
-            protocol: "bt-api", version: 1, ok: false,
+            protocol: "bt-api", version: 2, ok: false,
             error: {message: "Profile unavailable"}
         }, "");
         compare(calls.length, 1, "a rejected profile must not be remembered");
@@ -437,7 +437,7 @@ DaemonTestCase {
         });
         backend.acceptSharedResponse("audio-set-profile", {
             protocol: "bt-api",
-            version: 1,
+            version: 2,
             ok: true,
             data: {
                 audio_devices: [
@@ -467,7 +467,7 @@ DaemonTestCase {
         verify(controller.setAudioProfile({key: "aac", label: "AAC"}));
         const messages = [];
         controller.statusChanged.connect(() => messages.push(controller.status));
-        backend.acceptSharedResponse("audio-set-profile", {protocol: "bt-api", version: 1, ok: true,
+        backend.acceptSharedResponse("audio-set-profile", {protocol: "bt-api", version: 2, ok: true,
             data: {audio_devices: [], profile_outcome: data.outcome}}, "");
         compare(messages, [data.message], "never emit an intermediate success before reading the outcome");
         compare(calls.length, 1, "missing or partial acknowledgement must not replay the operation");
@@ -482,7 +482,7 @@ DaemonTestCase {
         for (const stage of ["send", "response"]) {
             controller.listError = "Previous read failed";
             if (stage === "send") backend.sendFailed(data.tag, "Denied");
-            else backend.acceptSharedResponse(data.tag, {protocol: "bt-api", version: 1, ok: false, error: {message: "Denied"}}, "");
+            else backend.acceptSharedResponse(data.tag, {protocol: "bt-api", version: 2, ok: false, error: {message: "Denied"}}, "");
             compare(controller.status, "Denied");
             compare(controller.listError, data.read ? "Denied" : "Previous read failed");
         }
@@ -507,7 +507,7 @@ DaemonTestCase {
         verify(controller.nameEdits.draft("buds").pending);
         backend.acceptSharedResponse("device-set-alias", {
             protocol: "bt-api",
-            version: 1,
+            version: 2,
             ok: true,
             data: {
                 operation: {
@@ -545,7 +545,7 @@ DaemonTestCase {
         compare(calls[calls.length - 1].params.alias, "My renamed buds");
         backend.acceptSharedResponse("device-set-alias", {
             protocol: "bt-api",
-            version: 1,
+            version: 2,
             ok: false,
             error: {
                 message: "Adapter unavailable"
@@ -565,7 +565,7 @@ DaemonTestCase {
         return calls.filter(call => call.method === "bluetooth.adapter.update");
     }
     function batchReply(key, changes, states) {
-        return { protocol: "bt-api", version: 1, ok: true, data: { adapter_batch: {
+        return { protocol: "bt-api", version: 2, ok: true, data: { adapter_batch: {
             key: key, outcomes: Object.keys(changes).map(field => ({
                 field: field, value: changes[field], state: (states || {})[field] || "applied",
                 error: {message: "Acknowledgement lost"}

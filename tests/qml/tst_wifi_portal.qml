@@ -86,7 +86,7 @@ DaemonTestCase {
     }
     function reply(panel, data, id) {
         panel.controller.backend.acceptSharedResponse(id || panel.controller.portal.pendingId, {
-            protocol: "nm-api", version: 1, ok: true, data: {portal: data}
+            protocol: "nm-api", version: 2, ok: true, data: {portal: data}
         }, "");
     }
     function claim(panel, value) {

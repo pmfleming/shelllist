@@ -16,7 +16,7 @@ function expect(label, actual, expected) {
 }
 
 function event(detail) {
-    return { stream: "network.health", event: detail.subject, health: detail };
+    return { protocol: "nm-api", version: 2, stream: "network.health", event: detail.subject, data: {health: detail} };
 }
 
 const daemonFailure = event({
@@ -38,7 +38,7 @@ for (const [value, recommended] of [[daemonFailure, true], [daemonSuppressed, fa
 // only retests the recommendation boolean, not DHCP, VPN or suspend behavior.
 
 const secret = "must-not-appear-in-health-logs";
-const withSecret = event({ ...daemonFailure.health, password: secret, secrets: { psk: secret } });
+const withSecret = event({ ...daemonFailure.data.health, password: secret, secrets: { psk: secret } });
 expect("log line omits credential fields", health.logLine(withSecret).includes(secret), false);
 
 console.log("network health presentation checks passed");

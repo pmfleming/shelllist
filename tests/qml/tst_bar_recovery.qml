@@ -22,12 +22,12 @@ DaemonTestCase {
     function reads(backend) { return calls.filter(call => call.route.consumerId === backend.sharedConsumerId && call.method === "bar.snapshot"); }
     function reply(call, snapshot) {
         Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id,
-            {protocol: "bar-api", version: 1, ok: true, data: {snapshot: snapshot}}, "", call.route);
+            {protocol: "bar-api", version: 2, ok: true, data: {snapshot: snapshot}}, "", call.route);
     }
     function event(call, stream, kind, data) {
         const route = Object.assign({}, call.route, {kind: "base-subscription", localId: "session-subscribe"});
         Io.DaemonSessions.sessions["bar-daemon"].client.eventReceived(
-            {protocol: "bar-api", version: 1, stream: stream, event: kind, data: data}, route);
+            {protocol: "bar-api", version: 2, stream: stream, event: kind, data: data}, route);
     }
     function test_gapStormIsSingleFlightAndDomainLocal() {
         const controller = make();
@@ -35,7 +35,7 @@ DaemonTestCase {
         const initial = reads(backend)[0];
         reply(initial, {audio: {available: true, volume_percent: 5}, battery: {available: true, percentage: 80}});
         for (let i = 0; i < 100; ++i)
-            event(initial, "audio.changed", "lagged", {missed: 4});
+            event(initial, "audio.changed", "gap", {missed: "4", reason: "subscriber-lagged"});
         compare(reads(backend).length, 2);
         compare(reads(backend)[1].params.streams, ["audio.changed"]);
         verify(!backend.snapshot(), "Manual refresh cannot overlap recovery");
@@ -61,7 +61,7 @@ DaemonTestCase {
         reply(initial, {audio: {available: true, volume_percent: 10}, battery: {available: true, percentage: 80}});
         compare(controller.audio.volume_percent, 70);
         compare(controller.battery.percentage, 80);
-        event(initial, "audio.changed", "lagged", {missed: 1});
+        event(initial, "audio.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
         const recovery = reads(backend)[1];
         event(initial, "audio.changed", "changed", {available: true, volume_percent: 90});
         reply(recovery, {audio: {available: true, volume_percent: 20}});
@@ -74,8 +74,8 @@ DaemonTestCase {
         const backend = controller.backend;
         const initial = reads(backend)[0];
         reply(initial, {});
-        event(initial, "audio.changed", "lagged", {missed: 1});
-        event(initial, "battery.changed", "lagged", {missed: 1});
+        event(initial, "audio.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
+        event(initial, "battery.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
         compare(reads(backend).length, 3);
         compare(reads(backend)[1].params.streams, ["audio.changed"]);
         compare(reads(backend)[2].params.streams, ["battery.changed"]);
@@ -91,7 +91,7 @@ DaemonTestCase {
         const backend = controller.backend;
         const initial = reads(backend)[0];
         reply(initial, {});
-        event(initial, "audio.changed", "lagged", {missed: 1});
+        event(initial, "audio.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
         const recovery = reads(backend)[1];
         if (data.malformed)
             reply(recovery, {});
@@ -101,7 +101,7 @@ DaemonTestCase {
         compare(backend.requestPolicy.snapshotFailures, 1);
         wait(0);
         compare(reads(backend).length, 2);
-        event(initial, "audio.changed", "lagged", {missed: 1});
+        event(initial, "audio.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
         compare(reads(backend).length, 3);
     }
     function test_effectReplyCannotResurrectNewerMonitorFailure() {
@@ -113,7 +113,7 @@ DaemonTestCase {
         const effect = calls[calls.length - 1];
         event(initial, "audio.changed", "changed", {available: false, volume_percent: 30, error: "audio monitor panicked"});
         Io.DaemonSessions.sessions["bar-daemon"].client.response(effect.id,
-            {protocol: "bar-api", version: 1, ok: true, data: {audio: {available: true, volume_percent: 35}}}, "", effect.route);
+            {protocol: "bar-api", version: 2, ok: true, data: {audio: {available: true, volume_percent: 35}}}, "", effect.route);
         verify(!backend.isPending(effect.route.localId), "the effect acknowledgement still completes");
         verify(!controller.audio.available);
     }
@@ -122,7 +122,7 @@ DaemonTestCase {
         const backend = controller.backend;
         const initial = reads(backend)[0];
         reply(initial, {audio: {available: true, volume_percent: 30}});
-        event(initial, "audio.changed", "lagged", {missed: 1});
+        event(initial, "audio.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
         const recovery = reads(backend)[1];
         const client = Io.DaemonSessions.sessions["bar-daemon"].client;
         clientReady = false;

@@ -37,7 +37,7 @@ DaemonTestCase {
         };
         backend.acceptSharedResponse("work-area-snapshot", {
             protocol: "bar-api",
-            version: 1,
+            version: 2,
             ok: true,
             data: {
                 snapshot: {
@@ -51,7 +51,7 @@ DaemonTestCase {
         verify(area.ready);
         backend.acceptSharedEvent({
             protocol: "bar-api",
-            version: 1,
+            version: 2,
             stream: "workarea.changed",
             event: "changed",
             data: value
@@ -64,9 +64,9 @@ DaemonTestCase {
         compare(calls.length, requests, "no frontend geometry polling");
         backend.acceptSharedEvent({
             protocol: "bar-api",
-            version: 1,
+            version: 2,
             stream: "workarea.changed",
-            event: "lagged"
+            event: "gap", data: {missed: "1", reason: "subscriber-lagged"}
         });
         compare(calls.length, requests + 1, "the shared gap signal must recover geometry");
         compare(calls[calls.length - 1].method, "bar.snapshot");

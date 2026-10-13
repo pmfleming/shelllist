@@ -61,7 +61,7 @@ DaemonTestCase {
     }
     function reply(controller, id, data) {
         findChild(controller, "clipboardBackend").acceptSharedResponse(id, {
-            protocol: "clip-api", version: 1, ok: true, data: data
+            protocol: "clip-api", version: 2, ok: true, data: data
         }, "");
     }
     function detailsReply(controller, target, text) {

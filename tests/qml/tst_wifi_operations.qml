@@ -89,14 +89,14 @@ DaemonTestCase {
         tryVerify(function () { return panel.page.detailsNavigation.commandButtons.some(function (button) { return button.accessKey === "K"; }); });
         keyClick(Qt.Key_K, Qt.AltModifier);
         compare(calls.slice(-1)[0].method, "operation.status");
-        statusReply(c, {request_id: "connect-owned", status: "running", stream: "wifi.connect", event: {request_id: "connect-owned", event: "progress", message: "Verifying Wi-Fi activation"}});
+        statusReply(c, {request_id: "connect-owned", status: "running", stream: "wifi.connect", event: {request_id: "connect-owned", event: "progress", data: {message: "Verifying Wi-Fi activation"}}});
         compare(c.status, "Verifying Wi-Fi activation");
         keyClick(Qt.Key_X, Qt.AltModifier);
         verify(c.connection.cancellationRequested, "active link must not hide pending cancellation");
         verify(c.actionInFlight, "cancel dispatch is not acknowledgement");
-        c.connection.handleEvent({request_id: "other", event: "cancelled"});
+        c.connection.handleEvent({request_id: "other", event: "cancelled", data: {}});
         verify(c.actionInFlight, "foreign cancellation cannot release the guard");
-        c.connection.handleEvent({request_id: "connect-owned", event: "cancelled"});
+        c.connection.handleEvent({request_id: "connect-owned", event: "cancelled", data: {}});
         verify(!c.actionInFlight);
         panel.page.listItem.focusList();
         keyClick(Qt.Key_D, Qt.AltModifier);
@@ -137,7 +137,7 @@ DaemonTestCase {
         const before = calls.length;
         keyClick(Qt.Key_D, Qt.AltModifier);
         compare(calls.length, before, "repeated mutation is blocked");
-        c.backend.acceptSharedResponse("disconnect", {protocol: "nm-api", version: 1, ok: data.ok, data: {result: {message: "Disconnected Wi-Fi"}}, error: {code: "failed", message: "Disconnect failed"}}, "");
+        c.backend.acceptSharedResponse("disconnect", {protocol: "nm-api", version: 2, ok: data.ok, data: {result: {message: "Disconnected Wi-Fi"}}, error: {code: "failed", message: "Disconnect failed"}}, "");
         verify(!c.actionInFlight);
         verify(findChild(panel, "chooserPowerToggle").enabled);
         if (!data.ok) {
@@ -148,7 +148,7 @@ DaemonTestCase {
         }
     }
     function statusReply(c, result, id) {
-        c.backend.acceptSharedResponse(id || c.connection.recoveryId, {protocol: "nm-api", version: 1, ok: true, data: {result: result}}, "");
+        c.backend.acceptSharedResponse(id || c.connection.recoveryId, {protocol: "nm-api", version: 2, ok: true, data: {result: result}}, "");
     }
     function test_missedCompletionIsRecoveredWithoutReplayingMutation() {
         const c = makePanel().controller;
@@ -157,7 +157,7 @@ DaemonTestCase {
         const read = calls.filter(function (call) { return call.method === "operation.status"; });
         compare(read.length, 1);
         compare(read[0].params.request_id, "connect-owned");
-        statusReply(c, {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "connect-owned", event: "succeeded", result: {status: "connected", message: "Link connected; internet unknown"}}});
+        statusReply(c, {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "connect-owned", event: "succeeded", data: {result: {status: "connected", message: "Link connected; internet unknown"}}}});
         compare(c.connection.requestId, "");
         verify(!c.actionInFlight);
         compare(c.status, "Link connected; internet unknown");
@@ -206,7 +206,7 @@ DaemonTestCase {
         deadline.interval = 10000;
         verify(c.connection.checkStatus(true));
         compare(c.connection.recoveryFailures, 0);
-        c.connection.handleEvent({request_id: "connect-owned", event: "cancelled"});
+        c.connection.handleEvent({request_id: "connect-owned", event: "cancelled", data: {}});
         verify(!poll.running && !deadline.running);
     }
     function test_malformedOrUnknownRecoveryNeverClaimsCompletion_data() {

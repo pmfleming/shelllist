@@ -93,7 +93,7 @@ DaemonTestCase {
         compare(calls[0].params.operation, "share");
         const response = {
             protocol: "nm-api",
-            version: 1,
+            version: 2,
             ok: true,
             data: {
                 result: {
