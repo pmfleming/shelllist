@@ -22,7 +22,8 @@ TestCase {
     }
     function test_brightnessFailure(data) {
         const controller = createTemporaryObject(controllerFactory, testCase);
-        controller.brightness = {available: true, percent: 65};
+        controller.backend.acceptSharedEvent({protocol: "bar-api", version: 1,
+            stream: "brightness.changed", event: "subscribed", data: {available: true, percent: 65}});
         controller.showBrightnessOsd(controller.brightness);
         const backend = controller.backend;
         const id = "brightness-adjust-1";
@@ -32,6 +33,7 @@ TestCase {
         compare(controller.osd.kind, "brightness-error");
         verify(!controller.osd.progressVisible);
         compare(controller.brightness.percent, 65, "failure cannot replace acknowledged brightness");
+        verify(!controller.brightness.available, "process loss invalidates current availability");
         backend.finish("brightness-adjust-2", {
             protocol: "bar-api", version: 1, ok: true,
             data: {brightness: {available: true, percent: 70}}

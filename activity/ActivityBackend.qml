@@ -2,7 +2,7 @@ import QtQuick
 import Shelllist.Io as Io
 import "ActivityApi.js" as ActivityApi
 
-Io.DaemonBackend {
+Io.BarDaemonBackend {
     required property ActivityController controller
     daemonName: "bar-daemon"
     expectedProtocol: ActivityApi.protocol
@@ -15,7 +15,7 @@ Io.DaemonBackend {
 
     function snapshot(): bool {
         controller.snapshotReadError = "";
-        return call("activity-snapshot", ActivityApi.methods.snapshot, {});
+        return snapshotRequest("activity-snapshot", null);
     }
     function queryRange(fromDate: date, toDate: date): bool {
         const id = nextRequestId("activity-range");
@@ -81,7 +81,6 @@ Io.DaemonBackend {
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }
-    onEventGapDetected: snapshot()
     onEventReceived: function (event) {
         controller.handleEvent(event);
     }

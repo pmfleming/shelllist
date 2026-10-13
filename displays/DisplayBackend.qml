@@ -2,7 +2,7 @@ import QtQuick
 import Shelllist.Io as Io
 import "DisplayApi.js" as Api
 
-Io.DaemonBackend {
+Io.BarDaemonBackend {
     required property DisplayController controller
     daemonName: "bar-daemon"
     expectedProtocol: Api.protocol
@@ -13,7 +13,7 @@ Io.DaemonBackend {
     readonly property bool snapshotLoading: Object.keys(pending).some(id => requestKind(id) === "display-snapshot")
 
     function snapshot(): bool {
-        return callSequenced("display-snapshot", Api.methods.snapshot, {});
+        return snapshotRequest(nextRequestId("display-snapshot"), null);
     }
     function mutate(action: string, params: var): bool {
         return !!Api.methods[action] && callSequenced("display-" + action, Api.methods[action], params);
@@ -47,7 +47,6 @@ Io.DaemonBackend {
         else if (event.stream === Api.workspaceStream)
             controller.workspaceState = event.data || ({available: false});
     }
-    onEventGapDetected: controller.refresh()
     onSendFailed: function (id, message) {
         controller.requestFailed(id, message);
     }

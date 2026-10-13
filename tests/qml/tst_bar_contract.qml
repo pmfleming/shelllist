@@ -99,6 +99,19 @@ DaemonTestCase {
         verifySnapshot(controller);
         verify(requests(controller.backend).every(call => call.method === Api.methods.snapshot), "Recovery never sends effects");
     }
+    function test_producerMonitorFailureInvalidatesOnlyItsDomain() {
+        const controller = makeBar();
+        const initial = lastRead(controller.backend);
+        const battery = JSON.stringify(controller.battery);
+        verify(controller.backend.snapshot());
+        const stale = lastRead(controller.backend);
+        event(initial, fixture().monitor_failed);
+        verify(!controller.audio.available);
+        verify(controller.audio.error.includes("audio monitor panicked"));
+        compare(JSON.stringify(controller.battery), battery);
+        reply(stale);
+        verify(!controller.audio.available, "an older read cannot resurrect a dead monitor");
+    }
     function test_invalidMetadataDoesNotReachConsumer() {
         const controller = makeBar();
         const call = lastRead(controller.backend);

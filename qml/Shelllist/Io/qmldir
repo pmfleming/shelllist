@@ -2,6 +2,8 @@ module Shelllist.Io
 CompositorMotion 1.0 process/CompositorMotion.qml
 singleton DaemonSessions 1.0 DaemonSessions.qml
 DaemonBackend 1.0 DaemonBackend.qml
+BarDaemonBackend 1.0 BarDaemonBackend.qml
+BarStateRecovery 1.0 BarStateRecovery.qml
 BarProjectionBackend 1.0 BarProjectionBackend.qml
 ClipboardPublisher 1.0 ClipboardPublisher.qml
 ClipboardScreenshotCapture 1.0 ClipboardScreenshotCapture.qml

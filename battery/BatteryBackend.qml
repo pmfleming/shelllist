@@ -2,7 +2,7 @@ import QtQuick
 import Shelllist.Io as Io
 import "BatteryApi.js" as BatteryApi
 
-Io.DaemonBackend {
+Io.BarDaemonBackend {
     required property BatteryController controller
     daemonName: "bar-daemon"
     expectedProtocol: BatteryApi.protocol
@@ -13,7 +13,7 @@ Io.DaemonBackend {
     active: controller.uiActive
 
     function snapshot(): bool {
-        return callSequenced("battery-snapshot", BatteryApi.methods.snapshot, {});
+        return snapshotRequest(nextRequestId("battery-snapshot"), null);
     }
 
     function history(): bool {
@@ -178,7 +178,6 @@ Io.DaemonBackend {
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }
-    onEventGapDetected: controller.refreshAll()
     onEventReceived: function (event) {
         controller.handleEvent(event);
     }

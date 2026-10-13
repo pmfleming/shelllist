@@ -2,7 +2,7 @@ import QtQuick
 import Shelllist.Io as Io
 import "ActivityApi.js" as Api
 
-Io.DaemonBackend {
+Io.BarDaemonBackend {
     id: backend
     // The owner constructs this adapter; avoid a circular composite-type dependency.
     required property var store
@@ -23,7 +23,7 @@ Io.DaemonBackend {
         return call(id, method, params);
     }
     function snapshot(): void {
-        if (!Object.keys(requests).some(id => id.startsWith("snapshot-")))
+        if (!snapshotPending() && !Object.keys(requests).some(id => id.startsWith("snapshot-")))
             request("snapshot", Api.methods.snapshot, {}, {snapshot: true});
     }
     function queryCenter(params: var, context: var): bool {
@@ -139,7 +139,6 @@ Io.DaemonBackend {
         if (store.resident || store.uiActive)
             snapshot();
     }
-    onEventGapDetected: snapshot()
     Connections {
         target: backend.store
         function onUiActiveChanged(): void {

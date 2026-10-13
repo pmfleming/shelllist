@@ -2,7 +2,7 @@ import QtQuick
 import Shelllist.Io as Io
 import "BarApi.js" as BarApi
 
-Io.DaemonBackend {
+Io.BarDaemonBackend {
     required property BarController controller
     property string operationError: ""
     daemonName: "bar-daemon"
@@ -16,7 +16,7 @@ Io.DaemonBackend {
 
     function snapshot(): bool {
         snapshotError = "";
-        return callSequenced("snapshot", BarApi.methods.snapshot, {});
+        return snapshotRequest(nextRequestId("snapshot"), null);
     }
 
     function focusWorkspace(workspaceId: int): bool {
@@ -149,7 +149,6 @@ Io.DaemonBackend {
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }
-    onEventGapDetected: snapshot()
     onEventReceived: function (event) {
         controller.handleEvent(event);
     }

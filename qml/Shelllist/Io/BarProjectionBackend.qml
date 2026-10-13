@@ -2,7 +2,7 @@ import "../Bar/BarProtocol.generated.js" as Protocol
 
 // Read-only snapshot/stream transport. Each consumer owns its projection's
 // validation, revision fencing and unavailable-state behavior.
-DaemonBackend {
+BarDaemonBackend {
     required property string projection
     required property string failureMessage
     property string snapshotId: projection + "-snapshot"
@@ -17,15 +17,14 @@ DaemonBackend {
 
     function refresh(): void {
         if (active)
-            call(snapshotId, Protocol.methods["bar.snapshot"], {});
+            snapshotRequest(snapshotId, null);
     }
     onTransportReady: refresh()
-    onEventGapDetected: refresh()
     onResponseReceived: function (id, envelope, transportError) {
         if (responseError(envelope, transportError, failureMessage))
             readFailed();
-        else
-            received(envelope.data && envelope.data.snapshot ? envelope.data.snapshot[projection] : null);
+        else if (envelope.data && envelope.data.snapshot && envelope.data.snapshot[projection] !== undefined)
+            received(envelope.data.snapshot[projection]);
     }
     onEventReceived: function (event) {
         if (event.stream === streams[0])

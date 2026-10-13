@@ -1158,6 +1158,25 @@
       "version": 1
     }
   },
+  "monitor_failed": {
+    "data": {
+      "available": false,
+      "error": "audio monitor panicked; restart daemon to recover",
+      "input_available": true,
+      "input_muted": false,
+      "muted": false,
+      "sink_description": "Speakers",
+      "sink_name": "alsa_output.test",
+      "source_description": "Microphone",
+      "source_name": "alsa_input.test",
+      "volume_percent": 50
+    },
+    "event": "changed",
+    "protocol": "bar-api",
+    "stream": "audio.changed",
+    "subscription_id": "subscription-example",
+    "version": 1
+  },
   "snapshot": {
     "data": {
       "snapshot": {

@@ -91,7 +91,7 @@ for (const backoffExpired of [false, true]) {
     const received = [], gaps = [], ApiEnvelope = {};
     install(ApiEnvelope, source("qml/Shelllist/Core/ApiEnvelope.qml"));
     const backend = { Core: { ApiEnvelope }, expectedProtocol: "test-api", expectedVersion: 1,
-        daemonName: "test-daemon", console: quietConsole,
+        daemonName: "test-daemon", console: quietConsole, requestPolicy: null,
         eventReceived: event => received.push(event), eventGapDetected: stream => gaps.push(stream) };
     install(backend, source("qml/Shelllist/Io/DaemonBackend.qml"));
     const event = { protocol: "test-api", version: 1, stream: "updates", event: "changed", data: {} };
@@ -109,7 +109,7 @@ for (const backoffExpired of [false, true]) {
 for (const closeBeforeReply of [false, true]) {
     const cancellations = [];
     const backend = {
-        pending: {}, extraSubscriptions: {}, extraSubscriptionCancellations: {},
+        pending: {}, extraSubscriptions: {}, extraSubscriptionCancellations: {}, requestPolicy: null,
         subscriptionSequence: 0, daemonName: "test-daemon", sharedConsumerId: "view",
         console: quietConsole,
         DaemonSessions: { subscribe() {}, cancel: (...args) => cancellations.push(args) },

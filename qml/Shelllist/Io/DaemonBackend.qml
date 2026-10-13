@@ -14,6 +14,8 @@ Item {
     property int requestSequence: 0
     property int subscriptionSequence: 0
     property string sharedConsumerId: ""
+    // Optional domain policy; transport routing/ownership remains here.
+    property var requestPolicy: null
 
     readonly property bool requestRunning: pendingCount > 0
     readonly property int pendingCount: Object.keys(pending).length
@@ -89,12 +91,16 @@ Item {
             console.warn("shelllist " + daemonName + " request rejected id=" + id + " reason=already-pending");
             return false;
         }
+        if (requestPolicy)
+            params = requestPolicy.sending(id, method, params || ({}));
         setPending(id, true);
         try {
             DaemonSessions.call(daemonName, sharedConsumerId, id, method, params || ({}));
             return true;
         } catch (error) {
             setPending(id, false);
+            if (requestPolicy)
+                requestPolicy.sendFailed(id);
             const message = "Could not send " + daemonName + " request " + id + ": " + error;
             console.error("shelllist " + daemonName + " request failed id=" + id + " stage=send error=" + error);
             sendFailed(id, message);
@@ -194,8 +200,14 @@ Item {
             finishExtraSubscription(id, envelope, transportError);
             return;
         }
-        if (!isTransportControl(id))
+        if (!isTransportControl(id)) {
+            if (requestPolicy) {
+                envelope = requestPolicy.received(id, envelope, transportError);
+                if (envelope === undefined)
+                    return;
+            }
             responseReceived(id, envelope, transportError);
+        }
     }
 
     function failSharedTransport(message: string): void {
@@ -205,6 +217,8 @@ Item {
         // cancelled later against a subscription that no longer exists.
         extraSubscriptions = ({});
         extraSubscriptionCancellations = ({});
+        if (requestPolicy)
+            requestPolicy.reset(message);
         transportFailed(message, lostRequestIds);
     }
 
@@ -227,6 +241,8 @@ Item {
             console.warn("shelllist " + daemonName + " event rejected error=" + error);
             return;
         }
+        if (requestPolicy)
+            requestPolicy.observe(event);
         if (isEventGap(event)) {
             eventGapDetected(event.stream, event);
             return;
