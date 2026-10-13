@@ -32,6 +32,30 @@ draft, malformed confirmation, policy, timeout, reconnect and no-replay suites s
 Full Qt: **595 passes, zero failures, one existing renderer skip**. Strict lint,
 17 JavaScript checks and native runtime smoke pass. No tests were removed.
 
+## 2. Chooser restoration decision versus effects
+
+`ChooserSession.restorationRegion` classifies the saved region against current
+context and detail availability, without effects or another stored request.
+`apply` retains invocation admission, presentation synchronization, list/viewport
+restoration, readiness and the `restoring` reentrancy guard, then executes the
+chosen region explicitly. List-control availability is still checked at focus
+time. All cancellation handlers, two-turn readiness deferral and generation-fenced
+modal fallback are unchanged. No panel-local navigation or new key model.
+
+Six native cases cover changed result, closed details, removed selection,
+available/unavailable list controls, and readiness-gated editor resumption that
+cannot restore a discarded field value. Existing deferred-loader/new-navigation,
+closure, capability and sensitive-field tests remain. Full Qt: **601 passes,
+zero failures, one existing renderer skip**; strict lint, 17 JavaScript checks,
+runtime smoke and panel-UI drift review pass.
+
+Relative to step 1, production LOC **44,824 → 44,840**, cyclomatic **8,018 → 8,020**,
+cognitive **5,508 → 5,506**, function effort **39,758 → 39,767**, component effort
+**45,659 → 45,670**. `apply` cyclomatic/cognitive **19/26 → 15/19**, plus the new
+decision function **6/5**. Aggregate cognition improves by two, but explicit
+classification/switch effects add lines and effort; this is not a broad metric
+win. Locality, leverage and complete clone groups remain unchanged.
+
 ## Evidence limits
 
 Metrics are advisory production-only projections, excluding `tests/` and `dev/`

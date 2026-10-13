@@ -26,6 +26,8 @@ DaemonTestCase {
                 id: owner
                 uiActive: true
                 property string detailsTab: "one"
+                property int refreshes: 0
+                function refresh() { refreshes++; }
                 property list<string> availableTabs: ["one", "two"]
                 provider: Core.Provider { providerId: "memory"; displayName: "Memory" }
                 viewMemory: Ui.ChooserMemory {
@@ -297,6 +299,64 @@ DaemonTestCase {
         const input = findChild(surface.detailsNavigation.currentTarget, "fieldInput");
         compare(input.cursorPosition, 2);
         compare(input.selectionEnd, 8);
+        compare(surface.edits, 0);
+    }
+    function test_changedRestorationContextFallsBackWithoutEditing_data() {
+        return [{tag: "different-result", change: "result", search: false},
+            {tag: "closed-details", change: "close", search: false},
+            {tag: "removed-selection", change: "remove", search: true}];
+    }
+    function test_changedRestorationContextFallsBackWithoutEditing(data) {
+        const surface = makeSurface();
+        inspectSecondTab(surface);
+        closeInvocation(surface);
+        compare(surface.chooserController.focusMemory.region, "details");
+        if (data.change === "result")
+            surface.chooserController.select(1);
+        else if (data.change === "close")
+            surface.chooserController.closeDetails();
+        else
+            catalog(surface, []);
+        reopenInvocation(surface);
+        tryVerify(() => data.search ? surface.listItem.searchFocused : surface.listItem.listFocused);
+        verify(!surface.detailsNavigation.editing);
+        compare(surface.edits, 0);
+        compare(surface.chooserController.refreshes, 0);
+    }
+    function test_readinessResumesFocusButNeverRestoresUnsavedValues() {
+        const surface = makeSurface();
+        inspectSecondTab(surface);
+        const field = surface.detailsNavigation.currentTarget;
+        keyClick(Qt.Key_Right);
+        verify(field.value !== 50);
+        compare(surface.edits, 0);
+        closeInvocation(surface);
+        surface.sessionReady = false;
+        reopenInvocation(surface);
+        tryVerify(() => surface.detailsNavigation.browsing && surface.detailsNavigation.currentTarget === field);
+        compare(field.value, 50, "closing discarded the unsaved preview");
+        surface.sessionReady = true;
+        tryVerify(() => surface.detailsNavigation.editing);
+        compare(field.value, 50, "resuming restores focus, not the prior draft");
+        compare(surface.edits, 0);
+        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
+        compare(surface.edits, 1, "only explicit native save publishes");
+    }
+    function test_listControlRestorationDoesNotActivate_data() {
+        return [{tag: "available", available: true}, {tag: "unavailable", available: false}];
+    }
+    function test_listControlRestorationDoesNotActivate(data) {
+        const surface = makeSurface();
+        const refresh = findChild(surface, "chooserRefreshButton");
+        refresh.forceActiveFocus();
+        tryCompare(refresh, "activeFocus", true);
+        closeInvocation(surface);
+        compare(surface.chooserController.focusMemory.region, "list-control");
+        surface.listItem.refreshEnabled = data.available;
+        reopenInvocation(surface);
+        tryVerify(() => data.available ? refresh.activeFocus : surface.listItem.searchFocused);
+        compare(surface.chooserController.refreshes, 0);
         compare(surface.edits, 0);
     }
     function test_missingEditorAndTabFallBackWithoutMutations() {

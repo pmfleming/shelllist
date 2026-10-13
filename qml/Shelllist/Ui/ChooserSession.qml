@@ -55,6 +55,15 @@ Item {
         if (pending)
             Qt.callLater(apply);
     }
+    // Decide from current capabilities only; this never focuses, changes a
+    // selection or stores a second restoration request.
+    function restorationRegion(saved: var): string {
+        if (saved.region !== "details")
+            return saved.region || "search";
+        if (saved.context === context && controller.detailsOpen)
+            return "details";
+        return controller.hasSelection ? "results" : "search";
+    }
     function apply(): void {
         if (!pending || !listItem)
             return;
@@ -67,15 +76,22 @@ Item {
         restoring = true;
         listItem.restoreSession(saved.list ? {selection: saved.list.selection,
             viewport: saved.selectedKey === selectedKey ? saved.list.viewport : null} : null);
-        const details = saved.region === "details" && saved.context === context && controller.detailsOpen;
-        pending = details && !ready;
-        if (details) {
+        const targetRegion = restorationRegion(saved);
+        pending = targetRegion === "details" && !ready;
+        switch (targetRegion) {
+        case "details":
             // Browse while refresh validates capabilities; newer navigation
             // still cancels the pending editor resume.
             navigation.focusSessionLocation(pending ? Object.assign({}, saved.location || ({}), {editing: false}) : saved.location);
-        } else if (saved.region === "results" || (saved.region === "details" && controller.hasSelection)) {
+            break;
+        case "results":
             listItem.focusList();
-        } else if (saved.region !== "list-control" || !listItem.restoreControl(saved.list ? saved.list.control : null)) {
+            break;
+        case "list-control":
+            if (!listItem.restoreControl(saved.list ? saved.list.control : null))
+                listItem.focusSearch();
+            break;
+        default:
             listItem.focusSearch();
         }
         rememberRegion();

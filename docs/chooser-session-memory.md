@@ -96,7 +96,13 @@ Bluetooth refreshes on activation. During that read, a remembered detail locatio
 is shown in browse mode; the editor resumes only after refresh and queued field
 reconciliation, if still valid and no newer interaction occurred. A changed
 result/adapter/tab falls back to results or search instead of editing another
-object. Disabled/read-only targets stay in browse mode. Ordinary menus reopen
+object. `ChooserSession.restorationRegion` makes that read-only decision from the
+saved region and current context/capabilities; it does not focus, select or retain
+a second request. `apply` executes the selected region only inside the existing
+invocation/restoration guards, after presentation and list restoration. Closed
+details fall back to results when a selection remains, otherwise search. Ordinary
+list controls still resolve their live availability at the point of focus and
+fall back to search without activation. Disabled/read-only targets stay in browse mode. Ordinary menus reopen
 **collapsed**, and no sensitive dialog is a restoration target.
 
 ## Fallbacks and ownership
@@ -144,6 +150,9 @@ non-focus-stealing selection, close/reorder/removal/reconnect and capability
 fallbacks. Invocation tests exercise search/results/browse/editor focus, backwards
 selections, current-value clamping, keyed viewports, destroyed/recreated views,
 new-input cancellation, focus-loss context changes and stale queued callbacks.
+The ownership refactor adds native cases for changed result/closed details/missing
+selection fallbacks, available/unavailable list-control focus without activation,
+and readiness-gated editor resumption without restoring an unsaved value.
 Real Applications tests cover collapsed-menu restoration and fresh history.
 Bluetooth tests cover device and adapter editors (including an empty device list),
 refresh readiness, changed adapters, newer navigation and sensitive-prompt
