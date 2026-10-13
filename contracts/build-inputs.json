@@ -56,6 +56,10 @@
     "clip-daemon/vendor/shelllist-search/Cargo.lock": "Ignored local library-test artifact; clip-daemon/Cargo.lock owns this path dependency. Not captured or consumed by product Nix builds."
   },
   "shared": {
+    "schemars": {
+      "requirement": "1.2.3",
+      "version": "1.2.3"
+    },
     "allocation-counter": {
       "requirement": "0.8.1",
       "version": "0.8.1"

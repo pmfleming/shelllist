@@ -37,7 +37,7 @@
     "rejected": {
       "error": {
         "code": "validation-error",
-        "message": "audio.adjust parameters are invalid: invalid type: string \"loud\", expected i16"
+        "message": "invalid type: string \"loud\", expected i16"
       },
       "ok": false,
       "protocol": "bar-api",
@@ -101,7 +101,7 @@
     "rejected": {
       "error": {
         "code": "validation-error",
-        "message": "audio.setInputMuted parameters are invalid: invalid type: string \"true\", expected a boolean"
+        "message": "invalid type: string \"true\", expected a boolean"
       },
       "ok": false,
       "protocol": "bar-api",
@@ -165,7 +165,7 @@
     "rejected": {
       "error": {
         "code": "validation-error",
-        "message": "audio.setMuted parameters are invalid: invalid type: string \"true\", expected a boolean"
+        "message": "invalid type: string \"true\", expected a boolean"
       },
       "ok": false,
       "protocol": "bar-api",
