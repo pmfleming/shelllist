@@ -47,6 +47,7 @@
         "aarch64-linux"
       ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
+      surfaceCatalog = import ./nix/surface-catalog.nix { lib = nixpkgs.lib; };
       fontsConf = pkgs: pkgs.makeFontsConf {
         fontDirectories = [
           pkgs.roboto-flex
@@ -151,10 +152,10 @@
               Usage: shelllist [COMMAND]
 
               Surface commands:
-                shelllist                         Toggle Applications
+                shelllist                         Toggle ${surfaceCatalog.defaultName}
                 shelllist <surface> [open|toggle] Open or toggle a surface
-                shelllist open [surface]          Open a surface (default: applications)
-                shelllist toggle [surface]        Toggle a surface (default: applications)
+                shelllist open [surface]          Open a surface (default: ${surfaceCatalog.defaultId})
+                shelllist toggle [surface]        Toggle a surface (default: ${surfaceCatalog.defaultId})
                 shelllist floating [surface]      Run a one-shot floating host
                 shelllist hide                    Hide the active surface
                 shelllist quit                    Stop the resident host
@@ -164,7 +165,7 @@
                 shelllist daemon                  Ensure the resident host is running
                 shelllist run                     Run the resident host in the foreground
 
-              Surfaces: applications, wifi, bluetooth, clipboard, displays, battery, activity, notifications, time-weather, audio, media, tray
+              Surfaces: ${builtins.concatStringsSep ", " surfaceCatalog.ids}
 
               Clipboard settings:
                 shelllist clipboard pause
@@ -176,7 +177,7 @@
 
               valid_surface() {
                 case "$1" in
-                  applications|wifi|bluetooth|clipboard|battery|displays|activity|notifications|time-weather|audio|media|tray) return 0 ;;
+                  ${builtins.concatStringsSep "|" surfaceCatalog.ids}) return 0 ;;
                   *) return 1 ;;
                 esac
               }
@@ -304,7 +305,7 @@
 
               command=''${1:-}
               case "$command" in
-                "") surface_call toggle applications ;;
+                "") surface_call toggle ${surfaceCatalog.defaultId} ;;
                 -h|--help|help) usage ;;
                 daemon) [ "$#" -eq 1 ] || { usage >&2; exit 2; }; ensure_daemon ;;
                 run)
@@ -313,7 +314,7 @@
                   SHELLLIST_MODE=popover exec quickshell --path "$config_path" --no-duplicate
                   ;;
                 open|toggle)
-                  surface=''${2:-applications}
+                  surface=''${2:-${surfaceCatalog.defaultId}}
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
                   surface_call "$command" "$surface"
                   ;;
@@ -342,7 +343,7 @@
                   ensure_daemon && popover_ipc listSurfaces
                   ;;
                 floating)
-                  surface=''${2:-applications}
+                  surface=''${2:-${surfaceCatalog.defaultId}}
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
                   valid_surface "$surface" || { echo "Unknown Shelllist surface: $surface" >&2; exit 2; }
                   if current_daemon_running; then
@@ -370,7 +371,7 @@
                     *) usage >&2; exit 2 ;;
                   esac
                   ;;
-                applications|wifi|bluetooth|displays|battery|activity|notifications|time-weather|audio|media|tray)
+                ${builtins.concatStringsSep "|" surfaceCatalog.directIds})
                   action=''${2:-toggle}
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
                   case "$action" in open|toggle) surface_call "$action" "$command" ;; *) usage >&2; exit 2 ;; esac
@@ -467,6 +468,20 @@
                 python3 ${./tests/test-build-inputs.py} ${./tools/check-build-inputs.py}
                 touch $out
               '';
+          surfaceCatalog = pkgs.runCommand "shelllist-surface-catalog" {
+            nativeBuildInputs = [ pkgs.python3 ];
+          } ''
+            python3 ${./tools/generate-surface-catalog.py} --root ${./.} --check
+            python3 ${./tests/test-surface-catalog.py} ${./tools/generate-surface-catalog.py} ${./contracts/surface-catalog.json}
+            test '${toString (import ./tests/surface-catalog.nix { inherit pkgs; })}' = 1
+            touch $out
+          '';
+          surfaceCli = pkgs.runCommand "shelllist-surface-cli" {
+            nativeBuildInputs = [ pkgs.python3 ];
+          } ''
+            python3 ${./tests/test-surface-cli.py} ${self.packages.${system}.shelllistApplication}/bin/shelllist ${./contracts/surface-catalog.json}
+            touch $out
+          '';
           toolchain = (inputs.daemon-framework.lib.toolchain pkgs).check;
           timezoneAssetsPackage = self.packages.${system}.shelllistTimezoneAssets;
           portalLauncherPackage = self.packages.${system}.portalLauncher;

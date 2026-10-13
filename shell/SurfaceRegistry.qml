@@ -12,67 +12,16 @@ import Shelllist.Activity as Activity
 import Shelllist.Battery as Battery
 import Shelllist.Displays as Displays
 import Shelllist.Bar as Bar
+import "SurfaceCatalog.generated.js" as Catalog
 
 Item {
     id: registry
 
     property Bar.BarController barController: null
-    readonly property var descriptors: [
-        {
-            id: "applications",
-            name: "Applications",
-            icon: "󰀻"
-        },
-        {
-            id: "wifi",
-            name: "Wi-Fi",
-            icon: "󰖩"
-        },
-        {
-            id: "bluetooth",
-            name: "Bluetooth",
-            icon: "󰂯"
-        },
-        {
-            id: "clipboard",
-            name: "Clipboard",
-            icon: "󰅇"
-        },
-        {
-            id: "displays",
-            name: "Displays",
-            icon: "󰍹"
-        },
-        {
-            id: "battery",
-            name: "Battery",
-            icon: "󰂂"
-        },
-        {
-            id: "activity",
-            name: "Activity",
-            icon: "󰃭"
-        },
-        {
-            id: "notifications",
-            name: "Notifications",
-            icon: ""
-        },
-        {
-            id: "time-weather",
-            name: "Time & Weather",
-            icon: "󰅐"
-        },
-        {id: "audio", name: "Audio", icon: "󰕾"},
-        {id: "media", name: "Media", icon: "󰎆"},
-        {id: "tray", name: "Tray", icon: "󰀻"}
-    ]
-    property var loadedSurfaces: ({
-            wifi: true,
-            bluetooth: true
-        })
+    readonly property var descriptors: Catalog.descriptors
+    property var loadedSurfaces: Catalog.initiallyLoaded()
     property var openedSurfaces: ({})
-    property string currentId: "applications"
+    property string currentId: Catalog.defaultSurface
     readonly property alias notificationState: sharedNotifications
 
     Core.DraftStore {
@@ -81,7 +30,7 @@ Item {
 
     Activity.NotificationState {
         id: sharedNotifications
-        resident: true
+        resident: Catalog.requiresResidentState("notifications")
         uiActive: registry.notificationController !== null && registry.notificationController.uiActive
     }
 

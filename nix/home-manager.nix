@@ -2,6 +2,14 @@ self:
 { config, lib, pkgs, ... }:
 let
   cfg = config.programs.shelllist;
+  surfaceCatalog = import ./surface-catalog.nix { inherit lib; };
+  shortcutOptions = lib.listToAttrs (map (surface: {
+    name = surface.home_manager_shortcut.option;
+    value = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      inherit (surface.home_manager_shortcut) default description;
+    };
+  }) surfaceCatalog.withShortcuts);
   system = pkgs.stdenv.hostPlatform.system;
   environment = lib.mapAttrsToList (name: value: "${name}=${value}") cfg.systemd.environment;
   managedHypridle = self.inputs.bar-daemon.lib.mkManagedHypridle config.services.hypridle.package;
@@ -23,37 +31,15 @@ in
       description = "Shelllist package to install and run.";
     };
 
-    notificationsShortcut = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = "SUPER SHIFT, N";
-      description = "Hyprland modifiers and key for opening Notifications directly. Set null to disable.";
-    };
-
     updateLogsShortcut = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = "SUPER SHIFT, U";
       description = "Hyprland modifiers and key for update service logs. Set null to disable.";
     };
-    audioShortcut = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = "SUPER SHIFT, A";
-      description = "Hyprland modifiers and key for Audio. Set null to disable.";
-    };
-    mediaShortcut = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = "SUPER SHIFT, M";
-      description = "Hyprland modifiers and key for Media. Set null to disable.";
-    };
     media.youtubeMetadata.enable = lib.mkEnableOption ''YouTube metadata fallback.
       Sends recognized video IDs to YouTube oEmbed to fill missing title, channel
       and thumbnail, without browser cookies or extensions. Playback remains
       MPRIS-controlled. Requires the managed bar-daemon service'';
-
-    trayShortcut = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = "SUPER SHIFT, T";
-      description = "Hyprland modifiers and key for Tray. Set null to disable.";
-    };
 
     suspend.enable = lib.mkOption {
       type = lib.types.bool;
@@ -98,7 +84,7 @@ in
         description = "Environment variables passed to the Shelllist service.";
       };
     };
-  };
+  } // shortcutOptions;
 
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
@@ -117,9 +103,9 @@ in
     wayland.windowManager.hyprland.settings.bind = lib.mkIf
       config.wayland.windowManager.hyprland.enable
       (lib.concatMap (surface:
-        lib.optional (cfg.${surface + "Shortcut"} != null)
-          "${cfg.${surface + "Shortcut"}}, exec, ${cfg.package}/bin/shelllist ${surface} open"
-      ) [ "notifications" "audio" "media" "tray" ]
+        lib.optional (cfg.${surface.home_manager_shortcut.option} != null)
+          "${cfg.${surface.home_manager_shortcut.option}}, exec, ${cfg.package}/bin/shelllist ${surface.id} open"
+      ) surfaceCatalog.withShortcuts
       ++ lib.optional (cfg.updateLogsShortcut != null)
         "${cfg.updateLogsShortcut}, global, shelllist:update-logs");
 

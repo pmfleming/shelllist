@@ -242,53 +242,8 @@ ShellRoot {
     }
 
     Ui.ShelllistGlobalShortcut { shortcutName: "update-logs"; description: "Inspect update service logs"; onTriggered: barState.triggerModuleAction("updates") }
-    Ui.ShelllistGlobalShortcut { shortcutName: "audio"; description: "Toggle Shelllist Audio"; onTriggered: shell.toggleSurface("audio") }
-    Ui.ShelllistGlobalShortcut { shortcutName: "media"; description: "Toggle Shelllist Media"; onTriggered: shell.toggleSurface("media") }
-    Ui.ShelllistGlobalShortcut { shortcutName: "tray"; description: "Toggle Shelllist Tray"; onTriggered: shell.toggleSurface("tray") }
-    Ui.ShelllistGlobalShortcut {
-        shortcutName: "applications"
-        description: "Toggle Shelllist Applications"
-        onTriggered: shell.toggleSurface("applications")
-    }
-    Ui.ShelllistGlobalShortcut {
-        shortcutName: "wifi"
-        description: "Toggle Shelllist Wi-Fi"
-        onTriggered: shell.toggleSurface("wifi")
-    }
-    Ui.ShelllistGlobalShortcut {
-        shortcutName: "bluetooth"
-        description: "Toggle Shelllist Bluetooth"
-        onTriggered: shell.toggleSurface("bluetooth")
-    }
-    Ui.ShelllistGlobalShortcut {
-        shortcutName: "clipboard"
-        description: "Toggle Shelllist Clipboard"
-        onTriggered: shell.toggleSurface("clipboard")
-    }
-    Ui.ShelllistGlobalShortcut {
-        shortcutName: "displays"
-        description: "Toggle Shelllist Displays"
-        onTriggered: shell.toggleSurface("displays")
-    }
-    Ui.ShelllistGlobalShortcut {
-        shortcutName: "battery"
-        description: "Toggle Shelllist Battery"
-        onTriggered: shell.toggleSurface("battery")
-    }
-    Ui.ShelllistGlobalShortcut {
-        shortcutName: "activity"
-        description: "Toggle Shelllist Activity"
-        onTriggered: shell.toggleSurface("activity")
-    }
-    Ui.ShelllistGlobalShortcut {
-        shortcutName: "notifications"
-        description: "Toggle Shelllist Notifications"
-        onTriggered: shell.toggleSurface("notifications")
-    }
-    Ui.ShelllistGlobalShortcut {
-        shortcutName: "time-weather"
-        description: "Toggle Shelllist Time & Weather"
-        onTriggered: shell.toggleSurface("time-weather")
+    SurfaceShortcuts {
+        onSurfaceRequested: function (surfaceId) { shell.toggleSurface(surfaceId); }
     }
     Ui.ShelllistGlobalShortcut {
         shortcutName: "volume-up"

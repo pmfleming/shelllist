@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "default_surface": "applications",
+  "surfaces": [
+    { "id": "applications", "name": "Applications", "icon": "󰀻", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
+    { "id": "wifi", "name": "Wi-Fi", "icon": "󰖩", "loading": "eager", "resident_state": null, "home_manager_shortcut": null },
+    { "id": "bluetooth", "name": "Bluetooth", "icon": "󰂯", "loading": "eager", "resident_state": null, "home_manager_shortcut": null },
+    { "id": "clipboard", "name": "Clipboard", "icon": "󰅇", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
+    { "id": "displays", "name": "Displays", "icon": "󰍹", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
+    { "id": "battery", "name": "Battery", "icon": "󰂂", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
+    { "id": "activity", "name": "Activity", "icon": "󰃭", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
+    {
+      "id": "notifications", "name": "Notifications", "icon": "", "loading": "lazy", "resident_state": "notifications",
+      "home_manager_shortcut": {
+        "option": "notificationsShortcut",
+        "default": "SUPER SHIFT, N",
+        "description": "Hyprland modifiers and key for opening Notifications directly. Set null to disable."
+      }
+    },
+    { "id": "time-weather", "name": "Time & Weather", "icon": "󰅐", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
+    {
+      "id": "audio", "name": "Audio", "icon": "󰕾", "loading": "lazy", "resident_state": null,
+      "home_manager_shortcut": {
+        "option": "audioShortcut", "default": "SUPER SHIFT, A",
+        "description": "Hyprland modifiers and key for Audio. Set null to disable."
+      }
+    },
+    {
+      "id": "media", "name": "Media", "icon": "󰎆", "loading": "lazy", "resident_state": null,
+      "home_manager_shortcut": {
+        "option": "mediaShortcut", "default": "SUPER SHIFT, M",
+        "description": "Hyprland modifiers and key for Media. Set null to disable."
+      }
+    },
+    {
+      "id": "tray", "name": "Tray", "icon": "󰀻", "loading": "lazy", "resident_state": null,
+      "home_manager_shortcut": {
+        "option": "trayShortcut", "default": "SUPER SHIFT, T",
+        "description": "Hyprland modifiers and key for Tray. Set null to disable."
+      }
+    }
+  ]
+}

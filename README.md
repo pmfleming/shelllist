@@ -95,7 +95,7 @@ Home Manager provides configurable Super+Shift+A/M/T bindings; set `audioShortcu
 | Bar, power, displays, Activity, notifications, media and hardware state/effects | `bar-daemon` / `bar-api` v1 |
 | Rendering, navigation, monitor routing, tray menus and transient OSD | Shelllist / Quickshell |
 
-`shell/shell.qml` is the only UI entry point. Wi-Fi/Bluetooth load eagerly for the bar and pairing prompts; Applications/Clipboard load on demand. Opened surfaces remain warm. Shared JSONL transport provides bounded restart backoff; checked fixtures in `contracts/` guard protocol compatibility. See the [daemon boundary audit](docs/daemon-boundary-audit.md), [provider model](docs/provider-model.md) and [documentation index](docs/README.md).
+`shell/shell.qml` is the only UI entry point. The [surface catalog](contracts/surface-catalog.md) drives descriptors, loading policy, CLI names and shortcut metadata; controller/content factories remain typed QML. Wi-Fi/Bluetooth load eagerly for the bar and pairing prompts; Applications/Clipboard load on demand. Opened surfaces remain warm. Shared JSONL transport provides bounded restart backoff; checked fixtures in `contracts/` guard protocol compatibility. See the [daemon boundary audit](docs/daemon-boundary-audit.md), [provider model](docs/provider-model.md) and [documentation index](docs/README.md).
 
 Compositor and work-area projections share `BarProjectionBackend`; individual controllers retain validation, revision fencing and unavailable-state behavior. Transport recovery refreshes observations without authorizing duplicate effects or committing field drafts.
 
