@@ -11,7 +11,7 @@ var SUBJECT_LABEL = {
 };
 
 function health(event) {
-    return (event && event.health) || {};
+    return (event && event.data && event.data.health) || {};
 }
 
 function reason(event) {

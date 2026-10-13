@@ -76,7 +76,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "expired": {
       "data": {
@@ -174,7 +174,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "focus": {
       "data": {
@@ -241,7 +241,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "focusReset": {
       "data": {
@@ -306,7 +306,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "initial": {
       "data": {
@@ -373,7 +373,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "policy": {
       "data": {
@@ -440,7 +440,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "preview": {
       "data": {
@@ -538,7 +538,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "reverted": {
       "data": {
@@ -605,7 +605,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "rollback-failed": {
       "data": {
@@ -703,7 +703,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "settled": {
       "data": {
@@ -770,7 +770,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "stale": {
       "data": {
@@ -837,7 +837,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     }
   },
   "replies": {
@@ -849,7 +849,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": {
         "unknown": true
@@ -863,7 +863,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -928,7 +928,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "uncertain": {
         "error": {
@@ -937,7 +937,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "displayFocus.set": {
@@ -948,7 +948,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": {
         "unknown": true
@@ -966,7 +966,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1033,7 +1033,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "uncertain": {
         "error": {
@@ -1042,7 +1042,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "displayLayout.confirm": {
@@ -1053,7 +1053,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": {
         "unknown": true
@@ -1069,7 +1069,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1147,7 +1147,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "uncertain": {
         "error": {
@@ -1156,7 +1156,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "displayLayout.preview": {
@@ -1167,7 +1167,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": {
         "unknown": true
@@ -1195,7 +1195,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1293,7 +1293,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "uncertain": {
         "error": {
@@ -1302,7 +1302,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "displayLayout.revert": {
@@ -1313,7 +1313,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": {
         "unknown": true
@@ -1329,7 +1329,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1396,7 +1396,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "uncertain": {
         "error": {
@@ -1405,7 +1405,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "displayPolicy.set": {
@@ -1416,7 +1416,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": {
         "unknown": true
@@ -1432,7 +1432,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1499,7 +1499,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "uncertain": {
         "error": {
@@ -1508,7 +1508,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     }
   },
@@ -1891,7 +1891,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "focus": {
       "data": {
@@ -2260,7 +2260,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "focusReset": {
       "data": {
@@ -2627,7 +2627,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "initial": {
       "data": {
@@ -2996,7 +2996,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "policy": {
       "data": {
@@ -3365,7 +3365,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "preview": {
       "data": {
@@ -3765,7 +3765,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "reverted": {
       "data": {
@@ -4134,7 +4134,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   }
 }

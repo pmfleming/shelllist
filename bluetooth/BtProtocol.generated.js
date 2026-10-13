@@ -2,7 +2,7 @@
 
 // Generated from the daemon-owned protocol registry. Do not edit.
 var protocol = "bt-api";
-var version = 1;
+var version = 2;
 var methods = ({
     "bluetooth.protocol.describe": "bluetooth.protocol.describe",
     "bluetooth.snapshot": "bluetooth.snapshot",

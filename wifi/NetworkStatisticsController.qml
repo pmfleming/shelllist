@@ -57,12 +57,12 @@ Item {
         if (!Api.requestMatches(event, requestId))
             return;
         if (event.event === "sample") {
-            sample = event.statistics || null;
+            sample = event.data.statistics || null;
             return;
         }
         if (event.event !== "failed" && event.event !== "cancelled")
             return;
-        const message = event.message || (event.event === "failed" ? "Network statistics stopped after an error" : "Network statistics stopped");
+        const message = event.data.message || (event.event === "failed" ? "Network statistics stopped after an error" : "Network statistics stopped");
         if (event.event === "failed")
             error = message;
         clear();

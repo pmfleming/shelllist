@@ -98,10 +98,10 @@ Item {
     }
     function applyEvent(event) {
         if (event.event === "failed")
-            controller.networksError = event.message || qsTr("Wi-Fi scan failed");
+            controller.networksError = event.data.message || qsTr("Wi-Fi scan failed");
         if (event.event === "snapshot") {
             snapshotSeen = true;
-            controller.applyNetworks(event.networks || [], false, event.snapshot || null);
+            controller.applyNetworks(event.data.networks || [], false, event.data.snapshot || null);
         }
         controller.setBackgroundStatus(Api.scanEventStatus(event, controller.status));
     }

@@ -72,7 +72,7 @@ Item {
             return;
         requestId = "";
         connectingUuid = "";
-        controller.status = event.event === "succeeded" ? ((event.result && event.result.message) || "VPN connected") : failureMessage(event);
+        controller.status = event.event === "succeeded" ? ((event.data.result && event.data.result.message) || "VPN connected") : failureMessage(event);
         refresh();
     }
 
@@ -80,12 +80,12 @@ Item {
     // activation message so "needs a password" does not read as "failed".
     function failureMessage(event) {
         if (event.event === "cancelled")
-            return event.message || "VPN connection cancelled";
-        const details = event.details || ({});
+            return event.data.message || "VPN connection cancelled";
+        const details = event.error ? event.error.details || ({}) : ({});
         if (details.reason === "no-secrets")
             return "The VPN needs credentials.";
         if (details.reason === "login-failed")
             return "The VPN rejected the sign-in.";
-        return event.message || "The VPN could not connect.";
+        return event.data.message || "The VPN could not connect.";
     }
 }

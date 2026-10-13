@@ -319,14 +319,14 @@ ProviderChooserController {
     function applyStatusEvent(event: var): void {
         if (event.event !== "changed")
             return;
-        applyRecoveredStatus(event.status || null);
+        applyRecoveredStatus(event.data.status || null);
     }
 
     function applyNetworkEvent(event: var): void {
         if (event.event !== "changed")
             return;
-        const networks = event.initial ? (event.added || []) : Flow.mergeNetworkChanges(visibleNetworks, event);
-        applyNetworks(networks, false, event.snapshot || null);
+        const networks = event.data.initial ? (event.data.added || []) : Flow.mergeNetworkChanges(visibleNetworks, event.data);
+        applyNetworks(networks, false, event.data.snapshot || null);
     }
 
     function dispatchDaemonEvent(event: var): void {

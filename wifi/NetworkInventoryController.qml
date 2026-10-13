@@ -88,6 +88,6 @@ Item {
     function handleEvent(event) {
         if (event.event !== "changed")
             return;
-        applyInventory(event.inventory || null);
+        applyInventory(event.data.inventory || null);
     }
 }

@@ -12,7 +12,7 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   },
   "applications.execute": {
     "data": {
@@ -26,7 +26,7 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   },
   "applications.history": {
     "data": {
@@ -47,7 +47,7 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   },
   "applications.operation.status": {
     "data": {
@@ -61,7 +61,7 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   },
   "applications.query": {
     "data": {
@@ -213,7 +213,7 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   },
   "applications.refresh": {
     "data": {
@@ -365,7 +365,7 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   },
   "applications.revision": {
     "data": {
@@ -373,7 +373,7 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   },
   "applications.settings.update": {
     "data": {
@@ -385,7 +385,7 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   },
   "cancel-operation": {
     "data": {
@@ -394,7 +394,7 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   },
   "cancel-subscription": {
     "data": {
@@ -403,7 +403,7 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   },
   "errors": {
     "daemon-unavailable": {
@@ -414,7 +414,7 @@
       },
       "ok": false,
       "protocol": "app-api",
-      "version": 1
+      "version": 2
     },
     "operation-failed": {
       "error": {
@@ -424,7 +424,7 @@
       },
       "ok": false,
       "protocol": "app-api",
-      "version": 1
+      "version": 2
     },
     "request-not-found": {
       "error": {
@@ -434,7 +434,7 @@
       },
       "ok": false,
       "protocol": "app-api",
-      "version": 1
+      "version": 2
     },
     "subscription-unavailable": {
       "error": {
@@ -444,7 +444,7 @@
       },
       "ok": false,
       "protocol": "app-api",
-      "version": 1
+      "version": 2
     },
     "unsupported-method": {
       "error": {
@@ -454,7 +454,7 @@
       },
       "ok": false,
       "protocol": "app-api",
-      "version": 1
+      "version": 2
     },
     "unsupported-stream": {
       "error": {
@@ -464,7 +464,7 @@
       },
       "ok": false,
       "protocol": "app-api",
-      "version": 1
+      "version": 2
     },
     "validation-error": {
       "error": {
@@ -474,7 +474,7 @@
       },
       "ok": false,
       "protocol": "app-api",
-      "version": 1
+      "version": 2
     }
   },
   "subscribe": {
@@ -485,6 +485,6 @@
     },
     "ok": true,
     "protocol": "app-api",
-    "version": 1
+    "version": 2
   }
 }

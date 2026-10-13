@@ -11,7 +11,7 @@
       "protocol": "bar-api",
       "stream": "notifications.active.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "dnd": {
       "data": {
@@ -33,7 +33,7 @@
       "protocol": "bar-api",
       "stream": "notifications.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "dndCleared": {
       "data": {
@@ -55,7 +55,7 @@
       "protocol": "bar-api",
       "stream": "notifications.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "replaced": {
       "data": {
@@ -108,7 +108,7 @@
       "protocol": "bar-api",
       "stream": "notifications.active.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     }
   },
   "replies": {
@@ -120,7 +120,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.delete",
       "params": {
@@ -134,7 +134,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "stale": null,
       "success": {
@@ -143,7 +143,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "clear": {
@@ -154,7 +154,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.clear",
       "params": {},
@@ -167,7 +167,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "clearGroup": {
@@ -178,7 +178,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.clearGroup",
       "params": {
@@ -191,7 +191,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "stale": null,
       "success": {
@@ -202,7 +202,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "delete": {
@@ -213,7 +213,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.delete",
       "params": {
@@ -227,7 +227,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "stale": null,
       "success": {
@@ -236,7 +236,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "dismiss": {
@@ -247,7 +247,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.dismiss",
       "params": {
@@ -260,7 +260,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "stale": {
         "error": {
@@ -269,7 +269,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -278,7 +278,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "invokeAction": {
@@ -289,7 +289,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.invokeAction",
       "params": {
@@ -304,7 +304,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "stale": {
         "error": {
@@ -313,7 +313,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -323,7 +323,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "prepareDelete": {
@@ -334,7 +334,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.prepareDelete",
       "params": {
@@ -348,7 +348,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "stale": null,
       "success": {
@@ -363,7 +363,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "reply": {
@@ -374,7 +374,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.reply",
       "params": {
@@ -388,7 +388,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "stale": {
         "error": {
@@ -397,7 +397,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -406,7 +406,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "setAppPolicy": {
@@ -417,7 +417,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.setAppPolicy",
       "params": {
@@ -436,7 +436,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "stale": null,
       "success": {
@@ -466,7 +466,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "setDnd": {
@@ -477,7 +477,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.setDnd",
       "params": {
@@ -491,7 +491,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "stale": null,
       "success": {
@@ -514,7 +514,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "snooze": {
@@ -525,7 +525,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.snooze",
       "params": {
@@ -539,7 +539,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "stale": {
         "error": {
@@ -548,7 +548,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -558,7 +558,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "toggleDnd": {
@@ -569,7 +569,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.toggleDnd",
       "params": {},
@@ -582,7 +582,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "togglePanel": {
@@ -593,7 +593,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "notifications.togglePanel",
       "params": {},
@@ -605,7 +605,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     }
   },
@@ -980,6 +980,6 @@
     },
     "ok": true,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   }
 }

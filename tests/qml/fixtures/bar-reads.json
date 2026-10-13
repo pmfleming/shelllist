@@ -308,7 +308,7 @@
       "protocol": "bar-api",
       "stream": "activity.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "audio.changed": {
       "data": {
@@ -327,7 +327,7 @@
       "protocol": "bar-api",
       "stream": "audio.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "battery.changed": {
       "data": {
@@ -470,7 +470,7 @@
       "protocol": "bar-api",
       "stream": "battery.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "brightness.changed": {
       "data": {
@@ -485,7 +485,7 @@
       "protocol": "bar-api",
       "stream": "brightness.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "compositor.changed": {
       "data": {
@@ -498,7 +498,7 @@
       "protocol": "bar-api",
       "stream": "compositor.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "display-policy.changed": {
       "data": {
@@ -609,7 +609,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "media.changed": {
       "data": {
@@ -652,7 +652,7 @@
       "protocol": "bar-api",
       "stream": "media.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "notifications.active.changed": {
       "data": {
@@ -701,7 +701,7 @@
       "protocol": "bar-api",
       "stream": "notifications.active.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "notifications.changed": {
       "data": {
@@ -723,7 +723,7 @@
       "protocol": "bar-api",
       "stream": "notifications.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "osd-hardware.changed": {
       "data": {
@@ -739,7 +739,7 @@
       "protocol": "bar-api",
       "stream": "osd-hardware.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "power-profile.changed": {
       "data": {
@@ -782,7 +782,7 @@
       "protocol": "bar-api",
       "stream": "power-profile.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "power-sleep.changed": {
       "data": {
@@ -825,7 +825,7 @@
       "protocol": "bar-api",
       "stream": "power-sleep.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "sleep-policy.changed": {
       "data": {
@@ -868,7 +868,7 @@
       "protocol": "bar-api",
       "stream": "sleep-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "timezone.changed": {
       "data": {
@@ -887,7 +887,7 @@
       "protocol": "bar-api",
       "stream": "timezone.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "updates.changed": {
       "data": {
@@ -923,7 +923,7 @@
       "protocol": "bar-api",
       "stream": "updates.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "workarea.changed": {
       "data": {
@@ -943,7 +943,7 @@
       "protocol": "bar-api",
       "stream": "workarea.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "workspaces.changed": {
       "data": {
@@ -983,179 +983,196 @@
       "protocol": "bar-api",
       "stream": "workspaces.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     }
   },
   "lagged": {
     "activity.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "activity.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "audio.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "audio.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "battery.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "battery.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "brightness.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "brightness.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "compositor.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "compositor.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "display-policy.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "media.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "media.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "notifications.active.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "notifications.active.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "notifications.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "notifications.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "osd-hardware.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "osd-hardware.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "power-profile.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "power-profile.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "power-sleep.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "power-sleep.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "sleep-policy.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "sleep-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "timezone.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "timezone.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "updates.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "updates.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "workarea.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "workarea.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "workspaces.changed": {
       "data": {
-        "missed": 4
+        "dropped_events": "4",
+        "reason": "subscriber-lag"
       },
-      "event": "lagged",
+      "event": "gap",
       "protocol": "bar-api",
       "stream": "workspaces.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     }
   },
   "monitor_failed": {
@@ -1175,7 +1192,7 @@
     "protocol": "bar-api",
     "stream": "audio.changed",
     "subscription_id": "subscription-example",
-    "version": 1
+    "version": 2
   },
   "snapshot": {
     "data": {
@@ -2050,7 +2067,7 @@
     },
     "ok": true,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   },
   "subscribed": {
     "activity.changed": {
@@ -2102,7 +2119,7 @@
       "protocol": "bar-api",
       "stream": "activity.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "audio.changed": {
       "data": {
@@ -2121,7 +2138,7 @@
       "protocol": "bar-api",
       "stream": "audio.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "battery.changed": {
       "data": {
@@ -2209,7 +2226,7 @@
       "protocol": "bar-api",
       "stream": "battery.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "brightness.changed": {
       "data": {
@@ -2224,7 +2241,7 @@
       "protocol": "bar-api",
       "stream": "brightness.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "compositor.changed": {
       "data": {
@@ -2237,7 +2254,7 @@
       "protocol": "bar-api",
       "stream": "compositor.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "display-policy.changed": {
       "data": {
@@ -2268,7 +2285,7 @@
       "protocol": "bar-api",
       "stream": "display-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "media.changed": {
       "data": {
@@ -2282,7 +2299,7 @@
       "protocol": "bar-api",
       "stream": "media.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "notifications.active.changed": {
       "data": {
@@ -2295,7 +2312,7 @@
       "protocol": "bar-api",
       "stream": "notifications.active.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "notifications.changed": {
       "data": {
@@ -2317,7 +2334,7 @@
       "protocol": "bar-api",
       "stream": "notifications.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "osd-hardware.changed": {
       "data": {
@@ -2333,7 +2350,7 @@
       "protocol": "bar-api",
       "stream": "osd-hardware.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "power-profile.changed": {
       "data": {
@@ -2358,7 +2375,7 @@
       "protocol": "bar-api",
       "stream": "power-profile.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "power-sleep.changed": {
       "data": {
@@ -2392,7 +2409,7 @@
       "protocol": "bar-api",
       "stream": "power-sleep.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "sleep-policy.changed": {
       "data": {
@@ -2435,7 +2452,7 @@
       "protocol": "bar-api",
       "stream": "sleep-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "timezone.changed": {
       "data": {
@@ -2451,7 +2468,7 @@
       "protocol": "bar-api",
       "stream": "timezone.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "updates.changed": {
       "data": {
@@ -2466,7 +2483,7 @@
       "protocol": "bar-api",
       "stream": "updates.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "workarea.changed": {
       "data": {
@@ -2479,7 +2496,7 @@
       "protocol": "bar-api",
       "stream": "workarea.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "workspaces.changed": {
       "data": {
@@ -2494,7 +2511,7 @@
       "protocol": "bar-api",
       "stream": "workspaces.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     }
   }
 }

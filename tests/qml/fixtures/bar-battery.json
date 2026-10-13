@@ -8,7 +8,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "limited": null,
       "params": {
@@ -21,7 +21,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "error": {
@@ -30,7 +30,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -173,7 +173,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.chargeOnce": {
@@ -184,7 +184,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "limited": {
         "data": {
@@ -333,7 +333,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "params": {
         "battery_id": "BAT0"
@@ -345,7 +345,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "error": {
@@ -354,7 +354,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -503,7 +503,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.setAlertPolicy": {
@@ -514,7 +514,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "limited": null,
       "params": {
@@ -529,7 +529,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "error": {
@@ -538,7 +538,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -681,7 +681,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.setChargingInhibited": {
@@ -692,7 +692,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "limited": null,
       "params": {
@@ -706,7 +706,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "error": {
@@ -715,7 +715,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -858,7 +858,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.setProtection": {
@@ -869,7 +869,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "limited": {
         "data": {
@@ -1018,7 +1018,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "params": {
         "battery_id": "BAT0",
@@ -1033,7 +1033,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "error": {
@@ -1042,7 +1042,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1191,7 +1191,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.setThresholds": {
@@ -1202,7 +1202,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "limited": {
         "data": {
@@ -1351,7 +1351,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "params": {
         "battery_id": "BAT0",
@@ -1365,7 +1365,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "error": {
@@ -1374,7 +1374,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1523,7 +1523,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.startCalibration": {
@@ -1534,7 +1534,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "limited": null,
       "params": {
@@ -1547,7 +1547,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "error": {
@@ -1556,7 +1556,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1699,7 +1699,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     }
   },
@@ -1845,7 +1845,7 @@
       "protocol": "bar-api",
       "stream": "battery.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "completed": {
       "data": {
@@ -1988,7 +1988,7 @@
       "protocol": "bar-api",
       "stream": "battery.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "discharging": {
       "data": {
@@ -2131,7 +2131,7 @@
       "protocol": "bar-api",
       "stream": "battery.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "restoring": {
       "data": {
@@ -2274,7 +2274,7 @@
       "protocol": "bar-api",
       "stream": "battery.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     }
   },
   "history": {
@@ -2309,7 +2309,7 @@
     },
     "ok": true,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   },
   "operationCancelled": {
     "data": {
@@ -2323,7 +2323,7 @@
     },
     "ok": true,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   },
   "operationFinished": {
     "battery.cancelCalibration": {
@@ -2339,7 +2339,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2347,7 +2347,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "readbackFailed": {
         "data": {
@@ -2361,7 +2361,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2369,7 +2369,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "data": {
@@ -2383,7 +2383,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2391,7 +2391,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -2539,7 +2539,7 @@
               },
               "ok": true,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2547,7 +2547,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.chargeOnce": {
@@ -2563,7 +2563,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2571,7 +2571,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "limited": {
         "data": {
@@ -2725,7 +2725,7 @@
               },
               "ok": true,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2733,7 +2733,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "readbackFailed": {
         "data": {
@@ -2747,7 +2747,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2755,7 +2755,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "data": {
@@ -2769,7 +2769,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2777,7 +2777,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -2931,7 +2931,7 @@
               },
               "ok": true,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2939,7 +2939,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.setAlertPolicy": {
@@ -2955,7 +2955,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2963,7 +2963,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "readbackFailed": {
         "data": {
@@ -2977,7 +2977,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -2985,7 +2985,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "data": {
@@ -2999,7 +2999,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3007,7 +3007,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -3155,7 +3155,7 @@
               },
               "ok": true,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3163,7 +3163,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.setChargingInhibited": {
@@ -3179,7 +3179,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3187,7 +3187,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "readbackFailed": {
         "data": {
@@ -3201,7 +3201,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3209,7 +3209,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "data": {
@@ -3223,7 +3223,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3231,7 +3231,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -3379,7 +3379,7 @@
               },
               "ok": true,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3387,7 +3387,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.setProtection": {
@@ -3403,7 +3403,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3411,7 +3411,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "limited": {
         "data": {
@@ -3565,7 +3565,7 @@
               },
               "ok": true,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3573,7 +3573,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "readbackFailed": {
         "data": {
@@ -3587,7 +3587,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3595,7 +3595,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "data": {
@@ -3609,7 +3609,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3617,7 +3617,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -3771,7 +3771,7 @@
               },
               "ok": true,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3779,7 +3779,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.setThresholds": {
@@ -3795,7 +3795,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3803,7 +3803,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "limited": {
         "data": {
@@ -3957,7 +3957,7 @@
               },
               "ok": true,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3965,7 +3965,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "readbackFailed": {
         "data": {
@@ -3979,7 +3979,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -3987,7 +3987,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "data": {
@@ -4001,7 +4001,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -4009,7 +4009,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -4163,7 +4163,7 @@
               },
               "ok": true,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -4171,7 +4171,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "battery.startCalibration": {
@@ -4187,7 +4187,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -4195,7 +4195,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "readbackFailed": {
         "data": {
@@ -4209,7 +4209,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -4217,7 +4217,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "rejected": {
         "data": {
@@ -4231,7 +4231,7 @@
               },
               "ok": false,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -4239,7 +4239,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -4387,7 +4387,7 @@
               },
               "ok": true,
               "protocol": "bar-api",
-              "version": 1
+              "version": 2
             },
             "retention_ms": 300000,
             "state": "finished"
@@ -4395,7 +4395,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     }
   },
@@ -4411,7 +4411,7 @@
           },
           "ok": false,
           "protocol": "bar-api",
-          "version": 1
+          "version": 2
         },
         "retention_ms": 300000,
         "state": "finished"
@@ -4419,7 +4419,7 @@
     },
     "ok": true,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   },
   "operationStarted": {
     "data": {
@@ -4433,7 +4433,7 @@
     },
     "ok": true,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   },
   "operationUnknown": {
     "data": {
@@ -4447,7 +4447,7 @@
           },
           "ok": false,
           "protocol": "bar-api",
-          "version": 1
+          "version": 2
         },
         "retention_ms": 300000,
         "state": "finished"
@@ -4455,7 +4455,7 @@
     },
     "ok": true,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   },
   "restorationFailed": {
     "error": {
@@ -4464,7 +4464,7 @@
     },
     "ok": false,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   },
   "snapshot": {
     "data": {
@@ -4852,6 +4852,6 @@
     },
     "ok": true,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   }
 }

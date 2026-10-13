@@ -1,5 +1,6 @@
 import Shelllist.Io as Io
 import "AppApi.js" as AppApi
+import "AppProtocol.generated.js" as Contract
 
 Io.DaemonBackend {
     required property ApplicationController controller
@@ -7,6 +8,8 @@ Io.DaemonBackend {
     expectedProtocol: AppApi.protocol
     expectedVersion: AppApi.version
     streams: AppApi.subscribedStreams
+    validateRequest: Contract.requestError
+    validateEvent: Contract.eventError
     active: controller.uiActive || controller.actionInFlight
 
     function finish(id: string, envelope: var, transportError: string): void {
@@ -79,9 +82,7 @@ Io.DaemonBackend {
         if (event.event === "subscribed")
             return;
         if (event.stream === AppApi.streams.operation) {
-            // app-api v1 emits operation payloads at the top level. Retain
-            // nested-envelope compatibility without changing other daemons.
-            const operation = (event.data && event.data.operation) || event.operation;
+            const operation = event.data.operation;
             if (operation)
                 controller.applyOperation("", operation);
             return;

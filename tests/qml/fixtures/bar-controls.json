@@ -7,7 +7,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "invalid_params": {
       "delta_percent": "loud"
@@ -29,7 +29,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "params": {
       "delta_percent": 15
@@ -41,7 +41,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "success": {
       "data": {
@@ -60,7 +60,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   },
   "audio.setInputMuted": {
@@ -71,7 +71,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "invalid_params": {
       "muted": "true"
@@ -93,7 +93,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "params": {
       "muted": null
@@ -105,7 +105,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "success": {
       "data": {
@@ -124,7 +124,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   },
   "audio.setMuted": {
@@ -135,7 +135,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "invalid_params": {
       "muted": "true"
@@ -157,7 +157,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "params": {
       "muted": null
@@ -169,7 +169,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "success": {
       "data": {
@@ -188,7 +188,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   },
   "brightness.adjust": {
@@ -199,7 +199,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "invalid_params": {
       "delta_percent": "bright"
@@ -217,7 +217,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "params": {
       "delta_percent": 15
@@ -229,7 +229,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "success": {
       "data": {
@@ -244,7 +244,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   },
   "brightness.set": {
@@ -255,7 +255,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "invalid_params": {
       "percent": "bright"
@@ -273,7 +273,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "params": {
       "percent": 65
@@ -285,7 +285,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "success": {
       "data": {
@@ -300,7 +300,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   },
   "powerProfile.resumeAutomatic": {
@@ -311,7 +311,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "invalid_params": null,
     "limited": {
@@ -359,7 +359,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "params": {},
     "rejected": null,
@@ -408,7 +408,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   },
   "powerProfile.set": {
@@ -419,7 +419,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "invalid_params": {
       "profile": false
@@ -469,7 +469,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "params": {
       "profile": "performance"
@@ -481,7 +481,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "success": {
       "data": {
@@ -528,7 +528,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   },
   "powerProfile.setActionEnabled": {
@@ -539,7 +539,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "invalid_params": {
       "action": "amdgpu_panel_power",
@@ -590,7 +590,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "params": {
       "action": "amdgpu_panel_power",
@@ -603,7 +603,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "success": {
       "data": {
@@ -650,7 +650,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   },
   "powerProfile.setBatteryAware": {
@@ -661,7 +661,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "invalid_params": {
       "enabled": "true"
@@ -711,7 +711,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "params": {
       "enabled": true
@@ -723,7 +723,7 @@
       },
       "ok": false,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "success": {
       "data": {
@@ -770,7 +770,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   }
 }

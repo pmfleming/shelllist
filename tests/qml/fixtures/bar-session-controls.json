@@ -8,7 +8,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -22,7 +22,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -89,7 +89,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "cycle": {
@@ -100,7 +100,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -114,7 +114,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -181,7 +181,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "next": {
@@ -192,7 +192,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -206,7 +206,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -215,7 +215,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "pause": {
@@ -226,7 +226,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -240,7 +240,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -249,7 +249,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "play": {
@@ -260,7 +260,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -274,7 +274,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -283,7 +283,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "play-pause": {
@@ -294,7 +294,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -308,7 +308,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -317,7 +317,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "previous": {
@@ -328,7 +328,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -342,7 +342,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -351,7 +351,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "seek": {
@@ -362,7 +362,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -377,7 +377,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -387,7 +387,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "select": {
@@ -398,7 +398,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -412,7 +412,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -479,7 +479,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "set-mode": {
@@ -490,7 +490,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -505,7 +505,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -572,7 +572,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "stop": {
@@ -583,7 +583,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "media.operation",
       "params": {
@@ -597,7 +597,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -606,7 +606,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "updates": {
@@ -617,7 +617,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "updates.refresh",
       "params": {},
@@ -635,7 +635,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "workspace": {
@@ -646,7 +646,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "method": "workspace.focus",
       "params": {
@@ -660,7 +660,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -670,7 +670,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     }
   },
@@ -1056,6 +1056,6 @@
     },
     "ok": true,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   }
 }

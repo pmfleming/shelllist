@@ -41,7 +41,7 @@
       "protocol": "bar-api",
       "stream": "sleep-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     },
     "countdown": {
       "data": {
@@ -84,7 +84,7 @@
       "protocol": "bar-api",
       "stream": "sleep-policy.changed",
       "subscription_id": "subscription-example",
-      "version": 1
+      "version": 2
     }
   },
   "events": {
@@ -121,7 +121,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "cancelled-before-dispatch": {
         "data": {
@@ -155,7 +155,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "completed": {
         "data": {
@@ -189,7 +189,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "dispatching": {
         "data": {
@@ -223,7 +223,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "interrupted-dispatch": {
         "data": {
@@ -257,7 +257,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "job-failed": {
         "data": {
@@ -291,7 +291,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "monitor-lost": {
         "data": {
@@ -325,7 +325,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "preflight-failed": {
         "data": {
@@ -359,7 +359,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "preparing": {
         "data": {
@@ -393,7 +393,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "reply-lost": {
         "data": {
@@ -427,7 +427,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "requested": {
         "data": {
@@ -461,7 +461,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "returned": {
         "data": {
@@ -495,7 +495,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       }
     },
     "suspend": {
@@ -531,7 +531,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "cancelled-before-dispatch": {
         "data": {
@@ -565,7 +565,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "completed": {
         "data": {
@@ -599,7 +599,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "dispatching": {
         "data": {
@@ -633,7 +633,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "interrupted-dispatch": {
         "data": {
@@ -667,7 +667,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "job-failed": {
         "data": {
@@ -701,7 +701,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "monitor-lost": {
         "data": {
@@ -735,7 +735,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "preflight-failed": {
         "data": {
@@ -769,7 +769,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "preparing": {
         "data": {
@@ -803,7 +803,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "reply-lost": {
         "data": {
@@ -837,7 +837,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "requested": {
         "data": {
@@ -871,7 +871,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       },
       "returned": {
         "data": {
@@ -905,7 +905,7 @@
         "protocol": "bar-api",
         "stream": "power-sleep.changed",
         "subscription_id": "subscription-example",
-        "version": 1
+        "version": 2
       }
     }
   },
@@ -1241,7 +1241,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     },
     "suspend": {
       "data": {
@@ -1574,7 +1574,7 @@
       },
       "ok": true,
       "protocol": "bar-api",
-      "version": 1
+      "version": 2
     }
   },
   "replies": {
@@ -1586,7 +1586,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": null,
       "params": {},
@@ -1632,7 +1632,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "powerSleep.hibernate": {
@@ -1643,7 +1643,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": null,
       "params": {},
@@ -1681,7 +1681,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "uncertain": {
         "error": {
@@ -1690,7 +1690,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "powerSleep.idle": {
@@ -1701,7 +1701,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": {
         "unexpected": true
@@ -1718,7 +1718,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1752,7 +1752,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "powerSleep.lock": {
@@ -1763,7 +1763,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": null,
       "params": {},
@@ -1801,7 +1801,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "powerSleep.setCriticalPolicy": {
@@ -1812,7 +1812,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": {
         "unexpected": true
@@ -1829,7 +1829,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1872,7 +1872,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "powerSleep.setKeepAwake": {
@@ -1883,7 +1883,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": {
         "unexpected": true
@@ -1898,7 +1898,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -1932,7 +1932,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "powerSleep.setPolicy": {
@@ -1943,7 +1943,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": {
         "unexpected": true
@@ -1972,7 +1972,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "success": {
         "data": {
@@ -2015,7 +2015,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     },
     "powerSleep.suspend": {
@@ -2026,7 +2026,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "invalid_params": null,
       "params": {},
@@ -2064,7 +2064,7 @@
         },
         "ok": true,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       },
       "uncertain": {
         "error": {
@@ -2073,7 +2073,7 @@
         },
         "ok": false,
         "protocol": "bar-api",
-        "version": 1
+        "version": 2
       }
     }
   },
@@ -2408,6 +2408,6 @@
     },
     "ok": true,
     "protocol": "bar-api",
-    "version": 1
+    "version": 2
   }
 }

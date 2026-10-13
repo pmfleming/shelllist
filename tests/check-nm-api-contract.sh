@@ -23,7 +23,7 @@ diff -u "$fixture" "$actual"
 
 jq -e '
   .protocol == "nm-api" and
-  .version == 1 and
+  .version == 2 and
   .ok == true and
   (.data.fixture.network.capabilities.can_connect == true) and
   (.data.fixture.network.capabilities.needs_password | type == "boolean") and
@@ -61,7 +61,7 @@ jq -e '
 
 jq -e '
   .protocol == "nm-api" and
-  .version == 1 and
+  .version == 2 and
   .ok == true and
   (.data.fixtures."wifi-networks.saved".networks | type == "array") and
   .data.fixtures."wifi-networks.saved".snapshot.source == "cache" and
@@ -99,21 +99,21 @@ jq -e '
   .data.fixtures."network-statistics.watch".result.stream == "network.statistics" and
   .data.fixtures."hotspot.capabilities".hotspot.supported == true and
   .data.fixtures."hotspot.capabilities-unsupported".hotspot.unsupported_reason == "ap-mode-unsupported" and
-  (.data.fixtures."hotspot.stream".events[] | select(.event == "succeeded") | .result.hotspot.share.qr_payload | startswith("WIFI:")) and
+  (.data.fixtures."hotspot.stream".events[] | select(.event == "succeeded") | .data.result.hotspot.share.qr_payload | startswith("WIFI:")) and
   .data.fixtures."vpn.list".vpns[0].plugin == "openconnect" and
   .data.fixtures."vpn.list".vpns[1].plugin == "wireguard" and
   (.data.fixtures."vpn.status-connected".vpn.active[0].vpn_state_name | type == "string") and
-  (.data.fixtures."vpn.stream".events[] | select(.event == "failed") | .details.reason == "no-secrets") and
+  (.data.fixtures."vpn.stream".events[] | select(.event == "failed") | .error.details.reason == "no-secrets") and
   .data.fixtures."wifi-qr.parse".qr.auth == "wpa" and
   .data.fixtures."wifi-qr.parse".qr.has_password == true and
   (.data.fixtures."wifi-qr.parse".qr | has("password") | not) and
   .data.fixtures."wifi-qr.parse-open".qr.auth == "open" and
-  (.data.fixtures."network-health.stream".events[] | select(.event == "device") | .health.reason.category == "authentication")
+  (.data.fixtures."network-health.stream".events[] | select(.event == "device") | .data.health.reason.category == "authentication")
 ' "$method_actual" >/dev/null
 
 jq -e '
   .protocol == "nm-api" and
-  .version == 1 and
+  .version == 2 and
   .ok == true and
   ([.data.protocol.methods[].name] | contains([
     "wifi.status", "wifi.setEnabled", "radio.setWwanEnabled", "radio.setAirplaneMode",

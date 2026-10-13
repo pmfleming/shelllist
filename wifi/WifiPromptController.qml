@@ -81,9 +81,9 @@ Item {
     }
 
     function openDaemonSecretPrompt(event) {
-        const spec = Policy.daemonSecretSpec(event);
+        const spec = Policy.daemonSecretSpec(event.data);
         secretRequestId = event.request_id || "";
-        saveSecretSupported = !!event.save_supported;
+        saveSecretSupported = !!event.data.save_supported;
         openCredentials("daemon-secret", "Network credentials", spec.detail, spec.fields, null);
     }
 

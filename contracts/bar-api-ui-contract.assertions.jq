@@ -1,5 +1,5 @@
 (.protocol == "bar-api") and
-(.version == 1) and
+(.version == 2) and
 (.snapshot.activity.event_count | type == "number") and
 (.snapshot.activity.incomplete_todo_count | type == "number") and
 (.snapshot.activity.lunar.fraction | type == "number") and

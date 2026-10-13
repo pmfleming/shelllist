@@ -16,6 +16,8 @@ Item {
     property string sharedConsumerId: ""
     // Optional domain policy; transport routing/ownership remains here.
     property var requestPolicy: null
+    property var validateRequest: null
+    property var validateEvent: null
 
     readonly property bool requestRunning: pendingCount > 0
     readonly property int pendingCount: Object.keys(pending).length
@@ -87,6 +89,11 @@ Item {
     }
 
     function call(id: string, method: string, params: var): bool {
+        const validationError = validateRequest ? validateRequest(method, params || ({})) : "";
+        if (validationError) {
+            sendFailed(id, "Request rejected before dispatch: " + validationError);
+            return false;
+        }
         if (isPending(id)) {
             console.warn("shelllist " + daemonName + " request rejected id=" + id + " reason=already-pending");
             return false;
@@ -226,13 +233,13 @@ Item {
         const compatibility = Core.ApiEnvelope.compatibilityError(event, expectedProtocol, expectedVersion, daemonName);
         if (compatibility.length > 0)
             return compatibility;
-        if (typeof event.stream !== "string" || event.stream.length === 0 || typeof event.event !== "string" || event.event.length === 0)
+        if (typeof event.stream !== "string" || event.stream.length === 0 || typeof event.event !== "string" || event.event.length === 0 || !event.data || typeof event.data !== "object" || Array.isArray(event.data))
             return daemonName + " returned a malformed event";
-        return "";
+        return validateEvent ? validateEvent(event) : "";
     }
 
     function isEventGap(event: var): bool {
-        return event.event === "lagged" || event.event === "resync-required" || !!(event.data && event.data.resync_required);
+        return event.event === "gap";
     }
 
     function acceptSharedEvent(event: var): void {

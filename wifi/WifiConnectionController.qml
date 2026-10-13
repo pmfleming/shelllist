@@ -79,7 +79,7 @@ Item {
         const completedRequestId = event.request_id || requestId;
         requestId = "";
         resetProgress();
-        applyResult(Api.connectEventResult(event), event.message || (succeeded ? "Connected" : "Connection failed"), completedRequestId);
+        applyResult(Api.connectEventResult(event), event.data.message || (succeeded ? "Connected" : "Connection failed"), completedRequestId);
         if (succeeded)
             controller.refresh();
     }
@@ -89,13 +89,13 @@ Item {
         if (event.event === "cancelled") {
             requestId = "";
             resetProgress();
-            controller.setHeldStatus(event.message || "Connection cancelled", 2500);
+            controller.setHeldStatus(event.data.message || "Connection cancelled", 2500);
             controller.refresh();
             return;
         }
         const state = Api.connectEventState(event);
         if (state === "progress") {
-            controller.setHeldStatus(event.message || "Connecting to " + networkName + "…", 15000);
+            controller.setHeldStatus(event.data.message || "Connecting to " + networkName + "…", 15000);
             return;
         }
         finishEvent(event, state === "succeeded");
@@ -104,7 +104,7 @@ Item {
         if (event.event !== "changed")
             return;
         const previous = connectivity;
-        connectivity = event.connectivity || null;
+        connectivity = event.data.connectivity || null;
         if (!previous || !Presentation.connectivityRequiresSignIn(previous))
             return;
         if (!connectivity || (!connectivity.full && connectivity.state !== "full"))

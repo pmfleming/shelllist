@@ -23,6 +23,16 @@ TestCase {
             verify(App.responseError(method, moved).length > 0, "Moving a result out of data must fail: " + method);
         });
     }
+    function test_productionAppEventsUseCanonicalPayloadSchema() {
+        const events = fixture("app-events.json");
+        Object.keys(events).forEach(function(name) {
+            compare(App.eventError(events[name]), "", name);
+        });
+        const moved = JSON.parse(JSON.stringify(events.completed));
+        moved.operation = moved.data.operation;
+        delete moved.data.operation;
+        verify(App.eventError(moved).length > 0);
+    }
     function test_audioFixturesMatchGeneratedRustSchemas() {
         const fixtures = fixture("bar-controls.json");
         compare(Object.keys(Bar.contracts).length, 3);

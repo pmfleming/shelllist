@@ -2,7 +2,7 @@
 
 // Generated from the daemon-owned protocol registry. Do not edit.
 var protocol = "bar-api";
-var version = 1;
+var version = 2;
 var methods = ({
     "bar.snapshot": "bar.snapshot",
     "activity.queryRange": "activity.queryRange",
@@ -84,6 +84,7 @@ var streams = ({
 });
 
 var contracts = {"audio.adjust":{"params_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"delta_percent":{"format":"int16","maximum":32767,"minimum":-32768,"type":"integer"}},"required":["delta_percent"],"title":"DeltaRequest","type":"object"},"policy":{"ack_budget_ms":30000,"conflict_domain":"audio","execution":"effect","request_bytes":1048576,"result_bytes":16777216,"sensitivity":"effect"},"response_key":"audio","result_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"available":{"type":"boolean"},"error":{"type":["string","null"]},"input_available":{"type":"boolean"},"input_muted":{"type":"boolean"},"muted":{"type":"boolean"},"sink_description":{"type":"string"},"sink_name":{"type":"string"},"source_description":{"type":"string"},"source_name":{"type":"string"},"volume_percent":{"format":"uint8","maximum":255,"minimum":0,"type":"integer"}},"required":["available","sink_name","sink_description","volume_percent","muted","input_available","source_name","source_description","input_muted","error"],"title":"AudioState","type":"object"}},"audio.setInputMuted":{"params_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"muted":{"default":null,"type":["boolean","null"]}},"title":"MuteRequest","type":"object"},"policy":{"ack_budget_ms":30000,"conflict_domain":"audio","execution":"effect","request_bytes":1048576,"result_bytes":16777216,"sensitivity":"effect"},"response_key":"audio","result_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"available":{"type":"boolean"},"error":{"type":["string","null"]},"input_available":{"type":"boolean"},"input_muted":{"type":"boolean"},"muted":{"type":"boolean"},"sink_description":{"type":"string"},"sink_name":{"type":"string"},"source_description":{"type":"string"},"source_name":{"type":"string"},"volume_percent":{"format":"uint8","maximum":255,"minimum":0,"type":"integer"}},"required":["available","sink_name","sink_description","volume_percent","muted","input_available","source_name","source_description","input_muted","error"],"title":"AudioState","type":"object"}},"audio.setMuted":{"params_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"muted":{"default":null,"type":["boolean","null"]}},"title":"MuteRequest","type":"object"},"policy":{"ack_budget_ms":30000,"conflict_domain":"audio","execution":"effect","request_bytes":1048576,"result_bytes":16777216,"sensitivity":"effect"},"response_key":"audio","result_schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"available":{"type":"boolean"},"error":{"type":["string","null"]},"input_available":{"type":"boolean"},"input_muted":{"type":"boolean"},"muted":{"type":"boolean"},"sink_description":{"type":"string"},"sink_name":{"type":"string"},"source_description":{"type":"string"},"source_name":{"type":"string"},"volume_percent":{"format":"uint8","maximum":255,"minimum":0,"type":"integer"}},"required":["available","sink_name","sink_description","volume_percent","muted","input_available","source_name","source_description","input_muted","error"],"title":"AudioState","type":"object"}}};
+var eventContracts = {};
 // Runtime validation for the generated JSON Schema subset. No QML objects or eval.
 function schemaError(schema, value, root, path) {
     root = root || schema;
@@ -146,6 +147,11 @@ function schemaError(schema, value, root, path) {
         }
     }
     return "";
+}
+
+function eventError(envelope) {
+    var schema = eventContracts[envelope.stream + ":" + envelope.event];
+    return schema ? schemaError(schema, envelope.data) : "";
 }
 
 function requestError(method, params) {

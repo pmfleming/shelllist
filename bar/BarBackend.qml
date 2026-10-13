@@ -1,6 +1,7 @@
 import QtQuick
 import Shelllist.Io as Io
 import "BarApi.js" as BarApi
+import "BarProtocol.generated.js" as Contract
 
 Io.BarDaemonBackend {
     required property BarController controller
@@ -10,6 +11,7 @@ Io.BarDaemonBackend {
     expectedVersion: BarApi.version
     streams: controller.notificationState ? BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive].includes(stream)) : BarApi.subscribedStreams
     active: true
+    validateRequest: Contract.requestError
 
     property string snapshotError: ""
     readonly property bool snapshotLoading: Object.keys(pending).some(id => requestKind(id) === "snapshot")

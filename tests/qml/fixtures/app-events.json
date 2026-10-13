@@ -1,102 +1,120 @@
 {
   "applications.changed": {
+    "data": {
+      "revision": 42
+    },
     "event": "changed",
     "protocol": "app-api",
-    "revision": 42,
     "stream": "applications.changed",
     "subscription_id": "subscription-example",
-    "version": 1
+    "version": 2
   },
   "applications.changed.subscribed": {
-    "catalog_revision": 1,
+    "data": {
+      "catalog_revision": 1,
+      "runtime_revision": 4,
+      "settings_revision": 3,
+      "window_revision": 2
+    },
     "event": "subscribed",
     "protocol": "app-api",
-    "runtime_revision": 4,
-    "settings_revision": 3,
     "stream": "applications.changed",
     "subscription_id": "subscription-example",
-    "version": 1,
-    "window_revision": 2
+    "version": 2
   },
   "applications.operation.subscribed": {
-    "catalog_revision": 1,
+    "data": {
+      "catalog_revision": 1,
+      "runtime_revision": 4,
+      "settings_revision": 3,
+      "window_revision": 2
+    },
     "event": "subscribed",
     "protocol": "app-api",
-    "runtime_revision": 4,
-    "settings_revision": 3,
     "stream": "applications.operation",
     "subscription_id": "subscription-example",
-    "version": 1,
-    "window_revision": 2
+    "version": 2
   },
   "cancelled": {
-    "event": "cancelled",
-    "operation": {
-      "action": "activate",
-      "id": "operation-example",
-      "message": "Application action cancelled",
-      "status": "cancelled",
-      "target_id": "Alpha"
+    "data": {
+      "operation": {
+        "action": "activate",
+        "id": "operation-example",
+        "message": "Application action cancelled",
+        "status": "cancelled",
+        "target_id": "Alpha"
+      }
     },
+    "event": "cancelled",
     "protocol": "app-api",
     "stream": "applications.operation",
     "subscription_id": "subscription-example",
-    "version": 1
+    "version": 2
   },
   "completed": {
-    "event": "completed",
-    "operation": {
-      "action": "activate",
-      "id": "operation-example",
-      "message": "Application action completed",
-      "status": "completed",
-      "target_id": "Alpha"
+    "data": {
+      "operation": {
+        "action": "activate",
+        "id": "operation-example",
+        "message": "Application action completed",
+        "status": "completed",
+        "target_id": "Alpha"
+      }
     },
+    "event": "completed",
     "protocol": "app-api",
     "stream": "applications.operation",
     "subscription_id": "subscription-example",
-    "version": 1
+    "version": 2
   },
   "failed": {
-    "event": "failed",
-    "operation": {
-      "action": "activate",
-      "id": "operation-example",
-      "message": "Application action failed",
-      "status": "failed",
-      "target_id": "Alpha"
+    "data": {
+      "operation": {
+        "action": "activate",
+        "id": "operation-example",
+        "message": "Application action failed",
+        "status": "failed",
+        "target_id": "Alpha"
+      }
     },
+    "event": "failed",
     "protocol": "app-api",
     "stream": "applications.operation",
     "subscription_id": "subscription-example",
-    "version": 1
+    "version": 2
   },
   "gap": {
-    "dropped_events": 4,
-    "event": "resync-required",
+    "data": {
+      "dropped_events": "4",
+      "reason": "subscriber-lag"
+    },
+    "event": "gap",
     "protocol": "app-api",
-    "recovery_method": "applications.operation.status",
     "stream": "applications.operation",
     "subscription_id": "subscription-example",
-    "version": 1
+    "version": 2
   },
   "windows.changed": {
+    "data": {
+      "revision": 42
+    },
     "event": "changed",
     "protocol": "app-api",
-    "revision": 42,
     "stream": "windows.changed",
     "subscription_id": "subscription-example",
-    "version": 1
+    "version": 2
   },
   "windows.changed.subscribed": {
-    "catalog_revision": 1,
+    "data": {
+      "catalog_revision": 1,
+      "runtime_revision": 4,
+      "settings_revision": 3,
+      "window_revision": 2
+    },
     "event": "subscribed",
     "protocol": "app-api",
-    "runtime_revision": 4,
-    "settings_revision": 3,
     "stream": "windows.changed",
     "subscription_id": "subscription-example",
-    "version": 1,
-    "window_revision": 2
+    "version": 2
   }
 }

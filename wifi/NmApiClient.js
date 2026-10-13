@@ -40,10 +40,10 @@ function apiResult(response, key) {
 }
 function scanEventStatus(event, fallback) {
     const messages = {
-        snapshot: event.networks_found + (event.scanning ? " networks found; scanning…" : " networks available"),
-        complete: event.networks_found + (event.timed_out ? " networks available; scan timed out" : " networks available")
+        snapshot: event.data.networks_found + (event.data.scanning ? " networks found; scanning…" : " networks available"),
+        complete: event.data.networks_found + (event.data.timed_out ? " networks available; scan timed out" : " networks available")
     };
-    return messages[event.event] || event.message || fallback;
+    return messages[event.event] || event.data.message || fallback;
 }
 function isTerminalEvent(event) {
     return event.event === "complete" || event.event === "failed" || event.event === "cancelled";
@@ -52,11 +52,11 @@ function requestMatches(event, requestId) {
     return !!event.request_id && event.request_id === requestId;
 }
 function connectEventResult(event) {
-    return event.result || ({
+    return event.data.result || ({
             status: "error",
-            reason: event.reason || "unknown",
-            recovery_prompt: event.recovery_prompt || null,
-            message: event.message || "Connection failed"
+            reason: event.data.reason || "unknown",
+            recovery_prompt: event.data.recovery_prompt || null,
+            message: event.data.message || "Connection failed"
         });
 }
 function connectEventState(event) {

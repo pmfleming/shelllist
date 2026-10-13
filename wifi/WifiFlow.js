@@ -42,14 +42,14 @@ function bandTransition(event, requestId) {
     if (["started", "progress"].includes(event.event))
         return {
             stage: "running",
-            message: event.message || "Applying Wi-Fi band selection…"
+            message: event.data.message || "Applying Wi-Fi band selection…"
         };
     if (event.event !== "succeeded")
         return {
             stage: "failed",
-            message: event.message || (event.event === "cancelled" ? "Wi-Fi band change cancelled" : "Wi-Fi band change failed")
+            message: event.data.message || (event.event === "cancelled" ? "Wi-Fi band change cancelled" : "Wi-Fi band change failed")
         };
-    const result = event.result || ({});
+    const result = event.data.result || ({});
     return {
         stage: "completed",
         band: result.band || ({}),
@@ -73,7 +73,7 @@ function secretTransition(event, mode, requestId) {
         };
     return {
         stage: "persistence",
-        message: event.status === "stored" ? "Wi-Fi secret saved to the keyring." : "Wi-Fi secret was accepted but could not be saved: " + event.status
+        message: event.data.status === "stored" ? "Wi-Fi secret saved to the keyring." : "Wi-Fi secret was accepted but could not be saved: " + event.data.status
     };
 }
 

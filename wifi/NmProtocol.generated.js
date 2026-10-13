@@ -2,7 +2,7 @@
 
 // Generated from the daemon-owned protocol registry. Do not edit.
 var protocol = "nm-api";
-var version = 1;
+var version = 2;
 var methods = ({
     "wifi.status": "wifi.status",
     "wifi.setEnabled": "wifi.setEnabled",

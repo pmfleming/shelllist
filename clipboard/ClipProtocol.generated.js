@@ -2,7 +2,7 @@
 
 // Generated from the daemon-owned protocol registry. Do not edit.
 var protocol = "clip-api";
-var version = 1;
+var version = 2;
 var methods = ({
     "clipboard.session.begin": "clipboard.session.begin",
     "clipboard.session.end": "clipboard.session.end",

@@ -82,9 +82,9 @@ Item {
             return;
         requestId = "";
         if (event.event === "succeeded")
-            applySucceeded(event.result || ({}));
+            applySucceeded(event.data.result || ({}));
         else
-            controller.status = event.message || "Hotspot could not be started";
+            controller.status = event.data.message || "Hotspot could not be started";
         refresh();
     }
 
