@@ -202,6 +202,55 @@ DaemonTestCase {
         compare(state.drafts[newIdentity], "Draft for the new notification");
         compare(mutations(state).length, 1);
     }
+    function test_ownedCompletionFlushesEventsButDuplicatesCannotRetireANewerRequest() {
+        const state = make();
+        const old = start(state, "setDnd");
+        const route = Object.assign({}, lastCall(state, "bar.snapshot").route, {kind: "base-subscription", localId: "session-subscribe"});
+        Io.DaemonSessions.sessions["bar-daemon"].client.eventReceived(clone(fixture().events.dndCleared), route);
+        verify(state.queuedSummary !== null);
+        reply(old, fixture().replies.setDnd.success);
+        compare(state.queuedSummary, null, "queued observations precede acknowledgement");
+        verify(!state.notifications.dnd);
+        const current = start(state, "setDnd");
+        // Exercise the domain boundary too, not only the transport's duplicate fence.
+        state.backend.finish(old.route.localId, {}, "Late duplicate failure", "failed");
+        verify(state.dndPending);
+        compare(state.lastError, "");
+        verify(!!state.backend.requests[current.route.localId]);
+        reply(current, fixture().replies.setDnd.success);
+        verify(state.notifications.dnd);
+        compare(mutations(state).length, 2);
+    }
+    function test_obsoletePreparationIsConsumedWithoutPublishingOrFlushingCurrentEvents() {
+        const state = make();
+        const call = start(state, "prepareDelete");
+        state.connectionLost(); // Retire the domain generation before its reply arrives.
+        state.queueEvent(true, clone(fixture().events.dndCleared.data));
+        state.lastError = "Current connection failure";
+        reply(call, fixture().replies.prepareDelete.success);
+        verify(!state.backend.requests[call.route.localId]);
+        verify(state.queuedSummary !== null, "obsolete requests cannot flush the new generation");
+        verify(!state.notifications.available);
+        compare(state.deleteConfirmation, null);
+        compare(state.lastError, "Current connection failure");
+        compare(mutations(state).length, 1, "no consent or follow-up effect from an obsolete reply");
+        state.flushEvents();
+        verify(state.notifications.available);
+    }
+    function test_cancelAcknowledgementCannotPublishSnapshotOrClearAnotherError() {
+        const state = make();
+        prepare(state, "cancelDelete");
+        const call = start(state, "cancelDelete");
+        state.lastError = "Independent failure";
+        const response = clone(fixture().replies.cancelDelete.success);
+        response.data.snapshot = clone(fixture().snapshot.data.snapshot);
+        response.data.snapshot.notifications.dnd = true;
+        reply(call, response);
+        verifyReleased(state, call);
+        verify(!state.notifications.dnd);
+        compare(state.lastError, "Independent failure");
+        compare(state.deleteConfirmation, null);
+    }
     function test_newerDndEventOutranksAnOlderAcknowledgement() {
         const state = make();
         const call = start(state, "setDnd");

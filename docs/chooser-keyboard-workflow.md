@@ -381,7 +381,12 @@ The Message tab, its detail reader, reply editor and sender commands are removed
 from this center; there is no hidden tab to restore or navigate to. Alt+D remains
 selected-app deletion, while a card's Delete targets only its stable record ID.
 Popup sender actions/replies retain their existing acknowledgement and lifecycle
-guards. Tab changes still discard only uncommitted app-control edits.
+guards. The notification backend consumes a completion's request identity and
+checks its domain generation before flushing queued observations or acknowledging
+any domain. Duplicate/obsolete replies cannot publish, and cancellation replies
+cannot clear unrelated errors or apply snapshots. Scoped catalog, policy and
+consent owners remain separate from generic action/snapshot completion.
+Tab changes still discard only uncommitted app-control edits.
 `NotificationCatalog` owns only app-group reads; its obsolete selected-record/page
 reader is removed. Timeline and explicit group-resolution replies cannot retire a
 catalog read. Native tests cover that ownership boundary and timeline validation.

@@ -89,7 +89,14 @@ Io.BarDaemonBackend {
         // Consume once, then fence late completions before touching current state.
         if (context.generation !== store.dataGeneration)
             return;
+        // Queued observations precede domain acknowledgement. Ownership is
+        // already retired, so a reentrant completion cannot publish twice.
         store.flushEvents();
+        acknowledge(context, data, error, errorCode);
+    }
+    function acknowledge(context: var, data: var, error: string, errorCode: string): void {
+        // Scoped readers/settings/consent own their result, including errors.
+        // They must not fall through to generic snapshot or error publication.
         if (context.center) {
             store.centerResponse(context.center, data.notification_center, error, errorCode);
             return;
