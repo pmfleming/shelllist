@@ -87,7 +87,7 @@ function forgetCopy(networkName: string, active: boolean, profiles: { id: string
     const profileText = names.length === 0 ? "no saved profile is currently listed"
         : names.length + " saved profile" + (names.length === 1 ? "" : "s") + ": " + names.join(", ");
     return {
-        title: (active ? "Disconnect & forget " : "Forget ") + networkName,
+        title: (active ? "Disconnect & forget " : "Forget ") + networkName + "?",
         detail: (active ? "Disconnect from this network and remove " : "Remove ") + profileText
             + ". The hotspot may still recognize this device until its login session expires. Type FORGET to confirm."
     };

@@ -46,6 +46,7 @@
 (.snapshot.power_profile.profile | type == "string") and
 (.snapshot.power_sleep.diagnostics.hibernate_issues | type == "array") and
 (.snapshot.power_sleep.keep_awake | type == "boolean") and
+(.snapshot.display_policy.docking_state == "settled") and
 (.snapshot.display_policy.policy.prefer_external | type == "boolean") and
 (.snapshot.display_policy.outputs | type == "array") and
 (.snapshot.display_policy.outputs[0].internal == true) and

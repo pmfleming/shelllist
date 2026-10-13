@@ -321,10 +321,15 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         tryVerify(() => content.detailsItem !== null);
         controller.detailsTab = "settings";
-        wait(0);
-        keyClick(Qt.Key_Tab);
+        tryCompare(controller, "detailsExpansionProgress", 1);
+        // Incubating Loader children exist before navigation can discover them.
+        // Wait for the settings editor to be available before sending keys.
+        tryCompare(content.detailsNavigation, "contentReady", true);
         const name = findChild(content.detailsItem, "deviceNameInput");
         verify(name !== null);
+        tryVerify(() => content.detailsNavigation.availableFields().includes(name));
+        content.listItem.focusList();
+        keyClick(Qt.Key_Tab);
         for (let i = 0; i < 12 && content.detailsNavigation.currentTarget !== name; ++i)
             keyClick(Qt.Key_Tab);
         compare(content.detailsNavigation.currentTarget, name);

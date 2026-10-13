@@ -1662,6 +1662,7 @@
     "display_policy": {
       "available": true,
       "baseline": "",
+      "docking_state": "settled",
       "error": null,
       "focus": {
         "available": true,

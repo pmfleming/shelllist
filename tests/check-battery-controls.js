@@ -34,10 +34,12 @@ function controller() {
     });
     for (const match of source.matchAll(/^    (readonly )?property \w+ (\w+): ([\s\S]*?)(?=\n    (?:readonly property|property|function)|\n\n)/gm)) {
         const [, readonly, name, expression] = match;
+        // Keep the wrapper outside any trailing QML line comment.
+        const wrapped = `(\n${expression}\n)`;
         if (readonly)
-            Object.defineProperty(context, name, { get: () => vm.runInContext(`(${expression})`, context) });
+            Object.defineProperty(context, name, { get: () => vm.runInContext(wrapped, context) });
         else
-            context[name] = vm.runInContext(`(${expression})`, context);
+            context[name] = vm.runInContext(wrapped, context);
     }
     vm.runInContext(functions(source), context);
     return { c: context, calls };
