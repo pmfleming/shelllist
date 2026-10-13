@@ -78,6 +78,16 @@ Expected negative-test application error logs are distinct from QML engine
 warnings and remain allowed. Offscreen tests do not replace live compositor,
 hardware, IME or screen-reader acceptance.
 
+## Subsequent ownership regressions
+
+The [ownership refactor](../docs/ownership-refactor.md) adds 14 focused native
+cases after pruning: notification completion fencing, chooser restoration
+fallbacks/readiness, and clipboard captured-target/paste ownership. Latest full
+Qt run: **606 passes, zero failures, one existing renderer skip** (482 executed
+behaviors + 124 lifecycle hooks). Established inventory: **555**, including that
+skip. Lint, all 17 JavaScript checks and runtime smoke pass at each refactor step.
+The pruning figures below remain historical evidence, not a test-count cap.
+
 ## Current pruning checkpoint — baseline c6451f8 + incoming work
 
 **808 → 541 inventory units: 267 removed (33.04%), 66.96% retained.**

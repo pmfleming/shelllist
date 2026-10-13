@@ -25,6 +25,7 @@ Item {
     property var editPreview: null
     property bool retryingEdit: false
     readonly property alias failedDrafts: failedDraftStore.drafts
+    // Outlives clear(); only its edit snapshot, never paste intent, can be retried.
     property var pendingCommit: null
     property int sequence
     property string entryId
@@ -74,16 +75,13 @@ Item {
         else
             rememberFailedDraft();
     }
+    function draftSnapshot(): var {
+        return {target: editTarget, preview: editPreview, draft: editDraft, direct: editIsDirect};
+    }
     function rememberFailedDraft(): void {
         if (!editTarget || !editDirty || editError.length === 0)
             return;
-        failedDraftStore.put(editTarget.id, {
-            target: editTarget,
-            preview: editPreview,
-            draft: editDraft,
-            error: editError,
-            direct: editIsDirect
-        });
+        failedDraftStore.put(editTarget.id, Object.assign(draftSnapshot(), {error: editError}));
     }
     function forgetFailedDraft(): void {
         if (!editTarget)
@@ -158,10 +156,7 @@ Item {
         savingDirectEdit = editIsDirect;
         pendingCommit = {
             pasteSessionId: pasteAfterSave ? controller.sessionId : "",
-            target: editTarget,
-            preview: editPreview,
-            draft: committedDraft,
-            direct: editIsDirect
+            edit: draftSnapshot()
         };
         saveInFlight = true;
         editDirty = false;
@@ -255,12 +250,25 @@ Item {
                 detailsController.beginEdit(entry);
             });
     }
+    function commitTargetChanged(sent: var): bool {
+        return !!sent?.edit?.target && (!editTarget || editTarget.id !== sent.edit.target.id);
+    }
+    function finishNativePaste(sessionId: string, paste: var): void {
+        editorFocused = false;
+        // A saved edit is never retried for a missing/failed paste outcome, and
+        // a late reply cannot hide or publish into a different invocation.
+        if (!paste || paste.session_id !== sessionId || controller.sessionId !== sessionId || !controller.uiActive)
+            return;
+        controller.status = paste.message || "Paste preparation unconfirmed";
+        if (paste.prepared === true)
+            daemonBackend.hideSession(sessionId);
+    }
     function applyEditCommit(nextValue: var, paste: var): void {
         clearCache();
         const sent = pendingCommit;
         pendingCommit = null;
-        if (sent && sent.target && (!editTarget || editTarget.id !== sent.target.id)) {
-            failedDraftStore.put(sent.target.id, null);
+        if (commitTargetChanged(sent)) {
+            failedDraftStore.put(sent.edit.target.id, null);
             if (controller.activeAction === "edit") {
                 controller.actionInFlight = false;
                 controller.activeAction = "";
@@ -280,17 +288,8 @@ Item {
             if (nativePaste)
                 editorFocused = false;
             applyDirectEditCommit(nextValue, entry, sourceEntryId, shouldPaste && !nativePaste);
-            if (nativePaste) {
-                // A late reply cannot paste into a reopened session or retarget
-                // the committed edit. No fallback write on missing/failed outcome.
-                editorFocused = false;
-                if (paste && paste.session_id === sent.pasteSessionId
-                        && controller.sessionId === sent.pasteSessionId && controller.uiActive) {
-                    controller.status = paste.message || "Paste preparation unconfirmed";
-                    if (paste.prepared === true)
-                        daemonBackend.hideSession(sent.pasteSessionId);
-                }
-            }
+            if (nativePaste)
+                finishNativePaste(sent.pasteSessionId, paste);
             return;
         }
         value = null;
@@ -508,14 +507,9 @@ Item {
     function failEditCommit(message: string): void {
         const sent = pendingCommit;
         pendingCommit = null;
-        if (sent && sent.target && (!editTarget || editTarget.id !== sent.target.id)) {
-            failedDraftStore.put(sent.target.id, {
-                target: sent.target,
-                preview: sent.preview,
-                draft: sent.draft,
-                error: message,
-                direct: sent.direct
-            });
+        if (commitTargetChanged(sent)) {
+            // Only the edit snapshot becomes a failed draft, never paste intent.
+            failedDraftStore.put(sent.edit.target.id, Object.assign({}, sent.edit, {error: message}));
             scheduleLoad();
             return;
         }

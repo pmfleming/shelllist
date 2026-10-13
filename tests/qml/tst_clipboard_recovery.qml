@@ -472,7 +472,9 @@ DaemonTestCase {
     function test_saveAndPasteUsesOneWriteAndKeepsHiddenHandshake_data() {
         return [{tag: "prepared", prepared: true, stale: false},
             {tag: "publication-failed", prepared: false, stale: false},
-            {tag: "reopened-session", prepared: true, stale: true}];
+            {tag: "reopened-session", prepared: true, stale: true},
+            {tag: "missing-outcome", prepared: true, outcome: "missing"},
+            {tag: "different-outcome-session", prepared: true, outcome: "different"}];
     }
     function test_saveAndPasteUsesOneWriteAndKeepsHiddenHandshake(data) {
         const controller = makeController();
@@ -492,12 +494,91 @@ DaemonTestCase {
         if (data.stale) controller.sessionId = "reopened";
         reply(controller, "edit-commit", {
             entry: {entry: {id: "replacement", revision: 2, kind: "text"}, text: "Saved before paste", files: []},
-            paste: {session_id: "paste-session", prepared: data.prepared, message: "Native outcome"}
+            paste: data.outcome === "missing" ? null : {session_id: data.outcome === "different" ? "unowned" : "paste-session", prepared: data.prepared, message: "Native outcome"}
         });
         compare(calls.filter(call => call.method === "clipboard.entry.action").length, 0, "no chained publication or replay");
-        compare(calls.filter(call => call.method === "clipboard.session.hidden").length, data.prepared && !data.stale ? 1 : 0);
+        compare(calls.filter(call => call.method === "clipboard.session.hidden").length, data.prepared && !data.stale && !data.outcome ? 1 : 0);
         compare(details.editError, "", "saved edits are not retried for paste-preparation failure");
         verify(!details.saveInFlight);
+    }
+
+    function test_commitCompletionAfterResultNavigationKeepsTheNewPreview_data() {
+        return [{tag: "acknowledged", error: ""}, {tag: "uncertain", error: "Outcome unknown"}];
+    }
+    function test_commitCompletionAfterResultNavigationKeepsTheNewPreview(data) {
+        const controller = makeController();
+        const details = controller.detailState;
+        const first = controller.selectedEntry;
+        const second = {id: "second", revision: 7, kind: "text", preview: "Other entry", byte_size: 11, favorite: false};
+        controller.replaceProviderResults(controller.provider.resultsForEntries([first, second]), false);
+        const pane = makePane(controller);
+        controller.detailsOpen = true;
+        verify(details.beginEdit());
+        reply(controller, "edit-begin", {edit: {id: "moved-lease", value: "Original"}});
+        details.updateEditDraft("Submitted for first");
+        controller.sessionId = "original-paste";
+        verify(details.preparePaste());
+        compare(calls.find(call => call.method === "clipboard.entry.edit.commit").params.paste_session_id, "original-paste");
+        pane.focusList();
+        keyClick(Qt.Key_Down);
+        tryCompare(controller, "selectedIndex", 1);
+        details.load();
+        verify(details.requestId.length > 0);
+        reply(controller, details.requestId, {entry: {entry: second, text: "Other entry", files: []}});
+        const preview = details.value;
+        reply(controller, "edit-commit", {entry: {entry: {id: "replacement", revision: 2, kind: "text"}, text: "Submitted for first", files: []}}, data.error);
+        compare(details.value, preview, "late completion cannot replace the newly browsed preview");
+        compare(details.entryId, "second");
+        verify(!controller.actionInFlight);
+        if (data.error) {
+            compare(details.failedDrafts.first.target.id, "first");
+            compare(details.failedDrafts.first.target.revision, 1);
+            compare(details.failedDrafts.first.draft, "Submitted for first");
+            compare(details.failedDrafts.first.preview.text, "Original");
+            compare(details.failedDrafts.first.error, data.error);
+            compare(details.failedDrafts.first.pasteSessionId, undefined, "paste intent is not retryable draft state");
+        } else {
+            compare(details.failedDrafts.first, undefined);
+        }
+        verify(!details.failedDrafts.second);
+        wait(100);
+        compare(calls.filter(call => call.method === "clipboard.entry.edit.commit").length, 1);
+        compare(calls.filter(call => call.method === "clipboard.entry.action").length, 0);
+        compare(calls.filter(call => call.method === "clipboard.session.hidden").length, 0);
+        pane.focusList();
+        keyClick(Qt.Key_Up);
+        tryCompare(controller, "selectedIndex", 0);
+        details.load();
+        if (data.error) {
+            compare(details.editDraft, "Submitted for first");
+            verify(details.editing && details.editDirty && !details.saveInFlight);
+        } else {
+            verify(!details.editing && !details.editDirty);
+        }
+    }
+    function test_pasteIntentAfterSubmissionWaitsWithoutAmendingTheWrite() {
+        const controller = makeController();
+        controller.sessionId = "later-paste";
+        const details = controller.detailState;
+        verify(details.beginEdit());
+        reply(controller, "edit-begin", {edit: {id: "save-lease", value: "Original"}});
+        details.updateEditDraft("Save first");
+        verify(details.commitEdit());
+        const commit = calls.find(call => call.method === "clipboard.entry.edit.commit");
+        compare(commit.params.paste_session_id, null);
+        verify(details.preparePaste());
+        compare(calls.filter(call => call.method === "clipboard.entry.action").length, 0);
+        const replacement = {id: "replacement", revision: 2, kind: "text"};
+        reply(controller, "edit-commit", {entry: {entry: replacement, text: "Save first", files: []}});
+        const actions = calls.filter(call => call.method === "clipboard.entry.action");
+        compare(actions.length, 1);
+        compare(actions[0].params.entry_id, "replacement");
+        compare(actions[0].params.revision, 2);
+        compare(actions[0].params.session_id, "later-paste");
+        compare(actions[0].params.action, "paste");
+        compare(commit.params.paste_session_id, null);
+        compare(calls.filter(call => call.method === "clipboard.entry.edit.commit").length, 1);
+        compare(calls.filter(call => call.method === "clipboard.session.hidden").length, 0);
     }
 
     function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft_data() {

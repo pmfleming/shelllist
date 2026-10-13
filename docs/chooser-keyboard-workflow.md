@@ -904,8 +904,14 @@ that editor and saving explicitly retries with a fresh lease for the original
 revision, preserving conflict and busy guards. Discarding that reopened editor
 abandons the failed local draft and reloads the acknowledged value; it never
 claims to roll back a submitted backend write. Merely browsing elsewhere after
-a failure still retains its draft. `tst_clipboard_recovery.qml` covers native
-Enter/Tab/Shift+Tab/Escape, status feedback, fresh-lease retries and conflicts.
+a failure still retains its draft. Submitted commits capture the same canonical
+edit snapshot used for failed drafts, separately from paste intent. A shared
+captured-target check routes both success and failure after the editor moves on:
+acknowledgement retires only that entry's failed draft, while uncertainty retains
+its original revision/value for explicit retry, without replacing the newly
+browsed preview. Clearing the view does not clear the captured commit.
+`tst_clipboard_recovery.qml` covers native Enter/Tab/Shift+Tab/Escape, result-key
+navigation during a save, status feedback, fresh-lease retries and conflicts.
 
 ## Submitted clipboard save-and-paste
 
@@ -915,6 +921,9 @@ client still acknowledges the existing hidden-session handshake, only for the
 same active session; it never retries a saved edit for failed paste preparation.
 A new Paste intent arriving after an unrelated save was already submitted still
 waits for that save before requesting paste; it cannot amend an in-flight write.
+The native hidden-session handshake is separate from save completion: missing,
+failed, mismatched or stale paste outcomes cannot issue a fallback publication
+or repeat the commit. Paste intent never becomes retained failed-draft state.
 Field-local drafts and Enter/Tab/Escape behavior are unchanged.
 
 ## Observed application Close

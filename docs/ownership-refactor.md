@@ -56,6 +56,49 @@ decision function **6/5**. Aggregate cognition improves by two, but explicit
 classification/switch effects add lines and effort; this is not a broad metric
 win. Locality, leverage and complete clone groups remain unchanged.
 
+## 3. Clipboard captured edits and recovery
+
+`draftSnapshot` owns the target/revision, preview, submitted text and direct-edit
+projection shared by commit capture and failed-draft storage. `pendingCommit`
+keeps that edit separate from paste intent; a failed draft never inherits a paste
+session. `commitTargetChanged` is the single captured-target predicate for success
+and failure after view replacement. Retirement still happens before either path
+publishes. Successful displaced commits clear the captured failed draft and
+refresh; uncertain displaced commits retain it without altering the new preview.
+
+The native paste handshake has its own guarded `finishNativePaste` boundary,
+separate from acknowledging a saved edit. Missing/failed/mismatched outcomes and
+reopened sessions cannot replay writes or hide a different invocation. A Paste
+intent arriving after submission still waits for acknowledgement, then targets
+the replacement entry with the existing separate action. Mutable view flags and
+captured commit metadata deliberately retain different lifetimes: `clear()` must
+not erase the in-flight snapshot, and cancellation is not backend rollback.
+No new automatic retry, changed request DTO, lease or revision policy.
+
+Five added native cases cover success/uncertainty after actual result-key
+navigation, missing/mismatched native paste outcomes, and a Paste intent arriving
+after write submission. Existing fresh-lease/conflict, explicit save/discard,
+disconnect/no-replay and hidden-session tests remain. The initial new navigation
+fixture omitted `favorite`; it was corrected rather than suppressing its warning.
+Final focused suite is warning-free. Full Qt: **606 passes, zero failures, one
+existing renderer skip**; strict lint, 17 JavaScript checks, native smoke and
+panel-UI drift review pass. Full-suite logs retain existing Time/Weather fixture
+warnings and intentional negative-path diagnostics; no warning-free-host claim.
+
+Relative to step 2: production LOC **44,840 → 44,834**, cyclomatic **8,020 → 8,019**,
+cognitive **5,506 → 5,497**, function effort **39,767 → 39,744**, component effort
+**45,670 → 45,651**. `applyEditCommit` cyclomatic/cognitive **19/26 → 10/12**;
+`failEditCommit` **7/6 → 4/3**. These aggregate comparisons include all new helpers
+(snapshot **1/0**, target predicate **3/2**, native handshake **7/6**), not just
+smaller headline methods. Locality, leverage and complete clone groups are unchanged.
+
+Across all three commits: production cognition **5,508 → 5,497**, function effort
+**39,752 → 39,744**, component effort **45,654 → 45,651**, but LOC rises by **17**
+and cyclomatic sum by **2**. This is a bounded ownership/readability improvement,
+not a claim of broad architectural leverage or fewer domain decisions. Fourteen
+focused regressions bring the established inventory to **555**; the earlier
+pruning target remains a historical checkpoint, not a cap on useful tests.
+
 ## Evidence limits
 
 Metrics are advisory production-only projections, excluding `tests/` and `dev/`
