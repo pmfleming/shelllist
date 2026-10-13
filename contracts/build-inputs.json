@@ -1,0 +1,263 @@
+{
+  "schema": 1,
+  "rust": "1.95.0",
+  "systems": [
+    "x86_64-linux",
+    "aarch64-linux"
+  ],
+  "nixpkgs": {
+    "lastModified": 1784011430,
+    "narHash": "sha256-lDebytrYdd47IBLwvNOD+6AGeoqZ78CIKlp70hzW280=",
+    "owner": "NixOS",
+    "repo": "nixpkgs",
+    "rev": "8eeec934ae0dbeca3d7868c059568a65c08b2fc3",
+    "type": "github"
+  },
+  "repositories": [
+    "daemon-framework",
+    "app-daemon",
+    "bar-daemon",
+    "bt-daemon",
+    "clip-daemon",
+    "nm-daemon",
+    "update-daemon",
+    "shelllist"
+  ],
+  "manifests": [
+    "app-daemon/Cargo.toml",
+    "bar-daemon/Cargo.toml",
+    "bt-daemon/Cargo.toml",
+    "clip-daemon/Cargo.toml",
+    "clip-daemon/vendor/shelllist-search/Cargo.toml",
+    "daemon-framework/Cargo.toml",
+    "daemon-framework/crates/shelllist-daemon-core/Cargo.toml",
+    "daemon-framework/crates/shelllist-daemon-tokio/Cargo.toml",
+    "daemon-framework/crates/shelllist-hyprland/Cargo.toml",
+    "daemon-framework/crates/shelllist-local-build/Cargo.toml",
+    "nm-daemon/Cargo.toml",
+    "shelllist/portal-launcher/Cargo.toml",
+    "shelllist/rust/shelllist-search/Cargo.toml",
+    "shelllist/rust/shelllist-timezone-assets/Cargo.toml",
+    "update-daemon/Cargo.toml",
+    "update-daemon/crates/shelllist-update-status/Cargo.toml"
+  ],
+  "locks": [
+    "daemon-framework/Cargo.lock",
+    "app-daemon/Cargo.lock",
+    "bar-daemon/Cargo.lock",
+    "bt-daemon/Cargo.lock",
+    "clip-daemon/Cargo.lock",
+    "nm-daemon/Cargo.lock",
+    "update-daemon/Cargo.lock",
+    "shelllist/portal-launcher/Cargo.lock",
+    "shelllist/rust/shelllist-search/Cargo.lock",
+    "shelllist/rust/shelllist-timezone-assets/Cargo.lock"
+  ],
+  "nonOwningLocks": {
+    "clip-daemon/vendor/shelllist-search/Cargo.lock": "Ignored local library-test artifact; clip-daemon/Cargo.lock owns this path dependency. Not captured or consumed by product Nix builds."
+  },
+  "shared": {
+    "allocation-counter": {
+      "requirement": "0.8.1",
+      "version": "0.8.1"
+    },
+    "anyhow": {
+      "requirement": "1",
+      "version": "1.0.104"
+    },
+    "async-trait": {
+      "requirement": "0.1",
+      "version": "0.1.92"
+    },
+    "base64": {
+      "requirement": "0.22",
+      "version": "0.22.1",
+      "lockExceptions": {
+        "update-daemon/Cargo.lock": {
+          "versions": [
+            "0.22.1",
+            "0.23.1"
+          ],
+          "reason": "Worker reqwest/rustls graph also needs base64 0.23; direct worker/app API remains 0.22."
+        }
+      }
+    },
+    "clap": {
+      "requirement": "4",
+      "version": "4.6.7"
+    },
+    "clap_builder": {
+      "requirement": null,
+      "version": "4.6.7"
+    },
+    "clap_derive": {
+      "requirement": null,
+      "version": "4.6.7"
+    },
+    "futures": {
+      "requirement": "0.3",
+      "version": "0.3.34"
+    },
+    "futures-channel": {
+      "requirement": null,
+      "version": "0.3.34"
+    },
+    "futures-core": {
+      "requirement": null,
+      "version": "0.3.34"
+    },
+    "futures-executor": {
+      "requirement": null,
+      "version": "0.3.34"
+    },
+    "futures-io": {
+      "requirement": null,
+      "version": "0.3.34"
+    },
+    "futures-macro": {
+      "requirement": null,
+      "version": "0.3.34"
+    },
+    "futures-sink": {
+      "requirement": null,
+      "version": "0.3.34"
+    },
+    "futures-task": {
+      "requirement": null,
+      "version": "0.3.34"
+    },
+    "futures-util": {
+      "requirement": "0.3",
+      "version": "0.3.34"
+    },
+    "fuzzy-matcher": {
+      "requirement": "0.3",
+      "version": "0.3.7"
+    },
+    "hex": {
+      "requirement": "0.4",
+      "version": "0.4.3"
+    },
+    "notify": {
+      "requirement": "8",
+      "version": "8.2.0"
+    },
+    "pipewire": {
+      "requirement": "0.10",
+      "version": "0.10.0"
+    },
+    "reqwest": {
+      "requirement": "0.12",
+      "version": "0.12.28"
+    },
+    "rustix": {
+      "requirement": "1",
+      "version": "1.1.4"
+    },
+    "serde": {
+      "requirement": "1",
+      "version": "1.0.229"
+    },
+    "serde_core": {
+      "requirement": null,
+      "version": "1.0.229"
+    },
+    "serde_derive": {
+      "requirement": null,
+      "version": "1.0.229"
+    },
+    "serde_json": {
+      "requirement": "1",
+      "version": "1.0.151"
+    },
+    "sha2": {
+      "requirement": "0.10",
+      "version": "0.10.9"
+    },
+    "strsim": {
+      "requirement": "0.11",
+      "version": "0.11.1"
+    },
+    "tempfile": {
+      "requirement": "3",
+      "version": "3.27.0"
+    },
+    "tokio": {
+      "requirement": "1",
+      "version": "1.53.1"
+    },
+    "toml": {
+      "requirement": "0.8",
+      "version": "1.1.4+spec-1.1.0",
+      "requirementExceptions": {
+        "clip-daemon/Cargo.toml": {
+          "requirement": "0.9",
+          "reason": "local-build retains toml 0.8 parse-only API; clipboard settings retain toml 0.9. No wire types are shared; a parser migration is outside compiler alignment."
+        }
+      },
+      "lockExceptions": {
+        "daemon-framework/Cargo.lock": {
+          "versions": [
+            "0.8.23"
+          ],
+          "reason": "Distinct TOML parser API generations: local-build 0.8, clipboard config 0.9, and native PipeWire system-deps build tooling 1.1. Keep these exact transitive resolutions until a separate parser/native dependency upgrade."
+        },
+        "clip-daemon/Cargo.lock": {
+          "versions": [
+            "0.9.12+spec-1.1.0",
+            "1.1.4+spec-1.1.0"
+          ],
+          "reason": "Distinct TOML parser API generations: local-build 0.8, clipboard config 0.9, and native PipeWire system-deps build tooling 1.1. Keep these exact transitive resolutions until a separate parser/native dependency upgrade."
+        }
+      }
+    },
+    "tracing": {
+      "requirement": "0.1",
+      "version": "0.1.44"
+    },
+    "tracing-subscriber": {
+      "requirement": "0.3",
+      "version": "0.3.23"
+    },
+    "unicode-normalization": {
+      "requirement": "0.1",
+      "version": "0.1.25"
+    },
+    "url": {
+      "requirement": "2",
+      "version": "2.5.8"
+    },
+    "uuid": {
+      "requirement": "1",
+      "version": "1.26.0"
+    },
+    "wayland-client": {
+      "requirement": "0.31",
+      "version": "0.31.15"
+    },
+    "zbus": {
+      "requirement": "5.18",
+      "version": "5.18.0"
+    },
+    "zbus_macros": {
+      "requirement": null,
+      "version": "5.18.0"
+    },
+    "zbus_names": {
+      "requirement": null,
+      "version": "4.3.4"
+    },
+    "zvariant": {
+      "requirement": "5.13.1",
+      "version": "5.13.1"
+    },
+    "zvariant_derive": {
+      "requirement": null,
+      "version": "5.13.1"
+    },
+    "zvariant_utils": {
+      "requirement": null,
+      "version": "3.5.0"
+    }
+  }
+}

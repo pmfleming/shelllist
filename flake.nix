@@ -30,17 +30,22 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
     };
+    update-worker.url = "git+file:../update-daemon";
     bar-daemon = {
       url = "git+file:../bar-daemon";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
+      inputs.updateWorker.follows = "update-worker";
     };
   };
 
   outputs =
     inputs@{ self, nixpkgs, ... }:
     let
-      systems = [ "x86_64-linux" ];
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
       fontsConf = pkgs: pkgs.makeFontsConf {
         fontDirectories = [
@@ -65,14 +70,15 @@
       packages = forAllSystems (
         system: pkgs:
         let
-          shelllistSearch = pkgs.rustPlatform.buildRustPackage {
+          rustPlatform = (inputs.daemon-framework.lib.toolchain pkgs).rustPlatform;
+          shelllistSearch = rustPlatform.buildRustPackage {
             pname = "shelllist-search";
             version = "0.1.0";
             src = ./rust/shelllist-search;
             cargoLock.lockFile = ./rust/shelllist-search/Cargo.lock;
             meta = mkMeta "Fuzzy result ranking service for Shelllist" "shelllist-search";
           };
-          shelllistTimezoneAssets = pkgs.rustPlatform.buildRustPackage {
+          shelllistTimezoneAssets = rustPlatform.buildRustPackage {
             pname = "shelllist-timezone-assets";
             version = "0.1.0";
             src = ./rust/shelllist-timezone-assets;
@@ -383,7 +389,7 @@
             meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
           };
 
-          portalLauncher = pkgs.rustPlatform.buildRustPackage {
+          portalLauncher = rustPlatform.buildRustPackage {
             pname = "shelllist-portal-launch";
             version = "0.1.0";
             src = pkgs.lib.fileset.toSource {
@@ -451,6 +457,29 @@
               '';
         in
         {
+          buildInputs = import ./nix/build-inputs-check.nix { inherit inputs pkgs system; };
+          buildInputsTests =
+            pkgs.runCommand "shelllist-build-input-policy-tests"
+              {
+                nativeBuildInputs = [ pkgs.python3 ];
+              }
+              ''
+                python3 ${./tests/test-build-inputs.py} ${./tools/check-build-inputs.py}
+                touch $out
+              '';
+          toolchain = (inputs.daemon-framework.lib.toolchain pkgs).check;
+          timezoneAssetsPackage = self.packages.${system}.shelllistTimezoneAssets;
+          portalLauncherPackage = self.packages.${system}.portalLauncher;
+          updateWorkerPackage = inputs.update-worker.lib.mkPackage {
+            inherit pkgs;
+            hostName = "build-test";
+            username = "build-test";
+            manualInputs = [ ];
+            localBuildHelper = "${inputs.daemon-framework.packages.${system}.localBuild}/bin/local-build";
+            localBuildTestHelper = inputs.daemon-framework.packages.${system}.localBuild.unwrappedProgram;
+            piExtensions = pkgs.emptyDirectory;
+            fallbacks = { };
+          };
           # Flake checks do not recurse into inputs. Keep the shared framework
           # suite and all consumer package tests in the mandatory local matrix.
           frameworkWorkspace = inputs.daemon-framework.checks.${system}.workspace;
@@ -947,7 +976,7 @@
               export QT_PLUGIN_PATH="${pkgs.qt6.qtsvg}/lib/qt-6/plugins''${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
               export TZDIR="${pkgs.tzdata}/share/zoneinfo"
             '';
-            packages = [
+            packages = (inputs.daemon-framework.lib.toolchain pkgs).packages ++ [
               pkgs.nixpkgs-fmt
               pkgs.nodejs
               pkgs.typescript
