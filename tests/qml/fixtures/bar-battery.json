@@ -2311,6 +2311,2152 @@
     "protocol": "bar-api",
     "version": 1
   },
+  "operationCancelled": {
+    "data": {
+      "operation": {
+        "cancellation_requested": true,
+        "id": "battery-operation-example",
+        "response": null,
+        "retention_ms": 300000,
+        "state": "running"
+      }
+    },
+    "ok": true,
+    "protocol": "bar-api",
+    "version": 1
+  },
+  "operationFinished": {
+    "battery.cancelCalibration": {
+      "failed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-operation-failed",
+                "message": "Battery helper rejected the operation"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "readbackFailed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-refresh-failed",
+                "message": "Battery readback unavailable; operation may have completed"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "rejected": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "validation-error",
+                "message": "battery.cancelCalibration parameters are invalid: invalid type: null, expected struct BatteryRequest"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "data": {
+                "battery": {
+                  "available": true,
+                  "charging": false,
+                  "critical": false,
+                  "cycles": 101,
+                  "devices": [
+                    {
+                      "cycles": 101,
+                      "energy_full_design_wh": 52.5,
+                      "energy_full_wh": 44.75,
+                      "energy_now_wh": 35.8,
+                      "health_percent": 85,
+                      "id": "BAT0",
+                      "model": "5B11H56418",
+                      "percentage": 80,
+                      "power_watts": 8.2,
+                      "present": true,
+                      "protection": {
+                        "available_behaviours": [
+                          "auto",
+                          "inhibit-charge",
+                          "force-discharge"
+                        ],
+                        "backend": "thinkpad-sysfs",
+                        "charge_behaviour": "auto",
+                        "charge_once_active": false,
+                        "desired_enabled": true,
+                        "desired_end_percent": 80,
+                        "desired_start_percent": 75,
+                        "enabled": true,
+                        "end_percent": 80,
+                        "error": null,
+                        "managed": true,
+                        "start_percent": 75,
+                        "supported": true,
+                        "supports_charge_behaviour": true,
+                        "supports_end": true,
+                        "supports_start": true,
+                        "thresholds_verified": true
+                      },
+                      "serial": "5878",
+                      "state": "discharging",
+                      "vendor": "Sunwoda",
+                      "voltage_volts": 15.48
+                    }
+                  ],
+                  "error": null,
+                  "forecast": {
+                    "approximate": true,
+                    "estimating": false,
+                    "limit": 80,
+                    "percentage": 80,
+                    "scope": "aggregate",
+                    "seconds": 14400.0,
+                    "status": "valid",
+                    "target": 0
+                  },
+                  "health_percent": 85,
+                  "history": {
+                    "active_duration_ms": 900000,
+                    "current_point": {
+                      "active_time_ms": 930000,
+                      "charging": false,
+                      "continuous": true,
+                      "mode": "discharging",
+                      "percentage": 80,
+                      "plugged": false,
+                      "power_valid": true,
+                      "power_watts": 8.2,
+                      "time_to_full_seconds": null,
+                      "timestamp_ms": 1768464930000
+                    },
+                    "energy": {
+                      "activeDurationMs": 0,
+                      "bars": [],
+                      "intervalMs": 900000,
+                      "maximum": 0.0,
+                      "observedMs": 0,
+                      "totalWh": -0.0
+                    },
+                    "last_charge_timestamp_ms": 1768464000000,
+                    "latest_timestamp_ms": 1768464900000,
+                    "points": [],
+                    "retention_days": 7
+                  },
+                  "native_path": "BAT0",
+                  "operation": {
+                    "battery_id": "",
+                    "expires_unix_ms": 0,
+                    "kind": "",
+                    "phase": "",
+                    "started_unix_ms": 0
+                  },
+                  "percentage": 80,
+                  "plugged": true,
+                  "policy": {
+                    "auto_power_saver": true,
+                    "critical_percent": 12,
+                    "critical_profile": "power-saver",
+                    "notify_critical": true,
+                    "notify_warning": true,
+                    "notify_when_full": true,
+                    "recovery_margin_percent": 3,
+                    "warning_percent": 25,
+                    "warning_profile": "power-saver"
+                  },
+                  "power_available": true,
+                  "power_watts": 8.2,
+                  "protection": {
+                    "available_behaviours": [
+                      "auto",
+                      "inhibit-charge",
+                      "force-discharge"
+                    ],
+                    "backend": "thinkpad-sysfs",
+                    "charge_behaviour": "auto",
+                    "charge_once_active": false,
+                    "desired_enabled": true,
+                    "desired_end_percent": 80,
+                    "desired_start_percent": 75,
+                    "enabled": true,
+                    "end_percent": 80,
+                    "error": null,
+                    "managed": true,
+                    "start_percent": 75,
+                    "supported": true,
+                    "supports_charge_behaviour": true,
+                    "supports_end": true,
+                    "supports_start": true,
+                    "thresholds_verified": true
+                  },
+                  "state": "charge-paused",
+                  "time_to_empty_seconds": 14400,
+                  "time_to_full_seconds": 0,
+                  "warning": false
+                }
+              },
+              "ok": true,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "battery.chargeOnce": {
+      "failed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-operation-failed",
+                "message": "Battery helper rejected the operation"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "limited": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "data": {
+                "battery": {
+                  "available": true,
+                  "charging": false,
+                  "critical": false,
+                  "cycles": 101,
+                  "devices": [
+                    {
+                      "cycles": 101,
+                      "energy_full_design_wh": 52.5,
+                      "energy_full_wh": 44.75,
+                      "energy_now_wh": 35.8,
+                      "health_percent": 85,
+                      "id": "BAT0",
+                      "model": "5B11H56418",
+                      "percentage": 80,
+                      "power_watts": 8.2,
+                      "present": true,
+                      "protection": {
+                        "available_behaviours": [
+                          "auto",
+                          "inhibit-charge",
+                          "force-discharge"
+                        ],
+                        "backend": "thinkpad-sysfs",
+                        "charge_behaviour": "auto",
+                        "charge_once_active": true,
+                        "desired_enabled": true,
+                        "desired_end_percent": 80,
+                        "desired_start_percent": 75,
+                        "enabled": true,
+                        "end_percent": 80,
+                        "error": null,
+                        "managed": true,
+                        "start_percent": 0,
+                        "supported": true,
+                        "supports_charge_behaviour": true,
+                        "supports_end": true,
+                        "supports_start": true,
+                        "thresholds_verified": false
+                      },
+                      "serial": "5878",
+                      "state": "discharging",
+                      "vendor": "Sunwoda",
+                      "voltage_volts": 15.48
+                    }
+                  ],
+                  "error": null,
+                  "forecast": {
+                    "approximate": true,
+                    "estimating": false,
+                    "limit": 80,
+                    "percentage": 80,
+                    "scope": "aggregate",
+                    "seconds": 14400.0,
+                    "status": "valid",
+                    "target": 0
+                  },
+                  "health_percent": 85,
+                  "history": {
+                    "active_duration_ms": 900000,
+                    "current_point": {
+                      "active_time_ms": 930000,
+                      "charging": false,
+                      "continuous": true,
+                      "mode": "discharging",
+                      "percentage": 80,
+                      "plugged": false,
+                      "power_valid": true,
+                      "power_watts": 8.2,
+                      "time_to_full_seconds": null,
+                      "timestamp_ms": 1768464930000
+                    },
+                    "energy": {
+                      "activeDurationMs": 0,
+                      "bars": [],
+                      "intervalMs": 900000,
+                      "maximum": 0.0,
+                      "observedMs": 0,
+                      "totalWh": -0.0
+                    },
+                    "last_charge_timestamp_ms": 1768464000000,
+                    "latest_timestamp_ms": 1768464900000,
+                    "points": [],
+                    "retention_days": 7
+                  },
+                  "native_path": "BAT0",
+                  "operation": {
+                    "battery_id": "",
+                    "expires_unix_ms": 0,
+                    "kind": "",
+                    "phase": "",
+                    "started_unix_ms": 0
+                  },
+                  "percentage": 80,
+                  "plugged": true,
+                  "policy": {
+                    "auto_power_saver": true,
+                    "critical_percent": 12,
+                    "critical_profile": "power-saver",
+                    "notify_critical": true,
+                    "notify_warning": true,
+                    "notify_when_full": true,
+                    "recovery_margin_percent": 3,
+                    "warning_percent": 25,
+                    "warning_profile": "power-saver"
+                  },
+                  "power_available": true,
+                  "power_watts": 8.2,
+                  "protection": {
+                    "available_behaviours": [
+                      "auto",
+                      "inhibit-charge",
+                      "force-discharge"
+                    ],
+                    "backend": "thinkpad-sysfs",
+                    "charge_behaviour": "auto",
+                    "charge_once_active": true,
+                    "desired_enabled": true,
+                    "desired_end_percent": 80,
+                    "desired_start_percent": 75,
+                    "enabled": true,
+                    "end_percent": 80,
+                    "error": null,
+                    "managed": true,
+                    "start_percent": 0,
+                    "supported": true,
+                    "supports_charge_behaviour": true,
+                    "supports_end": true,
+                    "supports_start": true,
+                    "thresholds_verified": false
+                  },
+                  "state": "charge-paused",
+                  "time_to_empty_seconds": 14400,
+                  "time_to_full_seconds": 0,
+                  "warning": false
+                },
+                "operation": {
+                  "battery_id": "BAT0",
+                  "end_percent": 80,
+                  "start_percent": 0,
+                  "verified": false
+                }
+              },
+              "ok": true,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "readbackFailed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-refresh-failed",
+                "message": "Battery readback unavailable; operation may have completed"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "rejected": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "validation-error",
+                "message": "battery.chargeOnce parameters are invalid: invalid type: null, expected struct BatteryRequest"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "data": {
+                "battery": {
+                  "available": true,
+                  "charging": false,
+                  "critical": false,
+                  "cycles": 101,
+                  "devices": [
+                    {
+                      "cycles": 101,
+                      "energy_full_design_wh": 52.5,
+                      "energy_full_wh": 44.75,
+                      "energy_now_wh": 35.8,
+                      "health_percent": 85,
+                      "id": "BAT0",
+                      "model": "5B11H56418",
+                      "percentage": 80,
+                      "power_watts": 8.2,
+                      "present": true,
+                      "protection": {
+                        "available_behaviours": [
+                          "auto",
+                          "inhibit-charge",
+                          "force-discharge"
+                        ],
+                        "backend": "thinkpad-sysfs",
+                        "charge_behaviour": "auto",
+                        "charge_once_active": true,
+                        "desired_enabled": true,
+                        "desired_end_percent": 80,
+                        "desired_start_percent": 75,
+                        "enabled": false,
+                        "end_percent": 100,
+                        "error": null,
+                        "managed": true,
+                        "start_percent": 0,
+                        "supported": true,
+                        "supports_charge_behaviour": true,
+                        "supports_end": true,
+                        "supports_start": true,
+                        "thresholds_verified": false
+                      },
+                      "serial": "5878",
+                      "state": "discharging",
+                      "vendor": "Sunwoda",
+                      "voltage_volts": 15.48
+                    }
+                  ],
+                  "error": null,
+                  "forecast": {
+                    "approximate": true,
+                    "estimating": false,
+                    "limit": 80,
+                    "percentage": 80,
+                    "scope": "aggregate",
+                    "seconds": 14400.0,
+                    "status": "valid",
+                    "target": 0
+                  },
+                  "health_percent": 85,
+                  "history": {
+                    "active_duration_ms": 900000,
+                    "current_point": {
+                      "active_time_ms": 930000,
+                      "charging": false,
+                      "continuous": true,
+                      "mode": "discharging",
+                      "percentage": 80,
+                      "plugged": false,
+                      "power_valid": true,
+                      "power_watts": 8.2,
+                      "time_to_full_seconds": null,
+                      "timestamp_ms": 1768464930000
+                    },
+                    "energy": {
+                      "activeDurationMs": 0,
+                      "bars": [],
+                      "intervalMs": 900000,
+                      "maximum": 0.0,
+                      "observedMs": 0,
+                      "totalWh": -0.0
+                    },
+                    "last_charge_timestamp_ms": 1768464000000,
+                    "latest_timestamp_ms": 1768464900000,
+                    "points": [],
+                    "retention_days": 7
+                  },
+                  "native_path": "BAT0",
+                  "operation": {
+                    "battery_id": "",
+                    "expires_unix_ms": 0,
+                    "kind": "",
+                    "phase": "",
+                    "started_unix_ms": 0
+                  },
+                  "percentage": 80,
+                  "plugged": true,
+                  "policy": {
+                    "auto_power_saver": true,
+                    "critical_percent": 12,
+                    "critical_profile": "power-saver",
+                    "notify_critical": true,
+                    "notify_warning": true,
+                    "notify_when_full": true,
+                    "recovery_margin_percent": 3,
+                    "warning_percent": 25,
+                    "warning_profile": "power-saver"
+                  },
+                  "power_available": true,
+                  "power_watts": 8.2,
+                  "protection": {
+                    "available_behaviours": [
+                      "auto",
+                      "inhibit-charge",
+                      "force-discharge"
+                    ],
+                    "backend": "thinkpad-sysfs",
+                    "charge_behaviour": "auto",
+                    "charge_once_active": true,
+                    "desired_enabled": true,
+                    "desired_end_percent": 80,
+                    "desired_start_percent": 75,
+                    "enabled": false,
+                    "end_percent": 100,
+                    "error": null,
+                    "managed": true,
+                    "start_percent": 0,
+                    "supported": true,
+                    "supports_charge_behaviour": true,
+                    "supports_end": true,
+                    "supports_start": true,
+                    "thresholds_verified": false
+                  },
+                  "state": "not-charging",
+                  "time_to_empty_seconds": 14400,
+                  "time_to_full_seconds": 0,
+                  "warning": false
+                },
+                "operation": {
+                  "battery_id": "BAT0",
+                  "end_percent": 100,
+                  "start_percent": 0,
+                  "verified": true
+                }
+              },
+              "ok": true,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "battery.setAlertPolicy": {
+      "failed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-config-failed",
+                "message": "Battery settings could not be saved"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "readbackFailed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-refresh-failed",
+                "message": "Battery readback unavailable; operation may have completed"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "rejected": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "validation-error",
+                "message": "battery.setAlertPolicy parameters are invalid: invalid type: null, expected struct AlertPolicyRequest"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "data": {
+                "battery": {
+                  "available": true,
+                  "charging": false,
+                  "critical": false,
+                  "cycles": 101,
+                  "devices": [
+                    {
+                      "cycles": 101,
+                      "energy_full_design_wh": 52.5,
+                      "energy_full_wh": 44.75,
+                      "energy_now_wh": 35.8,
+                      "health_percent": 85,
+                      "id": "BAT0",
+                      "model": "5B11H56418",
+                      "percentage": 80,
+                      "power_watts": 8.2,
+                      "present": true,
+                      "protection": {
+                        "available_behaviours": [
+                          "auto",
+                          "inhibit-charge",
+                          "force-discharge"
+                        ],
+                        "backend": "thinkpad-sysfs",
+                        "charge_behaviour": "auto",
+                        "charge_once_active": false,
+                        "desired_enabled": true,
+                        "desired_end_percent": 80,
+                        "desired_start_percent": 75,
+                        "enabled": true,
+                        "end_percent": 80,
+                        "error": null,
+                        "managed": true,
+                        "start_percent": 75,
+                        "supported": true,
+                        "supports_charge_behaviour": true,
+                        "supports_end": true,
+                        "supports_start": true,
+                        "thresholds_verified": true
+                      },
+                      "serial": "5878",
+                      "state": "discharging",
+                      "vendor": "Sunwoda",
+                      "voltage_volts": 15.48
+                    }
+                  ],
+                  "error": null,
+                  "forecast": {
+                    "approximate": true,
+                    "estimating": false,
+                    "limit": 80,
+                    "percentage": 80,
+                    "scope": "aggregate",
+                    "seconds": 14400.0,
+                    "status": "valid",
+                    "target": 0
+                  },
+                  "health_percent": 85,
+                  "history": {
+                    "active_duration_ms": 900000,
+                    "current_point": {
+                      "active_time_ms": 930000,
+                      "charging": false,
+                      "continuous": true,
+                      "mode": "discharging",
+                      "percentage": 80,
+                      "plugged": false,
+                      "power_valid": true,
+                      "power_watts": 8.2,
+                      "time_to_full_seconds": null,
+                      "timestamp_ms": 1768464930000
+                    },
+                    "energy": {
+                      "activeDurationMs": 0,
+                      "bars": [],
+                      "intervalMs": 900000,
+                      "maximum": 0.0,
+                      "observedMs": 0,
+                      "totalWh": -0.0
+                    },
+                    "last_charge_timestamp_ms": 1768464000000,
+                    "latest_timestamp_ms": 1768464900000,
+                    "points": [],
+                    "retention_days": 7
+                  },
+                  "native_path": "BAT0",
+                  "operation": {
+                    "battery_id": "",
+                    "expires_unix_ms": 0,
+                    "kind": "",
+                    "phase": "",
+                    "started_unix_ms": 0
+                  },
+                  "percentage": 80,
+                  "plugged": true,
+                  "policy": {
+                    "auto_power_saver": true,
+                    "critical_percent": 10,
+                    "critical_profile": "power-saver",
+                    "notify_critical": true,
+                    "notify_warning": true,
+                    "notify_when_full": true,
+                    "recovery_margin_percent": 3,
+                    "warning_percent": 30,
+                    "warning_profile": "keep-current"
+                  },
+                  "power_available": true,
+                  "power_watts": 8.2,
+                  "protection": {
+                    "available_behaviours": [
+                      "auto",
+                      "inhibit-charge",
+                      "force-discharge"
+                    ],
+                    "backend": "thinkpad-sysfs",
+                    "charge_behaviour": "auto",
+                    "charge_once_active": false,
+                    "desired_enabled": true,
+                    "desired_end_percent": 80,
+                    "desired_start_percent": 75,
+                    "enabled": true,
+                    "end_percent": 80,
+                    "error": null,
+                    "managed": true,
+                    "start_percent": 75,
+                    "supported": true,
+                    "supports_charge_behaviour": true,
+                    "supports_end": true,
+                    "supports_start": true,
+                    "thresholds_verified": true
+                  },
+                  "state": "charge-paused",
+                  "time_to_empty_seconds": 14400,
+                  "time_to_full_seconds": 0,
+                  "warning": false
+                }
+              },
+              "ok": true,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "battery.setChargingInhibited": {
+      "failed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-operation-failed",
+                "message": "Battery helper rejected the operation"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "readbackFailed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-refresh-failed",
+                "message": "Battery readback unavailable; operation may have completed"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "rejected": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "validation-error",
+                "message": "battery.setChargingInhibited parameters are invalid: invalid type: null, expected struct InhibitionRequest"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "data": {
+                "battery": {
+                  "available": true,
+                  "charging": false,
+                  "critical": false,
+                  "cycles": 101,
+                  "devices": [
+                    {
+                      "cycles": 101,
+                      "energy_full_design_wh": 52.5,
+                      "energy_full_wh": 44.75,
+                      "energy_now_wh": 35.8,
+                      "health_percent": 85,
+                      "id": "BAT0",
+                      "model": "5B11H56418",
+                      "percentage": 80,
+                      "power_watts": 8.2,
+                      "present": true,
+                      "protection": {
+                        "available_behaviours": [
+                          "auto",
+                          "inhibit-charge",
+                          "force-discharge"
+                        ],
+                        "backend": "thinkpad-sysfs",
+                        "charge_behaviour": "inhibit-charge",
+                        "charge_once_active": false,
+                        "desired_enabled": true,
+                        "desired_end_percent": 80,
+                        "desired_start_percent": 75,
+                        "enabled": true,
+                        "end_percent": 80,
+                        "error": null,
+                        "managed": true,
+                        "start_percent": 75,
+                        "supported": true,
+                        "supports_charge_behaviour": true,
+                        "supports_end": true,
+                        "supports_start": true,
+                        "thresholds_verified": true
+                      },
+                      "serial": "5878",
+                      "state": "discharging",
+                      "vendor": "Sunwoda",
+                      "voltage_volts": 15.48
+                    }
+                  ],
+                  "error": null,
+                  "forecast": {
+                    "approximate": true,
+                    "estimating": false,
+                    "limit": 80,
+                    "percentage": 80,
+                    "scope": "aggregate",
+                    "seconds": 14400.0,
+                    "status": "valid",
+                    "target": 0
+                  },
+                  "health_percent": 85,
+                  "history": {
+                    "active_duration_ms": 900000,
+                    "current_point": {
+                      "active_time_ms": 930000,
+                      "charging": false,
+                      "continuous": true,
+                      "mode": "discharging",
+                      "percentage": 80,
+                      "plugged": false,
+                      "power_valid": true,
+                      "power_watts": 8.2,
+                      "time_to_full_seconds": null,
+                      "timestamp_ms": 1768464930000
+                    },
+                    "energy": {
+                      "activeDurationMs": 0,
+                      "bars": [],
+                      "intervalMs": 900000,
+                      "maximum": 0.0,
+                      "observedMs": 0,
+                      "totalWh": -0.0
+                    },
+                    "last_charge_timestamp_ms": 1768464000000,
+                    "latest_timestamp_ms": 1768464900000,
+                    "points": [],
+                    "retention_days": 7
+                  },
+                  "native_path": "BAT0",
+                  "operation": {
+                    "battery_id": "BAT0",
+                    "expires_unix_ms": 0,
+                    "kind": "inhibit",
+                    "phase": "paused",
+                    "started_unix_ms": 1700000000000
+                  },
+                  "percentage": 80,
+                  "plugged": true,
+                  "policy": {
+                    "auto_power_saver": true,
+                    "critical_percent": 12,
+                    "critical_profile": "power-saver",
+                    "notify_critical": true,
+                    "notify_warning": true,
+                    "notify_when_full": true,
+                    "recovery_margin_percent": 3,
+                    "warning_percent": 25,
+                    "warning_profile": "power-saver"
+                  },
+                  "power_available": true,
+                  "power_watts": 8.2,
+                  "protection": {
+                    "available_behaviours": [
+                      "auto",
+                      "inhibit-charge",
+                      "force-discharge"
+                    ],
+                    "backend": "thinkpad-sysfs",
+                    "charge_behaviour": "inhibit-charge",
+                    "charge_once_active": false,
+                    "desired_enabled": true,
+                    "desired_end_percent": 80,
+                    "desired_start_percent": 75,
+                    "enabled": true,
+                    "end_percent": 80,
+                    "error": null,
+                    "managed": true,
+                    "start_percent": 75,
+                    "supported": true,
+                    "supports_charge_behaviour": true,
+                    "supports_end": true,
+                    "supports_start": true,
+                    "thresholds_verified": true
+                  },
+                  "state": "charging-inhibited",
+                  "time_to_empty_seconds": 14400,
+                  "time_to_full_seconds": 0,
+                  "warning": false
+                }
+              },
+              "ok": true,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "battery.setProtection": {
+      "failed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-operation-failed",
+                "message": "Battery helper rejected the operation"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "limited": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "data": {
+                "battery": {
+                  "available": true,
+                  "charging": false,
+                  "critical": false,
+                  "cycles": 101,
+                  "devices": [
+                    {
+                      "cycles": 101,
+                      "energy_full_design_wh": 52.5,
+                      "energy_full_wh": 44.75,
+                      "energy_now_wh": 35.8,
+                      "health_percent": 85,
+                      "id": "BAT0",
+                      "model": "5B11H56418",
+                      "percentage": 80,
+                      "power_watts": 8.2,
+                      "present": true,
+                      "protection": {
+                        "available_behaviours": [
+                          "auto",
+                          "inhibit-charge",
+                          "force-discharge"
+                        ],
+                        "backend": "thinkpad-sysfs",
+                        "charge_behaviour": "auto",
+                        "charge_once_active": false,
+                        "desired_enabled": true,
+                        "desired_end_percent": 80,
+                        "desired_start_percent": 60,
+                        "enabled": true,
+                        "end_percent": 80,
+                        "error": null,
+                        "managed": true,
+                        "start_percent": 0,
+                        "supported": true,
+                        "supports_charge_behaviour": true,
+                        "supports_end": true,
+                        "supports_start": true,
+                        "thresholds_verified": false
+                      },
+                      "serial": "5878",
+                      "state": "discharging",
+                      "vendor": "Sunwoda",
+                      "voltage_volts": 15.48
+                    }
+                  ],
+                  "error": null,
+                  "forecast": {
+                    "approximate": true,
+                    "estimating": false,
+                    "limit": 80,
+                    "percentage": 80,
+                    "scope": "aggregate",
+                    "seconds": 14400.0,
+                    "status": "valid",
+                    "target": 0
+                  },
+                  "health_percent": 85,
+                  "history": {
+                    "active_duration_ms": 900000,
+                    "current_point": {
+                      "active_time_ms": 930000,
+                      "charging": false,
+                      "continuous": true,
+                      "mode": "discharging",
+                      "percentage": 80,
+                      "plugged": false,
+                      "power_valid": true,
+                      "power_watts": 8.2,
+                      "time_to_full_seconds": null,
+                      "timestamp_ms": 1768464930000
+                    },
+                    "energy": {
+                      "activeDurationMs": 0,
+                      "bars": [],
+                      "intervalMs": 900000,
+                      "maximum": 0.0,
+                      "observedMs": 0,
+                      "totalWh": -0.0
+                    },
+                    "last_charge_timestamp_ms": 1768464000000,
+                    "latest_timestamp_ms": 1768464900000,
+                    "points": [],
+                    "retention_days": 7
+                  },
+                  "native_path": "BAT0",
+                  "operation": {
+                    "battery_id": "",
+                    "expires_unix_ms": 0,
+                    "kind": "",
+                    "phase": "",
+                    "started_unix_ms": 0
+                  },
+                  "percentage": 80,
+                  "plugged": true,
+                  "policy": {
+                    "auto_power_saver": true,
+                    "critical_percent": 12,
+                    "critical_profile": "power-saver",
+                    "notify_critical": true,
+                    "notify_warning": true,
+                    "notify_when_full": true,
+                    "recovery_margin_percent": 3,
+                    "warning_percent": 25,
+                    "warning_profile": "power-saver"
+                  },
+                  "power_available": true,
+                  "power_watts": 8.2,
+                  "protection": {
+                    "available_behaviours": [
+                      "auto",
+                      "inhibit-charge",
+                      "force-discharge"
+                    ],
+                    "backend": "thinkpad-sysfs",
+                    "charge_behaviour": "auto",
+                    "charge_once_active": false,
+                    "desired_enabled": true,
+                    "desired_end_percent": 80,
+                    "desired_start_percent": 60,
+                    "enabled": true,
+                    "end_percent": 80,
+                    "error": null,
+                    "managed": true,
+                    "start_percent": 0,
+                    "supported": true,
+                    "supports_charge_behaviour": true,
+                    "supports_end": true,
+                    "supports_start": true,
+                    "thresholds_verified": false
+                  },
+                  "state": "charge-paused",
+                  "time_to_empty_seconds": 14400,
+                  "time_to_full_seconds": 0,
+                  "warning": false
+                },
+                "operation": {
+                  "battery_id": "BAT0",
+                  "end_percent": 80,
+                  "start_percent": 0,
+                  "verified": false
+                }
+              },
+              "ok": true,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "readbackFailed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-refresh-failed",
+                "message": "Battery readback unavailable; operation may have completed"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "rejected": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "validation-error",
+                "message": "battery.setProtection parameters are invalid: invalid type: null, expected struct ProtectionRequest"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "data": {
+                "battery": {
+                  "available": true,
+                  "charging": false,
+                  "critical": false,
+                  "cycles": 101,
+                  "devices": [
+                    {
+                      "cycles": 101,
+                      "energy_full_design_wh": 52.5,
+                      "energy_full_wh": 44.75,
+                      "energy_now_wh": 35.8,
+                      "health_percent": 85,
+                      "id": "BAT0",
+                      "model": "5B11H56418",
+                      "percentage": 80,
+                      "power_watts": 8.2,
+                      "present": true,
+                      "protection": {
+                        "available_behaviours": [
+                          "auto",
+                          "inhibit-charge",
+                          "force-discharge"
+                        ],
+                        "backend": "thinkpad-sysfs",
+                        "charge_behaviour": "auto",
+                        "charge_once_active": false,
+                        "desired_enabled": true,
+                        "desired_end_percent": 80,
+                        "desired_start_percent": 60,
+                        "enabled": true,
+                        "end_percent": 80,
+                        "error": null,
+                        "managed": true,
+                        "start_percent": 60,
+                        "supported": true,
+                        "supports_charge_behaviour": true,
+                        "supports_end": true,
+                        "supports_start": true,
+                        "thresholds_verified": true
+                      },
+                      "serial": "5878",
+                      "state": "discharging",
+                      "vendor": "Sunwoda",
+                      "voltage_volts": 15.48
+                    }
+                  ],
+                  "error": null,
+                  "forecast": {
+                    "approximate": true,
+                    "estimating": false,
+                    "limit": 80,
+                    "percentage": 80,
+                    "scope": "aggregate",
+                    "seconds": 14400.0,
+                    "status": "valid",
+                    "target": 0
+                  },
+                  "health_percent": 85,
+                  "history": {
+                    "active_duration_ms": 900000,
+                    "current_point": {
+                      "active_time_ms": 930000,
+                      "charging": false,
+                      "continuous": true,
+                      "mode": "discharging",
+                      "percentage": 80,
+                      "plugged": false,
+                      "power_valid": true,
+                      "power_watts": 8.2,
+                      "time_to_full_seconds": null,
+                      "timestamp_ms": 1768464930000
+                    },
+                    "energy": {
+                      "activeDurationMs": 0,
+                      "bars": [],
+                      "intervalMs": 900000,
+                      "maximum": 0.0,
+                      "observedMs": 0,
+                      "totalWh": -0.0
+                    },
+                    "last_charge_timestamp_ms": 1768464000000,
+                    "latest_timestamp_ms": 1768464900000,
+                    "points": [],
+                    "retention_days": 7
+                  },
+                  "native_path": "BAT0",
+                  "operation": {
+                    "battery_id": "",
+                    "expires_unix_ms": 0,
+                    "kind": "",
+                    "phase": "",
+                    "started_unix_ms": 0
+                  },
+                  "percentage": 80,
+                  "plugged": true,
+                  "policy": {
+                    "auto_power_saver": true,
+                    "critical_percent": 12,
+                    "critical_profile": "power-saver",
+                    "notify_critical": true,
+                    "notify_warning": true,
+                    "notify_when_full": true,
+                    "recovery_margin_percent": 3,
+                    "warning_percent": 25,
+                    "warning_profile": "power-saver"
+                  },
+                  "power_available": true,
+                  "power_watts": 8.2,
+                  "protection": {
+                    "available_behaviours": [
+                      "auto",
+                      "inhibit-charge",
+                      "force-discharge"
+                    ],
+                    "backend": "thinkpad-sysfs",
+                    "charge_behaviour": "auto",
+                    "charge_once_active": false,
+                    "desired_enabled": true,
+                    "desired_end_percent": 80,
+                    "desired_start_percent": 60,
+                    "enabled": true,
+                    "end_percent": 80,
+                    "error": null,
+                    "managed": true,
+                    "start_percent": 60,
+                    "supported": true,
+                    "supports_charge_behaviour": true,
+                    "supports_end": true,
+                    "supports_start": true,
+                    "thresholds_verified": true
+                  },
+                  "state": "charge-paused",
+                  "time_to_empty_seconds": 14400,
+                  "time_to_full_seconds": 0,
+                  "warning": false
+                },
+                "operation": {
+                  "battery_id": "BAT0",
+                  "end_percent": 80,
+                  "start_percent": 60,
+                  "verified": true
+                }
+              },
+              "ok": true,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "battery.setThresholds": {
+      "failed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-operation-failed",
+                "message": "Battery helper rejected the operation"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "limited": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "data": {
+                "battery": {
+                  "available": true,
+                  "charging": false,
+                  "critical": false,
+                  "cycles": 101,
+                  "devices": [
+                    {
+                      "cycles": 101,
+                      "energy_full_design_wh": 52.5,
+                      "energy_full_wh": 44.75,
+                      "energy_now_wh": 35.8,
+                      "health_percent": 85,
+                      "id": "BAT0",
+                      "model": "5B11H56418",
+                      "percentage": 80,
+                      "power_watts": 8.2,
+                      "present": true,
+                      "protection": {
+                        "available_behaviours": [
+                          "auto",
+                          "inhibit-charge",
+                          "force-discharge"
+                        ],
+                        "backend": "thinkpad-sysfs",
+                        "charge_behaviour": "auto",
+                        "charge_once_active": false,
+                        "desired_enabled": true,
+                        "desired_end_percent": 80,
+                        "desired_start_percent": 60,
+                        "enabled": true,
+                        "end_percent": 80,
+                        "error": null,
+                        "managed": true,
+                        "start_percent": 0,
+                        "supported": true,
+                        "supports_charge_behaviour": true,
+                        "supports_end": true,
+                        "supports_start": true,
+                        "thresholds_verified": false
+                      },
+                      "serial": "5878",
+                      "state": "discharging",
+                      "vendor": "Sunwoda",
+                      "voltage_volts": 15.48
+                    }
+                  ],
+                  "error": null,
+                  "forecast": {
+                    "approximate": true,
+                    "estimating": false,
+                    "limit": 80,
+                    "percentage": 80,
+                    "scope": "aggregate",
+                    "seconds": 14400.0,
+                    "status": "valid",
+                    "target": 0
+                  },
+                  "health_percent": 85,
+                  "history": {
+                    "active_duration_ms": 900000,
+                    "current_point": {
+                      "active_time_ms": 930000,
+                      "charging": false,
+                      "continuous": true,
+                      "mode": "discharging",
+                      "percentage": 80,
+                      "plugged": false,
+                      "power_valid": true,
+                      "power_watts": 8.2,
+                      "time_to_full_seconds": null,
+                      "timestamp_ms": 1768464930000
+                    },
+                    "energy": {
+                      "activeDurationMs": 0,
+                      "bars": [],
+                      "intervalMs": 900000,
+                      "maximum": 0.0,
+                      "observedMs": 0,
+                      "totalWh": -0.0
+                    },
+                    "last_charge_timestamp_ms": 1768464000000,
+                    "latest_timestamp_ms": 1768464900000,
+                    "points": [],
+                    "retention_days": 7
+                  },
+                  "native_path": "BAT0",
+                  "operation": {
+                    "battery_id": "",
+                    "expires_unix_ms": 0,
+                    "kind": "",
+                    "phase": "",
+                    "started_unix_ms": 0
+                  },
+                  "percentage": 80,
+                  "plugged": true,
+                  "policy": {
+                    "auto_power_saver": true,
+                    "critical_percent": 12,
+                    "critical_profile": "power-saver",
+                    "notify_critical": true,
+                    "notify_warning": true,
+                    "notify_when_full": true,
+                    "recovery_margin_percent": 3,
+                    "warning_percent": 25,
+                    "warning_profile": "power-saver"
+                  },
+                  "power_available": true,
+                  "power_watts": 8.2,
+                  "protection": {
+                    "available_behaviours": [
+                      "auto",
+                      "inhibit-charge",
+                      "force-discharge"
+                    ],
+                    "backend": "thinkpad-sysfs",
+                    "charge_behaviour": "auto",
+                    "charge_once_active": false,
+                    "desired_enabled": true,
+                    "desired_end_percent": 80,
+                    "desired_start_percent": 60,
+                    "enabled": true,
+                    "end_percent": 80,
+                    "error": null,
+                    "managed": true,
+                    "start_percent": 0,
+                    "supported": true,
+                    "supports_charge_behaviour": true,
+                    "supports_end": true,
+                    "supports_start": true,
+                    "thresholds_verified": false
+                  },
+                  "state": "charge-paused",
+                  "time_to_empty_seconds": 14400,
+                  "time_to_full_seconds": 0,
+                  "warning": false
+                },
+                "operation": {
+                  "battery_id": "BAT0",
+                  "end_percent": 80,
+                  "start_percent": 0,
+                  "verified": false
+                }
+              },
+              "ok": true,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "readbackFailed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-refresh-failed",
+                "message": "Battery readback unavailable; operation may have completed"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "rejected": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "validation-error",
+                "message": "battery.setThresholds parameters are invalid: invalid type: null, expected struct ThresholdRequest"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "data": {
+                "battery": {
+                  "available": true,
+                  "charging": false,
+                  "critical": false,
+                  "cycles": 101,
+                  "devices": [
+                    {
+                      "cycles": 101,
+                      "energy_full_design_wh": 52.5,
+                      "energy_full_wh": 44.75,
+                      "energy_now_wh": 35.8,
+                      "health_percent": 85,
+                      "id": "BAT0",
+                      "model": "5B11H56418",
+                      "percentage": 80,
+                      "power_watts": 8.2,
+                      "present": true,
+                      "protection": {
+                        "available_behaviours": [
+                          "auto",
+                          "inhibit-charge",
+                          "force-discharge"
+                        ],
+                        "backend": "thinkpad-sysfs",
+                        "charge_behaviour": "auto",
+                        "charge_once_active": false,
+                        "desired_enabled": true,
+                        "desired_end_percent": 80,
+                        "desired_start_percent": 60,
+                        "enabled": true,
+                        "end_percent": 80,
+                        "error": null,
+                        "managed": true,
+                        "start_percent": 60,
+                        "supported": true,
+                        "supports_charge_behaviour": true,
+                        "supports_end": true,
+                        "supports_start": true,
+                        "thresholds_verified": true
+                      },
+                      "serial": "5878",
+                      "state": "discharging",
+                      "vendor": "Sunwoda",
+                      "voltage_volts": 15.48
+                    }
+                  ],
+                  "error": null,
+                  "forecast": {
+                    "approximate": true,
+                    "estimating": false,
+                    "limit": 80,
+                    "percentage": 80,
+                    "scope": "aggregate",
+                    "seconds": 14400.0,
+                    "status": "valid",
+                    "target": 0
+                  },
+                  "health_percent": 85,
+                  "history": {
+                    "active_duration_ms": 900000,
+                    "current_point": {
+                      "active_time_ms": 930000,
+                      "charging": false,
+                      "continuous": true,
+                      "mode": "discharging",
+                      "percentage": 80,
+                      "plugged": false,
+                      "power_valid": true,
+                      "power_watts": 8.2,
+                      "time_to_full_seconds": null,
+                      "timestamp_ms": 1768464930000
+                    },
+                    "energy": {
+                      "activeDurationMs": 0,
+                      "bars": [],
+                      "intervalMs": 900000,
+                      "maximum": 0.0,
+                      "observedMs": 0,
+                      "totalWh": -0.0
+                    },
+                    "last_charge_timestamp_ms": 1768464000000,
+                    "latest_timestamp_ms": 1768464900000,
+                    "points": [],
+                    "retention_days": 7
+                  },
+                  "native_path": "BAT0",
+                  "operation": {
+                    "battery_id": "",
+                    "expires_unix_ms": 0,
+                    "kind": "",
+                    "phase": "",
+                    "started_unix_ms": 0
+                  },
+                  "percentage": 80,
+                  "plugged": true,
+                  "policy": {
+                    "auto_power_saver": true,
+                    "critical_percent": 12,
+                    "critical_profile": "power-saver",
+                    "notify_critical": true,
+                    "notify_warning": true,
+                    "notify_when_full": true,
+                    "recovery_margin_percent": 3,
+                    "warning_percent": 25,
+                    "warning_profile": "power-saver"
+                  },
+                  "power_available": true,
+                  "power_watts": 8.2,
+                  "protection": {
+                    "available_behaviours": [
+                      "auto",
+                      "inhibit-charge",
+                      "force-discharge"
+                    ],
+                    "backend": "thinkpad-sysfs",
+                    "charge_behaviour": "auto",
+                    "charge_once_active": false,
+                    "desired_enabled": true,
+                    "desired_end_percent": 80,
+                    "desired_start_percent": 60,
+                    "enabled": true,
+                    "end_percent": 80,
+                    "error": null,
+                    "managed": true,
+                    "start_percent": 60,
+                    "supported": true,
+                    "supports_charge_behaviour": true,
+                    "supports_end": true,
+                    "supports_start": true,
+                    "thresholds_verified": true
+                  },
+                  "state": "charge-paused",
+                  "time_to_empty_seconds": 14400,
+                  "time_to_full_seconds": 0,
+                  "warning": false
+                },
+                "operation": {
+                  "battery_id": "BAT0",
+                  "end_percent": 80,
+                  "start_percent": 60,
+                  "verified": true
+                }
+              },
+              "ok": true,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    },
+    "battery.startCalibration": {
+      "failed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-operation-failed",
+                "message": "Battery helper rejected the operation"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "readbackFailed": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "battery-refresh-failed",
+                "message": "Battery readback unavailable; operation may have completed"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "rejected": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "error": {
+                "code": "validation-error",
+                "message": "battery.startCalibration parameters are invalid: invalid type: null, expected struct BatteryRequest"
+              },
+              "ok": false,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      },
+      "success": {
+        "data": {
+          "operation": {
+            "cancellation_requested": false,
+            "id": "battery-operation-example",
+            "response": {
+              "data": {
+                "battery": {
+                  "available": true,
+                  "charging": false,
+                  "critical": false,
+                  "cycles": 101,
+                  "devices": [
+                    {
+                      "cycles": 101,
+                      "energy_full_design_wh": 52.5,
+                      "energy_full_wh": 44.75,
+                      "energy_now_wh": 35.8,
+                      "health_percent": 85,
+                      "id": "BAT0",
+                      "model": "5B11H56418",
+                      "percentage": 80,
+                      "power_watts": 8.2,
+                      "present": true,
+                      "protection": {
+                        "available_behaviours": [
+                          "auto",
+                          "inhibit-charge",
+                          "force-discharge"
+                        ],
+                        "backend": "thinkpad-sysfs",
+                        "charge_behaviour": "force-discharge",
+                        "charge_once_active": false,
+                        "desired_enabled": true,
+                        "desired_end_percent": 80,
+                        "desired_start_percent": 75,
+                        "enabled": false,
+                        "end_percent": 100,
+                        "error": null,
+                        "managed": true,
+                        "start_percent": 0,
+                        "supported": true,
+                        "supports_charge_behaviour": true,
+                        "supports_end": true,
+                        "supports_start": true,
+                        "thresholds_verified": false
+                      },
+                      "serial": "5878",
+                      "state": "discharging",
+                      "vendor": "Sunwoda",
+                      "voltage_volts": 15.48
+                    }
+                  ],
+                  "error": null,
+                  "forecast": {
+                    "approximate": true,
+                    "estimating": false,
+                    "limit": 80,
+                    "percentage": 80,
+                    "scope": "aggregate",
+                    "seconds": 14400.0,
+                    "status": "valid",
+                    "target": 0
+                  },
+                  "health_percent": 85,
+                  "history": {
+                    "active_duration_ms": 900000,
+                    "current_point": {
+                      "active_time_ms": 930000,
+                      "charging": false,
+                      "continuous": true,
+                      "mode": "discharging",
+                      "percentage": 80,
+                      "plugged": false,
+                      "power_valid": true,
+                      "power_watts": 8.2,
+                      "time_to_full_seconds": null,
+                      "timestamp_ms": 1768464930000
+                    },
+                    "energy": {
+                      "activeDurationMs": 0,
+                      "bars": [],
+                      "intervalMs": 900000,
+                      "maximum": 0.0,
+                      "observedMs": 0,
+                      "totalWh": -0.0
+                    },
+                    "last_charge_timestamp_ms": 1768464000000,
+                    "latest_timestamp_ms": 1768464900000,
+                    "points": [],
+                    "retention_days": 7
+                  },
+                  "native_path": "BAT0",
+                  "operation": {
+                    "battery_id": "BAT0",
+                    "expires_unix_ms": 1700172800000,
+                    "kind": "calibration",
+                    "phase": "discharging",
+                    "started_unix_ms": 1700000000000
+                  },
+                  "percentage": 80,
+                  "plugged": true,
+                  "policy": {
+                    "auto_power_saver": true,
+                    "critical_percent": 12,
+                    "critical_profile": "power-saver",
+                    "notify_critical": true,
+                    "notify_warning": true,
+                    "notify_when_full": true,
+                    "recovery_margin_percent": 3,
+                    "warning_percent": 25,
+                    "warning_profile": "power-saver"
+                  },
+                  "power_available": true,
+                  "power_watts": 8.2,
+                  "protection": {
+                    "available_behaviours": [
+                      "auto",
+                      "inhibit-charge",
+                      "force-discharge"
+                    ],
+                    "backend": "thinkpad-sysfs",
+                    "charge_behaviour": "force-discharge",
+                    "charge_once_active": false,
+                    "desired_enabled": true,
+                    "desired_end_percent": 80,
+                    "desired_start_percent": 75,
+                    "enabled": false,
+                    "end_percent": 100,
+                    "error": null,
+                    "managed": true,
+                    "start_percent": 0,
+                    "supported": true,
+                    "supports_charge_behaviour": true,
+                    "supports_end": true,
+                    "supports_start": true,
+                    "thresholds_verified": false
+                  },
+                  "state": "calibrating",
+                  "time_to_empty_seconds": 14400,
+                  "time_to_full_seconds": 0,
+                  "warning": false
+                }
+              },
+              "ok": true,
+              "protocol": "bar-api",
+              "version": 1
+            },
+            "retention_ms": 300000,
+            "state": "finished"
+          }
+        },
+        "ok": true,
+        "protocol": "bar-api",
+        "version": 1
+      }
+    }
+  },
+  "operationRestorationFailed": {
+    "data": {
+      "operation": {
+        "cancellation_requested": false,
+        "id": "battery-operation-example",
+        "response": {
+          "error": {
+            "code": "battery-operation-failed",
+            "message": "battery BAT0 reported thresholds 0–100 after calibration restoration; recovery remains pending"
+          },
+          "ok": false,
+          "protocol": "bar-api",
+          "version": 1
+        },
+        "retention_ms": 300000,
+        "state": "finished"
+      }
+    },
+    "ok": true,
+    "protocol": "bar-api",
+    "version": 1
+  },
+  "operationStarted": {
+    "data": {
+      "operation": {
+        "cancellation_requested": false,
+        "id": "battery-operation-example",
+        "response": null,
+        "retention_ms": 300000,
+        "state": "running"
+      }
+    },
+    "ok": true,
+    "protocol": "bar-api",
+    "version": 1
+  },
+  "operationUnknown": {
+    "data": {
+      "operation": {
+        "cancellation_requested": false,
+        "id": "battery-operation-example",
+        "response": {
+          "error": {
+            "code": "outcome-unknown",
+            "message": "Battery write outcome unknown; reconcile state"
+          },
+          "ok": false,
+          "protocol": "bar-api",
+          "version": 1
+        },
+        "retention_ms": 300000,
+        "state": "finished"
+      }
+    },
+    "ok": true,
+    "protocol": "bar-api",
+    "version": 1
+  },
   "restorationFailed": {
     "error": {
       "code": "battery-operation-failed",

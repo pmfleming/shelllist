@@ -8,6 +8,9 @@ var version = Protocol.version;
 var methods = {
     snapshot: Protocol.methods["bar.snapshot"],
     history: Protocol.methods["battery.history"],
+    operationStart: Protocol.methods["battery.operation.start"],
+    operationStatus: Protocol.methods["battery.operation.status"],
+    operationCancel: Protocol.methods["battery.operation.cancel"],
     setThresholds: Protocol.methods["battery.setThresholds"],
     setProtection: Protocol.methods["battery.setProtection"],
     chargeOnce: Protocol.methods["battery.chargeOnce"],

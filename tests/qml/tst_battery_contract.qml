@@ -20,13 +20,23 @@ DaemonTestCase {
     function clone(value) { return JSON.parse(JSON.stringify(value)); }
     function init() { calls = []; clientReady = true; failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop).*/); }
     function requests(c) { return calls.filter(call => call.route.consumerId === c.backend.sharedConsumerId); }
-    function effects(c) { return requests(c).filter(call => Object.keys(fixture().cases).includes(call.method)); }
+    function effects(c) { return requests(c).filter(call => call.method === "battery.operation.start" || Object.keys(fixture().cases).includes(call.method)); }
     function lastCall(c, method) {
-        const found = requests(c).filter(call => call.method === method);
+        const found = requests(c).filter(call => call.method === method || (call.method === "battery.operation.start" && call.params.method === method));
         verify(found.length > 0, "Missing " + method); return found[found.length - 1];
     }
     function reply(call, envelope, error) {
         Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id, clone(envelope), error || "", call.route);
+    }
+    function complete(c, call, method, outcome) {
+        if (call.method !== "battery.operation.start") {
+            reply(call, fixture().cases[method][outcome]);
+            return;
+        }
+        reply(call, fixture().operationStarted);
+        verify(c.actionInFlight || c.settingsOperationActive, "Acknowledgement is not completion");
+        c.backend.interactiveOperations.poll();
+        reply(lastCall(c, "battery.operation.status"), outcome === "restorationFailed" ? fixture().operationRestorationFailed : fixture().operationFinished[method][outcome]);
     }
     function event(c, value) {
         const route = Object.assign({}, lastCall(c, "bar.snapshot").route, {kind:"base-subscription", localId:"session-subscribe"});
@@ -56,7 +66,7 @@ DaemonTestCase {
             sent = c.flushAlertPolicy(); break;
         }
         verify(sent, method);
-        const call = lastCall(c, method); compare(call.params, params);
+        const call = lastCall(c, method); compare(call.method === "battery.operation.start" ? call.params.params : call.params, params);
         verify(c.backend.isPending(call.route.localId)); return call;
     }
     function test_outcomes_data() {
@@ -71,7 +81,7 @@ DaemonTestCase {
         const call = start(c, data.method);
         compare(JSON.stringify(c.battery), before);
         const response = fixture().cases[data.method][data.outcome];
-        reply(call, response);
+        complete(c, call, data.method, data.outcome);
         verify(!c.backend.isPending(call.route.localId)); verify(!c.actionInFlight); verify(!c.settingsOperationActive);
         if (response.ok) {
             compare(c.battery, response.data.battery);
@@ -125,23 +135,72 @@ DaemonTestCase {
         if (threshold) c.updateStartPercent(65, false);
         else c.updateWarningPercent(35, false);
         if (data.timeout) reply(call, null, "Outcome unknown");
-        else reply(call, fixture().cases[data.method].success);
+        else complete(c, call, data.method, "success");
         wait(650);
         compare(effects(c).length, 2, "A genuinely newer edit remains a new user request");
         const newer = lastCall(c, data.method);
-        compare(newer.params[threshold ? "start_percent" : "warning_percent"], threshold ? 65 : 35);
+        const params = newer.method === "battery.operation.start" ? newer.params.params : newer.params;
+        compare(params[threshold ? "start_percent" : "warning_percent"], threshold ? 65 : 35);
         compare(threshold ? c.draftStartPercent : c.alertDraft.warning_percent, threshold ? 65 : 35);
         verify(threshold ? c.thresholdDraftDirty : c.alertDraftDirty);
+    }
+    function test_terminalStatusCannotOverwriteNewerBatteryPush() {
+        const c = make("battery.chargeOnce");
+        reply(start(c, "battery.chargeOnce"), fixture().operationStarted);
+        event(c, fixture().events.charging);
+        const current = JSON.stringify(c.battery);
+        c.backend.interactiveOperations.poll();
+        reply(lastCall(c, "battery.operation.status"), fixture().operationFinished["battery.chargeOnce"].success);
+        compare(JSON.stringify(c.battery), current);
+        verify(!c.actionInFlight, "Stale state is discarded, not the operation acknowledgement");
+        compare(effects(c).length, 1);
+        verify(!Object.keys(c.backend.requestPolicy.responseEpochs).some(id => id.startsWith("battery-operation-result::")));
+    }
+    function test_cancelAcknowledgesIntentNotRollback() {
+        const c = make("battery.chargeOnce");
+        const call = start(c, "battery.chargeOnce");
+        reply(call, fixture().operationStarted);
+        verify(c.actionInFlight);
+        c.backend.interactiveOperations.cancel();
+        reply(lastCall(c, "battery.operation.cancel"), fixture().operationCancelled);
+        verify(c.actionInFlight, "Cancel intent is not proof that a write stopped");
+        c.backend.interactiveOperations.poll();
+        reply(lastCall(c, "battery.operation.status"), fixture().operationUnknown);
+        verify(!c.actionInFlight);
+        verify(c.lastError.includes("unknown"));
+        compare(effects(c).length, 1);
+    }
+    function test_statusTimeoutDoesNotReplayStart() {
+        const c = make("battery.chargeOnce");
+        reply(start(c, "battery.chargeOnce"), fixture().operationStarted);
+        c.backend.interactiveOperations.poll();
+        reply(lastCall(c, "battery.operation.status"), null, "Outcome unknown");
+        verify(!c.actionInFlight);
+        wait(1100);
+        compare(effects(c).length, 1);
+        compare(Object.keys(c.backend.interactiveOperations.requests).length, 0);
+    }
+    function test_ownerLossAfterAcknowledgementDoesNotClaimOldStatus() {
+        const c = make("battery.chargeOnce");
+        reply(start(c, "battery.chargeOnce"), fixture().operationStarted);
+        clientReady = false;
+        Io.DaemonSessions.sessions["bar-daemon"].client.transportFailed("Owner lost");
+        clientReady = true;
+        c.backend.interactiveOperations.poll();
+        compare(Object.keys(c.backend.interactiveOperations.requests).length, 0);
+        compare(requests(c).filter(call => call.method === "battery.operation.status").length, 0);
+        compare(effects(c).length, 1);
+        verify(!c.actionInFlight);
     }
     function test_calibrationRestoration() {
         const c = make("battery.startCalibration");
         const call = start(c, "battery.startCalibration");
-        reply(call, fixture().cases[call.method].success);
+        complete(c, call, "battery.startCalibration", "success");
         verify(c.calibrating); verify(!c.actionInFlight);
         event(c, fixture().events.charging); compare(c.batteryOperation.phase, "charging");
         const cancel = start(c, "battery.cancelCalibration");
         event(c, fixture().events.restoring);
-        reply(cancel, fixture().restorationFailed);
+        complete(c, cancel, "battery.cancelCalibration", "restorationFailed");
         verify(c.calibrating, "Failed restoration is still a durable operation");
         compare(c.batteryOperation.phase, "restoring");
         verify(!c.chargeOnce());

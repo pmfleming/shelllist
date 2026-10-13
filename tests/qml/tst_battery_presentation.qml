@@ -345,10 +345,10 @@ DaemonTestCase {
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Left);
         keyClick(Qt.Key_Tab);
-        tryVerify(() => calls.some(c => c.method === "battery.setThresholds"));
-        const write = calls.find(c => c.method === "battery.setThresholds");
-        compare(write.params.battery_id, "BAT0");
-        verify(write.params.start_percent < 85);
+        tryVerify(() => calls.some(c => c.method === "battery.operation.start" && c.params.method === "battery.setThresholds"));
+        const write = calls.find(c => c.method === "battery.operation.start");
+        compare(write.params.params.battery_id, "BAT0");
+        verify(write.params.params.start_percent < 85);
         panel.controller.applyBattery(battery("BAT0", true));
         compare(notify.title, "100%");
         panel.controller.thresholdSaveError = "firmware rejected range";
@@ -382,9 +382,9 @@ DaemonTestCase {
         wait(0);
         modal.focusAction("accept");
         keyClick(Qt.Key_Space);
-        tryVerify(() => calls.some(c => c.method === "battery.startCalibration"));
-        const write = calls.find(c => c.method === "battery.startCalibration");
-        compare(write.params.battery_id, "BAT1");
+        tryVerify(() => calls.some(c => c.method === "battery.operation.start" && c.params.method === "battery.startCalibration"));
+        const write = calls.find(c => c.method === "battery.operation.start");
+        compare(write.params.params.battery_id, "BAT1");
     }
     function test_criticalReviewAndUnavailableDiagnostic() {
         const panel = make("power");

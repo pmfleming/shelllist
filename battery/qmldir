@@ -1,4 +1,5 @@
 module Shelllist.Battery
+internal BatteryInteractiveOperations BatteryInteractiveOperations.qml
 internal BatteryIconValue BatteryIconValue.qml
 internal BatterySectionHeading BatterySectionHeading.qml
 internal BatteryCarePane BatteryCarePane.qml

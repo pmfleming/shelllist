@@ -3,6 +3,10 @@ import Shelllist.Io as Io
 import "BatteryApi.js" as BatteryApi
 
 Io.BarDaemonBackend {
+    id: batteryBackendRoot
+    readonly property alias interactiveOperations: interactive
+    BatteryInteractiveOperations { id: interactive; backend: batteryBackendRoot }
+
     required property BatteryController controller
     daemonName: "bar-daemon"
     expectedProtocol: BatteryApi.protocol
@@ -21,7 +25,7 @@ Io.BarDaemonBackend {
     }
 
     function setThresholds(batteryId: string, startPercent: int, endPercent: int): bool {
-        return callSequenced("battery-thresholds", BatteryApi.methods.setThresholds, {
+        return interactive.start("battery-thresholds", BatteryApi.methods.setThresholds, {
             battery_id: batteryId,
             start_percent: startPercent,
             end_percent: endPercent
@@ -29,7 +33,7 @@ Io.BarDaemonBackend {
     }
 
     function setProtection(batteryId: string, enabled: bool, startPercent: int, endPercent: int): bool {
-        return callSequenced("battery-protection", BatteryApi.methods.setProtection, {
+        return interactive.start("battery-protection", BatteryApi.methods.setProtection, {
             battery_id: batteryId,
             enabled: enabled,
             start_percent: startPercent,
@@ -38,26 +42,26 @@ Io.BarDaemonBackend {
     }
 
     function chargeOnce(batteryId: string): bool {
-        return callSequenced("battery-charge-once", BatteryApi.methods.chargeOnce, {
+        return interactive.start("battery-charge-once", BatteryApi.methods.chargeOnce, {
             battery_id: batteryId
         });
     }
 
     function setChargingInhibited(batteryId: string, enabled: bool): bool {
-        return callSequenced("battery-inhibit", BatteryApi.methods.setChargingInhibited, {
+        return interactive.start("battery-inhibit", BatteryApi.methods.setChargingInhibited, {
             battery_id: batteryId,
             enabled: enabled
         });
     }
 
     function startCalibration(batteryId: string): bool {
-        return callSequenced("battery-calibrate", BatteryApi.methods.startCalibration, {
+        return interactive.start("battery-calibrate", BatteryApi.methods.startCalibration, {
             battery_id: batteryId
         });
     }
 
     function cancelCalibration(batteryId: string): bool {
-        return callSequenced("battery-calibrate-cancel", BatteryApi.methods.cancelCalibration, {
+        return interactive.start("battery-calibrate-cancel", BatteryApi.methods.cancelCalibration, {
             battery_id: batteryId
         });
     }
@@ -176,16 +180,21 @@ Io.BarDaemonBackend {
     }
 
     onResponseReceived: function (id, envelope, transportError) {
-        finish(id, envelope, transportError);
+        if (!interactive.accept(id, envelope, transportError))
+            finish(id, envelope, transportError);
     }
     onEventReceived: function (event) {
         controller.handleEvent(event);
     }
     onSendFailed: function (id, message) {
+        if (["battery-operation-status", "battery-operation-cancel"].includes(requestKind(id)))
+            return; // Read-only status polling owns its bounded recovery.
         rejectRequest(id, message);
     }
     onTransportFailed: function (message) {
-        controller.transportFailed(message);
+        const uncertain = Object.keys(interactive.requests).length > 0;
+        interactive.reset();
+        controller.transportFailed(message + (uncertain ? "; battery operation outcome unknown" : ""));
     }
     onTransportReady: {
         snapshot();
