@@ -42,10 +42,7 @@
   outputs =
     inputs@{ self, nixpkgs, ... }:
     let
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
+      systems = [ "x86_64-linux" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
       surfaceCatalog = import ./nix/surface-catalog.nix { lib = nixpkgs.lib; };
       fontsConf = pkgs: pkgs.makeFontsConf {
@@ -94,7 +91,7 @@
           nmDaemonConnectParityProbe = inputs."nm-daemon".packages.${system}.connectParityProbe;
           mkMeta = description: mainProgram: {
             inherit description mainProgram;
-            platforms = pkgs.lib.platforms.linux;
+            platforms = systems;
           };
         in
         {
@@ -411,7 +408,7 @@
             src = ./.;
             meta = {
               description = "Shared QML configuration for Shelllist applications";
-              platforms = pkgs.lib.platforms.linux;
+              platforms = systems;
             };
             installPhase = ''
               runHook preInstall

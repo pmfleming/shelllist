@@ -2,8 +2,7 @@
   "schema": 1,
   "rust": "1.95.0",
   "systems": [
-    "x86_64-linux",
-    "aarch64-linux"
+    "x86_64-linux"
   ],
   "nixpkgs": {
     "lastModified": 1784011430,

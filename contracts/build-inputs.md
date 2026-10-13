@@ -6,14 +6,29 @@
 conditional product-workspace migration is not approved by this change. Do not
 merge Git histories, delete old checkouts/locks, rename services, or move privilege
 boundaries. Compiler/dependency alignment is independently deployable. A future
-workspace proposal needs explicit approval and native validation on both systems
-before changing source roots and Crane cache boundaries.
+workspace proposal needs explicit approval and native validation on the supported
+x86_64-linux platform before changing source roots and Crane cache boundaries.
 
 The product policy is `contracts/build-inputs.json`, enforced by
 `tools/check-build-inputs.py` and `checks.<system>.buildInputs`. This is a small
 policy/inventory, not another dependency resolver or a generated universal
 workspace. Cargo and the existing locked, offline Nix builds remain authoritative
 for features and transitive resolution.
+
+## Supported platform and CPU scope
+
+**x86_64-linux only**, primarily modern Intel and AMD desktop/laptop CPUs.
+ARM/aarch64, 32-bit x86 and other operating systems are outside product support
+and are not release gates. Flake package/check/app/developer-shell outputs,
+package metadata and host-supplied compiler/worker guards enforce this scope.
+The product input check rejects platform drift and tests unsupported-target
+rejection without needing an ARM builder.
+
+Keep the existing portable x86-64 build baseline. Modern Intel/AMD is the primary
+testing/performance target, not a new instruction-set minimum: do not introduce
+`target-cpu=native`, `-march=native`, mandatory AVX2/x86-64-v3, or a vendor-specific
+CPU target. No CPU-generation cutoff is imposed and no additional testing of
+older CPUs is claimed. This change narrows support; it does not retune binaries.
 
 ## Compiler and actual build inputs
 
@@ -126,22 +141,21 @@ python3 shelllist/tools/check-build-inputs.py
 python3 shelllist/tests/test-build-inputs.py
 # Run in the product developer shell, or use packaged local-build:
 daemon-framework/tools/local-build check shelllist --keep-going
-# Evaluate both targets; native build/test needs an appropriate builder:
+# Evaluate the complete supported output set (x86_64-linux only):
 daemon-framework/tools/local-build check shelllist --all-systems --no-build
 ```
 
-Both `x86_64-linux` and `aarch64-linux` package/check outputs are now exposed.
-Evaluation is **not** native ARM test evidence. The current host has no ARM
-builder/emulation; ARM execution remains a release gate. See
-`architecture-execution.html` for the measured results and outstanding gates.
+Only `x86_64-linux` package/check outputs are exposed. The former ARM execution
+gate is withdrawn by the explicit supported-platform decision, not reported as
+a passed ARM test. See `architecture-execution.html` for the measured results.
 
-The captured x86_64 run passed the compiler/policy checks and locked builds/tests
-for app, bar, BT, NM, framework/local-build, worker, portal, search and timezone.
-It is **not** a green full-product gate: concurrent P4/P5 code caused a clipboard
-client-envelope assertion, extracted boundary-harness failure, QML lint warnings
-and an out-of-date monitor-failure fixture. See `/tmp/p6-final-check.log`; those
-runtime/test files were left to their owning work rather than weakening tests.
-The native QML suite did not get past fixture freshness.
+The initial P6 x86_64 capture passed compiler/policy checks and most locked
+builds/tests, but concurrent P4/P5 changes blocked the full gate (see
+`/tmp/p6-final-check.log`). That failure is historical: the subsequent P4 closure
+records a complete passing x86_64 Nix gate in `/tmp/p4-nix-closed.log`, including
+805 native QML passes (one skipped). Validation of this platform-scope change is
+recorded separately in the execution ledger; neither historical run substitutes
+for checking later concurrent work.
 
 ## Rollout / rollback
 
