@@ -1,0 +1,49 @@
+{
+  "receipt_schema": 1,
+  "contract_version": 2,
+  "deployment": {
+    "status": "awaiting-interactive-authorization",
+    "reason": "The installed stack is NixOS/Home Manager managed; sudo -n requires a password.",
+    "installed_packages_changed": false,
+    "services_restarted": false,
+    "next_command": "rebuild --offline",
+    "next_command_behavior": "Snapshots and rechecks the current /etc/nixos graph before activation, then restarts all five daemons and Shelllist. It includes tracked worktree edits; review them before authorizing.",
+    "receipt_directory": "/home/laufan/.local/state/shelllist/cutovers/contract-v2-wKwpt2mT",
+    "rollback_system": "/nix/store/wk4rmc6b84ayw9v9ysw751fqibsprn1h-nixos-system-thinkpad-26.05.20260719.fd14620",
+    "rollback_scope": "The complete previous system closure includes every currently running Shelllist/daemon executable. A GC root preserves it; rollback activation has not been exercised."
+  },
+  "validation": {
+    "frozen_graph_nix_check": "passed: local-build check shelllist --offline --keep-going",
+    "rust": { "passed": 584, "failed": 0, "ignored": 9, "subprocess_tests_counted_once": true },
+    "configured_node_checks": { "passed": 16, "failed": 0 },
+    "native_and_packaged_qml": {
+      "passed": 618,
+      "failed": 0,
+      "skipped": 1,
+      "skip_reason": "Media artwork pixel check requires an RHI renderer; these runs use the software renderer."
+    },
+    "producer_fixtures": "current",
+    "protocol_bindings": "current",
+    "build_inputs": "aligned: Rust 1.95.0, 10 locked roots, 44 shared dependencies",
+    "tracked_worktree_edits_included": true
+  },
+  "validated_artifacts": {
+    "shelllist": "/nix/store/7cr8mdmwj9isib9ajfnxcds54n6fhh4b-shelllist",
+    "app-daemon": "/nix/store/0iymsx8f9yw8p4sn4amml6ala98s253g-app-daemon-0.1.0",
+    "bar-daemon": "/nix/store/h1hc5jjgnn02c8i3f840ddcls6pyjqng-bar-daemon-0.1.0",
+    "bt-daemon": "/nix/store/bsxac8qcfiqfy8kh9q6186fmrq73d8jl-bt-daemon-0.1.0",
+    "clip-daemon": "/nix/store/i7k190y7gfyiywykdss5pij0mf32c74m-clip-daemon-0.1.0",
+    "nm-daemon": "/nix/store/k1lnijbjc28vmpv8hhb09988612cx1j6-nm-daemon-0.1.0"
+  },
+  "source_commits": {
+    "daemon-framework": "95236154404b64907a6e5604c91a855a8707b2d5",
+    "app-daemon": "a5f42cbfa38485364790aebd6d152df0ebbaef4e",
+    "bar-daemon": "2c293e930f54acfff11a404aa27cc7c7e96feef0",
+    "bt-daemon": "6ea0f5ca312c1f4530ce7d708c02ce18950433be",
+    "clip-daemon": "402d92db45057bc309d09ca840cb583639444095",
+    "nm-daemon": "3bce2fb60ddb6d86c5cd1ca606c58daf781843f6",
+    "shelllist": "9f566bb87320790eee866ca425ae6fea0e461955",
+    "update-daemon": "fb4e2dd1e592ee638a0aeb765d2d799f042502ee"
+  },
+  "coverage_limit": "The coordinated v2 envelope migration covers all five D-Bus daemons. Rust-derived method payload schemas remain the app and bar/audio pilot, not complete schema coverage of every daemon method."
+}
