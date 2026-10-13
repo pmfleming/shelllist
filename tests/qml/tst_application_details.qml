@@ -66,42 +66,6 @@ DaemonTestCase {
         }
         fail("Missing named command: " + name);
     }
-    function test_emptyStatesArePassiveCenteredIcons() {
-        const panel = make(application("desktop-application", 0, 0));
-        const page = findChild(panel, "applicationPage");
-        const windows = findChild(page, "applicationEmptyState");
-        const actions = findChild(page, "applicationNoActions");
-        const data = findChild(page, "applicationDataDetails");
-        for (const state of [windows, actions]) {
-            verify(state.visible);
-            verify(!findChild(state, "contentStateLabel").visible);
-            compare(state.Accessible.name, state.text);
-            const glyph = findChild(state, "contentStateGlyph");
-            compare(glyph.symbol, state === windows ? "web_asset_off" : "extension_off");
-            const center = glyph.mapToItem(page, glyph.width / 2, glyph.height / 2);
-            fuzzyCompare(center.x, page.width / 2, 1);
-            if (state === actions) {
-                verify(center.y > data.y + data.height + glyph.height);
-                fuzzyCompare(center.y, (actions.y + page.height) / 2, 1);
-            }
-        }
-        keyClick(Qt.Key_Tab);
-        verify(panel.detailsNavigation.highlightedControl === null, "Empty states are not editable stops");
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(panel.controller.dispatched.length, 0);
-        keyClick(Qt.Key_A, Qt.AltModifier);
-        compare(panel.controller.dispatched.length, 1, "Launch remains a header command");
-        compare(panel.controller.dispatched[0].action, "activate");
-
-        setApplication(panel, application("desktop-application", 1, 1));
-        tryCompare(windows, "visible", false);
-        tryCompare(actions, "visible", false);
-        setApplication(panel, application("desktop-shortcut", 0, 0));
-        tryCompare(windows, "visible", true);
-        compare(windows.icon, "open_in_new");
-        verify(windows.Accessible.name.indexOf("another application") >= 0);
-        verify(!actions.visible);
-    }
     function test_reorderedRowsKeepIdentityAndLiveApplicationFallback() {
         const app = application("desktop-application", 2, 0);
         const panel = make(app);

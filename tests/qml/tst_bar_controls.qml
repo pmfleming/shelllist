@@ -60,14 +60,11 @@ DaemonTestCase {
             : ["audio.adjust", "audio.setMuted", "audio.setInputMuted", "brightness.adjust", "brightness.set", "powerProfile.set"];
     }
     function cases(battery) {
-        const result = [];
-        for (const method of methods(battery)) {
-            const example = fixture("bar-controls.json")[method];
-            for (const outcome of ["success", "limited", "failed", "rejected"])
-                if (example[outcome])
-                    result.push({tag: method + "/" + outcome, method: method, outcome: outcome, battery: battery});
-        }
-        return result;
+        const failures = battery
+            ? [["powerProfile.set", "limited"], ["powerProfile.setActionEnabled", "failed"], ["powerProfile.setBatteryAware", "rejected"]]
+            : [["audio.adjust", "limited"], ["brightness.adjust", "limited"], ["brightness.adjust", "failed"], ["audio.setInputMuted", "rejected"]];
+        return methods(battery).map(method => [method, "success"]).concat(failures)
+            .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome, battery: battery}));
     }
     function start(controller, method, battery) {
         const params = fixture("bar-controls.json")[method].params;
@@ -139,11 +136,9 @@ DaemonTestCase {
     function test_batteryOutcomes_data() { return cases(true); }
     function test_batteryOutcomes(data) { checkOutcome(data); }
     function test_recoveryNeverReplays_data() {
-        const result = [];
-        for (const battery of [false, true])
-            for (const method of methods(battery))
-                result.push({tag: (battery ? "battery/" : "bar/") + method, method: method, battery: battery});
-        return result;
+        return [["audio.adjust", false], ["brightness.adjust", false],
+            ["powerProfile.set", true], ["powerProfile.setActionEnabled", true]]
+            .map(([method, battery]) => ({tag: (battery ? "battery/" : "bar/") + method, method: method, battery: battery}));
     }
     function test_recoveryNeverReplays(data) {
         const controller = make(data.battery);

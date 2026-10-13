@@ -10,36 +10,37 @@ ColumnLayout {
     required property Component rowDelegate
     property real densityScale: Theme.densityScale(height + 2 * chooserController.contentVerticalMargin, chooserController.contentVerticalMargin)
     property Component listOptionsComponent: null
-    property Component listFooterComponent: null
-    property bool preserveViewportOnAppend: false
+    // Expose the owning controls directly instead of maintaining forwarding state.
+    property alias listFooterComponent: body.listFooterComponent
+    property alias preserveViewportOnAppend: body.preserveViewportOnAppend
     readonly property bool listNearEnd: body.listNearEnd
-    property var resultModel: null
-    property string emptyText: ""
-    property string emptyIcon: ""
-    property string emptyState: "empty"
-    property string placeholder: "Search…"
-    property string icon: ""
-    property bool signalIcon: false
-    property bool powered: false
-    property bool refreshing: false
-    property bool busy: false
-    property bool powerEnabled: true
+    property alias resultModel: body.resultModel
+    property alias emptyText: body.emptyText
+    property alias emptyIcon: body.emptyIcon
+    property alias emptyState: body.emptyState
+    property alias placeholder: header.placeholder
+    property alias icon: header.icon
+    property alias signalIcon: body.signalIcon
+    property alias powered: header.powered
+    property alias refreshing: header.refreshing
+    property alias busy: body.busy
+    property alias powerEnabled: header.powerEnabled
     property alias powerAccessory: header.powerAccessory
-    property bool powerVisible: true
-    property bool refreshEnabled: true
-    property string refreshIcon: "󰑐"
-    property bool focusOnCompleted: false
-    property bool iconActionEnabled: false
-    property string iconAccessibleName: ""
+    property alias powerVisible: header.powerVisible
+    property alias refreshEnabled: header.refreshEnabled
+    property alias refreshIcon: header.refreshIcon
+    property alias focusOnCompleted: header.focusOnCompleted
+    property alias iconActionEnabled: header.iconActionEnabled
+    property alias iconAccessibleName: header.iconAccessibleName
     readonly property real headerHeight: header.height
-    property string searchActionIcon: ""
-    property string searchActionToolTip: ""
-    property bool searchActionEnabled: true
-    property string filterText: ""
-    property string status: ""
-    property string statusSummary: qsTr("Status needs attention")
-    property string statusTone: "info"
-    property Item feedbackScope: null
+    property alias searchActionIcon: header.searchActionIcon
+    property alias searchActionToolTip: header.searchActionToolTip
+    property alias searchActionEnabled: header.searchActionEnabled
+    property alias filterText: header.filterText
+    property alias status: body.status
+    property alias statusSummary: body.statusSummary
+    property alias statusTone: body.statusTone
+    property alias feedbackScope: body.feedbackScope
     property int bodySpacing: Theme.verticalSpacing(Theme.spacingSm, densityScale)
     readonly property int resultCount: body.resultCount
     readonly property real delegateHeight: body.delegateHeight
@@ -103,21 +104,6 @@ ColumnLayout {
     ChooserHeader {
         id: header
         uiScale: 1
-        placeholder: pane.placeholder
-        icon: pane.icon
-        filterText: pane.filterText
-        powered: pane.powered
-        refreshing: pane.refreshing
-        powerEnabled: pane.powerEnabled
-        powerVisible: pane.powerVisible
-        refreshEnabled: pane.refreshEnabled
-        refreshIcon: pane.refreshIcon
-        focusOnCompleted: pane.focusOnCompleted
-        iconActionEnabled: pane.iconActionEnabled
-        iconAccessibleName: pane.iconAccessibleName
-        searchActionIcon: pane.searchActionIcon
-        searchActionToolTip: pane.searchActionToolTip
-        searchActionEnabled: pane.searchActionEnabled
         onQuerySelectionChanged: pane.querySelectionChanged()
         onFilterEdited: function (text) {
             pane.applyFilter(text);
@@ -145,21 +131,9 @@ ColumnLayout {
         Layout.fillHeight: true
         chooserController: pane.chooserController
         rowDelegate: pane.rowDelegate
-        resultModel: pane.resultModel
-        listFooterComponent: pane.listFooterComponent
-        preserveViewportOnAppend: pane.preserveViewportOnAppend
         selectedIndex: pane.selectedIndex
-        emptyText: pane.emptyText
-        emptyIcon: pane.emptyIcon
-        emptyState: pane.emptyState
-        status: pane.status
-        statusSummary: pane.statusSummary
-        statusTone: pane.statusTone
-        feedbackScope: pane.feedbackScope
         icon: pane.icon
-        signalIcon: pane.signalIcon
         powered: pane.powered
-        busy: pane.busy
         bodySpacing: pane.bodySpacing
     }
 }

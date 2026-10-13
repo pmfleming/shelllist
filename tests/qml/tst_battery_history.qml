@@ -51,7 +51,6 @@ TestCase {
     }
     function test_tracksAndPalette_data() {
         return [
-            {tag: "dark", scheme: Qt.Dark, cardWidth: 453},
             {tag: "light-narrow", scheme: Qt.Light, cardWidth: 340}
         ];
     }

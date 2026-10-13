@@ -1,7 +1,6 @@
 module Shelllist.Ui
 SectionHeading 1.0 SectionHeading.qml
 InlineStatus 1.0 InlineStatus.qml
-PanelMessage 1.0 PanelMessage.qml
 singleton Theme 1.0 Theme.qml
 MaterialPalette 1.0 MaterialPalette.qml
 MaterialIcons 1.0 MaterialIcons.js

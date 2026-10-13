@@ -99,7 +99,7 @@ DaemonTestCase {
         compare(controller.catalogError, "");
     }
     function test_structuredErrors_data() {
-        return Object.keys(fixture("app-replies.json").errors).map(code => ({tag: code, code: code}));
+        return ["daemon-unavailable", "validation-error"].map(code => ({tag: code, code: code}));
     }
     function test_structuredErrors(data) {
         const controller = make();

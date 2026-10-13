@@ -11,7 +11,6 @@ internal BarOsdContent BarOsdContent.qml
 BarOsdWindow 1.0 BarOsdWindow.qml
 internal BarOverlayWindow BarOverlayWindow.qml
 BarTray 1.0 BarTray.qml
-BarTrayItem 1.0 BarTrayItem.qml
 BarWindow 1.0 BarWindow.qml
 MediaChip 1.0 MediaChip.qml
 internal MediaPlaybackCard MediaPlaybackCard.qml

@@ -26,11 +26,15 @@ DaemonTestCase {
 
     SignalSpy { id: requests; signalName: "surfaceRequested" }
 
-    function test_allSurfaceShortcutsRegisterAndRoute_data(): var {
-        return Catalog.descriptors.map(item => ({tag: item.id, surfaceId: item.id, label: item.name}));
+    function test_surfaceShortcutRouting_data(): var {
+        // Default, eager and hyphenated lazy IDs exercise the shared delegate.
+        return ["applications", "wifi", "time-weather"].map(id => {
+            const item = Catalog.descriptors.find(item => item.id === id);
+            return {tag: id, surfaceId: id, label: item.name};
+        });
     }
 
-    function test_allSurfaceShortcutsRegisterAndRoute(data): void {
+    function test_surfaceShortcutRouting(data): void {
         const fixture = createTemporaryObject(fixtureComponent, testCase);
         verify(fixture !== null);
         requests.target = fixture.shortcuts;

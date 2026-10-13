@@ -78,7 +78,42 @@ Expected negative-test application error logs are distinct from QML engine
 warnings and remain allowed. Offscreen tests do not replace live compositor,
 hardware, IME or screen-reader acceptance.
 
-## Current pruning checkpoint — baseline aefcf52
+## Current pruning checkpoint — baseline c6451f8 + incoming work
+
+**808 → 541 inventory units: 267 removed (33.04%), 66.96% retained.**
+`round(808 × 0.67) = 541`, using the unchanged established inventory counter.
+The baseline includes the preceding Lens refactor and all other incoming edits.
+
+| Inventory unit | Before | After |
+| --- | ---: | ---: |
+| JavaScript assertion sites | 57 | 57 |
+| QML behavioral cases/data rows, including one existing skip | 736 | 469 |
+| Rust tests | 8 | 8 |
+| Python tests | 2 | 2 |
+| Daemon contract suites | 5 | 5 |
+| **Combined inventory units** | **808** | **541** |
+
+All reductions are actual Qt cases/data rows across 23 files. Contract matrices
+retain live request shapes and sample failures by state owner instead of crossing
+every method with every error/reconnect condition. Compatibility-only routes,
+repeated palette/layout/wording checks and duplicate per-surface input routes are
+removed. Shared native editing, confirmation, ownership, stale replies, secret
+handling, partial acknowledgement and no-replay tests remain. No production code,
+runner, counter, build check, fixture or discovery change; no new skips.
+
+Validation: **592 Qt passes, zero failures, one unchanged renderer skip**
+(468 executed behaviors + 124 lifecycle hooks), strict lint, all 17 JavaScript
+checks, two Python tests, four Rust search tests and native smoke pass. The four
+portal-launcher Rust tests are blocked by an unchanged lockfile/dependency mismatch;
+no lockfile was updated. Five daemon contracts and full Nix/hardware gates were
+not rerun. The mixed inventory is not coverage, and retained shared tests do not
+prove all removed endpoint/presentation permutations.
+
+See [decisions, retained owners and explicit gaps](test-pruning-current.md).
+Matching evidence is in `target/test-pruning-c6451f8/`. Earlier counts below are
+historical; this target is not a cap on future regression tests.
+
+## Previous pruning checkpoint — baseline aefcf52
 
 Baseline includes the incoming uncommitted changes, not an older historical
 checkpoint. **430 → 288 inventory units: 142 removed (33.02%), 66.98% retained.**
@@ -106,9 +141,8 @@ scripts plus source-tree imports, eight Rust tests, two Python tests, QML lint
 and native runtime smoke pass. The five retained daemon contract suites and full
 Nix/hardware/RHI gates were not rerun.
 
-See [decisions, retained owners and explicit gaps](test-pruning-current.md).
-Matching baseline/final sources, logs and inventories are in ignored
-`target/test-pruning-aefcf52/`. The older checkpoints below are historical, not
+Earlier decisions are retained in Git history. Matching baseline/final sources,
+logs and inventories are in ignored `target/test-pruning-aefcf52/`. The older checkpoints below are historical, not
 current coverage promises. This target is not a permanent cap on useful tests.
 
 ## Previous working-tree pruning checkpoint

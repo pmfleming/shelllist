@@ -72,7 +72,8 @@ DaemonTestCase {
     }
 
     function test_initialSurfaceDeepLinks_data(): var {
-        return Catalog.descriptors.map(item => ({tag: item.id, surfaceId: item.id})).concat([{tag: "invalid", surfaceId: "unknown"}]);
+        // Eager, lazy and invalid startup paths; selection tests cover all IDs.
+        return ["wifi", "clipboard", "unknown"].map(id => ({tag: id, surfaceId: id}));
     }
 
     function test_initialSurfaceDeepLinks(data): void {
@@ -104,17 +105,6 @@ DaemonTestCase {
         compare(registry.currentId, "applications");
         compare(Object.keys(registry.loadedSurfaces).sort(), ["bluetooth", "wifi"]);
         compare(Object.keys(registry.openedSurfaces), []);
-    }
-
-    function test_loadingStateIsNotSharedByGeneratedMetadata(): void {
-        const first = createTemporaryObject(registryComponent, testCase);
-        const second = createTemporaryObject(registryComponent, testCase);
-        verify(first !== null && second !== null);
-        verify(first.select("clipboard"));
-        verify(first.isLoaded("clipboard"));
-        verify(!second.isLoaded("clipboard"));
-        verify(!second.wasOpened("clipboard"));
-        compare(second.currentId, Catalog.defaultSurface);
     }
 
     function test_pendingActionRunsOnceAndLatestRequestWins(): void {

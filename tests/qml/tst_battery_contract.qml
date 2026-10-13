@@ -70,11 +70,14 @@ DaemonTestCase {
         verify(c.backend.isPending(call.route.localId)); return call;
     }
     function test_outcomes_data() {
-        const rows = [];
-        for (const method of Object.keys(fixture().cases))
-            for (const outcome of ["success", "limited", "failed", "rejected", "readbackFailed"])
-                if (fixture().cases[method][outcome]) rows.push({tag:method + "/" + outcome, method:method, outcome:outcome});
-        return rows;
+        // Distinct limited hardware readbacks and separate settings owners matter;
+        // repeating the same transport failure for every opcode does not.
+        return Object.keys(fixture().cases).map(method => [method, "success"])
+            .concat([["battery.chargeOnce", "limited"], ["battery.setProtection", "limited"],
+                ["battery.setThresholds", "limited"], ["battery.setThresholds", "failed"],
+                ["battery.setAlertPolicy", "failed"], ["battery.setChargingInhibited", "rejected"],
+                ["battery.startCalibration", "readbackFailed"]])
+            .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome}));
     }
     function test_outcomes(data) {
         const c = make(data.method); const before = JSON.stringify(c.battery);
@@ -98,10 +101,9 @@ DaemonTestCase {
         compare(effects(c).length, 1);
     }
     function test_noReplay_data() {
-        const rows = [];
-        for (const method of Object.keys(fixture().cases))
-            for (const disconnect of [false, true]) rows.push({tag:method + (disconnect ? "/disconnect" : "/timeout"), method:method, disconnect:disconnect});
-        return rows;
+        return [["battery.setThresholds", false], ["battery.setProtection", true],
+            ["battery.setAlertPolicy", false], ["battery.chargeOnce", true]]
+            .map(([method, disconnect]) => ({tag: method + (disconnect ? "/disconnect" : "/timeout"), method: method, disconnect: disconnect}));
     }
     function test_noReplay(data) {
         const c = make(data.method); const call = start(c, data.method);

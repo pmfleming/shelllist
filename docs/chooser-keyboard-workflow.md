@@ -580,6 +580,11 @@ are not power-off states. Audio currently combines inputs and outputs, so its
 empty reason is “No audio devices”; Tray uses its native inventory and never
 invents readiness from the bar daemon.
 
+Shared chooser wrappers expose header/list/status inputs as aliases to their
+owning controls, not duplicate mutable forwarding state. Defaults, incoming
+bindings and the native refresh guard are unchanged. Result-edge fades share
+one passive delegate; they never join field or command traversal.
+
 Owners supply explicit read state, not generic mutation/screenshot busy flags.
 Read errors remain separate from operation status, and a failure cannot become
 successful emptiness when an unrelated command completes. Existing rows and
@@ -622,12 +627,13 @@ acknowledgement, retry, modal and rollback coverage. See the
 ## Validation
 
 The [current pruning review](../tests/test-pruning-current.md), measured from
-`aefcf52` plus incoming work, reduces the established inventory **430 → 288**
-without changing this interaction contract. Shared field transactions, native
-domain acknowledgement/recovery and representative destructive/failure paths
-remain. Exact geometry/paint, repeated consumer field permutations, exhaustive
-malformed-response matrices and some presentation/cache internals have less
-direct evidence; the review names those gaps and retained owners. Earlier test
+`c6451f8` plus incoming work (including the shared-chooser Lens refactor), reduces
+the established inventory **808 → 541** without changing this interaction contract.
+Shared field transactions, native domain acknowledgement/recovery and representative
+destructive/failure paths remain. Repeated command/error/reconnect combinations,
+per-surface startup/shortcut routes, compatibility-only APIs, exact geometry/paint
+and presentation permutations have less direct evidence; the review names those
+gaps and retained owners. Earlier test
 coverage statements in this document describe their original checkpoints, not a
 promise that every historical scenario is still a separate test. No new skips,
 discovery exclusions or counter changes were introduced.

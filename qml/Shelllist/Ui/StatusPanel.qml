@@ -60,7 +60,6 @@ Rectangle {
         }
 
         FeedbackSlot {
-            id: feedback
             Layout.fillWidth: true
             Layout.minimumWidth: 0
             text: panel.status

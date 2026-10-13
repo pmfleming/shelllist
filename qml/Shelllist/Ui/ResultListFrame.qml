@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 Rectangle {
@@ -140,53 +141,34 @@ Rectangle {
     Component.onCompleted: if (controller.uiActive)
         Qt.callLater(revealSelection)
 
-    Rectangle {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        height: Math.min(28, Math.max(16, frame.delegateHeight * 0.48))
-        z: 2
-        opacity: list.count > 0 && !list.atYBeginning ? 1 : 0
-        gradient: Gradient {
-            orientation: Gradient.Vertical
-            GradientStop {
-                position: 0
-                color: Theme.surface
+    Repeater {
+        model: 2
+        delegate: Rectangle {
+            id: fade
+            required property int index
+            readonly property bool bottomEdge: index === 1
+            objectName: bottomEdge ? "resultBottomFade" : "resultTopFade"
+            width: frame.width
+            height: Math.min(28, Math.max(16, frame.delegateHeight * 0.48))
+            y: bottomEdge ? frame.height - height : 0
+            z: 2
+            opacity: list.count > 0 && !(bottomEdge ? list.atYEnd : list.atYBeginning) ? 1 : 0
+            gradient: Gradient {
+                orientation: Gradient.Vertical
+                GradientStop {
+                    position: 0
+                    color: fade.bottomEdge ? Theme.withAlpha(Theme.surface, 0) : Theme.surface
+                }
+                GradientStop {
+                    position: 1
+                    color: fade.bottomEdge ? Theme.surface : Theme.withAlpha(Theme.surface, 0)
+                }
             }
-            GradientStop {
-                position: 1
-                color: Theme.withAlpha(Theme.surface, 0)
-            }
-        }
 
-        InteractiveBehavior on opacity {
-            duration: Theme.animationFast
-            easingType: Easing.Linear
-        }
-    }
-
-    Rectangle {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        height: Math.min(28, Math.max(16, frame.delegateHeight * 0.48))
-        z: 2
-        opacity: list.count > 0 && !list.atYEnd ? 1 : 0
-        gradient: Gradient {
-            orientation: Gradient.Vertical
-            GradientStop {
-                position: 0
-                color: Theme.withAlpha(Theme.surface, 0)
+            InteractiveBehavior on opacity {
+                duration: Theme.animationFast
+                easingType: Easing.Linear
             }
-            GradientStop {
-                position: 1
-                color: Theme.surface
-            }
-        }
-
-        InteractiveBehavior on opacity {
-            duration: Theme.animationFast
-            easingType: Easing.Linear
         }
     }
 

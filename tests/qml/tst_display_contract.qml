@@ -84,11 +84,11 @@ DaemonTestCase {
         return call;
     }
     function test_replyOutcomes_data() {
-        const rows = [];
-        for (const method of Object.keys(fixture().replies))
-            for (const outcome of ["success", "failed", "rejected", "uncertain"])
-                rows.push({tag: method + "/" + outcome, method: method, outcome: outcome});
-        return rows;
+        return Object.keys(fixture().replies).map(method => [method, "success"])
+            .concat([["displayLayout.preview", "rejected"], ["displayLayout.preview", "failed"],
+                ["displayLayout.confirm", "uncertain"], ["displayLayout.revert", "failed"],
+                ["displayFocus.set", "rejected"], ["displayPolicy.set", "failed"]])
+            .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome}));
     }
     function test_replyOutcomes(data) {
         const controller = make();
@@ -125,7 +125,8 @@ DaemonTestCase {
         compare(effects(controller).length, 1, "Failures and uncertain replies cannot replay effects");
     }
     function test_reconnectReadsWithoutReplaying_data() {
-        return Object.keys(fixture().replies).map(method => ({tag: method, method: method}));
+        return ["displayLayout.preview", "displayLayout.confirm", "displayPolicy.set"]
+            .map(method => ({tag: method, method: method}));
     }
     function test_reconnectReadsWithoutReplaying(data) {
         const controller = make();

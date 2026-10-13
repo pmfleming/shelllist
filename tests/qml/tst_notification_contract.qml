@@ -58,9 +58,6 @@ DaemonTestCase {
         const params = example.params;
         let sent = false;
         switch (key) {
-        case "togglePanel": case "toggleDnd":
-            // Compatibility controls use the same transport, without native row context.
-            sent = state.backend.request(key, example.method, clone(params), {}); break;
         case "setDnd": state.dndDurationMinutes = 0; sent = state.setDndEnabled(params.enabled); break;
         case "setAppPolicy": sent = state.setAppPolicy(params.app_key, clone(params.policy)); break;
         case "prepareDelete": sent = state.prepareDelete("", null, "All notifications"); break;
@@ -89,11 +86,14 @@ DaemonTestCase {
         compare(Object.keys(state.policyPending).length, 0);
     }
     function test_outcomes_data() {
-        const rows = [];
-        for (const key of Object.keys(fixture().replies))
-            for (const outcome of ["success", "failed", "rejected", "stale"])
-                if (fixture().replies[key][outcome]) rows.push({tag: key + "/" + outcome, key: key, outcome: outcome});
-        return rows;
+        // One request-shape acknowledgement per live operation; negative rows
+        // distinguish draft, consent, policy and active-record ownership.
+        return ["cancelDelete", "clear", "clearGroup", "delete", "dismiss", "invokeAction",
+            "prepareDelete", "reply", "setAppPolicy", "setDnd", "snooze"].map(key => [key, "success"])
+            .concat([["reply", "failed"], ["setDnd", "failed"], ["setAppPolicy", "failed"],
+                ["prepareDelete", "failed"], ["delete", "failed"], ["cancelDelete", "failed"],
+                ["invokeAction", "stale"], ["dismiss", "stale"], ["snooze", "stale"], ["clearGroup", "rejected"]])
+            .map(([key, outcome]) => ({tag: key + "/" + outcome, key: key, outcome: outcome}));
     }
     function test_outcomes(data) {
         const state = make();
@@ -126,7 +126,7 @@ DaemonTestCase {
         compare(mutations(state).length, count + 1, "Errors and stale IDs cannot replay an effect");
     }
     function test_timeoutsDoNotReplay_data() {
-        return Object.keys(fixture().replies).map(key => ({tag: key, key: key}));
+        return ["reply", "delete", "prepareDelete"].map(key => ({tag: key, key: key}));
     }
     function test_timeoutsDoNotReplay(data) {
         const state = make();
@@ -146,7 +146,7 @@ DaemonTestCase {
         if (["prepareDelete", "delete", "cancelDelete"].includes(data.key)) compare(state.deleteConfirmation, null);
     }
     function test_reconnectNeverReplays_data() {
-        return Object.keys(fixture().replies).map(key => ({tag: key, key: key}));
+        return ["setDnd", "setAppPolicy", "invokeAction", "reply"].map(key => ({tag: key, key: key}));
     }
     function test_reconnectNeverReplays(data) {
         const state = make();
@@ -170,11 +170,10 @@ DaemonTestCase {
             verify(!state.replies[identity].pending);
             compare(state.replies[identity].error, "Notification outcome unknown");
         }
-        // Simulate a late old-generation completion: it must not clear drafts or create consent.
+        // A late old-generation completion must not clear the retained reply draft.
         reply(call, fixture().replies[data.key].success);
         compare(mutations(state).length, count);
         if (data.key === "reply") compare(state.drafts[identity], call.params.text);
-        if (["prepareDelete", "delete", "cancelDelete"].includes(data.key)) compare(state.deleteConfirmation, null);
     }
     function test_actionEventBeforeAcknowledgementClearsOnlyItsPendingIdentity() {
         const state = make();

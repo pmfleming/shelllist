@@ -80,7 +80,6 @@ Item {
         }
     }
     ColumnLayout {
-        id: graphSlot
         objectName: "resourceGraphSlot_" + row.lane.id
         x: row.readingWidth + row.columnGap
         y: Ui.Theme.spacingXs

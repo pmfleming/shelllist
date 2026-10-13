@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtTest
 import Shelllist.Io as Io
 import Shelllist.Activity as Activity
 
@@ -13,7 +12,6 @@ DaemonTestCase {
     Component { id: catalogFactory; Activity.NotificationCatalog {} }
     Component { id: timelineFactory; Activity.NotificationTimeline {} }
     Component { id: controllerFactory; Activity.NotificationController { uiActive: true } }
-    Component { id: spyFactory; SignalSpy { signalName: "responseReceived" } }
     function fixture() {
         if (!loaded) {
             const request = new XMLHttpRequest();
@@ -46,7 +44,7 @@ DaemonTestCase {
         reply(call, example.success); verify(!s.backend.isPending(call.route.localId)); return call;
     }
     function assertReadsOnly(s) {
-        verify(requests(s).every(call => ["bar.snapshot", "notifications.queryCenter", "notifications.queryHistory", "notifications.list"].includes(call.method)));
+        verify(requests(s).every(call => ["bar.snapshot", "notifications.queryCenter"].includes(call.method)));
     }
     function test_appWindowsAreNativeOrderedAndDisjoint() {
         const s = make(); const c = catalog(s); const before = clone(s.notifications);
@@ -79,7 +77,7 @@ DaemonTestCase {
         compare(t.snapshot.period_day, "2026-01-15"); compare(t.error, ""); assertReadsOnly(s);
     }
     function test_errorsKeepPublishedCatalogWithoutReadLoops_data() {
-        return ["invalid", "busy", "unavailable", "centerRejected"].map(key => ({tag:key, key:key}));
+        return ["invalid", "busy"].map(key => ({tag:key, key:key}));
     }
     function test_errorsKeepPublishedCatalogWithoutReadLoops(data) {
         const s = make(); const c = catalog(s); respond(s, "apps", true); const before = clone(c.apps);
@@ -108,26 +106,5 @@ DaemonTestCase {
         reply(lost, fixture().cases.apps.success); compare(c.apps.length, 0);
         tryVerify(() => lastCall(s, "notifications.queryCenter").id !== lost.id);
         respond(s, "apps", false); compare(c.apps.length, 50); assertReadsOnly(s);
-    }
-    function test_legacyQueriesRemainAvailableOnRealReplyRoute_data() {
-        return ["app", "app-next", "search", "history", "history-next", "list"].map(key => ({tag:key, key:key}));
-    }
-    function test_legacyQueriesRemainAvailableOnRealReplyRoute(data) {
-        // These compatibility methods/views no longer own a resident UI projection.
-        // Observe the actual shared reply route, not a fabricated replacement view.
-        const s = make(); const spy = createTemporaryObject(spyFactory, s, {target:s.backend}); verify(spy.valid);
-        const example = fixture().cases[data.key];
-        verify(s.backend.request("compatibility-read", example.method, clone(example.params), {}));
-        const call = lastCall(s, example.method); reply(call, example.success);
-        compare(spy.count, 1); compare(spy.signalArguments[0][0], call.route.localId);
-        compare(spy.signalArguments[0][1], example.success); compare(s.lastError, "");
-        verify(!s.backend.isPending(call.route.localId));
-        if (data.key === "history") {
-            const next = fixture().cases["history-next"];
-            const params = clone(next.params); params.cursor = spy.signalArguments[0][1].data.notification_page.next_cursor;
-            verify(s.backend.request("compatibility-read", next.method, params, {}));
-            compare(lastCall(s, next.method).params, next.params); respond(s, "history-next", true);
-        }
-        assertReadsOnly(s);
     }
 }

@@ -8,22 +8,22 @@ Item {
 
     required property ChooserController chooserController
     required property Component rowDelegate
-    property var resultModel: null
-    property Component listFooterComponent: null
-    property bool preserveViewportOnAppend: false
+    property alias resultModel: listFrame.resultModel
+    property alias listFooterComponent: listFrame.footerComponent
+    property alias preserveViewportOnAppend: listFrame.preserveViewportOnAppend
     readonly property bool listNearEnd: listFrame.nearEnd
-    property int selectedIndex: 0
-    property string emptyText: ""
-    property string emptyIcon: ""
-    property string emptyState: "empty"
+    property alias selectedIndex: listFrame.selectedIndex
+    property alias emptyText: listFrame.emptyText
+    property alias emptyIcon: listFrame.emptyIcon
+    property alias emptyState: listFrame.emptyState
     property string status: ""
-    property string statusSummary: qsTr("Status needs attention")
-    property string statusTone: "info"
-    property Item feedbackScope: null
-    property string icon: ""
-    property bool signalIcon: false
-    property bool powered: false
-    property bool busy: false
+    property alias statusSummary: statusPanel.statusSummary
+    property alias statusTone: statusPanel.statusTone
+    property alias feedbackScope: statusPanel.feedbackScope
+    property alias icon: statusPanel.icon
+    property alias signalIcon: statusPanel.signalIcon
+    property alias powered: statusPanel.powered
+    property alias busy: statusPanel.busy
     property int bodySpacing: 0
     readonly property real delegateHeight: listFrame.delegateHeight
     readonly property bool listFocused: listFrame.listFocused
@@ -55,13 +55,6 @@ Item {
             Layout.fillHeight: true
             uiScale: 1
             controller: body.chooserController
-            resultModel: body.resultModel
-            footerComponent: body.listFooterComponent
-            preserveViewportOnAppend: body.preserveViewportOnAppend
-            selectedIndex: body.selectedIndex
-            emptyText: body.emptyText
-            emptyIcon: body.emptyIcon
-            emptyState: body.emptyState
             // Preserve operation/screenshot/error ownership of the footer. If
             // occupied, keep the missing-content reason visible beside its icon.
             emptyShowLabel: body.status.length > 0 && body.status !== body.emptyText
@@ -73,16 +66,10 @@ Item {
 
         // Keep domain progress/errors; a result count cannot replace these.
         StatusPanel {
+            id: statusPanel
             Layout.fillWidth: true
             uiScale: 1
             status: body.status || (listFrame.count === 0 ? body.emptyText : "")
-            statusSummary: body.statusSummary
-            statusTone: body.statusTone
-            feedbackScope: body.feedbackScope
-            icon: body.icon
-            signalIcon: body.signalIcon
-            powered: body.powered
-            busy: body.busy
         }
     }
 }

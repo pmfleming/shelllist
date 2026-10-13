@@ -23,6 +23,8 @@ DaemonTestCase {
             chooserController: Ui.ProviderChooserController {
                 id: owner
                 uiActive: true
+                property int refreshes: 0
+                function refresh(): void { refreshes++; }
                 providerRankedResults: true
                 closeDetailsWithoutSelection: true
                 provider: Core.Provider { providerId: "state-test"; displayName: "State test" }
@@ -62,6 +64,13 @@ DaemonTestCase {
         tryVerify(() => surface.listItem !== null);
         const list = surface.listItem;
         const owner = surface.chooserController;
+        const refresh = findChild(surface, "chooserRefreshButton");
+        list.refreshing = true;
+        mouseClick(refresh);
+        compare(owner.refreshes, 0, "forwarded busy state must still guard the native button");
+        list.refreshing = false;
+        mouseClick(refresh);
+        compare(owner.refreshes, 1);
         const message = findChild(surface, "resultListEmptyMessage");
         tryCompare(message, "visible", true);
         compare(message.kind, "loading");

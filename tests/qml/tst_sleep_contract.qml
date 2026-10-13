@@ -80,12 +80,11 @@ DaemonTestCase {
         return call;
     }
     function test_replies_data() {
-        const rows = [];
-        for (const method of Object.keys(fixture().replies))
-            for (const outcome of ["success", "failed", "rejected", "uncertain"])
-                if (fixture().replies[method][outcome])
-                    rows.push({tag: method + "/" + outcome, method: method, outcome: outcome});
-        return rows;
+        return Object.keys(fixture().replies).map(method => [method, "success"])
+            .concat([["powerSleep.lock", "failed"], ["powerSleep.setKeepAwake", "failed"],
+                ["powerSleep.setPolicy", "failed"], ["powerSleep.setCriticalPolicy", "rejected"],
+                ["powerSleep.hibernate", "uncertain"], ["powerSleep.cancelCritical", "failed"]])
+            .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome}));
     }
     function test_replies(data) {
         const controller = make();
@@ -149,11 +148,11 @@ DaemonTestCase {
         compare(effects(controller).length, 1);
     }
     function test_terminalOutcomes_data() {
-        const rows = [];
-        for (const action of ["suspend", "hibernate"])
-            for (const name of ["job-failed", "preflight-failed", "cancelled-before-dispatch", "interrupted-dispatch", "monitor-lost", "reply-lost"])
-                rows.push({tag: action + "/" + name, action: action, outcome: name});
-        return rows;
+        // Every terminal failure class, without crossing each with both actions.
+        return [["suspend", "job-failed"], ["hibernate", "preflight-failed"],
+            ["suspend", "cancelled-before-dispatch"], ["hibernate", "interrupted-dispatch"],
+            ["suspend", "monitor-lost"], ["hibernate", "reply-lost"]]
+            .map(([action, outcome]) => ({tag: action + "/" + outcome, action: action, outcome: outcome}));
     }
     function test_terminalOutcomes(data) {
         const controller = make();
@@ -169,11 +168,8 @@ DaemonTestCase {
         compare(effects(controller).length, 0, "Failure, worker cancellation and uncertainty cannot initiate a retry");
     }
     function test_reconnectNeverReplays_data() {
-        const rows = [];
-        for (const action of ["suspend", "hibernate"])
-            for (const stage of ["pending", "accepted", "unknown"])
-                rows.push({tag: action + "/" + stage, action: action, stage: stage});
-        return rows;
+        return [["suspend", "pending"], ["hibernate", "accepted"], ["suspend", "unknown"]]
+            .map(([action, stage]) => ({tag: action + "/" + stage, action: action, stage: stage}));
     }
     function test_reconnectNeverReplays(data) {
         const controller = make();

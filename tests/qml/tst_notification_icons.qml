@@ -21,6 +21,16 @@ TestCase {
         }
     }
     function cleanup() { Quickshell.themeIcons = ({}); }
+    function test_candidatePrecedence_data() {
+        return [
+            {tag: "symbolic before next candidate", notification: {identity_icon: "fallback", app_icon: "app"}, expected: "symbolic"},
+            {tag: "internal content excluded", notification: {app_name: "Shelllist", app_icon: "app"}, expected: ""}
+        ];
+    }
+    function test_candidatePrecedence(data) {
+        Quickshell.themeIcons = {app: "app", "fallback-symbolic": "symbolic"};
+        compare(Ui.NotificationIconSource.resolve(data.notification), data.expected);
+    }
     function test_installedAppFallbackAndFailedFileRecover() {
         const source = Qt.resolvedUrl("fixtures/media-cover.svg").toString();
         Quickshell.themeIcons = {signal: source};

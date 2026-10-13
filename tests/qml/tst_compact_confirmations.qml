@@ -58,7 +58,6 @@ DaemonTestCase {
         calls = [];
         failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop|Cannot assign|Unable to assign).*/);
     }
-    function cleanup() { Ui.Theme.previewColorScheme = Qt.Unknown; }
     function verifyCompact(dialog, actions = true) {
         verify(dialog.visible && dialog.compactPresentation);
         verify(!findChild(dialog, "modalDetail").visible);
@@ -79,15 +78,8 @@ DaemonTestCase {
             compare(Math.round(title.mapToItem(dialog, 0, title.height / 2).y), Math.round(right.y));
         }
     }
-    function test_sharedNativeFocusAndCompactLayout_data() {
-        return [{tag: "dark-normal", size: 560, scheme: Qt.Dark},
-            {tag: "dark-narrow", size: 360, scheme: Qt.Dark},
-            {tag: "light-normal", size: 560, scheme: Qt.Light},
-            {tag: "light-narrow", size: 360, scheme: Qt.Light}];
-    }
-    function test_sharedNativeFocusAndCompactLayout(data) {
-        Ui.Theme.previewColorScheme = data.scheme;
-        const panel = createTemporaryObject(sharedFactory, tests, {width: data.size});
+    function test_sharedNativeFocusAndCompactLayout() {
+        const panel = createTemporaryObject(sharedFactory, tests, {width: 360});
         panel.prior.focusInput(false);
         const preceding = panel.Window.window.activeFocusItem;
         const dialog = panel.dialog;
@@ -137,7 +129,9 @@ DaemonTestCase {
         return panel;
     }
     function test_bluetoothPairingVariants_data() {
-        return ["confirmation", "authorization", "service-authorization", "pin-code", "passkey", "display-pin", "display-passkey"]
+        // Consent, validated native input and remote-owned display are distinct.
+        // BluetoothRecovery retains PIN clearing and queued request ownership.
+        return ["service-authorization", "passkey", "display-passkey"]
             .map(kind => ({tag: kind, kind: kind}));
     }
     function test_bluetoothPairingVariants(data) {
@@ -151,7 +145,7 @@ DaemonTestCase {
         verifyCompact(dialog, !passive);
         verify(!panel.content.navigationEnabled);
         const input = findChild(dialog, "promptInput");
-        const inputRequired = ["pin-code", "passkey"].includes(data.kind);
+        const inputRequired = data.kind === "passkey";
         compare(input.visible, inputRequired);
         compare(findChild(dialog, "bluetoothPairingCode").visible, !inputRequired);
         if (data.kind === "service-authorization")
@@ -163,21 +157,18 @@ DaemonTestCase {
             keyClick(Qt.Key_Enter);
             compare(calls.filter(call => call.method === "bluetooth.pairing.respond").length, 0);
             verify(dialog.visible, "remote-owned progress has no local approval/rejection");
-            if (data.kind === "display-passkey")
-                compare(findChild(dialog, "bluetoothPairingProgress").text, "3 / 6 digits");
+            compare(findChild(dialog, "bluetoothPairingProgress").text, "3 / 6 digits");
         } else {
             if (inputRequired) {
                 tryVerify(() => input.inputActiveFocus);
                 verify(input.password);
-                compare(input.maximumLength, data.kind === "passkey" ? 6 : 16);
+                compare(input.maximumLength, 6);
                 verify(!dialog.acceptEnabled);
-                if (data.kind === "passkey") {
-                    keyClick(Qt.Key_A);
-                    keyClick(Qt.Key_Return);
-                    verify(!dialog.acceptEnabled);
-                    compare(calls.filter(call => call.method === "bluetooth.pairing.respond").length, 0);
-                    keyClick(Qt.Key_A, Qt.ControlModifier);
-                }
+                keyClick(Qt.Key_A);
+                keyClick(Qt.Key_Return);
+                verify(!dialog.acceptEnabled);
+                compare(calls.filter(call => call.method === "bluetooth.pairing.respond").length, 0);
+                keyClick(Qt.Key_A, Qt.ControlModifier);
                 for (let i = 1; i <= 6; ++i) keyClick(Qt.Key_0 + i);
                 verify(dialog.acceptEnabled);
                 compare(calls.filter(call => call.method === "bluetooth.pairing.respond").length, 0);
@@ -217,25 +208,22 @@ DaemonTestCase {
         compare(writes.length, 1);
         compare(writes[0].params.key, "buds");
     }
-    function test_wifiTypedChallengeAndCredentialOptOut_data() {
-        return [{tag: "inactive", active: false}, {tag: "connected", active: true}];
-    }
-    function test_wifiTypedChallengeAndCredentialOptOut(data) {
+    function test_wifiTypedChallengeAndCredentialOptOut() {
         const panel = createTemporaryObject(wifiFactory, tests);
         const c = panel.controller;
-        const ap = {key: "cafe", ssid: "Cafe", active: data.active, strength: 70, security: "wpa2", profiles: [{id: "Cafe"}]};
+        const ap = {key: "cafe", ssid: "Cafe", active: true, strength: 70, security: "wpa2", profiles: [{id: "Cafe"}]};
         c.applyNetworks([ap], true, {});
         c.uiActive = true;
         wait(0);
         c.backend.pending = ({});
         panel.content.listItem.focusList();
         calls = [];
-        c.prompt.openForgetPrompt(ap, data.active, ap.profiles);
+        c.prompt.openForgetPrompt(ap, true, ap.profiles);
         const dialog = findChild(panel, "wifiPrompt");
         const input = findChild(dialog, "promptInput");
         tryVerify(() => input.inputActiveFocus);
         verifyCompact(dialog);
-        compare(dialog.title, data.active ? "Disconnect & forget Cafe?" : "Forget Cafe?");
+        compare(dialog.title, "Disconnect & forget Cafe?");
         compare(dialog.inputLabel, "Type FORGET");
         keyClick(Qt.Key_X);
         keyClick(Qt.Key_Return);
@@ -244,7 +232,7 @@ DaemonTestCase {
         keyClick(Qt.Key_Escape);
         verify(!c.prompt.open);
         compare(calls.length, 0);
-        c.prompt.openForgetPrompt(ap, data.active, ap.profiles);
+        c.prompt.openForgetPrompt(ap, true, ap.profiles);
         tryVerify(() => input.inputActiveFocus);
         for (const key of [Qt.Key_Space, Qt.Key_F, Qt.Key_O, Qt.Key_R, Qt.Key_G, Qt.Key_E, Qt.Key_T, Qt.Key_Space]) keyClick(key);
         verify(dialog.acceptEnabled, "existing trimmed/case-insensitive challenge remains valid");

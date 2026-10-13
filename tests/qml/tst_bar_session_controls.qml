@@ -51,11 +51,11 @@ DaemonTestCase {
         return call;
     }
     function test_outcomes_data() {
-        const rows = [];
-        for (const key of Object.keys(fixture().cases))
-            for (const outcome of ["success", "failed", "rejected"])
-                if (fixture().cases[key][outcome]) rows.push({tag: key + "/" + outcome, key: key, outcome: outcome});
-        return rows;
+        // Keep every request DTO, not every shared error code for every action.
+        return Object.keys(fixture().cases).map(key => [key, "success"])
+            .concat([["workspace", "failed"], ["updates", "failed"], ["seek", "rejected"],
+                ["select", "failed"], ["set-mode", "rejected"]])
+            .map(([key, outcome]) => ({tag: key + "/" + outcome, key: key, outcome: outcome}));
     }
     function test_outcomes(data) {
         const c = make();
@@ -76,13 +76,10 @@ DaemonTestCase {
         }
         compare(effects(c).length, 1);
     }
-    function recoveryCases() {
-        const rows = [];
-        for (const key of Object.keys(fixture().cases))
-            for (const disconnect of [false, true]) rows.push({tag:key + (disconnect ? "/disconnect" : "/timeout"), key:key, disconnect:disconnect});
-        return rows;
+    function test_noReplay_data() {
+        return [["play-pause", false], ["seek", true], ["select", false], ["workspace", true]]
+            .map(([key, disconnect]) => ({tag: key + (disconnect ? "/disconnect" : "/timeout"), key: key, disconnect: disconnect}));
     }
-    function test_noReplay_data() { return recoveryCases(); }
     function test_noReplay(data) {
         const c = make(); const call = start(c, data.key);
         if (data.disconnect) {

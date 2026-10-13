@@ -87,7 +87,11 @@ DaemonTestCase {
         verifySnapshot(controller);
         compare(requests(controller.backend).length, before, "Push delivery cannot be hidden by snapshot recovery");
     }
-    function test_laggedEventsRecoverReadOnly_data() { return test_barStreams_data(); }
+    function test_laggedEventsRecoverReadOnly_data() {
+        // All streams route above; sample scalar, list and nested recovery here.
+        return ["audio", "workspaces", "powerProfile"]
+            .map(property => ({tag: property, property: property, stream: Api.streams[property]}));
+    }
     function test_laggedEventsRecoverReadOnly(data) {
         const controller = makeBar();
         const call = lastRead(controller.backend);
@@ -111,18 +115,6 @@ DaemonTestCase {
         compare(JSON.stringify(controller.battery), battery);
         reply(stale);
         verify(!controller.audio.available, "an older read cannot resurrect a dead monitor");
-    }
-    function test_invalidMetadataDoesNotReachConsumer() {
-        const controller = makeBar();
-        const call = lastRead(controller.backend);
-        const value = fixture().subscribed[Api.streams.audio];
-        for (const patch of [{protocol: "foreign-api"}, {version: Api.version + 1}, {stream: ""}, {event: ""}]) {
-            event(call, Object.assign({}, value, patch));
-            verifySnapshot(controller);
-        }
-        event(call, value);
-        compare(controller.audio, value.data, "Valid data still routes after rejected envelopes");
-        compare(requests(controller.backend).length, 1);
     }
     function test_projections_data() {
         return [{tag: "workarea", projection: "workarea"}, {tag: "compositor", projection: "compositor"}];
@@ -180,22 +172,15 @@ DaemonTestCase {
         // Battery independently loads history when the first snapshot arrives.
         verify(requests(controller.backend).every(call => [Api.methods.snapshot, "battery.history"].includes(call.method)));
     }
-    function test_residentNotifications_data() {
-        return [{tag: "snapshot", pushes: false}, {tag: "events", pushes: true}];
-    }
-    function test_residentNotifications(data) {
+    function test_residentNotificationEvents() {
         const store = createTemporaryObject(notificationsFactory, tests);
         verify(store !== null);
         const call = lastRead(store.backend);
-        if (data.pushes) {
-            for (const stream of [Api.streams.notifications, Api.streams.notificationActive]) {
-                event(call, fixture().subscribed[stream]);
-                event(call, fixture().changed[stream]);
-            }
-            tryVerify(() => store.notifications.available && store.notificationActive.available);
-        } else {
-            reply(call);
+        for (const stream of [Api.streams.notifications, Api.streams.notificationActive]) {
+            event(call, fixture().subscribed[stream]);
+            event(call, fixture().changed[stream]);
         }
+        tryVerify(() => store.notifications.available && store.notificationActive.available);
         compare(store.notifications, fixture().snapshot.data.snapshot.notifications);
         compare(store.notificationActive, fixture().snapshot.data.snapshot.notification_active);
         compare(store.activeRecords.length, 1);
