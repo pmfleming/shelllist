@@ -62,10 +62,10 @@ function secretTransition(event, mode, requestId, outcomeRequestId) {
         return {
             stage: "requested"
         };
-    if (event.event === "cancelled" && mode === "daemon-secret" && requestId === event.request_id)
+    if (event.event === "cancelled" && (requestId === event.request_id || outcomeRequestId === event.request_id))
         return {
             stage: "cancelled",
-            message: event.data.reason === "expired" ? "Credential request expired. Select the network and connect again." : "NetworkManager cancelled the Wi-Fi secret request."
+            message: event.data.reason === "activation-finished" ? "" : event.data.reason === "expired" ? "Credential request expired. Select the network and connect again." : "NetworkManager cancelled the Wi-Fi secret request."
         };
     if (event.event === "delivered" && event.request_id === outcomeRequestId)
         return {

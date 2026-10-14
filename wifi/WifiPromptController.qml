@@ -19,6 +19,17 @@ Item {
     property string secretPersistenceMessage: ""
     property string secretDeliveryMessage: ""
     property string secretOutcomeRequestId: ""
+    signal secretExpired(string requestId)
+
+    Timer {
+        id: secretExpiry
+        repeat: false
+        onTriggered: {
+            const requestId = root.secretRequestId;
+            root.cancel();
+            root.secretExpired(requestId);
+        }
+    }
 
     function secretResponse(result) {
         if (!secretSubmitting || result.request_id !== secretRequestId)
@@ -111,9 +122,15 @@ Item {
         secretRequestId = event.request_id || "";
         saveSecretSupported = !!event.data.save_supported;
         openCredentials("daemon-secret", "Network credentials", spec.detail, spec.fields, null);
+        secretExpiry.stop();
+        if (Number.isFinite(event.data.timeout_ms) && event.data.timeout_ms >= 0) {
+            secretExpiry.interval = Math.max(1, Math.min(2147483647, Math.ceil(event.data.timeout_ms)));
+            secretExpiry.start();
+        }
     }
 
     function cancel() {
+        secretExpiry.stop();
         open = false;
         credentialOpen = false;
         credentialMode = "";
@@ -148,6 +165,9 @@ Item {
     }
 
     function submitCredentials(controller, values) {
+        // A queued Enter/click can arrive after expiry, acknowledgement or close.
+        if (!credentialOpen)
+            return false;
         const validationError = Policy.validationError(credentialMode, credentialFields, values, hiddenDescriptor);
         if (validationError.length > 0) {
             controller.status = validationError;

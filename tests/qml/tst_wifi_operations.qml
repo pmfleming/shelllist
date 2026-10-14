@@ -74,8 +74,7 @@ DaemonTestCase {
         c.connection.handleConnectError({reason: "wrong-password"});
         verify(!c.prompt.open, "raw reason strings cannot synthesize recovery policy");
         c.connection.handleConnectError({recovery_prompt: {kind: "password", message: "Native recovery"}});
-        verify(c.prompt.open);
-        compare(c.prompt.detail, "Native recovery");
+        verify(!c.prompt.open, "terminal failures never start a second credential transaction");
         c.prompt.cancel();
         verify(!calls.some(call => call.method === "wifi.connectTarget"), "opening/discarding prompts never connects");
     }
@@ -146,6 +145,108 @@ DaemonTestCase {
             keyClick(Qt.Key_D, Qt.AltModifier);
             verify(c.backend.isPending("disconnect"), "explicit retry remains available");
         }
+    }
+    function savedNetwork(panel) {
+        openNetwork(panel, false);
+        panel.controller.applyNetworks([{key: "cafe", ssid: "Cafe", active: false, strength: 70,
+            security: "WPA2", security_class: "personal", capabilities: {can_connect: true},
+            primary_profile: {path: "/profile/cafe", id: "Cafe"},
+            connect_prompt: {kind: "password", message: "Stale initial descriptor"}
+        }], true, {});
+        calls = [];
+    }
+    function test_savedConnectButtonActivatesWithoutCollectingOrReplacingCredentials_data() {
+        return ["secret-required", "wrong-password", "timeout", "cancelled", "succeeded"].map(outcome => ({tag: outcome, outcome: outcome}));
+    }
+    function test_savedConnectButtonActivatesWithoutCollectingOrReplacingCredentials(data) {
+        const panel = makePanel();
+        savedNetwork(panel);
+        const c = panel.controller;
+        const button = panel.page.detailsNavigation.commandButtons.find(button => button.accessKey === "C");
+        verify(!!button && button.enabled);
+        mouseClick(button);
+        const request = calls.find(call => call.method === "wifi.connectTarget");
+        verify(!!request);
+        compare(request.params.key, "cafe");
+        verify(!request.params.password);
+        verify(!c.prompt.open && !c.prompt.credentialOpen);
+        c.backend.acceptSharedResponse("connect-start", {protocol: "nm-api", version: 2, ok: true,
+            data: {result: {status: "started", request_id: "clicked-connect"}}}, "");
+        compare(c.connection.requestId, "clicked-connect");
+        if (data.outcome === "secret-required") {
+            c.handleSecretEvent({event: "requested", request_id: "clicked-secret", data: {secret_keys: ["psk"], timeout_ms: 60000}});
+            verify(c.prompt.credentialOpen, "only NetworkManager's live request collects credentials");
+        }
+        const terminal = ["cancelled", "succeeded"].includes(data.outcome) ? data.outcome : "failed";
+        c.connection.handleEvent({request_id: "clicked-connect", event: terminal, data: {
+            message: "Native " + data.outcome, result: {
+                status: terminal === "succeeded" ? "connected" : "error", reason: data.outcome,
+                message: "Native " + data.outcome,
+                recovery_prompt: {kind: "password", message: "Recovery is explicit"}
+            }
+        }});
+        if (data.outcome === "secret-required") {
+            c.handleSecretEvent({event: "cancelled", request_id: "clicked-secret", data: {reason: "activation-finished"}});
+            compare(c.status, "Native secret-required", "prompt retirement preserves the terminal failure");
+        }
+        verify(!c.prompt.open && !c.prompt.credentialOpen);
+        compare(calls.filter(call => call.method === "wifi.connectTarget").length, 1);
+    }
+    function test_updateCredentialsIsExplicitVersionedEditorNotAnotherConnect_data() {
+        return [{tag: "closed", hardware: false}, {tag: "leaving-hardware", hardware: true}];
+    }
+    function test_updateCredentialsIsExplicitVersionedEditorNotAnotherConnect(data) {
+        const panel = makePanel();
+        savedNetwork(panel);
+        const c = panel.controller;
+        if (data.hardware)
+            c.advanced.openSettings("hardware");
+        const leaving = [];
+        c.advancedSectionLeaving.connect(section => leaving.push(section));
+        const button = panel.page.detailsNavigation.commandButtons.find(button => button.accessKey === "U");
+        verify(!!button && button.enabled);
+        mouseClick(button);
+        verify(c.advanced.open);
+        compare(c.advanced.section, "security");
+        compare(c.advanced.profilePath, "/profile/cafe");
+        compare(leaving, data.hardware ? ["hardware"] : [], "existing field-leaving rules are preserved");
+        verify(!calls.some(call => call.method === "wifi.connectTarget"));
+        verify(!c.prompt.open && !c.prompt.credentialOpen);
+    }
+    function test_credentialTimerClearsDraftAndIgnoresLateReceipt() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.handleSecretEvent({event: "requested", request_id: "deadline", data: {
+            secret_keys: ["psk"], timeout_ms: 300, save_supported: true
+        }});
+        const dialog = panel.page.children.find(item => item.visible && item.prompt === c.prompt && item.maximumCardWidth === 620);
+        const field = findChild(dialog, "fieldInput");
+        verify(!!field);
+        field.forceActiveFocus();
+        keyClick(Qt.Key_A);
+        compare(c.prompt.credentialValues.psk, "a");
+        tryCompare(c.prompt, "credentialOpen", false);
+        compare(c.prompt.credentialValues, ({}));
+        verify(c.status.includes("expired"));
+        dialog.accepted({psk: "late-synthetic"});
+        verify(!calls.some(call => call.method === "wifi.secret.provide" || call.method === "wifi.connectTarget"), "a queued submit after expiry cannot become a new connection");
+        c.backend.handleSecretResponse({protocol: "nm-api", version: 2, ok: true, data: {result: {
+            request_id: "deadline", accepted: true, status: "accepted"
+        }}});
+        verify(c.status.includes("expired"));
+        verify(!calls.some(call => call.method === "wifi.secret.provide"));
+    }
+    function test_expiryAfterReceiptIsNotHiddenOrReplacedByRecoveryForm() {
+        const c = makePanel().controller;
+        c.handleSecretEvent({event: "requested", request_id: "ack-expired", data: {secret_keys: ["psk"]}});
+        verify(c.prompt.submitCredentials(c, {psk: "synthetic"}));
+        c.backend.handleSecretResponse({protocol: "nm-api", version: 2, ok: true, data: {result: {
+            request_id: "ack-expired", accepted: true, status: "accepted"
+        }}});
+        c.handleSecretEvent({event: "cancelled", request_id: "ack-expired", data: {reason: "expired"}});
+        verify(c.status.includes("expired"));
+        c.connection.handleConnectError({recovery_prompt: {kind: "password", message: "Retry"}});
+        verify(!c.prompt.open && !c.prompt.credentialOpen);
     }
     function test_secretEnterWaitsForAcknowledgementAndExpires() {
         const panel = makePanel();
@@ -245,9 +346,13 @@ DaemonTestCase {
         c.handleSecretEvent({event: "persistence", request_id: "retry-save", data: {connection_path: "/profile/one", status: "stored"}});
         verify(!panel.page.listItem.status.includes("could not be saved"));
     }
-    function test_rememberSwitchRoutesTemporaryConnect() {
+    function test_rememberSwitchRoutesTemporaryConnect_data() {
+        return [{tag: "new", saved: false}, {tag: "saved", saved: true}];
+    }
+    function test_rememberSwitchRoutesTemporaryConnect(data) {
         const panel = makePanel();
-        openNetwork(panel, false);
+        if (data.saved) savedNetwork(panel);
+        else openNetwork(panel, false);
         const c = panel.controller;
         const toggle = findChild(panel, "wifiRememberNetwork");
         verify(!!toggle && toggle.visible);

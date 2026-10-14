@@ -117,6 +117,10 @@ Item {
     }
 
     function deferForPrompt(ap) {
+        // Saved-profile activation owns credential discovery. Even a stale
+        // prompt descriptor must not turn ordinary Connect into replacement.
+        if (controller.profileFor(ap))
+            return false;
         const promptKind = ap && ap.connect_prompt ? (ap.connect_prompt.kind || "none") : "none";
         const handlers = {
             password: function () {
@@ -187,8 +191,7 @@ Item {
     function applyResult(result, fallbackText, completedRequestId) {
         const message = result.message || fallbackText || "Wi-Fi connection failed";
         if (result.status === "error") {
-            controller.status = message;
-            handleConnectError(result);
+            handleConnectError(result, message);
         } else {
             controller.invalidateShareAvailabilityCache();
             controller.setHeldStatus(message, 2500);
@@ -197,12 +200,11 @@ Item {
             portal.launchForConnect(completedRequestId || "", workspaceId);
         controller.maybeRunPendingRefresh();
     }
-    function handleConnectError(result) {
-        const recovery = result.recovery_prompt;
-        if (lastConnectAp && recovery?.kind === "password")
-            prompt.openPasswordPrompt(lastConnectAp, recovery.message);
-        else if (lastConnectAp && recovery?.kind === "enterprise")
-            prompt.openEnterpriseIdentityPrompt(Object.assign({}, lastConnectAp, {connect_prompt: recovery}));
+    function handleConnectError(result, fallbackText) {
+        // Failure is not permission to start another credential transaction.
+        // NM's outstanding SecretAgent request owns re-prompts; after it ends,
+        // Connect or Update credentials requires an explicit user action.
+        controller.status = result.message || result.recovery_prompt?.message || fallbackText || "Wi-Fi connection failed";
     }
     function provideSecrets(id, values, save) {
         controller.status = "Sending requested Wi-Fi credentials to NetworkManager…";

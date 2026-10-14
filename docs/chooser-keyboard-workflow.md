@@ -950,7 +950,16 @@ connection that requested it. The form remains open, with repeat submission
 blocked, until its matching acknowledgement. Failed dispatch preserves the draft;
 expired/unavailable requests clear secrets and require an explicit new connection.
 A late cancellation or reply cannot close another request's form. Keyring
-persistence is separate from credential acceptance and link activation.
+persistence is separate from credential acceptance and link activation. Forms also
+honor the daemon's advertised remaining deadline and clear drafts on expiry.
+
+Ordinary Connect activates a saved profile without an initial password form; only
+NetworkManager's live SecretAgent request collects credentials. Terminal failures
+show native status/recovery text rather than opening another form automatically.
+For saved personal-password profiles, **Alt+U / Update credentials** explicitly
+opens the existing versioned Security editor. Opening it neither reveals nor
+updates a password and does not reconnect. This adds no guessed enterprise/WEP
+replacement fields and preserves the editor's deferred field transactions.
 
 Remember network defaults on for each new connection intent. The disconnected
 network's profile card, password/hidden/enterprise forms and Qrca's scanned-network
@@ -964,8 +973,10 @@ controls keyring storage, not deletion of an existing profile.
 
 Hidden-network fields, defaults, security mappings and conditional required fields
 come from nm-daemon's status descriptor. Missing descriptors disable opening that
-form rather than inventing choices. Credential recovery uses the native recovery
-prompt, not frontend interpretation of failure-reason strings. Labels, focus,
+form rather than inventing choices. Credential requests use native SecretAgent
+field descriptors, not frontend interpretation of failure-reason strings. Native
+recovery descriptors remain advisory status text after failure; they never start
+another credential transaction automatically. Labels, focus,
 shared field drafts and cancel/save behavior remain frontend-owned; backend
 credential and connection validation remains authoritative.
 

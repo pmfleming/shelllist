@@ -1,5 +1,28 @@
 # Wi-Fi credential and QR regression acceptance — 2026-10-14
 
+## Manual Connect follow-up
+
+Saved-profile Connect now activates first; only a live native SecretAgent request
+opens a credential form. Terminal failures no longer launch a second password
+transaction. Expiry clears drafts, late receipt/retirement is correlated, and
+activation retirement preserves native terminal status. **Update credentials**
+(Alt+U) explicitly opens the existing versioned personal-password Security editor;
+it does not invent enterprise/WEP replacement fields or reconnect automatically.
+
+The actual Qt Connect-button regressions cover success, missing/rejected secrets,
+timeout and cancellation, plus the explicit editor command, local credential
+expiry and Remember OFF for new/saved networks. The sibling daemon's private-bus
+suite exercises ActivateConnection -> exported GetSecrets, available credentials,
+interactive entry, fresh-secret rejection, no frontend, retirement and late replies.
+See `../nm-daemon/docs/manual-wifi-activation.md` for deadline and outcome details.
+Follow-up validation: **651 Qt checks passed, one existing skip**; strict QML lint,
+API contract and generated-binding checks pass. **133 Rust tests passed, four
+ignored**; Clippy and Rust format checks pass, and the real keyring-provider test
+passed separately. The historical counts below describe the earlier correction.
+
+Deployment/live comparison still requires approval and a backup connection. No
+running service or live connection was changed during this follow-up.
+
 ## Scope and commits
 
 1. Credential/keyring recovery: `nm-daemon` fb2475e and Shelllist 6ea15c9.

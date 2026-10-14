@@ -306,6 +306,13 @@ ProviderChooserController {
         }
     }
 
+    Connections {
+        target: wifi.prompt
+        function onSecretExpired(requestId: string): void {
+            wifi.status = "Credential request expired. Select the network and connect again.";
+        }
+    }
+
     function handleSecretEvent(event: var): void {
         const transition = Flow.secretTransition(event, promptMode(), prompt.secretRequestId, prompt.secretOutcomeRequestId);
         if (transition.stage === "requested")
