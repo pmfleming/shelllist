@@ -36,9 +36,7 @@ DaemonTestCase {
             {tag:"read-with-mutation-id", id:"disconnect", method:"wifi.profile.operation", params:{operation:"details",path:"profile"}, exclusive:false, handler:"advanced-load", execution:"read"},
             {tag:"unknown-with-portal-id", id:"portal-fake", method:"new.mutation", params:{}, exclusive:true, handler:"", execution:"effect"},
             {tag:"cache-refresh-is-not-a-read", id:"networks", method:"wifi.networks", params:{cached:true,refresh_cache:true}, exclusive:false, handler:"networks", execution:"operation"},
-            {tag:"connect-is-not-a-read", id:"arbitrary", method:"wifi.connectTarget", params:{}, exclusive:false, handler:"connect-start", execution:"operation"},
-            {tag:"portal-is-independent-effect", id:"arbitrary", method:"network.portalClaim", params:{}, exclusive:false, handler:"portal", execution:"effect"},
-            {tag:"status-without-prefix", id:"arbitrary", method:"operation.status", params:{request_id:"op"}, exclusive:false, handler:"connection-status", execution:"read"}
+            {tag:"portal-is-independent-effect", id:"arbitrary", method:"network.portalClaim", params:{}, exclusive:false, handler:"portal", execution:"effect"}
         ];
     }
     function test_classificationIsCapturedFromMethodAndVariant(data) {

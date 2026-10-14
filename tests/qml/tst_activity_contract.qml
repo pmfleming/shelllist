@@ -52,8 +52,7 @@ DaemonTestCase {
         verify(c.backend.isPending(call.route.localId)); return call;
     }
     function test_outcomes_data() {
-        return Object.keys(fixture().cases).map(key => [key, "success"])
-            .concat([["range", "failed"], ["create", "rejected"], ["delete", "failed"]])
+        return [["refresh", "success"], ["range", "failed"], ["create", "rejected"]]
             .map(([key, outcome]) => ({tag: key + "/" + outcome, key: key, outcome: outcome}));
     }
     function test_outcomes(data) {
@@ -74,7 +73,7 @@ DaemonTestCase {
         } else { compare(c.lastError, response.error.message); compare(c.todos, before); }
     }
     function test_noReplay_data() {
-        return [["create", false], ["complete", true], ["delete", true]]
+        return [["delete", true]]
             .map(([key, disconnect]) => ({tag: key + (disconnect ? "/disconnect" : "/timeout"), key: key, disconnect: disconnect}));
     }
     function test_noReplay(data) {
@@ -89,7 +88,7 @@ DaemonTestCase {
         reply(start(c, "range"), fixture().cases.range.success);
         compare(effects(c).length, 1); compare(c.todos, fixture().cases.range.success.data.activity_range.todos);
     }
-    function test_lateRangeCannotReplaceNewerRange_data() { return [{tag:"old-success", failed:false}, {tag:"old-error", failed:true}]; }
+    function test_lateRangeCannotReplaceNewerRange_data() { return [{tag:"old-success", failed:false}]; }
     function test_lateRangeCannotReplaceNewerRange(data) {
         const c = make(); const old = start(c, "range"); const current = start(c, "emptyRange");
         reply(current, fixture().cases.emptyRange.success);

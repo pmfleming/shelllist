@@ -137,44 +137,6 @@ DaemonTestCase {
         compare(state.editError, "Conflict");
     }
 
-    function test_imageRepliesKeepChromeAndDoNotReportUnavailableWhilePending_data() {
-        return [{tag: "thumbnail-first", thumbnailFirst: true}];
-    }
-    function test_imageRepliesKeepChromeAndDoNotReportUnavailableWhilePending(data) {
-        const entries = [entry("first", "image"), entry("second", "image")];
-        const controller = makeController(entries);
-        const panel = makePanel(controller);
-        const tabs = findChild(panel, "clipboardDetailsTabs");
-        const card = findChild(panel, "clipboardDataCard");
-        const message = findChild(panel, "clipboardPreviewMessage");
-        const image = findChild(panel, "clipboardThumbnail");
-        const headerHeight = panel.detailsItem.headerHeight;
-        compare(panel.detailsItem.secondaryActions.filter(action => action.visible).length, 3);
-        verify(panel.detailsItem.secondaryActions.every(action => !action.enabled));
-        keyClick(Qt.Key_E, Qt.AltModifier);
-        verify(!calls.some(call => call.route.localId === "action-annotate"));
-        thumbnailReply(controller, entries[0]);
-        verify(message.visible);
-        compare(message.text, "Loading preview…");
-        compare(controller.detailState.previewCache.length, 0);
-        detailsReply(controller, entries[0], null);
-        tryCompare(image, "status", Image.Ready);
-        verify(image.visible && !message.visible);
-        compare(controller.detailState.previewCache.length, 1);
-        compare(panel.detailsItem.headerHeight, headerHeight);
-        keyClick(Qt.Key_Down);
-        verify(tabs.visible && card.visible && message.visible && !image.visible);
-        compare(panel.detailsItem.headerHeight, headerHeight);
-        detailsReply(controller, entries[1], null);
-        controller.detailState.handleFailure(controller.detailState.thumbnailRequestId, "Thumbnail failed");
-        verify(message.visible);
-        compare(message.text, "Image preview is unavailable");
-        calls = [];
-        keyClick(Qt.Key_Up);
-        tryCompare(image, "status", Image.Ready);
-        verify(!message.visible && image.visible);
-        compare(previewCalls().length, 0);
-    }
 
     function test_revisionAndLateThumbnailCannotReuseOldPreview() {
         const entries = [entry("first", "image"), entry("second", "image")];

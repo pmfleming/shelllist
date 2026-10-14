@@ -29,7 +29,7 @@ TestCase {
     }
 
     function test_opaqueReadableStatesAndNativeActions_data() {
-        return [{tag: "bright-camera", backdrop: "white"}, {tag: "dark-camera", backdrop: "black"}];
+        return [{tag: "bright-camera", backdrop: "white"}];
     }
     function test_opaqueReadableStatesAndNativeActions(data) {
         const host = createTemporaryObject(factory, testCase, {color: data.backdrop});

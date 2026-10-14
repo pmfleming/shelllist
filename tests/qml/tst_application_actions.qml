@@ -136,20 +136,6 @@ DaemonTestCase {
         compare(panel.dismissals, 1);
         compare(calls.filter(call => call.method === Api.methods.execute).length, 1, "Recovery never replays the effect");
     }
-    function test_producerEventRejectsIncompatibleAndMalformedEnvelopes() {
-        const panel = makePanel();
-        const value = producerEvent("completed");
-        const call = startProducerOperation(panel, value);
-        for (const patch of [{protocol: "foreign-api"}, {version: Api.version + 1}, {stream: ""}, {event: ""}]) {
-            deliverProducerEvent(call, Object.assign({}, value, patch));
-            verify(panel.controller.actionInFlight);
-            compare(panel.dismissals, 0);
-        }
-        deliverProducerEvent(call, value);
-        verify(!panel.controller.actionInFlight);
-        compare(panel.dismissals, 1);
-        compare(calls.filter(call => call.method === Api.methods.operationStatus).length, 0);
-    }
     function snapshot(panel, windows, background) {
         panel.controller.refresh(false);
         reply(lastCall(Api.methods.query), {applications: {revision: 2, hyprland_available: true,
@@ -168,7 +154,7 @@ DaemonTestCase {
         tryCompare(label, "text", message);
     }
     function test_handoff_data() {
-        return [{tag: "focus", launch: false}, {tag: "launch-receipt", launch: true}];
+        return [{tag: "launch-receipt", launch: true}];
     }
     function test_handoff(data) {
         const panel = makePanel();
@@ -282,7 +268,6 @@ DaemonTestCase {
     }
     function test_closeTerminalOutcomesNeverHandOff_data() {
         return [
-            {tag: "closed", status: "completed", close: "closed", warning: false},
             {tag: "missing", status: "completed", close: null, warning: true}
         ];
     }

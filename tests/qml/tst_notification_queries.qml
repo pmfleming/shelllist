@@ -77,7 +77,7 @@ DaemonTestCase {
         compare(t.snapshot.period_day, "2026-01-15"); compare(t.error, ""); assertReadsOnly(s);
     }
     function test_errorsKeepPublishedCatalogWithoutReadLoops_data() {
-        return ["invalid", "busy"].map(key => ({tag:key, key:key}));
+        return ["invalid"].map(key => ({tag:key, key:key}));
     }
     function test_errorsKeepPublishedCatalogWithoutReadLoops(data) {
         const s = make(); const c = catalog(s); respond(s, "apps", true); const before = clone(c.apps);

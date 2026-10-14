@@ -68,67 +68,6 @@ DaemonTestCase {
         compare(panel.surface.detailsNavigation.currentTarget, target);
         return target;
     }
-    function reveal(panel, item) {
-        const page = findChild(panel, "batteryDetailPage");
-        page.contentY = Math.max(0, Math.min(page.contentHeight - page.height, item.mapToItem(page.contentItem, 0, 0).y - Ui.Theme.spacingMd));
-        verify(waitForRendering(panel));
-    }
-    function test_sleepTaskCards_data() {
-        return [
-            {tag: "normal-dark", width: 453, scheme: Qt.Dark},
-            {tag: "normal-light", width: 453, scheme: Qt.Light},
-            {tag: "narrow-dark", width: 340, scheme: Qt.Dark},
-            {tag: "narrow-light", width: 340, scheme: Qt.Light}
-        ];
-    }
-    function test_sleepTaskCards(data) {
-        tests.width = data.width;
-        Ui.Theme.previewColorScheme = data.scheme;
-        const panel = make("power");
-        const commands = findChild(panel, "powerSuspendCard");
-        const automatic = findChild(panel, "automaticSuspendCard");
-        const critical = findChild(panel, "criticalProtectionCard");
-        verify(commands && automatic && critical);
-        compare(commands.parent, automatic.parent);
-        compare(automatic.parent, critical.parent, "three sibling cards, not nested tonal surfaces");
-        verify(commands.y + commands.height <= automatic.y);
-        verify(automatic.y + automatic.height <= critical.y);
-        compare(findChild(automatic, "criticalBatteryEnabled"), null);
-        verify(findChild(critical, "criticalBatteryEnabled") !== null);
-        compare(findChild(panel, "suspendSameProfile").title, "Same settings on battery & AC");
-        compare(findChild(panel, "suspendProfileHeading-battery").text, "Battery & plugged in");
-        verify(!findChild(panel, "criticalBatteryPercent").visible);
-        verify(!findChild(panel, "suspendProfileCurrent-battery").visible, "unknown source is not reported as current");
-        const closedHeight = critical.height;
-        const policy = JSON.parse(JSON.stringify(panel.controller.suspendPolicyDraft));
-        policy.same_profile = false;
-        policy.critical_battery.enabled = true;
-        panel.controller.applySuspendPolicy({available: true, active_profile: "plugged", hibernate_available: true, lid: {available: true}, policy: policy});
-        verify(waitForRendering(panel));
-        compare(findChild(panel, "suspendProfileHeading-battery").text, "On battery");
-        compare(findChild(panel, "suspendProfileHeading-plugged").text, "Plugged in");
-        verify(!findChild(panel, "suspendProfileCurrent-battery").visible);
-        verify(findChild(panel, "suspendProfileCurrent-plugged").visible);
-        verify(findChild(panel, "suspendDelay-plugged").visible);
-        verify(critical.height > closedHeight);
-        const link = findChild(panel, "suspendSameProfile");
-        link.title = "Use the same automatic sleep and hibernation settings on battery and when connected to an external power supply";
-        verify(waitForRendering(panel));
-        verify(link.height >= link.implicitHeight);
-        verify(link.focusSurface.width >= 52, "long labels must not shrink the switch");
-        verify(link.focusSurface.mapToItem(panel, 0, 0).x + link.focusSurface.width <= panel.width, "switch stays inside the narrow panel");
-        compare(findChild(panel, "suspendDelay-battery").Accessible.name, "On battery: suspend after inactivity");
-        compare(findChild(panel, "hibernateDelay-plugged").Accessible.name, "Plugged in: time suspended before hibernating");
-        compare(findChild(panel, "criticalBatteryGrace").Accessible.name, "Critical-battery warning period");
-        for (const name of ["suspendDelay-battery", "hibernateDelay-plugged", "criticalBatteryGrace"]) {
-            const field = findChild(panel, name);
-            const card = name.startsWith("critical") ? critical : automatic;
-            const point = field.mapToItem(card, 0, 0);
-            verify(field.width > 0 && point.x >= 0 && point.x + field.width <= card.width + 1, name + " stays inside its card");
-            verify(field.mapToItem(panel, 0, 0).x + field.width <= panel.width, name + " is not clipped by the narrow viewport");
-        }
-        compare(calls.length, 0, "layout, headings and incoming state never write settings");
-    }
     function test_sleepFieldTransactionsAndLinkedTraversal() {
         const panel = make("power");
         const sleep = browse(panel, "suspendDelay-battery");
@@ -257,35 +196,6 @@ DaemonTestCase {
         verify(panel.surface.detailsNavigation.editing, "Enter works without an initial Tab");
         keyClick(Qt.Key_Escape);
     }
-    function test_reopenRestoresFocusWithoutResettingNewNavigation() {
-        const panel = make();
-        const nav = panel.surface.detailsNavigation;
-        keyClick(Qt.Key_Tab);
-        compare(nav.currentTarget, findChild(panel, "batteryHistoryRange"));
-        panel.controller.prepareUiDeactivation();
-        panel.visible = false;
-        tests.forceActiveFocus();
-        panel.controller.deactivateUiState();
-        panel.controller.activateUiState("");
-        panel.visible = true;
-        tryVerify(() => nav.browsing);
-        tryCompare(nav, "currentTarget", findChild(panel, "batteryHistoryRange"));
-        keyClick(Qt.Key_Tab);
-        const target = nav.currentTarget;
-        panel.controller.restoreUiFocus();
-        wait(0);
-        compare(nav.currentTarget, target, "late host requests do not reset navigation");
-        compare(calls.length, 0);
-    }
-    function test_closureCancelsPendingOpeningFocus() {
-        const panel = createTemporaryObject(factory, tests, {visible: false, initiallyActive: true});
-        panel.controller.deactivateUiState();
-        tests.forceActiveFocus();
-        panel.visible = true;
-        wait(0);
-        verify(!panel.surface.pendingFocus);
-        verify(!panel.surface.detailsNavigation.activeFocus);
-    }
     function test_historyRangeRemainsTheOnlyChartField() {
         const panel = make();
         const card = findChild(panel, "batteryHistoryCard");
@@ -360,39 +270,5 @@ DaemonTestCase {
         tryVerify(() => calls.some(c => c.method === "battery.operation.start" && c.params.method === "battery.startCalibration"));
         const write = calls.find(c => c.method === "battery.operation.start");
         compare(write.params.params.battery_id, "BAT1");
-    }
-    function test_criticalReviewAndUnavailableDiagnostic() {
-        const panel = make("power");
-        const critical = browse(panel, "criticalBatteryEnabled");
-        keyClick(Qt.Key_Return);
-        const modal = findChild(panel, "batterySafetyReview");
-        tryVerify(() => modal.visible);
-        verify(modal.Accessible.description.includes("one automatic power manager"));
-        verify(!findChild(modal, "modalDetail").visible);
-        verify(waitForPolish(panel.Window.window));
-        const title = findChild(modal, "detailTitle");
-        compare(title.elide, Text.ElideNone);
-        verify(title.contentHeight <= title.height + 1, "the complete safety question wraps at battery-panel width");
-        verify(!critical.checked);
-        compare(calls.length, 0);
-        keyClick(Qt.Key_Escape);
-        verify(!critical.checked);
-        browse(panel, "criticalBatteryEnabled");
-        keyClick(Qt.Key_Return);
-        tryVerify(() => modal.visible);
-        const accept = findChild(modal, "detailAction:accept");
-        verify(accept !== null);
-        mouseClick(accept, accept.width / 2, accept.height / 2);
-        tryVerify(() => calls.some(c => c.method === "powerSleep.setCriticalPolicy"));
-        const write = calls.find(c => c.method === "powerSleep.setCriticalPolicy");
-        compare(write.params.enabled, true);
-        panel.controller.applySuspendPolicy({available: false, error: "nested or inline hypridle listeners are not supported", policy: panel.controller.suspendPolicyDraft});
-        compare(findChild(panel, "suspendPolicyStatus").text, "Automatic sleep unavailable");
-        verify(!findChild(panel, "lidCloseAction").interactive);
-        const details = findChild(panel, "suspendPolicyDetails");
-        reveal(panel, details);
-        mouseClick(details, details.width / 2, details.height / 2);
-        verify(findChild(panel, "suspendPolicyDiagnostic").visible);
-        verify(findChild(panel, "suspendPolicyDiagnostic").text.includes("nested or inline"));
     }
 }

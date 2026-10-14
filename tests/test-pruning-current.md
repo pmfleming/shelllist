@@ -1,202 +1,193 @@
-# Test pruning — current baseline c6451f8 + working tree
+# Test pruning — baseline `46407b7`
 
-## Baseline and result
+## Scope and accounting
 
-The baseline includes **all incoming work**, including the preceding shared-chooser
-Lens refactor and its tests, not just committed `c6451f8`. The matching full Qt
-baseline is the immediately preceding successful run: 859 passes, zero failures,
-one existing renderer skip. Its log and a fresh pre-pruning source archive,
-working patch and hashes are in `target/test-pruning-c6451f8/`.
+This pass uses Shelllist's existing mixed inventory, not sibling repositories or
+an older pruning target. The working tree was clean at `46407b7`; the matching
+baseline Qt log is the successful architecture-closure run. Source and log were
+saved before pruning in `target/test-pruning-46407b7/`. Incoming changes in
+`update-daemon` are unrelated and were not edited.
 
-The unchanged `tests/count-test-inventory.py` counts JavaScript assertion sites,
-Qt behavioral cases/data rows, Rust/Python tests and daemon contract suites.
-Qt lifecycle hooks are excluded. The existing software-renderer skip is included
-in inventory **but not executed coverage**. Manual captures, smoke/build scripts,
-sibling repositories and loop iterations inside assertion helpers are not extra
-inventory units. This established mixed inventory is not a coverage percentage.
+`tests/count-test-inventory.py` is unchanged. It counts JavaScript assertion
+sites, Qt behavioral cases/data rows, Rust/Python tests and five daemon contract
+suites. Lifecycle hooks, helper-loop iterations, build scripts and sibling tests
+are not additional units. **This is an inventory reduction, not a coverage
+percentage.** The existing software-renderer skip remains inventory, not executed
+coverage.
 
 | Inventory unit | Before | After | Removed |
 | --- | ---: | ---: | ---: |
-| JavaScript assertion sites | 57 | 57 | 0 |
-| Qt behavioral cases/data rows, including one existing skip | 736 | 469 | 267 |
+| JavaScript assertion sites | 68 | 66 | 2 |
+| Qt behavioral cases/data rows, including existing skip | 535 | 333 | 202 |
 | Rust tests | 8 | 8 | 0 |
 | Python tests | 2 | 2 | 0 |
 | Daemon contract suites | 5 | 5 | 0 |
-| **Total** | **808** | **541** | **267** |
+| **Total** | **618** | **414** | **204** |
 
-`round(808 × 0.67) = 541`: **33.04% removed, 66.96% retained**.
-Qt reports **859 → 592 passes**; both include 124 lifecycle hooks. All 62 suites
-remain discovered. No counter changes, runner filters, new skips, renamed hidden
-tests or packing of removed scenarios into loops. Existing parameterized tests
-now enumerate fewer scenarios; each retained row is still counted independently.
-Missing selected producer examples now fail instead of silently omitting a row.
+`round(618 × 0.67) = 414`: **33.01% removed, 66.99% retained**.
+Two presentation-only suites were deleted, leaving 64 Qt suites. No runner,
+discovery, counter, fixture, build-check or production changes; no filters,
+renamed/hidden tests, new skips or repacking removed scenarios into loops.
+Retained parameter rows still count separately. The two removed JavaScript
+assertions fixed generated method counts at eight and nine, unnecessarily
+rejecting API growth; all schema/fixture validation loops remain.
 
-Only 23 Qt test files and documentation changed in this pass. Production code,
-Lens entrypoints, runners, build checks, native producer fixtures, JavaScript,
-Rust and Python tests are unchanged from the incoming snapshot. In particular,
-the incoming Bluetooth recovery and battery-control test changes are preserved.
-Previous Lens validation remains a historical checkpoint, not current test count.
+## Review decisions
 
-## Review decisions and retained coverage
+### Prefer behavior owners over opcode matrices
 
-### Contract matrices: partition by state owner, not method × every error
+- **Generated contracts:** keep all five native validator cases and Node
+  request/result/event validation, invalid payloads, nullability and exact-integer
+  checks. The underlying coverage is still app's eight methods and selected nine
+  bar methods, not complete schemas for all five daemons. All native producer
+  fixtures and all five daemon contract gates remain unchanged.
+- **Bar controls/session:** remove repeated ordinary success, diagnostic strings,
+  preference/playback opcode variations and backend-only UI test calls. Keep
+  clamped audio/brightness, input rejection, brightness-error OSD, degraded
+  profile telemetry, selection result, seek/mode rejection and representative
+  timeout/disconnect no-replay checks. Native SystemChoosers, MediaChip and
+  BalancedDashboard still test actual command activation and acknowledgement.
+- **Battery/sleep:** keep hardware-limited outcomes, settings/inhibition/calibration
+  errors, newer threshold/alert drafts, explicit retry, cancellation not rollback,
+  status timeout, owner loss, stale terminal state and failed calibration
+  restoration. Sleep keeps failed versus unknown execution, a complete lifecycle,
+  lost-reply recovery, policy failure, and critical cancellation that cannot undo
+  dispatched sleep. Remove repeated command-success, terminal-label and
+  action × reconnect-stage rows. JavaScript safety/capability/identity tests and
+  native degraded-release, critical-protection and calibration-consent tests stay.
+- **Display/activity:** keep uncertain confirmation, failed revert, authoritative
+  policy result, recovery, expiry, rollback failure, stale drafts and close-time
+  revert. Native Displays retains enable/disable/confirm/revert, last-screen and
+  mirror safety, drag cancellation, opaque modes, docking/focus acknowledgement
+  and retries. Activity retains refresh progress, read/validation errors,
+  destructive uncertainty and late-range fencing, rather than every todo opcode.
+- **Notifications:** sample policy/preparation/record failures and preserve reply
+  timeout/reconnect drafts, reused IDs, event-before-ack, duplicate completion,
+  obsolete preparation and cancel acknowledgements. Native notification suites
+  retain DND/reply success/failure, policy transactions, record/app-scoped deletion,
+  malformed consent, late preparation, atomic paging and stale ownership. Remove
+  repeated ordinary acknowledgements, transport rows and equivalent invalid-page
+  variants; keep staged-continuation failure and stale-cursor restart coverage.
+- **Bar reads:** sample the generic stream map and gap recovery rather than every
+  property. Keep actual producer work-area/compositor projections, battery sleep
+  policy and resident notifications. Unchanged BarDomainRecovery covers gap
+  storms, independent recovery, monitor failure, stale replies and process loss.
 
-- **Notification actions:** retain request/acknowledgement checks for all eleven
-  current operations, plus separate failed reply, DND, app-policy, prepare/delete
-  and cancellation outcomes; stale action/record/snooze and validation rejection.
-  Sample timeouts for drafts and consent; reconnect for settings, actions and
-  replies. Keep newer-draft/reused-ID, event-before-ack and newer-DND-event races.
-  Remove backend-only togglePanel/toggleDnd compatibility routes.
-- **Bar session controls:** retain all thirteen request DTOs and authoritative
-  results. Sample workspace/update failures, seek validation, selection failure
-  and control-mode rejection. Playback/seek/selection/focus sample timeout or
-  disconnect, rather than all twenty-six combinations. `SystemChoosers`,
-  `BalancedDashboard` and `MediaChip` retain actual user routes and capability
-  guards; shared daemon tests retain transport ownership.
-- **Battery:** retain every command success, all three limited hardware readbacks,
-  threshold/config failure, inhibition rejection and calibration readback failure.
-  Keep threshold/protection/alert explicit retries, newer saved edits after both
-  acknowledgement and timeout, cancellation-versus-completion, stale pushed state,
-  status timeout, owner loss, and failed calibration restoration. Sample transport
-  uncertainty by owner rather than repeating it for every command.
-- **Audio/brightness/power profiles:** retain every request shape, clamped audio
-  and brightness readbacks, degraded profile telemetry, brightness error OSD,
-  rejected microphone change, action failure and battery-aware rejection. Both
-  bar and battery owners retain reconnect/no-replay checks.
-- **Sleep:** retain every request DTO, distinct lock/keep-awake/policy/critical
-  error ownership, uncertain hibernation, and full suspend/hibernate lifecycles.
-  All six terminal failure classes and all three reconnect stages remain, each
-  sampled with one action instead of crossed with both. Critical cancellation
-  still cannot undo dispatched sleep, and a lost cancel reply cannot replay.
-- **Displays:** retain all six successful operations, preview rejection/failure,
-  uncertain confirmation, failed revert, focus rejection and docking failure.
-  Sample preview/confirm/policy reconnects. Keep authoritative rollback/expiry,
-  failed rollback, external stale drafts and exactly-once close-time revert.
-  The entire 25-case native `Displays` interaction suite is unchanged.
-- **Activity and reads:** retain every Activity request success, read failure,
-  create validation, deletion failure, create/complete/delete uncertainty and
-  late success/error fences. All fourteen bar streams still execute push routing;
-  sample gap recovery on three shapes instead of all streams. Dedicated
-  `BarDomainRecovery`, `DaemonBridge`, `DaemonSessions`, work-area and compositor
-  suites retain generation, monitor failure and independent recovery behavior.
-  Remove duplicate metadata-envelope rejection (retained in shared boundary and
-  Applications tests), resident snapshot (used by notification contract setup),
-  and synthetic sleep naming checks (covered by live sleep/read fixtures).
-- **Notification queries:** remove six compatibility-only history/list/app-view
-  routes that no longer own a UI projection. Keep app/timeline native paging,
-  group resolution, stale-cursor restart, old search/transport fences and sampled
-  invalid/busy errors without read loops. Producer fixtures remain intact.
+### Remove duplicated or constraining native checks
 
-### UI duplication and presentation constraints
-
-- Keep all twelve actual surface/controller/content construction routes. Sample
-  environment deep links with eager, lazy and invalid IDs; shortcuts with default,
-  eager and hyphenated lazy IDs. Keep registration/no-preload, unknown IDs and
-  deferred latest-request ownership. Remove per-ID repetition and the two-registry
-  metadata-isolation implementation test.
-- Remove Resources' four size/theme/plot-style layouts and duplicate model-gap/
-  recolouring test. Retain actual range save/discard, source updates during a
-  draft, canonical totals, unavailable-versus-zero and app-owned passive metadata.
-  `check-resource-availability.js` retains disjoint-series gaps and clipping.
-- Remove battery sleep colours, the duplicate hardware width, history footer
-  allocation and redundant visible-window opening fixture. Keep cold hidden-view
-  activation, reopening and late-focus cancellation, field-local power/threshold/
-  range transactions, real hardware-toggle dispatch, and safety confirmations.
-  Remove palette/icon-table assertions from those retained behavioral workflows.
-  Battery history retains signed power pixels/gaps in one theme/size, live theme
-  repaint during inspection and unknown/zero/warning distinctions.
-- Sample compact confirmations at one narrow size, and pairing by consent,
-  validated passkey and remote-owned display. PIN clearing/queue/reply identity
-  stay in unchanged `BluetoothRecovery`. Keep connected Wi-Fi's typed destructive
-  challenge and credential opt-out; remove its duplicate inactive presentation.
-- Remove notification title/pluralization permutations, exact switch-label geometry,
-  result-fade geometry, centered application empty icons and excess icon candidate
-  tables. Keep malformed deletion counts, app/record scopes, consent cancellation,
-  late preparation, actual icon-load failure/recovery, symbolic fallback and
-  internal-content exclusion. Shared text contrast and all 150 JS palette cases
-  remain. Shared overflow/menu, field, chooser-memory and native secret tests are
-  unchanged. Failed-save, lease, clipboard privacy and Wi-Fi recovery suites remain.
-- Applications retain producer success/failure without polling and duplicate-event
-  guards, dropping cancelled duplication and the legacy nested envelope. Sample
-  catalog errors with unavailable and validation failures, not seven error strings.
-  Existing handoff, uncertain Close, late completion and owned recovery cases stay.
+- Remove per-surface construction/descriptor tables; domain suites still construct
+  real panels. Registry keeps invalid IDs, startup selection, queued latest-request
+  ownership and shared resident notification state. Shortcuts sample one lazy
+  route while retaining registration/no-effect checks.
+- Reduce Wi-Fi terminal-result and credential-order permutations. Preserve real
+  credential input, expiry/clearing, receipt versus delivery/persistence, cancellation
+  acknowledgement, bounded recovery, stale reads, explicit retry and no replay.
+  Metadata tests still distinguish method/variant from misleading IDs, fail closed
+  on unknown methods, protect secrets/reused IDs, isolate portal effects and clean
+  up on rejection/transport failure.
+- Reduce clipboard bulk-count, discard and malformed-paste variants; preserve
+  revision-checked deletion/wipe consent, failed drafts, fresh leases, hidden paste
+  ownership, navigation races, private cache handling and stale thumbnails.
+  Bluetooth retains pairing secrets/queue ownership, partial outcomes, malformed
+  and lost adapter acknowledgements, failed rename drafts and device-scoped policy.
+- Remove battery card size/theme/layout matrices and duplicate focus/confirmation
+  checks, chart pixel/legend/inspection checks, application header composition,
+  resource presentation repetition, notification footer/geometry and clipboard
+  preview-chrome constraints. Remove the standalone CompactFields and
+  SharedPanelComposition suites. Shared native fields, multiline IP settings,
+  modal/destructive workflows, painted field contrast, palette and chart-data
+  tests remain. Unknown readings are still distinguished from measured zero.
+- Sample chooser restoration contexts and reverse removal during Tab rather than
+  every direction/context pair. Keep disabled/hidden traversal, external updates,
+  draft discard, slider commit/live rollback, asynchronous focus, sensitive-field
+  exclusion and modal containment. Remove duplicate clock-format checks while
+  keeping the real clock button, fractional offsets and unavailable timezone.
 
 ## Changed Qt suites
 
-Counts include data rows and the existing skip, not lifecycle hooks.
+Counts include data rows and exclude lifecycle hooks. Unlisted suites are unchanged.
 
 | Suite | Before | After |
 | --- | ---: | ---: |
-| NotificationActionContract | 69 | 31 |
-| BarSessionControlContract | 64 | 22 |
-| BatteryContract | 54 | 27 |
-| BarControlContract | 49 | 21 |
-| SleepContract | 44 | 27 |
-| DisplayContract | 34 | 19 |
-| ActivityContract | 29 | 15 |
-| BarReadContract | 36 | 23 |
-| SurfaceRegistry | 30 | 19 |
-| SurfaceShortcuts | 13 | 4 |
-| NotificationQueryContract | 15 | 7 |
-| ApplicationResources | 8 | 3 |
-| BatteryPresentation | 15 | 9 |
-| CompactConfirmations | 14 | 6 |
-| NotificationCenter | 21 | 16 |
-| SharedPanelComposition | 4 | 1 |
-| NotificationIcons | 10 | 3 |
-| ResultListReactivation | 2 | 1 |
-| ApplicationDetails | 4 | 3 |
-| ApplicationContract | 11 | 6 |
-| ApplicationActions | 19 | 17 |
-| BatteryHistory | 4 | 3 |
-| BatterySuspend | 3 | 2 |
+| ActivityContract | 15 | 5 |
+| ApplicationActions | 17 | 14 |
+| ApplicationContract | 6 | 4 |
+| ApplicationDetails | 3 | 2 |
+| ApplicationResources | 3 | 2 |
+| BarControlContract | 21 | 9 |
+| BarReadContract | 23 | 6 |
+| BarSessionControlContract | 22 | 5 |
+| BatteryContract | 27 | 13 |
+| BatteryHistory | 3 | 1 |
+| BatteryPresentation | 15 | 8 |
+| BluetoothRecovery | 17 | 15 |
+| ChooserMemory | 10 | 7 |
+| ClipboardPreview | 6 | 5 |
+| ClipboardRecovery | 22 | 19 |
+| CompactConfirmations | 6 | 5 |
+| CompactFields | 1 | 0 |
+| DaemonBridge | 7 | 6 |
+| DisplayContract | 19 | 8 |
+| Displays | 25 | 21 |
+| FieldInteraction | 17 | 13 |
+| MaterialBar | 2 | 1 |
+| NotificationActionContract | 34 | 11 |
+| NotificationCenter | 16 | 11 |
+| NotificationIcons | 3 | 2 |
+| NotificationQueryContract | 7 | 6 |
+| Notifications | 13 | 11 |
+| SharedPanelComposition | 1 | 0 |
+| SleepContract | 27 | 10 |
+| SurfaceRegistry | 19 | 4 |
+| SurfaceShortcuts | 4 | 2 |
+| TimeWeatherLocations | 2 | 1 |
+| TimezoneClock | 4 | 3 |
+| WifiOperations | 33 | 21 |
+| WifiRequestMetadata | 12 | 10 |
+| WifiScannerContrast | 2 | 1 |
 
-## Deliberate coverage gaps
+## Deliberate gaps
 
-This does not establish identical branch coverage. Individual command × error ×
-transport combinations have less direct evidence; shared handlers do not prove
-all endpoint wiring. There is less native coverage for exact chart layout/palette,
-short Resources scrolling, long switch labels, battery history's footer placement,
-standalone visible-window activation, icon candidate ordering, alternate pairing
-presentations, inactive Wi-Fi confirmation, per-surface startup/shortcut routes,
-notification wording, cancelled application push outcomes and removed compatibility
-APIs. These are deliberate tradeoffs, not waived product or safety contracts.
-Native fixture data and separate daemon contract checks still describe the full
-producer API. Add focused regressions when needed; **541 is not a permanent cap**.
+There is less direct evidence for individual endpoint wiring, all bar stream
+mappings, every error/transport combination, each generated surface factory,
+chart paint/inspection, particular footer/preview layouts, notification toast
+visibility, and per-panel focus variants. Shared handlers and native interaction
+tests do **not** prove those removed permutations. Retained tests are not a claim
+of identical branch coverage. Add focused regressions when necessary; **414 is
+not a permanent cap**. No live hardware, compositor, RHI, IME or screen-reader
+acceptance is claimed.
 
 ## Validation and reproduction
 
-Passed: full Qt **592 passes, zero failures, one unchanged renderer skip**;
-strict QML lint; all 16 behavioral JavaScript scripts plus source-tree imports;
-two Python tests; four Rust search tests; timezone build/test (zero unit tests);
-native offscreen runtime smoke (existing unsupported-window-mask warning).
+Passed: full native Qt **460 passes, zero failures, one unchanged renderer skip**
+(332 executed behaviors + 128 excluded lifecycle hooks), strict QML lint, two
+Python tests and native offscreen runtime smoke. The full current-source
+`local-build check shelllist --offline --keep-going` also passed (exit 0), including
+retained JavaScript/contract gates and regenerated producer-fixture checks. Its
+isolated Qt run independently reports the same 460/0/1 result. Runtime smoke has
+the existing offscreen window-mask warning, not a test failure.
 
-The four retained portal-launcher Rust tests could not run with `--offline
---locked`: Cargo requires a lockfile update against the local sibling dependency.
-Its manifest/lock and all Rust tests are unchanged from the baseline; no lockfile
-was rewritten or gate relaxed. The five daemon contract suites were retained but
-not rerun. No full sibling-aware Nix/package, hardware, RHI, IME or screen-reader
-acceptance is claimed. An intermediate Qt run exposed a removed *required*
-fixture `uiScale`; it was restored as `1`, and all three retained Resources cases
-pass in the complete final run. No failing case was deleted to obtain the result.
+Case-set comparison confirms **202 removed cases, zero added cases**; the inventory
+is exactly 414. A source comparison also confirms 278 retained multiline test
+bodies are unchanged: no assertion weakening or relocation into other scenarios.
+
+Local evidence is under `target/test-pruning-46407b7/`: baseline/final sources,
+`before.json`, `final.json`, `case-diff.json`, `preservation.json`,
+`retained-bodies.json`, `final-qml.log`, `lint.log`, `python.log`, `smoke.log`,
+`nix.log` and `nix-qml.log`.
 
 ```sh
-QML_XHR_ALLOW_FILE_READ=1 tests/run-qml-tests.sh > /tmp/pruned-qml.log 2>&1
+local-build develop shelllist --offline --command bash -c '
+  cd /home/laufan/Projects/shelllist
+  QML_XHR_ALLOW_FILE_READ=1 tests/run-qmlquality-tests.sh > /tmp/pruned-qml.log 2>&1
+'
+cd shelllist
 python3 tests/count-test-inventory.py --qml-log /tmp/pruned-qml.log \
   --expected-qml-skip 'qmltestrunner::MediaChip::test_artworkReallyClipsRoundedCorners()'
-tests/run-qmllint.sh
-bash tests/run-runtime-smoke.sh
-python3 -m unittest discover -s tests -p 'test_*.py'
-# Node arguments are in flake.nix; executed script is saved with local evidence.
-cargo test --offline --locked --manifest-path rust/shelllist-search/Cargo.toml
-cargo test --offline --locked --manifest-path portal-launcher/Cargo.toml
+cd ..
+local-build check shelllist --offline --keep-going
 ```
 
-Local evidence: `before-source.tar`, `final-source.tar`, `incoming.patch`,
-`pruning.patch`, `incoming-hashes.json`, `preservation.json`, `before-qml.log`,
-`before.json`, `final-qml.log`, `final.json`, `comparison.json`, `case-diff.json`,
-`run-javascript.sh`, `lint.log`, `javascript.log`, `python.log`, `rust.log`,
-`timezone.log`, `smoke.log`
-under `target/test-pruning-c6451f8/`. The initial post-edit failure is retained in
-`after-qml.log`; it is not passing evidence. Counts and source preservation were
-checked against the saved baseline, not historical pruning documents.
+The preceding pruning report is historical and available as
+`git show 46407b7:tests/test-pruning-current.md`; its 808 → 541 figures are not
+this pass's baseline or result.

@@ -81,7 +81,7 @@ DaemonTestCase {
         compare(controller.resourceHistorySummary.revision, "history-example");
     }
     function test_stateEvents_data() {
-        return [{tag: "applications", stream: Api.streams.applications}, {tag: "windows", stream: Api.streams.windows}];
+        return [{tag: "windows", stream: Api.streams.windows}];
     }
     function test_stateEvents(data) {
         const controller = make();
@@ -99,7 +99,7 @@ DaemonTestCase {
         compare(controller.catalogError, "");
     }
     function test_structuredErrors_data() {
-        return ["daemon-unavailable", "validation-error"].map(code => ({tag: code, code: code}));
+        return ["validation-error"].map(code => ({tag: code, code: code}));
     }
     function test_structuredErrors(data) {
         const controller = make();

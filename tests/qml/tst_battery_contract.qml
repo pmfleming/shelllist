@@ -70,13 +70,11 @@ DaemonTestCase {
         verify(c.backend.isPending(call.route.localId)); return call;
     }
     function test_outcomes_data() {
-        // Distinct limited hardware readbacks and separate settings owners matter;
-        // repeating the same transport failure for every opcode does not.
-        return Object.keys(fixture().cases).map(method => [method, "success"])
-            .concat([["battery.chargeOnce", "limited"], ["battery.setProtection", "limited"],
-                ["battery.setThresholds", "limited"], ["battery.setThresholds", "failed"],
-                ["battery.setAlertPolicy", "failed"], ["battery.setChargingInhibited", "rejected"],
-                ["battery.startCalibration", "readbackFailed"]])
+        // Limited readbacks exercise acknowledgement plus unverified hardware state.
+        // Draft and calibration workflows below retain normal completion coverage.
+        return [["battery.chargeOnce", "limited"], ["battery.setProtection", "limited"],
+                ["battery.setAlertPolicy", "failed"],
+                ["battery.setChargingInhibited", "rejected"], ["battery.startCalibration", "readbackFailed"]]
             .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome}));
     }
     function test_outcomes(data) {
@@ -101,8 +99,7 @@ DaemonTestCase {
         compare(effects(c).length, 1);
     }
     function test_noReplay_data() {
-        return [["battery.setThresholds", false], ["battery.setProtection", true],
-            ["battery.setAlertPolicy", false], ["battery.chargeOnce", true]]
+        return [["battery.setThresholds", false]]
             .map(([method, disconnect]) => ({tag: method + (disconnect ? "/disconnect" : "/timeout"), method: method, disconnect: disconnect}));
     }
     function test_noReplay(data) {
@@ -126,10 +123,10 @@ DaemonTestCase {
         }
     }
     function test_newerDraft_data() {
-        const rows = [];
-        for (const method of ["battery.setThresholds", "battery.setAlertPolicy"])
-            for (const timeout of [false, true]) rows.push({tag:method + (timeout ? "/timeout" : "/ack"), method:method, timeout:timeout});
-        return rows;
+        return [
+            {tag:"battery.setThresholds/ack", method:"battery.setThresholds", timeout:false},
+            {tag:"battery.setAlertPolicy/timeout", method:"battery.setAlertPolicy", timeout:true}
+        ];
     }
     function test_newerDraft(data) {
         const c = make(data.method); const call = start(c, data.method);

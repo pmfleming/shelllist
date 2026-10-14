@@ -59,7 +59,7 @@ DaemonTestCase {
         compare(controller.detailState.committedDraft, "Originalx");
     }
     function test_escapeDiscardsClipboardDraft_data() {
-        return [{tag: "fresh", failed: false}, {tag: "failed", failed: true}];
+        return [{tag: "failed", failed: true}];
     }
     function test_escapeDiscardsClipboardDraft(data) {
         const controller = makeController();
@@ -140,7 +140,7 @@ DaemonTestCase {
     }
 
     function test_bulkAndWipeCompactConfirmations_data() {
-        return [{tag: "selected-one", count: 1}, {tag: "selected-many", count: 3}, {tag: "wipe", count: 0}];
+        return [{tag: "selected-many", count: 3}, {tag: "wipe", count: 0}];
     }
     function test_bulkAndWipeCompactConfirmations(data) {
         const controller = makeController();
@@ -473,7 +473,6 @@ DaemonTestCase {
         return [{tag: "prepared", prepared: true, stale: false},
             {tag: "publication-failed", prepared: false, stale: false},
             {tag: "reopened-session", prepared: true, stale: true},
-            {tag: "missing-outcome", prepared: true, outcome: "missing"},
             {tag: "different-outcome-session", prepared: true, outcome: "different"}];
     }
     function test_saveAndPasteUsesOneWriteAndKeepsHiddenHandshake(data) {

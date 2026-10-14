@@ -187,28 +187,6 @@ TestCase {
         surface.savedText = "backend after save";
         compare(text.text, surface.savedText, "save also restores the source binding");
     }
-    function test_nativeSliderHomeDiscardPreservesBinding() {
-        const surface = make();
-        browse(surface, "level");
-        const control = field(surface, "level");
-        const original = control.value;
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Home);
-        verify(control.value !== original);
-        compare(surface.writes, 0);
-        keyClick(Qt.Key_Escape);
-        verify(surface.detailsNavigation.browsing);
-        compare(control.value, original);
-        verify(!control.editSession.active);
-        // A backend update must still flow through the restored binding.
-        for (let round = 0; round < 2; round++) {
-            surface.savedLevel = 70 + round * 10;
-            compare(control.value, surface.savedLevel, "the model binding survives a transaction");
-            keyClick(Qt.Key_Return);
-            keyClick(Qt.Key_Escape); // Even a no-op discard must retain the binding.
-        }
-        compare(surface.writes, 0);
-    }
     function test_externalUpdateDoesNotOverwriteDraftAndBlurRestoresBinding() {
         const surface = make();
         const control = field(surface, "text");
@@ -232,7 +210,7 @@ TestCase {
         compare(surface.writes, 0);
     }
     function test_choiceDraftSurvivesSnapshotsAndDiscardsOnExit_data() {
-        return [{tag: "dropdown", name: "choice"}, {tag: "segments", name: "segments"}];
+        return [{tag: "segments", name: "segments"}];
     }
     function test_choiceDraftSurvivesSnapshotsAndDiscardsOnExit(data) {
         const surface = make();
@@ -284,7 +262,7 @@ TestCase {
         }
     }
     function test_tabKeepsPositionWhenSaveRemovesField_data() {
-        return [{tag: "forward", backwards: false}, {tag: "reverse", backwards: true}];
+        return [{tag: "reverse", backwards: true}];
     }
     function test_tabKeepsPositionWhenSaveRemovesField(data) {
         const surface = make();
@@ -322,33 +300,6 @@ TestCase {
         verify(surface.listItem.listFocused);
         keyClick(Qt.Key_Left);
         verify(!surface.chooserController.detailsOpen);
-    }
-    function test_choicesStayLocalAndTwoOptionsAreNotSwitches() {
-        const surface = make();
-        browse(surface, "segments");
-        keyClick(Qt.Key_Return);
-        compare(surface.savedChoice, "a");
-        keyClick(Qt.Key_Right);
-        compare(field(surface, "segments").displayedValue, "b");
-        compare(surface.writes, 0);
-        keyClick(Qt.Key_Escape);
-        compare(field(surface, "segments").displayedValue, "a");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        keyClick(Qt.Key_Return);
-        compare(surface.savedChoice, "b");
-        compare(surface.writes, 1);
-        browse(surface, "choice");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Space);
-        tryCompare(field(surface, "choice").popup, "visible", true);
-        keyClick(Qt.Key_Down);
-        compare(surface.savedChoice, "b");
-        keyClick(Qt.Key_Tab);
-        compare(surface.savedChoice, "c");
-        compare(surface.writes, 2);
-        verify(surface.detailsNavigation.editing);
-        compare(surface.detailsNavigation.currentTarget, field(surface, "segments"));
     }
     function test_dropdownOptionClickSavePolicy_data() {
         return [{tag: "deferred", immediate: false}, {tag: "save-on-click", immediate: true}];

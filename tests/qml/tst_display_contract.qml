@@ -84,10 +84,9 @@ DaemonTestCase {
         return call;
     }
     function test_replyOutcomes_data() {
-        return Object.keys(fixture().replies).map(method => [method, "success"])
-            .concat([["displayLayout.preview", "rejected"], ["displayLayout.preview", "failed"],
-                ["displayLayout.confirm", "uncertain"], ["displayLayout.revert", "failed"],
-                ["displayFocus.set", "rejected"], ["displayPolicy.set", "failed"]])
+        // Native Displays workflows cover confirm/revert/focus success and policy retry.
+        return [["displayLayout.confirm", "uncertain"], ["displayLayout.revert", "failed"],
+                ["displayPolicy.set", "success"]]
             .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome}));
     }
     function test_replyOutcomes(data) {
@@ -125,7 +124,7 @@ DaemonTestCase {
         compare(effects(controller).length, 1, "Failures and uncertain replies cannot replay effects");
     }
     function test_reconnectReadsWithoutReplaying_data() {
-        return ["displayLayout.preview", "displayLayout.confirm", "displayPolicy.set"]
+        return ["displayLayout.preview"]
             .map(method => ({tag: method, method: method}));
     }
     function test_reconnectReadsWithoutReplaying(data) {

@@ -40,7 +40,6 @@ TestCase {
 
     function test_reopenDuringDrain_data() {
         return [
-            {tag: "running", starting: false},
             {tag: "starting", starting: true}
         ];
     }

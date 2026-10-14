@@ -211,36 +211,4 @@ DaemonTestCase {
         compare(c.historyRange, "30m");
         compare(historyCalls(), pointerBefore + 1);
     }
-    function test_arrivingSnapshotsKeepDraftAndPartialFootprint() {
-        const panel = make();
-        const c = panel.chooserController;
-        const before = historyCalls();
-        keyClick(Qt.Key_Tab);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        compare(field(panel).displayedValue, "2h");
-        const changed = fixture();
-        changed.disk_space_permanent_bytes = null;
-        changed.disk_read_bytes_per_second = null;
-        changed.memory_bytes = 1024 * 1024 * 1024 * 123.4;
-        c.replaceProviderResults([c.provider.resultFor(changed)], false);
-        verify(panel.detailsNavigation.editing);
-        compare(field(panel).displayedValue, "2h");
-        compare(c.historyRange, "30m");
-        compare(historyCalls(), before);
-        compare(findChild(panel, "applicationDiskFootprint"), null, "Storage attribution is not a power reading");
-        const read = card(panel, "resourceTotal_disk_read_bytes_per_second");
-        verify(read.available, "Canonical period total survives an unavailable latest read rate");
-        verify(read.detailText.includes("Current Unavailable"));
-        verify(read.Accessible.name.includes("Estimated"), "Removing a visible approximation sign does not erase estimation semantics");
-        verify(card(panel, "resourceTotal_disk_write_bytes_per_second").available);
-        const receive = card(panel, "resourceTotal_network_receive_bytes_per_second");
-        verify(!receive.available);
-        compare(findChild(receive, "resourceValue").text, "—");
-        verify(receive.Accessible.name.includes("Unavailable"));
-        compare(card(panel, "applicationRam").valueText, "123 GiB", "Descriptor replacement updates the existing reading");
-        keyClick(Qt.Key_Escape);
-        compare(field(panel).displayedValue, "30m");
-        compare(card(panel, "applicationResourceOverview").rows.length, 5);
-    }
 }

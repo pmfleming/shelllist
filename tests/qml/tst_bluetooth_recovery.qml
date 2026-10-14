@@ -479,7 +479,7 @@ DaemonTestCase {
         verify(!backend.requestRunning);
     }
     function test_requestErrorsKeepReadAndMutationFeedbackSeparate_data() {
-        return [{tag: "snapshot", read: true}, {tag: "audio-set-profile", read: false}];
+        return [{tag: "audio-set-profile", read: false}];
     }
     function test_requestErrorsKeepReadAndMutationFeedbackSeparate(data) {
         const controller = makePanel().controller;
@@ -728,34 +728,6 @@ DaemonTestCase {
         compare(Object.keys(controller.adapterEdits.draft("other").fields).length, 0);
         wait(750);
         compare(adapterCalls().length, 1);
-    }
-    function test_renameAcknowledgementAndDisconnectKeepCorrectState() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        verify(controller.renameSelected("New name"));
-        const snapshot = {
-            radio: controller.radio,
-            adapters: controller.adapters,
-            devices: [Object.assign({}, controller.selectedDevice, {
-                    name: "New name",
-                    alias: "New name"
-                })]
-        };
-        controller.handleOperationEvent({
-            request_id: "rename-1",
-            device_key: "buds",
-            operation: "set-alias",
-            state: "completed",
-            snapshot: snapshot
-        });
-        compare(controller.nameEdits.draft("buds"), null);
-        compare(findChild(panel.page, "deviceNameInput").text, "New name");
-        findChild(controller, "bluetoothBackend").pending = ({});
-        verify(controller.renameSelected("Keep on disconnect"));
-        findChild(controller, "bluetoothBackend").failSharedTransport("Disconnected");
-        const draft = controller.nameEdits.draft("buds");
-        compare(draft.value, "Keep on disconnect");
-        verify(draft.dirty && !draft.pending && draft.error.length > 0);
     }
     Component {
         id: deviceDetailsComponent

@@ -126,46 +126,6 @@ DaemonTestCase {
         tryCompare(panel.detailsItem.parent, "status", Loader.Ready);
         verify(waitForPolish(panel.Window.window));
     }
-    function test_settingsRemainVisibleWithOnlyOneEnabledDisplay_data() {
-        return [
-            {tag: "docked-after-extended", output: "DP-1", height: 600, previouslyExtended: true}
-        ];
-    }
-    function test_settingsRemainVisibleWithOnlyOneEnabledDisplay(data) {
-        const panel = makePanel();
-        panel.height = data.height;
-        const c = panel.controller;
-        if (data.previouslyExtended) {
-            const state = displayState();
-            state.outputs[0].disabled = false;
-            c.applyDisplayPolicy(state);
-        }
-        c.uiActive = true;
-        c.selectOutput(data.output);
-        c.openDetails();
-        waitForDetails(panel);
-        if (data.previouslyExtended) {
-            c.applyDisplayPolicy(displayState());
-            verify(waitForPolish(panel.Window.window));
-        }
-        compare(findChild(panel, "displayArrangementControls").height, 0,
-            "unavailable placement controls must not retain a blank row");
-        const workspace = findChild(panel, "displayLayoutWorkspace");
-        const card = findChild(panel, "displayContentCard");
-        const field = findChild(panel, "displayContentMode");
-        verify(workspace.visible && workspace.width > 0 && workspace.height > 0);
-        verify(card.visible && card.width > 0 && card.height > 0);
-        const point = field.mapToItem(workspace, 0, 0);
-        verify(point.y >= 0 && point.y + field.height <= workspace.height,
-            "display settings must be inside the viewport before focusing an editor");
-        // Going through Information must not let the empty layout expand again.
-        c.detailsTab = "information";
-        verify(waitForPolish(panel.Window.window));
-        c.detailsTab = "settings";
-        verify(waitForPolish(panel.Window.window));
-        verify(workspace.height >= field.height && workspace.visible);
-        compare(calls.length, 0, "layout changes never submit display settings");
-    }
     function test_enableDisableCommandsPreviewAndAcknowledge_data() {
         return [
             {tag: "enable-laptop", index: 0, wasEnabled: false, keyboard: false, keep: true},
@@ -264,52 +224,6 @@ DaemonTestCase {
         verify(!c.selectedDraft.enabled && c.canPreview);
         compare(calls.length, 0, "the swap still needs a single guarded Preview");
     }
-    function test_noResetRowAndDiscardOnClose() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        c.selectOutput("eDP-1");
-        c.openDetails();
-        waitForDetails(panel);
-        compare(findChild(panel, "reloadDisplayLayout"), null);
-        const back = findChild(panel, "backToDisplayList");
-        verify(!back.parent.visible, "display pages reserve no Back/reset row");
-        const arrangement = findChild(panel, "displayArrangementSummary").parent;
-        const tabs = findChild(panel, "displayDetailsTabs");
-        compare(tabs.y, arrangement.y + arrangement.height + panel.detailsItem.sectionSpacing);
-
-        panel.list.focusSearch();
-        keyClick(Qt.Key_E, Qt.AltModifier);
-        verify(c.dirty && c.selectedDraft.enabled);
-        const feedback = findChild(panel.list, "feedbackText").parent;
-        tryVerify(() => feedback.fullText.includes("Unsaved layout"));
-        keyClick(Qt.Key_X, Qt.AltModifier);
-        verify(c.dirty, "removed reset command cannot silently discard");
-        panel.navigation.focusContent();
-        keyClick(Qt.Key_Escape);
-        const prompt = findChild(panel, "discardDisplayDraft");
-        tryVerify(() => prompt.visible);
-        keyClick(Qt.Key_Escape);
-        tryVerify(() => !prompt.visible);
-        verify(c.dirty && c.detailsOpen, "cancelling keeps the layout draft");
-        panel.navigation.focusContent();
-        keyClick(Qt.Key_Escape);
-        tryVerify(() => prompt.visible);
-        wait(0);
-        prompt.focusAction("accept");
-        keyClick(Qt.Key_Space);
-        tryVerify(() => !c.dirty && !c.detailsOpen);
-        verify(!c.draft.find(output => output.name === "eDP-1").enabled);
-        compare(calls.length, 0, "discarding a local draft never mutates the backend");
-
-        c.openGlobalSettings();
-        waitForDetails(panel);
-        const globalBack = findChild(panel, "backToDisplayList");
-        verify(globalBack.visible && globalBack.parent.visible, "global settings keeps its Back command");
-        panel.list.focusSearch();
-        keyClick(Qt.Key_B, Qt.AltModifier);
-        tryVerify(() => !c.detailsOpen);
-    }
     function focusState() {
         const state = displayState();
         state.outputs[0].disabled = false;
@@ -339,51 +253,6 @@ DaemonTestCase {
             {tag: "left", side: "left", key: Qt.Key_L, x: -2560, y: 0},
             {tag: "above", side: "above", key: Qt.Key_U, x: 0, y: -1440}
         ];
-    }
-    function test_directionButtonsAndKeyboard_data() { return [placementCases()[0]]; }
-    function test_directionButtonsAndKeyboard(data) {
-        const panel = arrangementPanel(false);
-        const c = panel.controller;
-        const map = findChild(panel, "displayArrangementSummary");
-        const controls = findChild(panel, "displayArrangementControls");
-        const button = findChild(panel, "displayPlace-" + data.side);
-        verify(button.visible && button.enabled);
-        verify(controls.mapToItem(panel.detailsItem, 0, 0).y >= map.mapToItem(panel.detailsItem, 0, map.height).y);
-        compare(findChild(panel, "displayX"), null);
-        compare(findChild(panel, "displayY"), null);
-        verify(!findChild(panel, "displayPositionReference").visible, "two monitors have an automatic reference");
-        mouseClick(button);
-        compare(c.selectedDraft.x, data.x);
-        compare(c.selectedDraft.y, data.y);
-        c.reloadDraft();
-        panel.list.focusSearch();
-        keyClick(data.key, Qt.AltModifier);
-        compare(c.selectedDraft.x, data.x);
-        compare(c.selectedDraft.y, data.y);
-        const saved = JSON.stringify(c.draft);
-        keyClick(data.key, Qt.AltModifier);
-        compare(JSON.stringify(c.draft), saved, "repeating the current direction is a no-op");
-        const tabs = findChild(panel, "displayDetailsTabs");
-        const settingsY = tabs.y;
-        const settingsHeight = tabs.height;
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        tryCompare(c, "detailsTab", "information");
-        verify(!map.visible && !button.visible && !controls.visible);
-        tryCompare(tabs, "y", 0);
-        compare(tabs.height, settingsHeight + settingsY, "Information reclaims the entire arrangement area");
-        const feedback = findChild(panel.list, "feedbackText").parent;
-        verify(feedback.fullText.includes("Unsaved layout"), "draft status remains visible without the map");
-        panel.navigation.focusContent();
-        verify(panel.navigation.targets.every(item => !item.objectName.startsWith("displayPlace-") && item.objectName !== "displayPositionReference"));
-        keyClick(Qt.Key_U, Qt.AltModifier);
-        compare(JSON.stringify(c.draft), saved, "hidden arrangement commands cannot change the draft");
-        keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
-        tryCompare(c, "detailsTab", "settings");
-        verify(map.visible && button.visible && controls.visible);
-        tryCompare(tabs, "y", settingsY);
-        compare(tabs.height, settingsHeight);
-        compare(JSON.stringify(c.draft), saved, "tab changes preserve saved layout edits");
-        compare(calls.length, 0, "buttons and Alt commands are draft-only");
     }
     function beginMapDrag(panel) {
         const map = findChild(panel, "displayArrangementSummary");
@@ -975,19 +844,5 @@ DaemonTestCase {
         c.clock = Date.now() + 30000;
         verify(!c.displayLayoutAction("confirm", { id: "token" }));
         verify(c.displayLayoutAction("revert", { id: "token" }));
-    }
-    function test_closeWhilePreviewIsPending() {
-        const c = makePanel().controller;
-        c.edit("DP-1", "x", 1600);
-        verify(c.preview());
-        c.deactivateUi();
-        const value = displayState();
-        value.layout.trial = { id: "late-token", expires_at: Date.now() / 1000 + 20 };
-        c.applyDisplayPolicy(value);
-        compare(calls.length, 1, "wait for preview acknowledgement before sending revert");
-        c.requestFinished(calls[0].id);
-        compare(calls.length, 2);
-        compare(calls[1].method, "displayLayout.revert");
-        compare(calls[1].params.id, "late-token");
     }
 }

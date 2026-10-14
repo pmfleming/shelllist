@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Shelllist.Ui as Ui
 import Shelllist.Bluetooth as Bt
 import Shelllist.Wifi as Wifi
 
@@ -12,25 +11,6 @@ DaemonTestCase {
     width: 700
     height: 780
 
-    Component {
-        id: sharedFactory
-        Item {
-            width: 560; height: 600
-            property alias prior: prior
-            property alias dialog: dialog
-            Ui.TextField { id: prior; width: 200; text: "Preceding editor" }
-            Ui.ConfirmationDialog {
-                id: dialog
-                visible: false
-                title: "Delete these selected clipboard entries permanently?"
-                detail: "Only the captured entries are removed. This cannot be undone."
-                property int accepts: 0
-                property int rejects: 0
-                onAccepted: { accepts++; visible = false; }
-                onCancelled: { rejects++; visible = false; }
-            }
-        }
-    }
     Component {
         id: bluetoothFactory
         Item {
@@ -77,42 +57,6 @@ DaemonTestCase {
             verify(title.mapToItem(dialog, title.width, 0).x < left.x, "question stays left of the pair");
             compare(Math.round(title.mapToItem(dialog, 0, title.height / 2).y), Math.round(right.y));
         }
-    }
-    function test_sharedNativeFocusAndCompactLayout() {
-        const panel = createTemporaryObject(sharedFactory, tests, {width: 360});
-        panel.prior.focusInput(false);
-        const preceding = panel.Window.window.activeFocusItem;
-        const dialog = panel.dialog;
-        dialog.visible = true;
-        const cancel = findChild(dialog, "detailAction:reject");
-        const accept = findChild(dialog, "detailAction:accept");
-        tryCompare(cancel, "activeFocus", true);
-        verifyCompact(dialog);
-        compare(dialog.accepts, 0);
-        keyClick(Qt.Key_Escape);
-        compare(dialog.rejects, 1);
-        compare(panel.Window.window.activeFocusItem, preceding);
-        dialog.acceptEnabled = false;
-        dialog.visible = true;
-        tryCompare(cancel, "activeFocus", true);
-        mouseClick(accept);
-        keyClick(Qt.Key_Tab);
-        compare(dialog.accepts, 0, "disabled approval neither submits nor joins Tab");
-        tryVerify(() => findChild(dialog, "detailAction:reject").activeFocus);
-        dialog.acceptEnabled = true;
-        tryCompare(accept, "enabled", true);
-        dialog.focusAction("reject");
-        keyClick(Qt.Key_Tab);
-        verify(accept.activeFocus);
-        keyClick(Qt.Key_Return);
-        compare(dialog.accepts, 1);
-        compare(panel.Window.window.activeFocusItem, preceding);
-        // Opt-out protects ordinary credential forms and scope menus.
-        dialog.compactPresentation = false;
-        dialog.visible = true;
-        verify(findChild(dialog, "modalDetail").visible);
-        verify(findChild(dialog, "promptActionSummary").visible);
-        keyClick(Qt.Key_Escape);
     }
     function makeBluetooth() {
         const panel = createTemporaryObject(bluetoothFactory, tests);

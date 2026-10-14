@@ -54,16 +54,14 @@ DaemonTestCase {
         }
         return controller;
     }
-    function methods(battery) {
-        return battery
-            ? ["powerProfile.set", "powerProfile.resumeAutomatic", "powerProfile.setBatteryAware", "powerProfile.setActionEnabled"]
-            : ["audio.adjust", "audio.setMuted", "audio.setInputMuted", "brightness.adjust", "brightness.set", "powerProfile.set"];
-    }
     function cases(battery) {
-        const failures = battery
-            ? [["powerProfile.set", "limited"], ["powerProfile.setActionEnabled", "failed"], ["powerProfile.setBatteryAware", "rejected"]]
-            : [["audio.adjust", "limited"], ["brightness.adjust", "limited"], ["brightness.adjust", "failed"], ["audio.setInputMuted", "rejected"]];
-        return methods(battery).map(method => [method, "success"]).concat(failures)
+        // Sample distinct state/error owners; generated schemas cover all nine DTOs.
+        const rows = battery
+            ? [["powerProfile.set", "limited"], ["powerProfile.setBatteryAware", "rejected"]]
+            : [["audio.setInputMuted", "success"],
+                ["audio.adjust", "limited"], ["brightness.adjust", "limited"],
+                ["brightness.adjust", "failed"], ["audio.setInputMuted", "rejected"]];
+        return rows
             .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome, battery: battery}));
     }
     function start(controller, method, battery) {
@@ -74,8 +72,6 @@ DaemonTestCase {
         case "audio.setMuted": sent = controller.toggleMuted(); break;
         case "audio.setInputMuted": sent = controller.toggleInputMuted(); break;
         case "brightness.adjust": sent = controller.adjustBrightness(params.delta_percent); break;
-        // v1 exposes absolute brightness, although the bar currently offers only steps.
-        case "brightness.set": sent = controller.backend.callSequenced("brightness-set", method, params); break;
         case "powerProfile.set": sent = battery ? controller.setPowerProfile(params.profile) : controller.backend.setPowerProfile(params.profile); break;
         case "powerProfile.resumeAutomatic": sent = controller.resumeAutomaticProfiles(); break;
         case "powerProfile.setBatteryAware": sent = controller.setBatteryAware(params.enabled); break;
@@ -136,8 +132,7 @@ DaemonTestCase {
     function test_batteryOutcomes_data() { return cases(true); }
     function test_batteryOutcomes(data) { checkOutcome(data); }
     function test_recoveryNeverReplays_data() {
-        return [["audio.adjust", false], ["brightness.adjust", false],
-            ["powerProfile.set", true], ["powerProfile.setActionEnabled", true]]
+        return [["brightness.adjust", false], ["powerProfile.set", true]]
             .map(([method, battery]) => ({tag: (battery ? "battery/" : "bar/") + method, method: method, battery: battery}));
     }
     function test_recoveryNeverReplays(data) {

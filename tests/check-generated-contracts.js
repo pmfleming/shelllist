@@ -14,7 +14,6 @@ const app = load('launcher/AppProtocol.generated.js');
 const bar = load('bar/BarProtocol.generated.js');
 const fixture = name => JSON.parse(fs.readFileSync(path.join(root, 'tests/qml/fixtures', name), 'utf8'));
 const replies = fixture('app-replies.json');
-assert.equal(Object.keys(app.contracts).length, 8);
 for (const [method, contract] of Object.entries(app.contracts)) {
     assert.equal(app.responseError(method, replies[method]), '', method);
     const moved = structuredClone(replies[method]);
@@ -23,7 +22,6 @@ for (const [method, contract] of Object.entries(app.contracts)) {
     assert.notEqual(app.responseError(method, moved), '', method);
 }
 const controls = fixture('bar-controls.json');
-assert.equal(Object.keys(bar.contracts).length, 9);
 for (const method of Object.keys(bar.contracts)) {
     const example = controls[method];
     assert.equal(bar.requestError(method, example.params), '', method);

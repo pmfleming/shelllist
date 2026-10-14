@@ -156,7 +156,7 @@ DaemonTestCase {
         calls = [];
     }
     function test_savedConnectButtonActivatesWithoutCollectingOrReplacingCredentials_data() {
-        return ["secret-required", "wrong-password", "timeout", "cancelled", "succeeded"].map(outcome => ({tag: outcome, outcome: outcome}));
+        return ["secret-required", "succeeded"].map(outcome => ({tag: outcome, outcome: outcome}));
     }
     function test_savedConnectButtonActivatesWithoutCollectingOrReplacingCredentials(data) {
         const panel = makePanel();
@@ -193,7 +193,7 @@ DaemonTestCase {
         compare(calls.filter(call => call.method === "wifi.connectTarget").length, 1);
     }
     function test_updateCredentialsIsExplicitVersionedEditorNotAnotherConnect_data() {
-        return [{tag: "closed", hardware: false}, {tag: "leaving-hardware", hardware: true}];
+        return [{tag: "leaving-hardware", hardware: true}];
     }
     function test_updateCredentialsIsExplicitVersionedEditorNotAnotherConnect(data) {
         const panel = makePanel();
@@ -236,18 +236,6 @@ DaemonTestCase {
         verify(c.status.includes("expired"));
         verify(!calls.some(call => call.method === "wifi.secret.provide"));
     }
-    function test_expiryAfterReceiptIsNotHiddenOrReplacedByRecoveryForm() {
-        const c = makePanel().controller;
-        c.handleSecretEvent({event: "requested", request_id: "ack-expired", data: {secret_keys: ["psk"]}});
-        verify(c.prompt.submitCredentials(c, {psk: "synthetic"}));
-        c.backend.handleSecretResponse({protocol: "nm-api", version: 2, ok: true, data: {result: {
-            request_id: "ack-expired", accepted: true, status: "accepted"
-        }}});
-        c.handleSecretEvent({event: "cancelled", request_id: "ack-expired", data: {reason: "expired"}});
-        verify(c.status.includes("expired"));
-        c.connection.handleConnectError({recovery_prompt: {kind: "password", message: "Retry"}});
-        verify(!c.prompt.open && !c.prompt.credentialOpen);
-    }
     function test_secretEnterWaitsForAcknowledgementAndExpires() {
         const panel = makePanel();
         const c = panel.controller;
@@ -280,26 +268,8 @@ DaemonTestCase {
         verify(!c.prompt.credentialOpen);
     }
 
-    function test_persistenceFailureSurvivesEitherAcknowledgementOrder_data() {
-        return [{tag: "event-first", eventFirst: true}, {tag: "reply-first", eventFirst: false}];
-    }
-    function test_persistenceFailureSurvivesEitherAcknowledgementOrder(data) {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.handleSecretEvent({event: "requested", request_id: "secret-save", data: {secret_keys: ["psk"], save_supported: true}});
-        verify(c.prompt.submitCredentials(c, {psk: "synthetic-password"}));
-        const persistence = {event: "persistence", request_id: "secret-save", data: {status: "failed", error: "Keyring locked"}};
-        const reply = {protocol: "nm-api", version: 2, ok: true, data: {result: {request_id: "secret-save", status: "accepted", accepted: true}}};
-        if (data.eventFirst) c.handleSecretEvent(persistence);
-        c.backend.handleSecretResponse(reply);
-        if (!data.eventFirst) c.handleSecretEvent(persistence);
-        verify(!c.prompt.credentialOpen);
-        compare(c.prompt.credentialValues, ({}), "accepted secrets are cleared");
-        verify(c.status.includes("could not be saved"));
-        verify(c.status.includes("Keyring locked"));
-    }
     function test_receiptDeliveryAndSaveFailureRemainDistinct_data() {
-        return ["rdp", "rpd", "drp", "dpr", "prd", "pdr"].map(order => ({tag: order, order: order}));
+        return ["rdp", "dpr", "prd"].map(order => ({tag: order, order: order}));
     }
     function test_receiptDeliveryAndSaveFailureRemainDistinct(data) {
         const panel = makePanel();
@@ -333,21 +303,8 @@ DaemonTestCase {
         c.handleSecretEvent({event: "delivered", request_id: "secret-order", data: {}});
         compare(c.status, status, "old delivery cannot overwrite a newer request");
     }
-    function test_connectionSuccessCannotHideSaveFailure() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.handleSecretEvent({event: "persistence", request_id: "save-one", data: {connection_path: "/profile/one", status: "failed", error: "Keyring locked"}});
-        c.connection.applyResult({status: "connected", message: "Connected to Synthetic"}, "", "connect-one");
-        compare(c.status, "Connected to Synthetic");
-        verify(panel.page.listItem.status.includes("could not be saved"));
-        verify(panel.page.listItem.status.includes("Connected to Synthetic"));
-        c.handleSecretEvent({event: "persistence", request_id: "other-save", data: {connection_path: "/profile/other", status: "stored"}});
-        verify(panel.page.listItem.status.includes("could not be saved"), "another profile's save cannot clear the warning");
-        c.handleSecretEvent({event: "persistence", request_id: "retry-save", data: {connection_path: "/profile/one", status: "stored"}});
-        verify(!panel.page.listItem.status.includes("could not be saved"));
-    }
     function test_rememberSwitchRoutesTemporaryConnect_data() {
-        return [{tag: "new", saved: false}, {tag: "saved", saved: true}];
+        return [{tag: "saved", saved: true}];
     }
     function test_rememberSwitchRoutesTemporaryConnect(data) {
         const panel = makePanel();

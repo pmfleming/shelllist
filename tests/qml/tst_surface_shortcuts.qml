@@ -27,8 +27,8 @@ DaemonTestCase {
     SignalSpy { id: requests; signalName: "surfaceRequested" }
 
     function test_surfaceShortcutRouting_data(): var {
-        // Default, eager and hyphenated lazy IDs exercise the shared delegate.
-        return ["applications", "wifi", "time-weather"].map(id => {
+        // One lazy surface exercises the generated shortcut delegate and activation.
+        return ["time-weather"].map(id => {
             const item = Catalog.descriptors.find(item => item.id === id);
             return {tag: id, surfaceId: id, label: item.name};
         });

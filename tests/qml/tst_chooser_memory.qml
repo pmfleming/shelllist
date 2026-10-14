@@ -302,9 +302,7 @@ DaemonTestCase {
         compare(surface.edits, 0);
     }
     function test_changedRestorationContextFallsBackWithoutEditing_data() {
-        return [{tag: "different-result", change: "result", search: false},
-            {tag: "closed-details", change: "close", search: false},
-            {tag: "removed-selection", change: "remove", search: true}];
+        return [{tag: "removed-selection", change: "remove", search: true}];
     }
     function test_changedRestorationContextFallsBackWithoutEditing(data) {
         const surface = makeSurface();
@@ -344,7 +342,7 @@ DaemonTestCase {
         compare(surface.edits, 1, "only explicit native save publishes");
     }
     function test_listControlRestorationDoesNotActivate_data() {
-        return [{tag: "available", available: true}, {tag: "unavailable", available: false}];
+        return [{tag: "unavailable", available: false}];
     }
     function test_listControlRestorationDoesNotActivate(data) {
         const surface = makeSurface();

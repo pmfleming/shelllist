@@ -51,10 +51,8 @@ DaemonTestCase {
         return call;
     }
     function test_outcomes_data() {
-        // Keep every request DTO, not every shared error code for every action.
-        return Object.keys(fixture().cases).map(key => [key, "success"])
-            .concat([["workspace", "failed"], ["updates", "failed"], ["seek", "rejected"],
-                ["select", "failed"], ["set-mode", "rejected"]])
+        // Native chooser/media tests cover command activation; sample response owners.
+        return [["select", "success"], ["seek", "rejected"], ["set-mode", "rejected"]]
             .map(([key, outcome]) => ({tag: key + "/" + outcome, key: key, outcome: outcome}));
     }
     function test_outcomes(data) {
@@ -77,7 +75,7 @@ DaemonTestCase {
         compare(effects(c).length, 1);
     }
     function test_noReplay_data() {
-        return [["play-pause", false], ["seek", true], ["select", false], ["workspace", true]]
+        return [["play-pause", false], ["seek", true]]
             .map(([key, disconnect]) => ({tag: key + (disconnect ? "/disconnect" : "/timeout"), key: key, disconnect: disconnect}));
     }
     function test_noReplay(data) {

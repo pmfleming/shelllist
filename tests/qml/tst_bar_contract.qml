@@ -60,14 +60,8 @@ DaemonTestCase {
         for (const field of Object.keys(Api.propertyByPayload))
             compare(controller[Api.propertyByPayload[field]], snapshot[field], field);
     }
-    function test_snapshotUsesActualReplyEnvelope() {
-        const controller = makeBar();
-        verifySnapshot(controller);
-        verify(!controller.osdVisible, "A snapshot must not produce change-event OSDs");
-        compare(requests(controller.backend).length, 1);
-    }
     function test_barStreams_data() {
-        return Object.keys(Api.streams).map(property => ({tag: property, property: property, stream: Api.streams[property]}));
+        return ["audio"].map(property => ({tag: property, property: property, stream: Api.streams[property]}));
     }
     function test_barStreams(data) {
         const controller = makeBar();
@@ -88,8 +82,8 @@ DaemonTestCase {
         compare(requests(controller.backend).length, before, "Push delivery cannot be hidden by snapshot recovery");
     }
     function test_laggedEventsRecoverReadOnly_data() {
-        // All streams route above; sample scalar, list and nested recovery here.
-        return ["audio", "workspaces", "powerProfile"]
+        // Recovery is shared; BarDomainRecovery covers concurrency and stale replies.
+        return ["powerProfile"]
             .map(property => ({tag: property, property: property, stream: Api.streams[property]}));
     }
     function test_laggedEventsRecoverReadOnly(data) {
@@ -102,19 +96,6 @@ DaemonTestCase {
         reply(lastRead(controller.backend));
         verifySnapshot(controller);
         verify(requests(controller.backend).every(call => call.method === Api.methods.snapshot), "Recovery never sends effects");
-    }
-    function test_producerMonitorFailureInvalidatesOnlyItsDomain() {
-        const controller = makeBar();
-        const initial = lastRead(controller.backend);
-        const battery = JSON.stringify(controller.battery);
-        verify(controller.backend.snapshot());
-        const stale = lastRead(controller.backend);
-        event(initial, fixture().monitor_failed);
-        verify(!controller.audio.available);
-        verify(controller.audio.error.includes("audio monitor panicked"));
-        compare(JSON.stringify(controller.battery), battery);
-        reply(stale);
-        verify(!controller.audio.available, "an older read cannot resurrect a dead monitor");
     }
     function test_projections_data() {
         return [{tag: "workarea", projection: "workarea"}, {tag: "compositor", projection: "compositor"}];

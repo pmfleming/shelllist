@@ -86,13 +86,10 @@ DaemonTestCase {
         compare(Object.keys(state.policyPending).length, 0);
     }
     function test_outcomes_data() {
-        // One request-shape acknowledgement per live operation; negative rows
-        // distinguish draft, consent, policy and active-record ownership.
-        return ["cancelDelete", "clear", "clearGroup", "delete", "dismiss", "invokeAction",
-            "prepareDelete", "reply", "setAppPolicy", "setDnd", "snooze"].map(key => [key, "success"])
-            .concat([["reply", "failed"], ["setDnd", "failed"], ["setAppPolicy", "failed"],
-                ["prepareDelete", "failed"], ["delete", "failed"], ["cancelDelete", "failed"],
-                ["invokeAction", "stale"], ["dismiss", "stale"], ["snooze", "stale"], ["clearGroup", "rejected"]])
+        // Preserve distinct draft, consent, policy and active-record error owners.
+        // Race tests below and native notification workflows cover ordinary acks.
+        return [["setAppPolicy", "failed"], ["prepareDelete", "failed"],
+                ["invokeAction", "stale"], ["snooze", "success"]]
             .map(([key, outcome]) => ({tag: key + "/" + outcome, key: key, outcome: outcome}));
     }
     function test_outcomes(data) {
@@ -126,7 +123,7 @@ DaemonTestCase {
         compare(mutations(state).length, count + 1, "Errors and stale IDs cannot replay an effect");
     }
     function test_timeoutsDoNotReplay_data() {
-        return ["reply", "delete", "prepareDelete"].map(key => ({tag: key, key: key}));
+        return ["reply"].map(key => ({tag: key, key: key}));
     }
     function test_timeoutsDoNotReplay(data) {
         const state = make();
@@ -146,7 +143,7 @@ DaemonTestCase {
         if (["prepareDelete", "delete", "cancelDelete"].includes(data.key)) compare(state.deleteConfirmation, null);
     }
     function test_reconnectNeverReplays_data() {
-        return ["setDnd", "setAppPolicy", "invokeAction", "reply"].map(key => ({tag: key, key: key}));
+        return ["reply"].map(key => ({tag: key, key: key}));
     }
     function test_reconnectNeverReplays(data) {
         const state = make();
@@ -250,17 +247,5 @@ DaemonTestCase {
         verify(!state.notifications.dnd);
         compare(state.lastError, "Independent failure");
         compare(state.deleteConfirmation, null);
-    }
-    function test_newerDndEventOutranksAnOlderAcknowledgement() {
-        const state = make();
-        const call = start(state, "setDnd");
-        event(state, "dnd");
-        event(state, "dndCleared");
-        const observed = JSON.stringify(state.notifications);
-        reply(call, fixture().replies.setDnd.success);
-        compare(JSON.stringify(state.notifications), observed);
-        verify(!state.notifications.dnd, "An older acknowledgement cannot overwrite a newer DND observation");
-        verify(!state.dndPending);
-        compare(mutations(state).length, 1);
     }
 }

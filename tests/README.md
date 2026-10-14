@@ -9,11 +9,11 @@ implementation tables or freeze visual choices unnecessarily.
 `docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,
 exceptions and separate source/offscreen/live evidence. Those are historical
 acceptance results, not a claim that every visual matrix remains automated.
-Shared field/command tests retain interaction and native identity;
-`tst_shared_panel_composition.qml` retains readable long-diagnostic fallback.
-The redundant `PanelRoles` suite and per-family/Weather geometry matrices were
-removed in the current pruning pass. Manual all-panel captures still assert fixed
-status bounds and representative real-consumer error transitions. See [current convergence evidence](../docs/shared-panel-ui-convergence.md);
+Shared field/command tests retain interaction and native identity. Standalone
+long-diagnostic geometry, `PanelRoles` and per-family/Weather geometry matrices
+were removed across pruning passes. Historical manual all-panel captures record
+fixed status bounds and representative real-consumer error transitions; those
+presentation choices are not mandatory contributor requirements. See [current convergence evidence](../docs/shared-panel-ui-convergence.md);
 pruning checkpoints below describe historical source snapshots, not this run.
 The explicit manual capture fixtures cover panels, dense forms and display safety
 states. Generate the local comparison gallery with `tests/build-panel-gallery.py`;
@@ -31,8 +31,8 @@ cards and produce misleading chart-pixel failures; the resource pixel test check
 that prerequisite rather than skipping or weakening its paint assertions.
 
 - `tst_field_interaction.qml`: local drafts, binding survival, backend updates
-  during editing, native arrows and slider Home, forward/reverse Tab after
-  availability changes or removal, editable-only traversal, switch safety,
+  during editing, native arrows, forward/reverse Tab after availability changes
+  and reverse Tab after removal, editable-only traversal, switch safety,
   pointer transactions, continuous-preview rollback and command menus.
 - `tst_chooser_keyboard.qml`, `tst_chooser_memory.qml` and
   `tst_domain_workflows.qml`: search/result navigation, asynchronous restoration,
@@ -78,17 +78,43 @@ Expected negative-test application error logs are distinct from QML engine
 warnings and remain allowed. Offscreen tests do not replace live compositor,
 hardware, IME or screen-reader acceptance.
 
-## Subsequent ownership regressions
+## Current pruning checkpoint — baseline `46407b7`
+
+**618 → 414 inventory units: 204 removed (33.01%), 66.99% retained.**
+The unchanged counter gives `round(618 × 0.67) = 414`. Actual reductions are
+202 Qt cases/data rows and two hard-coded JavaScript schema-cardinality assertions;
+no filtering, hidden tests, scenario packing or new skips. Production, fixtures,
+runners and all five daemon contract checks are unchanged.
+
+| Inventory unit | Before | After |
+| --- | ---: | ---: |
+| JavaScript assertion sites | 68 | 66 |
+| Qt behavioral cases/data rows, including existing skip | 535 | 333 |
+| Rust tests | 8 | 8 |
+| Python tests | 2 | 2 |
+| Daemon contract suites | 5 | 5 |
+| **Total** | **618** | **414** |
+
+Full Qt: **460 passes, zero failures, one existing renderer skip** (332 executed
+behaviors + 128 excluded lifecycle hooks). Sixty-four suites remain. This mixed
+inventory is not coverage; 414 is not a cap on future regression tests.
+See [decisions, retained owners, validation and explicit gaps](test-pruning-current.md).
+Strict lint, Python tests, runtime smoke and the full current-source
+`local-build check shelllist --offline --keep-going` passed. The Nix Qt run
+independently reports the same 460/0/1 result with regenerated producer fixtures.
+Matching local evidence is in `target/test-pruning-46407b7/`.
+
+## Historical ownership regressions
 
 The [ownership refactor](../docs/ownership-refactor.md) adds 14 focused native
 cases after pruning: notification completion fencing, chooser restoration
-fallbacks/readiness, and clipboard captured-target/paste ownership. Latest full
-Qt run: **606 passes, zero failures, one existing renderer skip** (482 executed
+fallbacks/readiness, and clipboard captured-target/paste ownership. At that checkpoint,
+the full Qt run had **606 passes, zero failures, one existing renderer skip** (482 executed
 behaviors + 124 lifecycle hooks). Established inventory: **555**, including that
 skip. Lint, all 17 JavaScript checks and runtime smoke pass at each refactor step.
 The pruning figures below remain historical evidence, not a test-count cap.
 
-## Current pruning checkpoint — baseline c6451f8 + incoming work
+## Previous pruning checkpoint — baseline c6451f8 + incoming work
 
 **808 → 541 inventory units: 267 removed (33.04%), 66.96% retained.**
 `round(808 × 0.67) = 541`, using the unchanged established inventory counter.
@@ -119,7 +145,7 @@ no lockfile was updated. Five daemon contracts and full Nix/hardware gates were
 not rerun. The mixed inventory is not coverage, and retained shared tests do not
 prove all removed endpoint/presentation permutations.
 
-See [decisions, retained owners and explicit gaps](test-pruning-current.md).
+Historical decisions: `git show 46407b7:tests/test-pruning-current.md`.
 Matching evidence is in `target/test-pruning-c6451f8/`. Earlier counts below are
 historical; this target is not a cap on future regression tests.
 

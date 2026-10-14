@@ -179,33 +179,6 @@ DaemonTestCase {
         state.finishReply(key, "Older draft", "");
         compare(state.drafts[key], "Newer draft");
     }
-    function test_dateHistoryUsesSharedScrollingAndKeepsAppListFixed() {
-        const controller = makeController(makeState());
-        projectApps(controller, [app(100, "Chat", 500), app(1, "Mail", 1)]);
-        controller.uiActive = true; controller.primarySelected();
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
-        wait(150);
-        projectTimeline(controller, Array.from({length: 100}, (_, i) => preview(1000 - i)));
-        verify(!findChild(content, "notificationPage"), "transport windows do not create page fields");
-        const list = findChild(content, "notificationTimelineList");
-        tryCompare(list, "count", 101);
-        tryCompare(controller, "detailsExpansionProgress", 1);
-        wait(50);
-        content.listItem.focusList(); keyClick(Qt.Key_Tab);
-        const beforeScroll = list.contentY - list.originY;
-        keyClick(Qt.Key_PageDown);
-        tryVerify(() => list.contentY - list.originY > beforeScroll, 1000, "shared non-highlighted scrolling fallback handles PageDown relative to ListView's origin");
-        const rendered = descendants(list.contentItem).filter(item => String(item.objectName || "").startsWith("notificationPreview-")).length;
-        verify(rendered < 25, "virtualization does not instantiate the entire date");
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        tryCompare(controller, "detailsTab", "controls");
-        verify(findChild(content, "notificationAppDelivery") !== null);
-        compare(controller.notificationModel.count, 2);
-        content.listItem.focusList(); keyClick(Qt.Key_Down);
-        compare(controller.selectedAppKey, "Mail");
-        verify(controller.detailsOpen);
-        content.destroy(); wait(0);
-    }
     function test_centerRefreshNeverPublishesPartialAppPages() {
         const state = makeState();
         const controller = makeController(state);
@@ -351,8 +324,7 @@ DaemonTestCase {
     }
     function test_unownedCenterResponsesCannotRetireAppRead_data() {
         return [
-            {tag: "timeline", patch: {view: "timeline"}},
-            {tag: "old-generation", patch: {generation: -1}}
+            {tag: "timeline", patch: {view: "timeline"}}
         ];
     }
     function test_unownedCenterResponsesCannotRetireAppRead(data) {

@@ -69,9 +69,6 @@ DaemonTestCase {
             controller.suspendPolicyCriticalOnly = true;
             controller.suspendPolicyDirty = true;
             sent = controller.saveSuspendPolicy(); break;
-        case "powerSleep.idle":
-            // Hypridle, not a UI button, normally invokes this v1 method.
-            sent = controller.backend.callSequenced("power-suspend-idle", method, params); break;
         }
         verify(sent, method);
         const call = lastCall(controller, method);
@@ -80,10 +77,9 @@ DaemonTestCase {
         return call;
     }
     function test_replies_data() {
-        return Object.keys(fixture().replies).map(method => [method, "success"])
-            .concat([["powerSleep.lock", "failed"], ["powerSleep.setKeepAwake", "failed"],
-                ["powerSleep.setPolicy", "failed"], ["powerSleep.setCriticalPolicy", "rejected"],
-                ["powerSleep.hibernate", "uncertain"], ["powerSleep.cancelCritical", "failed"]])
+        // Lifecycle/cancellation tests cover action success; retain separate error owners.
+        return [["powerSleep.setKeepAwake", "failed"], ["powerSleep.setPolicy", "success"],
+                ["powerSleep.setPolicy", "failed"], ["powerSleep.hibernate", "uncertain"]]
             .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome}));
     }
     function test_replies(data) {
@@ -121,7 +117,7 @@ DaemonTestCase {
         }
         compare(effects(controller).length, 1);
     }
-    function test_lifecycle_data() { return [{tag: "suspend", action: "suspend"}, {tag: "hibernate", action: "hibernate"}]; }
+    function test_lifecycle_data() { return [{tag: "suspend", action: "suspend"}]; }
     function test_lifecycle(data) {
         const controller = make();
         const call = start(controller, "powerSleep." + data.action);
@@ -148,10 +144,8 @@ DaemonTestCase {
         compare(effects(controller).length, 1);
     }
     function test_terminalOutcomes_data() {
-        // Every terminal failure class, without crossing each with both actions.
-        return [["suspend", "job-failed"], ["hibernate", "preflight-failed"],
-            ["suspend", "cancelled-before-dispatch"], ["hibernate", "interrupted-dispatch"],
-            ["suspend", "monitor-lost"], ["hibernate", "reply-lost"]]
+        // Failed versus unknown execution, not every daemon diagnostic label.
+        return [["suspend", "job-failed"], ["hibernate", "interrupted-dispatch"]]
             .map(([action, outcome]) => ({tag: action + "/" + outcome, action: action, outcome: outcome}));
     }
     function test_terminalOutcomes(data) {
@@ -168,7 +162,7 @@ DaemonTestCase {
         compare(effects(controller).length, 0, "Failure, worker cancellation and uncertainty cannot initiate a retry");
     }
     function test_reconnectNeverReplays_data() {
-        return [["suspend", "pending"], ["hibernate", "accepted"], ["suspend", "unknown"]]
+        return [["suspend", "pending"]]
             .map(([action, stage]) => ({tag: action + "/" + stage, action: action, stage: stage}));
     }
     function test_reconnectNeverReplays(data) {

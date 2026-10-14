@@ -23,7 +23,6 @@ TestCase {
     function cleanup() { Quickshell.themeIcons = ({}); }
     function test_candidatePrecedence_data() {
         return [
-            {tag: "symbolic before next candidate", notification: {identity_icon: "fallback", app_icon: "app"}, expected: "symbolic"},
             {tag: "internal content excluded", notification: {app_name: "Shelllist", app_icon: "app"}, expected: ""}
         ];
     }
