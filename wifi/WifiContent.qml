@@ -59,9 +59,9 @@ ProviderChooserSurface {
         readonly property bool forgetResponseValid: content.controller.prompt.text.trim().toLowerCase() === "forget"
         inputValid: !compactPresentation || content.controller.prompt.text.length === 0 || forgetResponseValid
         acceptEnabled: !compactPresentation || forgetResponseValid
-        optionVisible: content.controller.prompt.mode === "daemon-secret" && content.controller.prompt.saveSecretSupported
+        optionVisible: content.controller.prompt.mode === "network-password"
         optionChecked: content.controller.prompt.saveSecret
-        optionLabel: "Save in the desktop keyring"
+        optionLabel: qsTr("Remember network")
         actionsVisible: true
         rejectLabel: "Cancel"
         acceptLabel: compactPresentation ? qsTr("Forget") : qsTr("Continue")

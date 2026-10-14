@@ -100,6 +100,7 @@
           inherit shelllistSearch shelllistTimezoneAssets;
 
           materialColors = import ./nix/material-colors.nix { inherit pkgs; };
+          wifiQrScanner = pkgs.callPackage ./nix/qrca.nix { };
 
           # Development-only: never part of the resident host or installed bar.
           materialGallery = pkgs.writeShellApplication {
@@ -123,7 +124,7 @@
               pkgs.quickshell
               pkgs.hyprland # hyprctl: layer rules and live workspace placement
               self.packages.${system}.shelllistSearch
-              pkgs.kdePackages.qrca
+              self.packages.${system}.wifiQrScanner
               self.packages.${system}.portalLauncher
               nmDaemon
               btDaemon

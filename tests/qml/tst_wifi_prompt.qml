@@ -28,13 +28,14 @@ TestCase {
                     };
                     return true;
                 },
-                runTarget: function (target, name, password, identity, enterprise, wepKeyType) {
+                runTarget: function (target, name, password, identity, enterprise, wepKeyType, remember) {
                     capturedConnect = {
                         target: target,
                         name: name,
                         password: password,
                         enterprise: enterprise,
-                        wepKeyType: wepKeyType
+                        wepKeyType: wepKeyType,
+                        remember: remember
                     };
                     return true;
                 }
@@ -63,7 +64,7 @@ TestCase {
             }
         });
         compare(prompt.credentialFields.length, 2);
-        prompt.saveSecret = true;
+        verify(prompt.saveSecret, "remember defaults on for each supported request");
         verify(prompt.submitCredentials(fakeController, {
             password: "login-secret",
             "private-key-password": "key-secret"
@@ -72,6 +73,24 @@ TestCase {
         compare(capturedSecrets.values.password, "login-secret");
         compare(capturedSecrets.values["private-key-password"], "key-secret");
         verify(capturedSecrets.save);
+    }
+
+    function test_rememberIsExplicitOptOutAndResetsForNewRequests() {
+        const network = {ssid: "Cafe", key: "cafe"};
+        prompt.openPasswordPrompt(network);
+        verify(prompt.saveSecret);
+        prompt.saveSecret = false;
+        prompt.text = "test-password";
+        prompt.submit(fakeController);
+        compare(capturedConnect.password, "test-password");
+        compare(capturedConnect.remember, false);
+        prompt.openPasswordPrompt(network);
+        verify(prompt.saveSecret, "opt-out is local to this connection intent");
+        prompt.cancel();
+        prompt.openDaemonSecretPrompt({request_id: "temporary", data: {secret_keys: ["psk"], save_supported: false}});
+        verify(!prompt.saveSecret, "temporary native credentials must not be saved");
+        verify(prompt.submitCredentials(fakeController, {psk: "test-password"}));
+        verify(!capturedSecrets.save);
     }
 
     function test_validatesHiddenAndEnterpriseSchema() {

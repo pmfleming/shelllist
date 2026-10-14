@@ -68,8 +68,9 @@ ModalFrame {
     ToggleRow {
         width: parent.width
         height: Theme.controlHeight
-        visible: dialog.prompt.credentialMode === "daemon-secret" && dialog.prompt.saveSecretSupported
-        title: qsTr("Save in the desktop keyring")
+        visible: dialog.prompt.credentialMode !== "daemon-secret" || dialog.prompt.saveSecretSupported
+        enabled: !dialog.prompt.secretSubmitting
+        title: qsTr("Remember network")
         showSubtitle: false
         checked: dialog.prompt.saveSecret
         onClicked: dialog.prompt.saveSecret = !dialog.prompt.saveSecret

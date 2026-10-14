@@ -1,0 +1,105 @@
+diff -ruN original/src/qml/QrCodeScannerPage.qml qrca-26.04.3/src/qml/QrCodeScannerPage.qml
+--- original/src/qml/QrCodeScannerPage.qml	2026-06-26 13:54:23.000000000 -0600
++++ qrca-26.04.3/src/qml/QrCodeScannerPage.qml	2026-10-14 03:09:44.605409762 -0600
+@@ -98,6 +98,7 @@
+ 
+         property var tag
+         onTagChanged: resultErrorMessage.visible = false
++        onOpened: rememberNetwork.checked = true
+ 
+         header: Kirigami.Heading {
+             text: {
+@@ -131,6 +132,15 @@
+         ColumnLayout {
+             Layout.preferredWidth: Kirigami.Units.gridUnit * 20
+ 
++            Controls.CheckBox {
++                id: rememberNetwork
++                text: i18n("Remember network")
++                checked: true
++                visible: resultSheet.tag?.contentType === QrCodeContent.WifiSetting
++                enabled: !Qrca.connectingToWifi
++                Layout.fillWidth: true
++            }
++
+             Kirigami.InlineMessage {
+                 id: resultErrorMessage
+                 Layout.fillWidth: true
+@@ -236,7 +246,7 @@
+                         Qrca.openInApplication(resultSheet.tag, "org.kde.vakzination");
+                         break;
+                     case QrCodeContent.WifiSetting:
+-                        Qrca.connectToWifi(resultSheet.tag.text);
++                        Qrca.connectToWifi(resultSheet.tag.text, rememberNetwork.checked);
+                         return; // Wait for connection to be established before closing.
+                     }
+                     resultSheet.close();
+diff -ruN original/src/Qrca.cpp qrca-26.04.3/src/Qrca.cpp
+--- original/src/Qrca.cpp	2026-06-26 13:54:23.000000000 -0600
++++ qrca-26.04.3/src/Qrca.cpp	2026-10-14 03:09:36.174935494 -0600
+@@ -218,7 +218,7 @@
+ };
+ #endif
+ 
+-void Qrca::connectToWifi(const QString &wifiCode)
++void Qrca::connectToWifi(const QString &wifiCode, bool remember)
+ {
+ #if HAVE_NETWORKMANAGER
+     auto p = Prison::MeCard::parse(wifiCode);
+@@ -275,7 +275,7 @@
+ 
+     setConnectingToWifi(true);
+ 
+-    if (existingConnection) {
++    if (existingConnection && remember) {
+         qDebug() << "Updating existing connection" << existingConnection->uuid() << existingConnection->path() << "from MeCard";
+ 
+         // Override default null UUID with existing one.
+@@ -317,15 +317,24 @@
+ 
+     // Add new connection and activate it.
+     settings->setUuid(ConnectionSettings::createNewUuid());
+-    settings->setAutoconnect(true);
++    settings->setAutoconnect(remember);
+     // TODO what about UiUtils::setConnectionDefaultPermissions that plasma-nm does?
+ 
+-    auto call = NetworkManager::addAndActivateConnection(settings->toMap(), wifiDevice->uni(), QString());
++    auto map = settings->toMap();
++    if (!remember && map.contains(QStringLiteral("802-11-wireless-security"))) {
++        auto &security = map[QStringLiteral("802-11-wireless-security")];
++        for (const auto &key : {"psk-flags", "wep-key-flags", "leap-password-flags"}) {
++            security[QString::fromLatin1(key)] = uint(Setting::NotSaved);
++        }
++    }
++    // Volatile profiles disappear on disconnect and never replace a saved UUID.
++    const QVariantMap options{{QStringLiteral("persist"), remember ? QStringLiteral("disk") : QStringLiteral("volatile")}};
++    auto call = NetworkManager::addAndActivateConnection2(map, wifiDevice->uni(), QString(), options);
+     auto *watcher = new QDBusPendingCallWatcher(call, this);
+     connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, watcher] {
+         watcher->deleteLater();
+ 
+-        QDBusPendingReply<QDBusObjectPath, QDBusObjectPath> reply = *watcher;
++        QDBusPendingReply<QDBusObjectPath, QDBusObjectPath, QVariantMap> reply = *watcher;
+         if (reply.isError()) {
+             qWarning() << "Failed to add and activate connection" << reply.error().message();
+             Q_EMIT wifiConnectionFailed(reply.error().message());
+@@ -336,6 +345,7 @@
+     });
+ #else
+     Q_UNUSED(wifiCode)
++    Q_UNUSED(remember)
+ #endif
+ }
+ 
+diff -ruN original/src/Qrca.h qrca-26.04.3/src/Qrca.h
+--- original/src/Qrca.h	2026-06-26 13:54:23.000000000 -0600
++++ qrca-26.04.3/src/Qrca.h	2026-10-14 03:09:24.304670812 -0600
+@@ -42,7 +42,7 @@
+     Q_INVOKABLE void openInApplication(const QrCodeContent &content, const QString &appId);
+     Q_INVOKABLE QString wifiName(const QString &wifiSetting) const;
+     Q_INVOKABLE bool canConnectToWifi() const;
+-    Q_INVOKABLE void connectToWifi(const QString &wifiCode);
++    Q_INVOKABLE void connectToWifi(const QString &wifiCode, bool remember = true);
+     Q_INVOKABLE QrCodeContent resultContent(const Prison::ScanResult &result);
+     Q_INVOKABLE Prison::ScanResult scanImage(const QUrl &imagePath);
+ 

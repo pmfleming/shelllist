@@ -12,6 +12,17 @@ DetailColumnCard {
     required property WifiController controller
     title: qsTr("Profile settings")
 
+    ToggleRow {
+        objectName: "wifiRememberNetwork"
+        Layout.fillWidth: true
+        visible: !card.controller.detailAp?.active
+        enabled: !card.controller.actionInFlight
+        title: qsTr("Remember network")
+        showSubtitle: false
+        checked: card.controller.connection.rememberNetwork
+        onClicked: card.controller.connection.rememberNetwork = !checked
+    }
+
     ActionToggleList {
         Layout.fillWidth: true
         showDisabledReason: false

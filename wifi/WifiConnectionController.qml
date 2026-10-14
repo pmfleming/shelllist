@@ -21,6 +21,9 @@ Item {
     property string recoveryRequestId: ""
     property int recoveryFailures: 0
     property bool cancellationRequested: false
+    property bool rememberNetwork: true
+    readonly property string rememberKey: controller.detailAp?.key || ""
+    onRememberKeyChanged: rememberNetwork = true
     readonly property bool running: backend.connectStarting || requestId.length > 0
 
     function activate() {
@@ -125,6 +128,7 @@ Item {
         };
         if (handlers[promptKind]) {
             handlers[promptKind]();
+            prompt.saveSecret = keyFor(ap) === rememberKey ? rememberNetwork : true;
             return true;
         }
         if (ap && ap.capabilities && ap.capabilities.can_connect)
@@ -139,12 +143,13 @@ Item {
             runTarget(ap, Presentation.networkName(ap));
         return true;
     }
-    function targetRequest(ap, password, enterpriseIdentity, enterprise, wepKeyType) {
+    function targetRequest(ap, password, enterpriseIdentity, enterprise, wepKeyType, remember) {
         const request = ap.key ? {
             key: ap.key
         } : {
             target: ap
         };
+        request.remember = remember === undefined ? (keyFor(ap) === rememberKey ? rememberNetwork : true) : remember !== false;
         if (password !== undefined && password !== null)
             request.password = password;
         if (enterpriseIdentity)
@@ -155,9 +160,9 @@ Item {
             request.wep_key_type = wepKeyType;
         return request;
     }
-    function runTarget(ap, displayName, password, enterpriseIdentity, enterprise, wepKeyType) {
+    function runTarget(ap, displayName, password, enterpriseIdentity, enterprise, wepKeyType, remember) {
         lastConnectAp = ap;
-        run(targetRequest(ap, password, enterpriseIdentity, enterprise, wepKeyType), displayName);
+        run(targetRequest(ap, password, enterpriseIdentity, enterprise, wepKeyType, remember), displayName);
     }
     function run(request, displayName) {
         if (!controller.requireIdle(!backend.nonConnectRunning))

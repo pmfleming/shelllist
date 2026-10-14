@@ -13,7 +13,7 @@ Item {
     property bool password: false
     property var network: null
     property string secretRequestId: ""
-    property bool saveSecret: false
+    property bool saveSecret: true
     property bool saveSecretSupported: false
     property bool secretSubmitting: false
 
@@ -53,7 +53,7 @@ Item {
         detail = nextDetail;
         text = "";
         password = nextPassword;
-        saveSecret = false;
+        saveSecret = true;
         saveSecretSupported = false;
         open = true;
     }
@@ -67,6 +67,7 @@ Item {
     }
 
     function openCredentials(nextMode, nextTitle, nextDetail, fields, nextNetwork) {
+        saveSecret = nextMode === "daemon-secret" ? saveSecretSupported : true;
         credentialMode = nextMode;
         credentialTitle = nextTitle;
         credentialDetail = nextDetail;
@@ -113,7 +114,7 @@ Item {
         network = null;
         secretRequestId = "";
         secretSubmitting = false;
-        saveSecret = false;
+        saveSecret = true;
         saveSecretSupported = false;
     }
 
@@ -125,9 +126,10 @@ Item {
             return;
         }
         const ap = network;
+        const remember = saveSecret;
         cancel();
         if (ap)
-            controller.connection.runTarget(ap, Presentation.networkName(ap), value);
+            controller.connection.runTarget(ap, Presentation.networkName(ap), value, null, null, null, remember);
     }
 
     function submitCredentials(controller, values) {
@@ -154,10 +156,11 @@ Item {
         const nextMode = credentialMode;
         const ap = credentialNetwork;
         const descriptor = hiddenDescriptor;
+        const remember = saveSecret;
         cancel();
         const request = Policy.connectionRequest(nextMode, ap, values, descriptor);
         const name = nextMode === "hidden" ? String(values.ssid || "") : Presentation.networkName(ap);
-        return controller.connection.runTarget(request.target, name, request.password, null, request.enterprise, request.wepKeyType);
+        return controller.connection.runTarget(request.target, name, request.password, null, request.enterprise, request.wepKeyType, remember);
     }
 
     function submitForget(controller, value) {

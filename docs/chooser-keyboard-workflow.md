@@ -952,6 +952,14 @@ expired/unavailable requests clear secrets and require an explicit new connectio
 A late cancellation or reply cannot close another request's form. Keyring
 persistence is separate from credential acceptance and link activation.
 
+Remember network defaults on for each new connection intent. The disconnected
+network's profile card, password/hidden/enterprise forms and Qrca's scanned-network
+confirmation expose an explicit opt-out. Opt-out creates a volatile,
+non-autoconnecting profile without updating an existing saved identity; it does
+not delete an earlier saved network (use Forget for that). SecretAgent requests
+marked NOT_SAVED never offer saving. A supported SecretAgent remember choice
+controls keyring storage, not deletion of an existing profile.
+
 ## Native Wi-Fi prompt descriptors
 
 Hidden-network fields, defaults, security mappings and conditional required fields
