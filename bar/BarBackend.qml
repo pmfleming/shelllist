@@ -12,6 +12,7 @@ Io.BarDaemonBackend {
     streams: controller.notificationState ? BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive].includes(stream)) : BarApi.subscribedStreams
     active: true
     validateRequest: Contract.requestError
+    validateEvent: Contract.eventError
 
     property string snapshotError: ""
     readonly property bool snapshotLoading: Object.keys(pending).some(id => requestKind(id) === "snapshot")

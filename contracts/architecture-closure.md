@@ -27,3 +27,20 @@ uses v2 envelopes in all five daemons and a shared direct-bus boundary. Complete
 typed method coverage and metadata-driven service policy remain separate gaps.
 This gate proves packaged/isolated integration, not live hardware, compositor or
 privileged update deployment. No live service was restarted.
+
+## Step 2 — additional typed control coverage (partial)
+
+Brightness and power-profile requests/results now derive schemas from the live
+Rust DTOs. Bar has nine typed method contracts instead of three, plus typed
+subscribed/changed/gap payloads for audio, brightness and power-profile streams.
+The bar consumer uses the generated event validator. Production fixtures have
+Node and native-QML schema gates; removing a required result/event field is
+rejected. The Node gate passed; the captured native-QML product gate was still
+running at this incremental commit. The intentionally ignored resume-automatic parameters remain accepted.
+Native bar tests: 208 passed, one existing ignored test. Full captured product
+validation: `/tmp/shelllist-closure/step2-nix.log`.
+
+**Not complete:** other bar domains, BT, clipboard and NM still need complete
+Rust-derived method/event declarations and generated types. Their current
+name/fixture checks do not establish typed payload coverage. This incremental
+commit does not claim the requested all-method closure.

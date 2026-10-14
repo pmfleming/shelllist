@@ -33,18 +33,32 @@ TestCase {
         delete moved.data.operation;
         verify(App.eventError(moved).length > 0);
     }
-    function test_audioFixturesMatchGeneratedRustSchemas() {
+    function test_controlFixturesMatchGeneratedRustSchemas() {
         const fixtures = fixture("bar-controls.json");
-        compare(Object.keys(Bar.contracts).length, 3);
+        compare(Object.keys(Bar.contracts).length, 9);
         Object.keys(Bar.contracts).forEach(function(method) {
             const values = fixtures[method];
             compare(Bar.requestError(method, values.params), "", method);
-            verify(Bar.requestError(method, values.invalid_params).length > 0, method);
+            if (values.invalid_params !== null)
+                verify(Bar.requestError(method, values.invalid_params).length > 0, method);
             for (const outcome of ["success", "limited"])
                 compare(Bar.responseError(method, values[outcome]), "", method + ": " + outcome);
             const changed = JSON.parse(JSON.stringify(values.success));
-            delete changed.data.audio.volume_percent;
+            const contract = Bar.contracts[method];
+            delete changed.data[contract.response_key][contract.result_schema.required[0]];
             verify(Bar.responseError(method, changed).length > 0, "Rust reply fields cannot disappear silently");
+        });
+    }
+    function test_controlEventsMatchProductionSchemas() {
+        const reads = fixture("bar-reads.json");
+        Object.keys(Bar.eventContracts).forEach(function(key) {
+            const parts = key.split(":");
+            const values = reads[parts[1] === "gap" ? "lagged" : parts[1]];
+            const event = values[parts[0]];
+            compare(Bar.eventError(event), "", key);
+            const broken = JSON.parse(JSON.stringify(event));
+            delete broken.data[Bar.eventContracts[key].required[0]];
+            verify(Bar.eventError(broken).length > 0, key);
         });
     }
     function test_nullabilityDefaultsUnknownFieldsAndExactIntegers() {

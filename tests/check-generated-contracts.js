@@ -23,15 +23,26 @@ for (const [method, contract] of Object.entries(app.contracts)) {
     assert.notEqual(app.responseError(method, moved), '', method);
 }
 const controls = fixture('bar-controls.json');
-assert.equal(Object.keys(bar.contracts).length, 3);
+assert.equal(Object.keys(bar.contracts).length, 9);
 for (const method of Object.keys(bar.contracts)) {
     const example = controls[method];
     assert.equal(bar.requestError(method, example.params), '', method);
-    assert.notEqual(bar.requestError(method, example.invalid_params), '', method);
+    if (example.invalid_params !== null) assert.notEqual(bar.requestError(method, example.invalid_params), '', method);
     for (const outcome of ['success', 'limited']) assert.equal(bar.responseError(method, example[outcome]), '', method);
     const changed = structuredClone(example.success);
-    delete changed.data.audio.volume_percent;
+    const contract = bar.contracts[method];
+    delete changed.data[contract.response_key][contract.result_schema.required[0]];
     assert.notEqual(bar.responseError(method, changed), '', method);
+}
+const reads = fixture('bar-reads.json');
+for (const [key, schema] of Object.entries(bar.eventContracts)) {
+    const [stream, event] = key.split(':');
+    const value = reads[event === 'gap' ? 'lagged' : event][stream];
+    assert.ok(value, key);
+    assert.equal(bar.eventError(value), '', key);
+    const broken = structuredClone(value);
+    delete broken.data[schema.required[0]];
+    assert.notEqual(bar.eventError(broken), '', key);
 }
 const validate = app.schemaError;
 for (const [schema, valid, invalid] of [
