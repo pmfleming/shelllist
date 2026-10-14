@@ -18,6 +18,10 @@ Item {
     property var requestPolicy: null
     property var validateRequest: null
     property var validateEvent: null
+    // Local, non-secret classification captured before dispatch. Never sent as
+    // daemon authorization, and never inferred from a caller-chosen request ID.
+    property var classifyRequest: null
+    property var requestMetadata: ({})
 
     readonly property bool requestRunning: pendingCount > 0
     readonly property int pendingCount: Object.keys(pending).length
@@ -88,14 +92,29 @@ Item {
         pending = next;
     }
 
+    function forgetRequestMetadata(id: string, expected: var): void {
+        if (requestMetadata[id] !== expected)
+            return; // A completion callback may already have reused this ID.
+        const next = Object.assign({}, requestMetadata);
+        delete next[id];
+        requestMetadata = next;
+    }
+
+    function recordRequestMetadata(id: string, metadata: var): void {
+        requestMetadata = Object.assign({}, requestMetadata, {[id]: metadata});
+    }
+
     function call(id: string, method: string, params: var): bool {
+        if (isPending(id)) {
+            console.warn("shelllist " + daemonName + " request rejected id=" + id + " reason=already-pending");
+            return false;
+        }
+        const metadata = Object.assign({}, classifyRequest ? classifyRequest(method, params || ({})) : {}, {kind: "call", method: method});
+        recordRequestMetadata(id, metadata);
         const validationError = validateRequest ? validateRequest(method, params || ({})) : "";
         if (validationError) {
             sendFailed(id, "Request rejected before dispatch: " + validationError);
-            return false;
-        }
-        if (isPending(id)) {
-            console.warn("shelllist " + daemonName + " request rejected id=" + id + " reason=already-pending");
+            forgetRequestMetadata(id, metadata);
             return false;
         }
         if (requestPolicy)
@@ -111,6 +130,7 @@ Item {
             const message = "Could not send " + daemonName + " request " + id + ": " + error;
             console.error("shelllist " + daemonName + " request failed id=" + id + " stage=send error=" + error);
             sendFailed(id, message);
+            forgetRequestMetadata(id, metadata);
             return false;
         }
     }
@@ -136,6 +156,9 @@ Item {
     }
 
     function isTransportControl(id: string): bool {
+        const metadata = requestMetadata[id];
+        if (metadata)
+            return metadata.kind !== "call";
         return id === "session-subscribe" || id.startsWith("cancel-") || id.startsWith("shutdown-") || id.startsWith("subscribe-");
     }
 
@@ -144,6 +167,8 @@ Item {
     /// is what `unsubscribe` cancels.
     function subscribeStreams(streamNames: var): string {
         const id = "subscribe-" + (++subscriptionSequence);
+        const metadata = {kind: "subscription"};
+        recordRequestMetadata(id, metadata);
         setPending(id, true);
         try {
             DaemonSessions.subscribe(daemonName, sharedConsumerId, id, streamNames, false);
@@ -151,6 +176,7 @@ Item {
         } catch (error) {
             setPending(id, false);
             console.error("shelllist " + daemonName + " subscribe failed id=" + id + " error=" + error);
+            forgetRequestMetadata(id, metadata);
             return "";
         }
     }
@@ -202,23 +228,29 @@ Item {
     }
 
     function acceptSharedResponse(id: string, envelope: var, transportError: string): void {
+        const metadata = requestMetadata[id];
         setPending(id, false);
-        if (id.startsWith("subscribe-")) {
-            finishExtraSubscription(id, envelope, transportError);
-            return;
-        }
-        if (!isTransportControl(id)) {
-            if (requestPolicy) {
-                envelope = requestPolicy.received(id, envelope, transportError);
-                if (envelope === undefined)
-                    return;
+        try {
+            if (metadata ? metadata.kind === "subscription" : id.startsWith("subscribe-")) {
+                finishExtraSubscription(id, envelope, transportError);
+                return;
             }
-            responseReceived(id, envelope, transportError);
+            if (!isTransportControl(id)) {
+                if (requestPolicy) {
+                    envelope = requestPolicy.received(id, envelope, transportError);
+                    if (envelope === undefined)
+                        return;
+                }
+                responseReceived(id, envelope, transportError);
+            }
+        } finally {
+            forgetRequestMetadata(id, metadata);
         }
     }
 
     function failSharedTransport(message: string): void {
         const lostRequestIds = Object.keys(pending);
+        const lostMetadata = requestMetadata;
         pending = ({});
         // A new session resubscribes from scratch, so stale ids must not be
         // cancelled later against a subscription that no longer exists.
@@ -227,6 +259,7 @@ Item {
         if (requestPolicy)
             requestPolicy.reset(message);
         transportFailed(message, lostRequestIds);
+        Object.keys(lostMetadata).forEach(id => forgetRequestMetadata(id, lostMetadata[id]));
     }
 
     function eventEnvelopeError(event: var): string {

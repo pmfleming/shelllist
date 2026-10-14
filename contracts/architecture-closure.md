@@ -96,3 +96,79 @@ Build-input alignment passed. Full source-captured Nix gate is recorded in
 `/tmp/shelllist-closure/step4-nix.log`. Strict all-target bar Clippy exposed existing
 `redundant_closure` in `api/audio.rs` and `items_after_test_module` in `timezone.rs`;
 that Clippy run is not claimed as passing.
+
+## Step 5 — send-time Wi-Fi classification and reliability baseline
+
+Wi-Fi records the actual method, response handler, conflict domain, concurrency,
+sensitivity and execution class at send time, without retaining request parameters.
+Profile details/share/reveal are reads; update/forget/unknown variants are exclusive
+effects. Cache-refresh reads can schedule radio scans and are classified as
+operations, not reads. Scans/connects retain their own concurrency rules. Portal transactions
+are effects in a separate conflict domain, not reads. Unknown methods fail closed
+for link exclusion. Response/error routing no longer examines ID prefixes.
+
+Shared backend metadata is recorded before dispatch and cleared on reply,
+rejection/send failure and generation loss. Duplicate pending IDs cannot replace
+classification. Call IDs resembling subscription/control IDs remain calls.
+Metadata cleanup cannot delete a new request started by a completion callback.
+Native tests cover misleading IDs, method variants, parameter mutation, duplicate
+IDs, no secret retention, transport loss, local rejection and control-looking IDs.
+
+Validation: final source-captured native QML **666 passed, 0 failed, one existing
+renderer skip**; strict QML lint passed. Scoped production-gap recovery: nine
+passes. App and update-worker all-target Clippy passed. Logs: `/tmp/shelllist-closure/step5-{qml,lint,recovery,app-clippy}.log`.
+Full source-captured product gate: `/tmp/shelllist-closure/final-nix.log` (exit 0).
+The intermediate step-4 and step-5 captures also passed. Final bar Nix tests:
+214 unit tests plus both integrations passed, including the private native-idle
+fixture. Final QML log: `/tmp/shelllist-closure/final-qml.log`. The initial
+step-2 fixture failures are superseded by this passing gate. All five daemon
+packages/contracts, framework, worker, bindings/fixtures, build-input alignment,
+TypeScript freshness, QML lint and packaged UI checks passed together.
+
+Reproduce the isolated measurements in the product dev shell:
+
+```sh
+QML_XHR_ALLOW_FILE_READ=1 tests/run-qmlquality-tests.sh \
+  -input tests/qml/tst_bar_recovery.qml -o /tmp/shelllist-recovery.log,txt
+QML_LOG=/tmp/shelllist-recovery.log tests/benchmark-architecture.sh
+python3 tests/benchmark-resident.py --duration 5
+```
+
+Committed sample: [architecture-reliability.sample.json](architecture-reliability.sample.json).
+The second debug sample measured app round-trip p50/p95/p99 **3.35/5.91/8.25 ms**
+over 200 requests through the actual JSONL bridge and private-bus daemon. Ten fake
+launcher operations produced 31 events / 15,297 JSON bytes; zero transport
+recoveries, zero idle events and zero bridge CPU ticks over two seconds. Bar's
+source-local p50/p95/p99 was **10.72/17.14/22.63 µs**; 3,024 publications accounted
+for 568,331 payload bytes. The paused 1,024-event burst coalesced 1,023 states,
+caused no domain lag and no unrelated-domain traffic; the old capacity-128 ring
+lost 896 transitions. The real QML policy reduced 100 producer-backed gaps to
+two recovery reads (one flight plus bounded follow-up), with no pending work left.
+
+A separate passive observation of the **already deployed** hidden shell measured
+1.60% of one CPU core and 274.53 MiB PSS over five seconds; three bridges were
+active. It is not a measurement of these modified sources. Compilation was active
+during sampling. These short/debug samples are not release budgets, a comparison
+against an equivalent deployed baseline, or a long-duration reliability study.
+**No process split is proposed or implemented.** Repeat under controlled idle/load
+and deployed failure scenarios before making that decision.
+
+## Remaining closure gates
+
+Steps 2 and 3 remain partial: complete Rust-derived method/event/type coverage
+and per-method policy adoption outside app and the covered bar controls. Current
+generated coverage is app 8/8 methods (11 event shapes), bar 9/58 (9 event shapes),
+BT 0/17, clipboard 0/21 and NM 0/38 complete request/result schema pairs. BT's
+existing parameter-only schemas are not counted as complete contracts. Step 5
+has an initial measured baseline, not comprehensive five-daemon deployed latency
+and recovery statistics. Live hardware, privileged deployment and power-loss
+filesystem testing were not performed. The earlier ledger's completion claims
+must not be expanded to cover these outstanding gates.
+
+## Commit anchors
+
+- Step 1: Shelllist `bed65ee`.
+- Step 2 partial: bar `478f367`; Shelllist `455f6aa`, `be246d4` (later gap-fixture correction in the step-5 consumer commit).
+- Step 3 partial: framework `06e8d72`; app `1b6cfc3`; bar `ab6d013`; Shelllist `dd93525`.
+- Step 4: worker `9aa3f13`; bar `3a2a888`; Shelllist `4f20e02`.
+- Step 5 measurements: app `d0d4b1e`; bar `5f779b2`; the paired Shelllist commit contains classification, native tests, benchmark runner and this record.

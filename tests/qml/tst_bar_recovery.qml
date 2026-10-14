@@ -32,7 +32,9 @@ DaemonTestCase {
         const group = fixtures[kind === "gap" ? "lagged" : kind];
         // Positive events start with the production serializer, not a partial fake.
         const envelope = group ? group[stream] : {protocol: "bar-api", version: 2, stream: stream, event: kind, data: {}};
-        envelope.data = Object.assign(envelope.data, data);
+        // Gap payloads are used verbatim; only state telemetry is varied.
+        if (kind !== "gap")
+            envelope.data = Object.assign(envelope.data, data);
         const route = Object.assign({}, call.route, {kind: "base-subscription", localId: "session-subscribe"});
         Io.DaemonSessions.sessions["bar-daemon"].client.eventReceived(envelope, route);
     }
@@ -42,7 +44,7 @@ DaemonTestCase {
         const initial = reads(backend)[0];
         reply(initial, {audio: {available: true, volume_percent: 5}, battery: {available: true, percentage: 80}});
         for (let i = 0; i < 100; ++i)
-            event(initial, "audio.changed", "gap", {missed: "4", reason: "subscriber-lagged"});
+            event(initial, "audio.changed", "gap", {});
         compare(reads(backend).length, 2);
         compare(reads(backend)[1].params.streams, ["audio.changed"]);
         verify(!backend.snapshot(), "Manual refresh cannot overlap recovery");
@@ -58,6 +60,7 @@ DaemonTestCase {
         wait(0);
         compare(reads(backend).length, 3);
         compare(Object.keys(backend.requestPolicy.requests).length, 0);
+        console.info("SHELLLIST_RELIABILITY " + JSON.stringify({scenario: "qml-production-gap-burst", gaps: 100, initialReads: 1, recoveryReads: reads(backend).length - 1, pendingAfterRecovery: Object.keys(backend.requestPolicy.requests).length}));
     }
     function test_newerPushFencesLateStartupAndRecoveryReplies() {
         const controller = make();
@@ -68,7 +71,7 @@ DaemonTestCase {
         reply(initial, {audio: {available: true, volume_percent: 10}, battery: {available: true, percentage: 80}});
         compare(controller.audio.volume_percent, 70);
         compare(controller.battery.percentage, 80);
-        event(initial, "audio.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
+        event(initial, "audio.changed", "gap", {});
         const recovery = reads(backend)[1];
         event(initial, "audio.changed", "changed", {available: true, volume_percent: 90});
         reply(recovery, {audio: {available: true, volume_percent: 20}});
@@ -81,8 +84,8 @@ DaemonTestCase {
         const backend = controller.backend;
         const initial = reads(backend)[0];
         reply(initial, {});
-        event(initial, "audio.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
-        event(initial, "battery.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
+        event(initial, "audio.changed", "gap", {});
+        event(initial, "battery.changed", "gap", {});
         compare(reads(backend).length, 3);
         compare(reads(backend)[1].params.streams, ["audio.changed"]);
         compare(reads(backend)[2].params.streams, ["battery.changed"]);
@@ -98,7 +101,7 @@ DaemonTestCase {
         const backend = controller.backend;
         const initial = reads(backend)[0];
         reply(initial, {});
-        event(initial, "audio.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
+        event(initial, "audio.changed", "gap", {});
         const recovery = reads(backend)[1];
         if (data.malformed)
             reply(recovery, {});
@@ -108,7 +111,7 @@ DaemonTestCase {
         compare(backend.requestPolicy.snapshotFailures, 1);
         wait(0);
         compare(reads(backend).length, 2);
-        event(initial, "audio.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
+        event(initial, "audio.changed", "gap", {});
         compare(reads(backend).length, 3);
     }
     function test_effectReplyCannotResurrectNewerMonitorFailure() {
@@ -129,7 +132,7 @@ DaemonTestCase {
         const backend = controller.backend;
         const initial = reads(backend)[0];
         reply(initial, {audio: {available: true, volume_percent: 30}});
-        event(initial, "audio.changed", "gap", {missed: "1", reason: "subscriber-lagged"});
+        event(initial, "audio.changed", "gap", {});
         const recovery = reads(backend)[1];
         const client = Io.DaemonSessions.sessions["bar-daemon"].client;
         clientReady = false;

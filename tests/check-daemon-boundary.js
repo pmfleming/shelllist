@@ -109,7 +109,7 @@ for (const backoffExpired of [false, true]) {
 for (const closeBeforeReply of [false, true]) {
     const cancellations = [];
     const backend = {
-        pending: {}, extraSubscriptions: {}, extraSubscriptionCancellations: {}, requestPolicy: null,
+        pending: {}, requestMetadata: {}, extraSubscriptions: {}, extraSubscriptionCancellations: {}, requestPolicy: null,
         subscriptionSequence: 0, daemonName: "test-daemon", sharedConsumerId: "view",
         console: quietConsole,
         DaemonSessions: { subscribe() {}, cancel: (...args) => cancellations.push(args) },

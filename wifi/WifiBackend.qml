@@ -2,6 +2,7 @@ import QtQuick
 import Shelllist.Io as Io
 import "NmApi.js" as NmApi
 import "NmApiClient.js" as Api
+import "WifiRequestMetadata.js" as RequestMetadata
 import "process"
 
 Io.DaemonBackend {
@@ -14,19 +15,18 @@ Io.DaemonBackend {
     streams: NmApi.subscribedStreams
     recoverProtocolErrors: false
     active: controller.statusMonitorActive || controller.uiActive || requestRunning || controller.connection.running || controller.promptActive || (controller.portal && controller.portal.busy)
-    readonly property bool listRunning: isPending("networks")
-    readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
-    readonly property bool connectStarting: isPending("connect-start") || isPending("qr-connect")
-    // Reads and portal transactions do not mutate the Wi-Fi link. Unknown
-    // request kinds remain conservatively exclusive; new mutations fail closed.
-    readonly property bool nonConnectRunning: Object.keys(pending).some(function (id) {
-        const reads = ["networks", "scan-start", "connect-start", "qr-connect", "share", "qr-parse", "status-recovery", "connection-status", "band-status", "advanced-load", "advanced-secret", "hotspot-capabilities", "hotspot-status", "vpn-list", "vpn-status", "inventory", "network-status", "statistics-watch"];
-        return !reads.includes(id) && !id.startsWith("portal-") && !id.startsWith("connection-status-") && !isTransportControl(id);
-    })
+    classifyRequest: RequestMetadata.classify
+    readonly property bool listRunning: pendingRequests.some(info => info.method === NmApi.methods.wifi_networks)
+    readonly property bool scanRunning: pendingRequests.some(info => info.concurrency === "scan") || controller.scan.requestId.length > 0
+    readonly property bool connectStarting: pendingRequests.some(info => info.concurrency === "connect")
+    readonly property var pendingRequests: Object.keys(pending).map(id => requestMetadata[id] || {kind: "call", conflictDomain: "wifi-link", concurrency: "exclusive"})
+    // Scans and connects have their own exclusion rules. Portal effects are not
+    // reads, but intentionally do not occupy the Wi-Fi link conflict domain.
+    readonly property bool nonConnectRunning: pendingRequests.some(info => info.kind === "call" && info.conflictDomain === "wifi-link" && !["scan", "connect"].includes(info.concurrency))
     readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     property var portalExecutor: portalProcess
     property string portalLaunchId: ""
-    readonly property var responseHandlerById: ({
+    readonly property var responseHandlers: ({
             "status-recovery": function (value) {
                 controller.applyRecoveredStatus(Api.apiData(value, "status") || null);
             },
@@ -337,21 +337,23 @@ Io.DaemonBackend {
     }
 
     function finish(id, envelope, transportError) {
-        if (id.startsWith("connection-status-")) {
+        const metadata = requestMetadata[id] || ({});
+        const kind = metadata.responseHandler || "";
+        if (kind === "connection-status") {
             controller.connection.receiveStatus(id, envelope, transportError);
             return;
         }
-        if (id.startsWith("portal-")) {
+        if (kind === "portal") {
             controller.portal.receive(id, envelope, transportError);
             return;
         }
         if (transportError.length > 0) {
             console.error("shelllist nm request failed id=" + id + " stage=response error=" + transportError);
-            controller.failCall(id, "nm-daemon request failed: " + transportError, envelope && envelope.error ? (envelope.error.details || ({})) : ({}));
+            controller.failCall(kind, "nm-daemon request failed: " + transportError, envelope && envelope.error ? (envelope.error.details || ({})) : ({}));
             return;
         }
         try {
-            const handler = responseHandlerById[id];
+            const handler = responseHandlers[kind];
             if (!handler)
                 console.warn("shelllist nm response ignored id=" + id + " reason=no-handler");
             else
@@ -359,7 +361,7 @@ Io.DaemonBackend {
             console.info("shelllist nm request completed id=" + id);
         } catch (error) {
             console.error("shelllist nm request failed id=" + id + " stage=parse error=" + error);
-            controller.failCall(id, "Could not parse nm-daemon " + id + " response: " + error);
+            controller.failCall(kind, "Could not parse nm-daemon " + id + " response: " + error);
         }
         controller.maybeRunPendingRefresh();
     }
@@ -410,16 +412,17 @@ Io.DaemonBackend {
         controller.handleDaemonEvent(event);
     }
     onSendFailed: function (id, message) {
-        if (id.startsWith("connection-status-"))
+        const kind = (requestMetadata[id] || ({})).responseHandler || "";
+        if (kind === "connection-status")
             controller.connection.receiveStatus(id, null, message);
-        else if (id.startsWith("portal-"))
+        else if (kind === "portal")
             controller.portal.receive(id, null, message);
         else
-            controller.failCall(id, message);
+            controller.failCall(kind, message);
     }
     onTransportFailed: function (message, lostRequestIds) {
         console.error("shelllist nm transport failed error=" + message + " lost_requests=" + (lostRequestIds.length > 0 ? lostRequestIds.join(",") : "none"));
-        controller.handleTransportFailure(message, lostRequestIds);
+        controller.handleTransportFailure(message, lostRequestIds.map(id => (requestMetadata[id] || ({})).responseHandler || ""));
     }
     onTransportReady: handleTransportReady()
 

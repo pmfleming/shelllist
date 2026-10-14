@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "sources": {
+    "daemon-framework": {
+      "commit": "06e8d7290dd80f735aaaa55da7dc07953ed99c8a",
+      "worktree_dirty": false
+    },
+    "app-daemon": {
+      "commit": "1b6cfc367dd59e59e419a01f640e18cfc41f0d3f",
+      "worktree_dirty": true
+    },
+    "bar-daemon": {
+      "commit": "3a2a8880c294ff95b26512ed44202d45d4a98ffb",
+      "worktree_dirty": true
+    },
+    "shelllist": {
+      "commit": "4f20e02286c90189d53a5da77b655785bc0dbf95",
+      "worktree_dirty": true
+    }
+  },
+  "samples": [
+    {
+      "effects": "ten temporary fixture launcher operations; no live desktop effects",
+      "event_count": 31,
+      "event_json_bytes": 15297,
+      "idle_bridge_cpu_ticks": 0,
+      "idle_event_count": 0,
+      "idle_seconds": 2.001206693,
+      "latency_us": {
+        "p50": 3346.68,
+        "p95": 5907.019,
+        "p99": 8252.196
+      },
+      "profile": "cargo-test-debug",
+      "samples": 200,
+      "scenario": "isolated-real-app-jsonl-and-dbus",
+      "transport_recoveries": 0
+    },
+    {
+      "coalesced": 1023,
+      "idle_events": 0,
+      "idle_ms": 100,
+      "lagged": 0,
+      "latency_us": {
+        "p50": 10.72,
+        "p95": 17.142999999999997,
+        "p99": 22.633000000000003
+      },
+      "old_ring_burst_dropped": 896,
+      "payload_bytes": 568331,
+      "publications": 3024,
+      "samples": 2000,
+      "scenario": "bar-domain-source-not-end-to-end",
+      "unaffected_domain_events": 0
+    },
+    {
+      "scenario": "qml-production-gap-burst",
+      "gaps": 100,
+      "initialReads": 1,
+      "recoveryReads": 2,
+      "pendingAfterRecovery": 0
+    }
+  ],
+  "limitations": [
+    "Debug builds, not release latency budgets.",
+    "Synthetic domains and private-bus fixtures, not all five deployed services.",
+    "Run repeatedly on an otherwise idle host before comparing; no process split is justified by one sample.",
+    "Samples were collected while Nix compilation was active; repeat without build contention before using latency as a release budget."
+  ],
+  "deployed_idle_sample": {
+    "schema_version": 1,
+    "scenario": "resident-hidden-warm",
+    "duration_seconds": 5.000039819002268,
+    "host": {
+      "pid": 178421,
+      "cpu_percent_of_one_core": 1.5999872580207488,
+      "rss_mib": 339.22265625,
+      "pss_mib": 274.5263671875,
+      "threads": 32,
+      "minor_faults_per_second": 2.9999761087889043,
+      "major_faults": 0,
+      "executable": "/nix/store/nm6wrf4gprrxlri8nr16kcmixpkk8hrf-quickshell-0.3.0/bin/.quickshell-wrapped"
+    },
+    "bridges": [
+      {
+        "pid": 178604,
+        "command": "bar-daemon",
+        "threads": 4,
+        "executable": "/nix/store/8zc45jw973ddpqf89n5q6594qgqw2ycn-bar-daemon-0.1.0/bin/.bar-daemon-wrapped"
+      },
+      {
+        "pid": 178610,
+        "command": "nm-daemon",
+        "threads": 4,
+        "executable": "/nix/store/298mny4vmqj2gyx41npb09f5mjrl3n40-nm-daemon-0.1.0/bin/nm-daemon"
+      },
+      {
+        "pid": 178614,
+        "command": "bt-daemon",
+        "threads": 3,
+        "executable": "/nix/store/bsxac8qcfiqfy8kh9q6186fmrq73d8jl-bt-daemon-0.1.0/bin/bt-daemon"
+      }
+    ],
+    "budgets": {
+      "max_cpu_percent": 2.0,
+      "max_pss_mib": 300.0,
+      "max_bridge_threads": 6
+    },
+    "provenance": "Read-only observation of the already deployed stack, not the modified worktrees; only three bridges were active."
+  }
+}
