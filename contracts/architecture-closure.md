@@ -72,3 +72,27 @@ unit tests passed, one existing ignored. Dedicated tests exercise two owners,
 request/result bounds, acknowledgement expiry, abandoned waiters, retained effect
 capacity, panic/read cleanup and the reserved cleanup lane. Existing private-bus
 ownership tests remain green. Logs: `/tmp/shelllist-closure/step3-*.log`.
+
+## Step 4 — actual update publisher/reader boundary
+
+The serde-only contract crate now owns job status, job state and phase DTOs and
+bounded versioned decoding/encoding. Worker publication and bar reading use the
+same DTO; boot ID/PID/start-time and zombie checks remain in the reader. Worker
+writes retain atomic replacement and durability. Display state does not authorize
+privileged apply.
+
+Bar tests depend on the worker **only as a dev dependency**. They call the actual
+`readiness::publish`/`job::Status` and actual `read_state`/job reader, not a copied
+writer. Tests cover two lock-serialized concurrent readiness publishers with
+concurrent readers, concurrent job-status replacement, invalidation before artifact
+retirement, ignored stale legacy readiness, unsupported/malformed/oversized job
+records, and subprocess exit before publication, after running-status publication,
+and after invalidation. Exiting without terminal publication is read as interrupted.
+These are process-crash tests, not simulated filesystem power loss.
+
+Validation: all 12 bar update-boundary tests passed; worker workspace passed
+82 worker tests plus two contract tests (one existing ignored worker test).
+Build-input alignment passed. Full source-captured Nix gate is recorded in
+`/tmp/shelllist-closure/step4-nix.log`. Strict all-target bar Clippy exposed existing
+`redundant_closure` in `api/audio.rs` and `items_after_test_module` in `timezone.rs`;
+that Clippy run is not claimed as passing.
