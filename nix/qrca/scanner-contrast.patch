@@ -1,0 +1,70 @@
+diff -ruN remembered/src/CMakeLists.txt qrca-26.04.3/src/CMakeLists.txt
+--- remembered/src/CMakeLists.txt	2026-06-26 13:54:23.000000000 -0600
++++ qrca-26.04.3/src/CMakeLists.txt	2026-10-14 03:22:44.046287034 -0600
+@@ -23,6 +23,7 @@
+ ecm_target_qml_sources(qrca SOURCES
+     qml/Main.qml
+     qml/QrCodeScannerPage.qml
++    qml/ScannerButton.qml
+     qml/QrCodeEncoderPage.qml
+     qml/AboutPage.qml
+ )
+diff -ruN remembered/src/qml/QrCodeScannerPage.qml qrca-26.04.3/src/qml/QrCodeScannerPage.qml
+--- remembered/src/qml/QrCodeScannerPage.qml	2026-10-14 03:09:44.605409762 -0600
++++ qrca-26.04.3/src/qml/QrCodeScannerPage.qml	2026-10-14 03:22:39.440619082 -0600
+@@ -51,7 +51,25 @@
+     }
+ 
+     title: Qrca.wifiMode ? i18n("Scan a Wi-Fi Code") : i18n("Scan a QR Code")
+-    actions: [
++    // Explicit opaque actions remain readable over both camera and image input.
++    // Reuse the original actions; only their presentation changes.
++    header: Controls.ToolBar {
++        padding: Kirigami.Units.smallSpacing
++        background: Rectangle { color: "#202124" }
++        contentItem: Flow {
++            spacing: Kirigami.Units.smallSpacing
++            implicitHeight: childrenRect.height
++            Repeater {
++                model: scanner.scannerActions
++                delegate: ScannerButton {
++                    required property var modelData
++                    action: modelData
++                    visible: modelData.visible
++                }
++            }
++        }
++    }
++    property list<Kirigami.Action> scannerActions: [
+         Kirigami.Action {
+             icon.name: checked ? "flashlight-off" : "flashlight-on"
+             text: i18n("Light")
+@@ -197,7 +215,7 @@
+                 }
+             }
+ 
+-            Controls.Button {
++            ScannerButton {
+                 text: {
+                     switch (resultSheet.tag?.contentType) {
+                     case QrCodeContent.Url:
+@@ -283,7 +301,7 @@
+ 
+                 Layout.fillWidth: true
+             }
+-            Controls.Button {
++            ScannerButton {
+                 text: i18n("Copy to Clipboard")
+                 icon.name: "edit-copy-symbolic"
+                 onClicked: {
+@@ -413,7 +431,9 @@
+         fillMode: Image.PreserveAspectFit
+         visible: false
+ 
+-        Controls.Button {
++        ScannerButton {
++            text: i18n("Close image")
++            display: Controls.AbstractButton.IconOnly
+             anchors {
+                 top: parent.top
+                 right: parent.right
