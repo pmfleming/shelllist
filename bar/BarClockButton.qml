@@ -8,6 +8,7 @@ BarAction {
     required property var timezone
     required property int layoutDensity
     readonly property var descriptor: Presentation.clockModule(now, timezone)
+    readonly property var clockParts: Presentation.clockParts(now, timezone)
     text: ""
     implicitWidth: clockText.implicitWidth + 14
     accessibleName: qsTr("Open time and weather") + ". " + descriptor.tooltip
@@ -19,7 +20,7 @@ BarAction {
         Ui.ThemeText {
             objectName: "barClock"
             anchors.verticalCenter: parent.verticalCenter
-            text: Qt.formatDateTime(clock.now, "HH:mm")
+            text: clock.clockParts.time
             font.pixelSize: Ui.Theme.fontSizeLabel
             font.weight: Ui.Theme.fontWeightDemiBold
             Accessible.ignored: true
@@ -28,7 +29,7 @@ BarAction {
             objectName: "barClockDate"
             anchors.verticalCenter: parent.verticalCenter
             visible: clock.layoutDensity < 2
-            text: Qt.formatDateTime(clock.now, "MM-dd")
+            text: clock.clockParts.shortDate
             font.pixelSize: Ui.Theme.fontSizeCaption
             color: Ui.Theme.mutedText
             Accessible.ignored: true

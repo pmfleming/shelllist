@@ -10,6 +10,7 @@ Ui.ProviderChooserSurface {
     readonly property alias now: liveClock.now
 
     chooserController: controller
+    feedbackScope: content
     navigationEnabled: !controller.screenshotInFlight
     refreshEnabled: !controller.activity.syncing && !controller.screenshotInFlight
 
@@ -24,6 +25,15 @@ Ui.ProviderChooserSurface {
             now: content.now
             uiScale: content.uiScale
         }
+    }
+
+    Ui.FeedbackSource {
+        objectName: "locationTimezoneFeedback"
+        active: text.length > 0
+        text: content.controller.timezone.error || ""
+        summaryText: text
+        briefText: qsTr("Location needs attention")
+        tone: "warning"
     }
 
     Ui.LiveClock {

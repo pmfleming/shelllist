@@ -59,6 +59,17 @@ state; only the resident notification owner subscribes to its streams.
 
 Time & Weather follows the same list/detail interaction as Wi-Fi and Bluetooth. The list combines configured weather locations and world clocks by timezone, showing city, current weather, and local time. `Right` expands the selected city. The detail pane has **Time** and **Weather** tabs; Time renders a world map that highlights every region sharing the selected current UTC offset and marks configured location coordinates, plus sun position, day length, and moon phase. Weather reuses the existing hourly, daily, and weather-metric presentation. The bar clock/date group opens this chooser directly.
 
+Network-aware timezone updates are owned by the system location authority, not
+by a panel-open or weather-refresh action. Its concise warning arrives through
+`timezone.error` and is contributed to the existing Time & Weather status bar
+using `FeedbackSource`, including when details are collapsed. No inline warning
+or tooltip is added. A warning does not invalidate the observed system timezone.
+The visible top-bar clock/date and its accessible description both render the
+daemon's `utc_offset_seconds` using UTC getters, so an acknowledged timezone
+change takes effect without restarting Qt or relying on its local-time cache.
+Configured Home/weather places are not changed by this path. Qt coverage lives
+in `tst_timezone_clock.qml` and `tst_time_weather_locations.qml`.
+
 Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. Weather locations—including which location is home, labels, coordinates, and timezones—come entirely from `bar-daemon/activity.json`; no city is compiled into the UI. `bar-daemon` refreshes configured Open-Meteo locations concurrently at most every 15 minutes and retains each last successful forecast through transient failures.
 
 In native notification mode, `bar-daemon` owns `org.freedesktop.Notifications` and publishes a bounded, recoverable snapshot containing only unsnoozed active records. That stream drives toasts and current action capabilities, not a second frontend history catalog. `notifications.queryCenter` merges live/persisted identities and supplies native app summaries, ordering, counts, Unicode-lowercase literal substring search, direct app-page seeks and selected full-record lookup. Search covers the newest 5,000 persisted records plus up to 200 unsnoozed live notifications, not merely loaded pages. This query limit does not prune stored history. Search uses the full body even though previews are bounded.

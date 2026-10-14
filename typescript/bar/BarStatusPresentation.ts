@@ -17,7 +17,7 @@ interface NetworkStatus {
 }
 interface BluetoothSummary { powered?: boolean; allDevices?: {connected?: boolean}[] }
 interface NotificationSummary { count?: number; dnd?: boolean }
-interface TimezoneState { abbreviation?: string; utc_offset_seconds?: number }
+interface TimezoneState { available?: boolean; abbreviation?: string; utc_offset_seconds?: number }
 interface StatusModule {
     id: string; key: string; text: string; compactText: string; tooltip: string;
     visible: boolean; maxDensity: number; interactive: boolean; tone: string;
@@ -130,10 +130,29 @@ function notificationsModule(state: StatusState) {
             tone: urgent ? "danger" : dnd ? "muted" : count ? "accent" : "text"
         });
 }
+function clockParts(now: Date, timezone: TimezoneState) {
+    // Qt/process-local timezone caches can lag timedated after a network move.
+    // The daemon's observed offset is authoritative; UTC getters avoid applying
+    // the host timezone a second time to the shifted instant.
+    const offset = timezone.utc_offset_seconds;
+    if (timezone.available !== false && typeof offset === "number" && Number.isFinite(offset) && Math.abs(offset) <= 86400) {
+        const local = new Date(now.getTime() + offset * 1000);
+        const pad = (value: number) => String(value).padStart(2, "0");
+        const shortDate = pad(local.getUTCMonth() + 1) + "-" + pad(local.getUTCDate());
+        const date = String(local.getUTCFullYear()).padStart(4, "0") + "-" + shortDate;
+        const time = pad(local.getUTCHours()) + ":" + pad(local.getUTCMinutes());
+        return {date, shortDate, time, reported: true};
+    }
+    return {date: Qt.formatDateTime(now, "yyyy-MM-dd"), shortDate: Qt.formatDateTime(now, "MM-dd"),
+        time: Qt.formatDateTime(now, "HH:mm"), reported: false};
+}
 function clockModule(now: Date, timezone: TimezoneState) {
-    return statusModule("clock", Qt.formatDateTime(now, "yyyy-MM-dd  HH:mm"),
-        Qt.formatDateTime(now, "yyyy-MM-dd HH:mm") + " " + (timezone.abbreviation || "") + " " + utcOffset(timezone.utc_offset_seconds), {
-            compactText: Qt.formatDateTime(now, "MM-dd HH:mm"), primary: "time-weather"
+    const parts = clockParts(now, timezone);
+    const suffix = parts.reported ? " " + (timezone.abbreviation || "") + " " + utcOffset(timezone.utc_offset_seconds)
+        : " · Timezone unavailable";
+    return statusModule("clock", parts.date + "  " + parts.time,
+        parts.date + " " + parts.time + suffix, {
+            compactText: parts.shortDate + " " + parts.time, primary: "time-weather"
         });
 }
 function statusModules(state: StatusState, now: Date) {
