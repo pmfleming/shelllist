@@ -147,6 +147,38 @@ DaemonTestCase {
             verify(c.backend.isPending("disconnect"), "explicit retry remains available");
         }
     }
+    function test_secretEnterWaitsForAcknowledgementAndExpires() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.connection.requestId = "connect-in-progress";
+        c.handleSecretEvent({event: "requested", request_id: "secret-owned", data: {
+            secret_keys: ["psk"], save_supported: true
+        }});
+        // Select the credential form's input rather than the panel search.
+        const dialog = panel.page.children.find(item => item.visible && item.prompt === c.prompt && item.maximumCardWidth === 620);
+        verify(!!dialog);
+        const password = findChild(dialog, "fieldInput");
+        verify(!!password);
+        password.forceActiveFocus();
+        keyClick(Qt.Key_A);
+        compare(c.prompt.credentialValues.psk, "a");
+        keyClick(Qt.Key_Return);
+        compare(calls.slice(-1)[0].method, "wifi.secret.provide");
+        compare(calls.slice(-1)[0].params.values.psk, "a");
+        verify(c.prompt.credentialOpen, "dispatch does not discard the password");
+        verify(c.prompt.secretSubmitting);
+        c.backend.handleSecretResponse({protocol: "nm-api", version: 2, ok: true, data: {result: {request_id: "foreign", accepted: true, status: "accepted"}}});
+        verify(c.prompt.credentialOpen);
+        c.backend.handleSecretResponse({protocol: "nm-api", version: 2, ok: true, data: {result: {request_id: "secret-owned", accepted: false, status: "unavailable"}}});
+        verify(!c.prompt.credentialOpen);
+        verify(c.status.includes("expired"));
+        c.handleSecretEvent({event: "requested", request_id: "secret-next", data: {secret_keys: ["psk"]}});
+        c.handleSecretEvent({event: "cancelled", request_id: "secret-owned", data: {reason: "expired"}});
+        verify(c.prompt.credentialOpen, "old expiry cannot close a newer request");
+        c.handleSecretEvent({event: "cancelled", request_id: "secret-next", data: {reason: "expired"}});
+        verify(!c.prompt.credentialOpen);
+    }
+
     function statusReply(c, result, id) {
         c.backend.acceptSharedResponse(id || c.connection.recoveryId, {protocol: "nm-api", version: 2, ok: true, data: {result: result}}, "");
     }

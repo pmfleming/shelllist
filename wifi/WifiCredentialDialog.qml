@@ -51,6 +51,8 @@ ModalFrame {
                         Layout.fillWidth: true
                         text: String(dialog.prompt.credentialValues[fieldColumn.modelData.key] || "")
                         password: !!fieldColumn.modelData.password
+                        enabled: !dialog.prompt.secretSubmitting
+                        onAccepted: if (!dialog.prompt.secretSubmitting) dialog.accepted(dialog.prompt.credentialValues)
                         placeholder: fieldColumn.modelData.required ? "" : qsTr("Optional")
                         onEdited: function (value) {
                             const values = Object.assign({}, dialog.prompt.credentialValues);
@@ -75,11 +77,11 @@ ModalFrame {
 
     icon: "wifi"
     actions: [
-        {id: "accept", label: prompt.credentialMode === "daemon-secret" ? qsTr("Provide credentials") : qsTr("Connect"), icon: "wifi", presentation: {group: "primary"}},
+        {id: "accept", label: prompt.credentialMode === "daemon-secret" ? qsTr("Provide credentials") : qsTr("Connect"), icon: "wifi", enabled: !prompt.secretSubmitting, presentation: {group: "primary"}},
         {id: "cancel", label: qsTr("Cancel"), icon: "close", presentation: {group: "toolbar"}}
     ]
     onActionTriggered: function(actionId) {
         if (actionId === "cancel") cancelled();
-        else accepted(prompt.credentialValues);
+        else if (!prompt.secretSubmitting) accepted(prompt.credentialValues);
     }
 }

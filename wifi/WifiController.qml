@@ -370,6 +370,8 @@ ProviderChooserController {
     }
 
     function failCall(id, message, details) {
+        if (id === "secret-provide")
+            prompt.secretSubmitting = false;
         if (id === "networks" || id === "scan-start")
             networksError = message;
         if (id === "connect-start" || id === "qr-connect")

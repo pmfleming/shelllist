@@ -942,6 +942,16 @@ availability; formatting and graph layout remain local. Missing projections fail
 closed. Range identity and finite/nonnegative-value checks still reject stale or
 malformed results. Resource cards introduce no additional field stops.
 
+## Wi-Fi credential acknowledgement
+
+Required credential dialogs submit through either native Enter or their primary
+command. Answering an outstanding SecretAgent request is allowed during the
+connection that requested it. The form remains open, with repeat submission
+blocked, until its matching acknowledgement. Failed dispatch preserves the draft;
+expired/unavailable requests clear secrets and require an explicit new connection.
+A late cancellation or reply cannot close another request's form. Keyring
+persistence is separate from credential acceptance and link activation.
+
 ## Native Wi-Fi prompt descriptors
 
 Hidden-network fields, defaults, security mappings and conditional required fields

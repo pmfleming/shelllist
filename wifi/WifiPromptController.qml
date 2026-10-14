@@ -15,6 +15,18 @@ Item {
     property string secretRequestId: ""
     property bool saveSecret: false
     property bool saveSecretSupported: false
+    property bool secretSubmitting: false
+
+    function secretResponse(result) {
+        if (!secretSubmitting || result.request_id !== secretRequestId)
+            return false;
+        secretSubmitting = false;
+        if (result.accepted === true && result.status === "accepted")
+            cancel();
+        else if (result.status === "unavailable")
+            cancel();
+        return true;
+    }
 
     property bool credentialOpen: false
     property string credentialMode: ""
@@ -82,6 +94,7 @@ Item {
 
     function openDaemonSecretPrompt(event) {
         const spec = Policy.daemonSecretSpec(event.data);
+        secretSubmitting = false;
         secretRequestId = event.request_id || "";
         saveSecretSupported = !!event.data.save_supported;
         openCredentials("daemon-secret", "Network credentials", spec.detail, spec.fields, null);
@@ -99,6 +112,7 @@ Item {
         mode = "";
         network = null;
         secretRequestId = "";
+        secretSubmitting = false;
         saveSecret = false;
         saveSecretSupported = false;
     }
@@ -122,18 +136,25 @@ Item {
             controller.status = validationError;
             return false;
         }
+        // Answering NetworkManager is part of the active connection, not a
+        // competing mutation. The ordinary busy guard would deadlock recovery.
+        if (credentialMode === "daemon-secret") {
+            if (secretSubmitting || !secretRequestId)
+                return false;
+            secretSubmitting = true;
+            if (!controller.connection.provideSecrets(secretRequestId, values, saveSecret)) {
+                secretSubmitting = false;
+                return false;
+            }
+            return true;
+        }
         if (!controller.connection.beginAny())
             return false;
 
         const nextMode = credentialMode;
         const ap = credentialNetwork;
-        const requestId = secretRequestId;
-        const save = saveSecret;
         const descriptor = hiddenDescriptor;
         cancel();
-        if (nextMode === "daemon-secret")
-            return controller.connection.provideSecrets(requestId, values, save);
-
         const request = Policy.connectionRequest(nextMode, ap, values, descriptor);
         const name = nextMode === "hidden" ? String(values.ssid || "") : Presentation.networkName(ap);
         return controller.connection.runTarget(request.target, name, request.password, null, request.enterprise, request.wepKeyType);

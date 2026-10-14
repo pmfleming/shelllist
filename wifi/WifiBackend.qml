@@ -324,8 +324,13 @@ Io.DaemonBackend {
 
     function handleSecretResponse(envelope) {
         const result = Api.apiResult(envelope, "result") || ({});
-        if (result.status === "error")
-            controller.status = result.message || "Wi-Fi secret was not accepted";
+        if (!controller.prompt.secretResponse(result))
+            return;
+        controller.status = result.accepted === true && result.status === "accepted"
+            ? "Credentials accepted; waiting for NetworkManager to connect…"
+            : result.status === "unavailable"
+                ? "Credential request expired. Select the network and connect again."
+                : result.message || "Wi-Fi credentials were not accepted. Try again.";
     }
 
     function finish(id, envelope, transportError) {

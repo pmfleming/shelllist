@@ -65,7 +65,7 @@ function secretTransition(event, mode, requestId) {
     if (event.event === "cancelled" && mode === "daemon-secret" && requestId === event.request_id)
         return {
             stage: "cancelled",
-            message: "NetworkManager cancelled the Wi-Fi secret request."
+            message: event.data.reason === "expired" ? "Credential request expired. Select the network and connect again." : "NetworkManager cancelled the Wi-Fi secret request."
         };
     if (event.event !== "persistence")
         return {
@@ -73,7 +73,7 @@ function secretTransition(event, mode, requestId) {
         };
     return {
         stage: "persistence",
-        message: event.data.status === "stored" ? "Wi-Fi secret saved to the keyring." : "Wi-Fi secret was accepted but could not be saved: " + event.data.status
+        message: event.data.status === "stored" ? "Wi-Fi secret saved to the keyring." : "Wi-Fi password could not be saved: " + (event.data.error || event.data.status)
     };
 }
 
