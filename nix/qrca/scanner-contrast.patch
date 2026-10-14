@@ -12,7 +12,7 @@ diff -ruN remembered/src/CMakeLists.txt qrca-26.04.3/src/CMakeLists.txt
 diff -ruN remembered/src/qml/QrCodeScannerPage.qml qrca-26.04.3/src/qml/QrCodeScannerPage.qml
 --- remembered/src/qml/QrCodeScannerPage.qml	2026-10-14 03:09:44.605409762 -0600
 +++ qrca-26.04.3/src/qml/QrCodeScannerPage.qml	2026-10-14 03:22:39.440619082 -0600
-@@ -51,7 +51,25 @@
+@@ -51,7 +51,24 @@
      }
  
      title: Qrca.wifiMode ? i18n("Scan a Wi-Fi Code") : i18n("Scan a QR Code")
@@ -24,7 +24,6 @@ diff -ruN remembered/src/qml/QrCodeScannerPage.qml qrca-26.04.3/src/qml/QrCodeSc
 +        background: Rectangle { color: "#202124" }
 +        contentItem: Flow {
 +            spacing: Kirigami.Units.smallSpacing
-+            implicitHeight: childrenRect.height
 +            Repeater {
 +                model: scanner.scannerActions
 +                delegate: ScannerButton {
@@ -39,7 +38,7 @@ diff -ruN remembered/src/qml/QrCodeScannerPage.qml qrca-26.04.3/src/qml/QrCodeSc
          Kirigami.Action {
              icon.name: checked ? "flashlight-off" : "flashlight-on"
              text: i18n("Light")
-@@ -197,7 +215,7 @@
+@@ -197,7 +214,7 @@
                  }
              }
  
@@ -48,7 +47,7 @@ diff -ruN remembered/src/qml/QrCodeScannerPage.qml qrca-26.04.3/src/qml/QrCodeSc
                  text: {
                      switch (resultSheet.tag?.contentType) {
                      case QrCodeContent.Url:
-@@ -283,7 +301,7 @@
+@@ -283,7 +300,7 @@
  
                  Layout.fillWidth: true
              }
@@ -57,6 +56,14 @@ diff -ruN remembered/src/qml/QrCodeScannerPage.qml qrca-26.04.3/src/qml/QrCodeSc
                  text: i18n("Copy to Clipboard")
                  icon.name: "edit-copy-symbolic"
                  onClicked: {
+@@ -366,6 +383,7 @@
+     }
+ 
+     Component.onCompleted: {
++        console.info("qrca scanner page ready");
+         if (permission.status == Qt.PermissionStatus.Undetermined)
+             permission.request();
+ 
 @@ -413,7 +431,9 @@
          fillMode: Image.PreserveAspectFit
          visible: false
