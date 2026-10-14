@@ -25,9 +25,16 @@ DaemonTestCase {
             {protocol: "bar-api", version: 2, ok: true, data: {snapshot: snapshot}}, "", call.route);
     }
     function event(call, stream, kind, data) {
+        const request = new XMLHttpRequest();
+        request.open("GET", Qt.resolvedUrl("fixtures/bar-reads.json"), false);
+        request.send();
+        const fixtures = JSON.parse(request.responseText);
+        const group = fixtures[kind === "gap" ? "lagged" : kind];
+        // Positive events start with the production serializer, not a partial fake.
+        const envelope = group ? group[stream] : {protocol: "bar-api", version: 2, stream: stream, event: kind, data: {}};
+        envelope.data = Object.assign(envelope.data, data);
         const route = Object.assign({}, call.route, {kind: "base-subscription", localId: "session-subscribe"});
-        Io.DaemonSessions.sessions["bar-daemon"].client.eventReceived(
-            {protocol: "bar-api", version: 2, stream: stream, event: kind, data: data}, route);
+        Io.DaemonSessions.sessions["bar-daemon"].client.eventReceived(envelope, route);
     }
     function test_gapStormIsSingleFlightAndDomainLocal() {
         const controller = make();

@@ -22,8 +22,12 @@ TestCase {
     }
     function test_brightnessFailure(data) {
         const controller = createTemporaryObject(controllerFactory, testCase);
-        controller.backend.acceptSharedEvent({protocol: "bar-api", version: 2,
-            stream: "brightness.changed", event: "subscribed", data: {available: true, percent: 65}});
+        const request = new XMLHttpRequest();
+        request.open("GET", Qt.resolvedUrl("fixtures/bar-reads.json"), false);
+        request.send();
+        const event = JSON.parse(request.responseText).subscribed["brightness.changed"];
+        event.data.percent = 65;
+        controller.backend.acceptSharedEvent(event);
         controller.showBrightnessOsd(controller.brightness);
         const backend = controller.backend;
         const id = "brightness-adjust-1";
