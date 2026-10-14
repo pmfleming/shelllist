@@ -44,3 +44,31 @@ validation: `/tmp/shelllist-closure/step2-nix.log`.
 Rust-derived method/event declarations and generated types. Their current
 name/fixture checks do not establish typed payload coverage. This incremental
 commit does not claim the requested all-method closure.
+
+The first full step-2 Nix run exposed eight old QML scenarios supplying partial
+hand-built positive events. Recovery/OSD tests now start from the production
+read fixture; validators were not weakened. Native rerun evidence is recorded
+in `/tmp/shelllist-closure/step2-fixed-qml.log` (with file-XHR explicitly enabled).
+
+## Step 3 — declared policy enforcement (partial rollout)
+
+Shared service admission now applies declared request/result byte limits,
+per-method and per-owner concurrent-handler limits, and acknowledgement budgets.
+Reads abort their local future when their wait expires/disappears. Effects and
+operation acknowledgements continue with capacity retained until the handler
+finishes; expiry reports outcome-unknown, never safe-to-retry or rolled-back.
+Domain cancellation retains its existing owner checks and intent semantics.
+Cleanup uses the separate control lane. Quota entries are removed on completion,
+read cancellation and panic; timed-out effects cannot silently free admission.
+
+Connected: all eight app methods and nine typed bar controls. Other daemon
+methods still use their existing shared aggregate boundary: **step 3 is not
+fully rolled out**. Hung effects deliberately retain bounded capacity; no generic
+middleware can safely undo them or claim cleanup of an external effect.
+
+Validation: framework 37 tests and all-target Clippy passed; app 46 unit tests,
+16 private-bus session tests passed (existing ignored tests retained); bar 208
+unit tests passed, one existing ignored. Dedicated tests exercise two owners,
+request/result bounds, acknowledgement expiry, abandoned waiters, retained effect
+capacity, panic/read cleanup and the reserved cleanup lane. Existing private-bus
+ownership tests remain green. Logs: `/tmp/shelllist-closure/step3-*.log`.
