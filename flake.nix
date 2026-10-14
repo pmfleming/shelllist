@@ -944,6 +944,7 @@
                 ln -s ${./bluetooth} test-root/bluetooth
                 ln -s ${./launcher} test-root/launcher
                 ln -s ${./shell} test-root/shell
+                ln -s ${./nix} test-root/nix
                 export HOME=$TMPDIR
                 export XDG_CACHE_HOME=$TMPDIR/cache
                 export QT_PLUGIN_PATH=${pkgs.qt6.qtsvg}/lib/qt-6/plugins
@@ -969,6 +970,7 @@
             ]
           ];
 
+          wifiQrScanner = self.packages.${system}.wifiQrScanner;
           fuzzySearch = self.packages.${system}.shelllistSearch;
 
           providerModel = nodeCheck "provider-model" [

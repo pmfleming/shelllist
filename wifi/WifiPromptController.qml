@@ -16,6 +16,7 @@ Item {
     property bool saveSecret: true
     property bool saveSecretSupported: false
     property bool secretSubmitting: false
+    property string secretPersistenceMessage: ""
 
     function secretResponse(result) {
         if (!secretSubmitting || result.request_id !== secretRequestId)
@@ -96,6 +97,7 @@ Item {
     function openDaemonSecretPrompt(event) {
         const spec = Policy.daemonSecretSpec(event.data);
         secretSubmitting = false;
+        secretPersistenceMessage = "";
         secretRequestId = event.request_id || "";
         saveSecretSupported = !!event.data.save_supported;
         openCredentials("daemon-secret", "Network credentials", spec.detail, spec.fields, null);
@@ -114,6 +116,7 @@ Item {
         network = null;
         secretRequestId = "";
         secretSubmitting = false;
+        secretPersistenceMessage = "";
         saveSecret = true;
         saveSecretSupported = false;
     }

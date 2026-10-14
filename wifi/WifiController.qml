@@ -308,6 +308,8 @@ ProviderChooserController {
             prompt.openDaemonSecretPrompt(event);
         else if (transition.stage === "cancelled")
             prompt.cancel();
+        else if (transition.stage === "persistence" && event.request_id === prompt.secretRequestId)
+            prompt.secretPersistenceMessage = transition.message;
         if (transition.message)
             status = transition.message;
     }

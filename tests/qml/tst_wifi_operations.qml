@@ -179,6 +179,42 @@ DaemonTestCase {
         verify(!c.prompt.credentialOpen);
     }
 
+    function test_persistenceFailureSurvivesEitherAcknowledgementOrder_data() {
+        return [{tag: "event-first", eventFirst: true}, {tag: "reply-first", eventFirst: false}];
+    }
+    function test_persistenceFailureSurvivesEitherAcknowledgementOrder(data) {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.handleSecretEvent({event: "requested", request_id: "secret-save", data: {secret_keys: ["psk"], save_supported: true}});
+        verify(c.prompt.submitCredentials(c, {psk: "synthetic-password"}));
+        const persistence = {event: "persistence", request_id: "secret-save", data: {status: "failed", error: "Keyring locked"}};
+        const reply = {protocol: "nm-api", version: 2, ok: true, data: {result: {request_id: "secret-save", status: "accepted", accepted: true}}};
+        if (data.eventFirst) c.handleSecretEvent(persistence);
+        c.backend.handleSecretResponse(reply);
+        if (!data.eventFirst) c.handleSecretEvent(persistence);
+        verify(!c.prompt.credentialOpen);
+        compare(c.prompt.credentialValues, ({}), "accepted secrets are cleared");
+        verify(c.status.includes("could not be saved"));
+        verify(c.status.includes("Keyring locked"));
+    }
+    function test_rememberSwitchRoutesTemporaryConnect() {
+        const panel = makePanel();
+        openNetwork(panel, false);
+        const c = panel.controller;
+        const toggle = findChild(panel, "wifiRememberNetwork");
+        verify(!!toggle && toggle.visible);
+        verify(toggle.checked);
+        mouseClick(toggle.focusSurface);
+        verify(!c.connection.rememberNetwork);
+        panel.page.listItem.focusList();
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        const request = calls.find(call => call.method === "wifi.connectTarget");
+        verify(!!request);
+        compare(request.params.remember, false);
+        compare(request.params.key, "cafe");
+        compare(c.connection.targetRequest({key: "another-network"}).remember, true, "opt-out never leaks to another network");
+    }
+
     function statusReply(c, result, id) {
         c.backend.acceptSharedResponse(id || c.connection.recoveryId, {protocol: "nm-api", version: 2, ok: true, data: {result: result}}, "");
     }
