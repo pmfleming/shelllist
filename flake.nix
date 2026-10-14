@@ -1006,6 +1006,8 @@
               export TZDIR="${pkgs.tzdata}/share/zoneinfo"
             '';
             packages = (inputs.daemon-framework.lib.toolchain pkgs).packages ++ [
+              pkgs.git
+              pkgs.python3
               pkgs.nixpkgs-fmt
               pkgs.nodejs
               pkgs.typescript
