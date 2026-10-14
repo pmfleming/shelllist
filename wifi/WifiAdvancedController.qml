@@ -17,6 +17,7 @@ Item {
     readonly property bool secretLoading: backend.isPending("advanced-secret")
 
     signal sectionTransitionRequested(string section, bool animate)
+    signal secretRevealed(string value)
 
     function reset() {
         profilePath = "";
@@ -104,8 +105,10 @@ Item {
     function applySecret(result) {
         if (!open || (result.path || "") !== profilePath)
             return;
-        secret = result.available ? (result.password || "") : "";
-        error = result.available ? "" : "The saved Wi-Fi password is not readable.";
+        secret = result.available && typeof result.password === "string" ? result.password : "";
+        error = secret.length > 0 ? "" : "The saved Wi-Fi password is not readable.";
+        if (secret.length > 0)
+            secretRevealed(secret);
     }
     function handlesCall(id) {
         return id === "advanced-load" || id === "advanced-save" || id === "advanced-secret";

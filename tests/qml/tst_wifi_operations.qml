@@ -192,26 +192,114 @@ DaemonTestCase {
         verify(!c.prompt.open && !c.prompt.credentialOpen);
         compare(calls.filter(call => call.method === "wifi.connectTarget").length, 1);
     }
-    function test_updateCredentialsIsExplicitVersionedEditorNotAnotherConnect_data() {
-        return [{tag: "leaving-hardware", hardware: true}];
-    }
-    function test_updateCredentialsIsExplicitVersionedEditorNotAnotherConnect(data) {
+    function test_passwordEditorUsesSecurityTabWithoutHeaderShortcut() {
         const panel = makePanel();
         savedNetwork(panel);
         const c = panel.controller;
-        if (data.hardware)
-            c.advanced.openSettings("hardware");
-        const leaving = [];
-        c.advancedSectionLeaving.connect(section => leaving.push(section));
-        const button = panel.page.detailsNavigation.commandButtons.find(button => button.accessKey === "U");
-        verify(!!button && button.enabled);
-        mouseClick(button);
-        verify(c.advanced.open);
-        compare(c.advanced.section, "security");
-        compare(c.advanced.profilePath, "/profile/cafe");
-        compare(leaving, data.hardware ? ["hardware"] : [], "existing field-leaving rules are preserved");
-        verify(!calls.some(call => call.method === "wifi.connectTarget"));
-        verify(!c.prompt.open && !c.prompt.credentialOpen);
+        verify(!c.detailActions.some(action => action.id === "update-credentials"));
+        verify(!panel.page.detailsNavigation.commandButtons.some(button => button.accessKey === "U"));
+        panel.page.listItem.focusList();
+        keyClick(Qt.Key_U, Qt.AltModifier);
+        compare(c.detailsTab, "network");
+        compare(calls.length, 0);
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        compare(c.detailsTab, "security");
+        profileReply(panel);
+        tryVerify(function () { return !!findChild(panel, "wifiPassword"); });
+        verify(!findChild(panel, "wifiPassword").readOnly);
+        verify(!calls.some(call => call.method === "wifi.connectTarget" || ["update", "reveal-secret"].includes(call.params.operation)));
+    }
+    function profileReply(panel) {
+        panel.controller.backend.acceptSharedResponse("advanced-load", {protocol: "nm-api", version: 2, ok: true, data: {result: {
+            path: "/profile/cafe", version: "test-version", security_type: "WPA2 Personal",
+            ipv4: {method: "auto"}, ipv6: {method: "auto"}
+        }}}, "");
+    }
+    function openPasswordEditor(panel) {
+        savedNetwork(panel);
+        const c = panel.controller;
+        c.advanced.openSettings("security");
+        profileReply(panel);
+        let field = null;
+        tryVerify(function () {
+            field = panel.page.detailsNavigation.availableFields().find(item => item.sensitive);
+            return !!field;
+        });
+        return field;
+    }
+    function secretReply(panel) {
+        panel.controller.backend.acceptSharedResponse("advanced-secret", {protocol: "nm-api", version: 2, ok: true,
+            data: {result: {path: "/profile/cafe", available: true, password: "synthetic-password"}}}, "");
+    }
+    function test_passwordCanBeRevealedAgainAfterHiding() {
+        const panel = makePanel();
+        const field = openPasswordEditor(panel);
+        field.focusInput(false);
+        keyClick(Qt.Key_Escape);
+        mouseClick(field.trailingAction);
+        verify(panel.controller.backend.isPending("advanced-secret"));
+        secretReply(panel);
+        compare(panel.controller.advanced.secret, "synthetic-password");
+        tryCompare(field, "text", "synthetic-password");
+        verify(!field.password);
+        mouseClick(field.trailingAction);
+        verify(field.password);
+        mouseClick(field.trailingAction);
+        if (panel.controller.backend.isPending("advanced-secret"))
+            secretReply(panel);
+        verify(!field.password, "the same saved secret must reveal on every explicit click");
+        keyClick(Qt.Key_Escape);
+        verify(!calls.some(call => call.params.operation === "update"), "revealing never makes the password dirty");
+        // A profile reload clears the visible value, not the controller's cached
+        // secret. A second identical reply must still reveal it.
+        panel.controller.advanced.applyProfile(Object.assign({}, panel.controller.advanced.profile));
+        compare(field.text, "");
+        mouseClick(field.trailingAction);
+        secretReply(panel);
+        compare(field.text, "synthetic-password");
+        verify(!field.password);
+    }
+    function test_passwordRevealWhileEditingDoesNotLoseDraft_data() {
+        return [{tag: "local-draft", pending: false}, {tag: "draft-during-read", pending: true}];
+    }
+    function test_passwordRevealWhileEditingDoesNotLoseDraft(data) {
+        const panel = makePanel();
+        const field = openPasswordEditor(panel);
+        field.focusInput(false);
+        if (data.pending) {
+            mouseClick(field.trailingAction);
+            verify(panel.controller.backend.isPending("advanced-secret"));
+        }
+        keyClick(Qt.Key_A);
+        compare(field.text, "a");
+        if (!data.pending)
+            mouseClick(field.trailingAction);
+        if (panel.controller.backend.isPending("advanced-secret"))
+            secretReply(panel);
+        compare(field.text, "a", "visibility must not replace a new password draft");
+        verify(!field.password);
+        verify(!calls.some(call => call.params.operation === "update"));
+        keyClick(Qt.Key_Escape);
+        verify(!calls.some(call => call.params.operation === "update"));
+    }
+    function test_passwordReadFailureCanRetryAndForeignReplyCannotReveal() {
+        const panel = makePanel();
+        const field = openPasswordEditor(panel);
+        field.focusInput(false);
+        mouseClick(field.trailingAction);
+        panel.controller.backend.acceptSharedResponse("advanced-secret", {protocol: "nm-api", version: 2, ok: true,
+            data: {result: {path: "/profile/cafe", available: false}}}, "");
+        compare(field.text, "");
+        verify(field.password);
+        verify(panel.controller.advanced.error.length > 0);
+        mouseClick(field.trailingAction);
+        secretReply(panel);
+        compare(field.text, "synthetic-password");
+        keyClick(Qt.Key_Escape);
+        panel.controller.advanced.applyProfile(Object.assign({}, panel.controller.advanced.profile));
+        panel.controller.advanced.applySecret({path: "/profile/other", available: true, password: "foreign-secret"});
+        compare(field.text, "");
+        verify(field.password);
     }
     function test_credentialTimerClearsDraftAndIgnoresLateReceipt() {
         const panel = makePanel();

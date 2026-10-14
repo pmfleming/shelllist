@@ -5,13 +5,14 @@ import QtQuick
 ActionControl {
     id: control
     property bool pointerEnabled: enabled && interactive
+    property Item pointerFocusTarget: control
     readonly property bool hovered: pointer.containsMouse
     readonly property bool pointerPressed: pointer.pressed
     readonly property bool pressed: enabled && interactive && (pointerPressed || keyboardPressed)
 
     ControlPointerArea {
         id: pointer
-        focusTarget: control
+        focusTarget: control.pointerFocusTarget
         enabled: control.pointerEnabled
         onClicked: control.activate()
     }

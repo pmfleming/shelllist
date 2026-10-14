@@ -92,6 +92,8 @@ AdvancedSettingsFlickable {
                     icon: "key"
                     accessibleName: qsTr("Network password")
                     TextField {
+                        id: passwordField
+                        objectName: "wifiPassword"
                         sensitive: true
                         Layout.fillWidth: true
                         readOnly: !securityFlick.settings.personalSecurity
@@ -110,8 +112,30 @@ AdvancedSettingsFlickable {
                         onTrailingActionRequested: {
                             if (securityFlick.settings.passwordRevealed)
                                 securityFlick.settings.passwordRevealed = false;
+                            else if (text.length > 0)
+                                securityFlick.settings.passwordRevealed = true;
                             else
                                 securityFlick.settings.controller.advanced.revealSecret();
+                        }
+                        Connections {
+                            target: securityFlick.settings.controller.advanced
+                            function onSecretRevealed(value) {
+                                const session = passwordField.editSession;
+                                // Reveal is not a save. Preserve a replacement typed while
+                                // the read was pending; otherwise rebase the empty editor
+                                // so its transaction does not mask the fetched value.
+                                const draft = session.active && passwordField.text !== session.originalValue;
+                                if (!draft && !securityFlick.settings.passwordDirty) {
+                                    const resume = session.active;
+                                    const navigation = session.navigation;
+                                    if (resume && navigation)
+                                        navigation.finishEditor(false);
+                                    securityFlick.settings.passwordValue = value;
+                                    if (resume && navigation)
+                                        navigation.enterEditor();
+                                }
+                                securityFlick.settings.passwordRevealed = true;
+                            }
                         }
                     }
                 }

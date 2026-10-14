@@ -216,14 +216,6 @@ Item {
             page.showSection(section, animate);
         }
 
-        function onSecretChanged() {
-            if (page.controller.advanced.secret.length === 0)
-                return;
-            page.passwordValue = page.controller.advanced.secret;
-            page.passwordDirty = false;
-            page.passwordRevealed = true;
-        }
-
         function onSavingChanged() {
             if (!page.controller.advanced.saving && (page.securityDirty || page.hardwareDirty))
                 autoSaveTimer.restart();

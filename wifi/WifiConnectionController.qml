@@ -203,7 +203,7 @@ Item {
     function handleConnectError(result, fallbackText) {
         // Failure is not permission to start another credential transaction.
         // NM's outstanding SecretAgent request owns re-prompts; after it ends,
-        // Connect or Update credentials requires an explicit user action.
+        // reconnecting or editing the saved password requires explicit user action.
         controller.status = result.message || result.recovery_prompt?.message || fallbackText || "Wi-Fi connection failed";
     }
     function provideSecrets(id, values, save) {

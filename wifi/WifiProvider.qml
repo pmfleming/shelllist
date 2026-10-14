@@ -48,13 +48,7 @@ Core.Provider {
             })];
     }
     function toolbarActions(ap) {
-        return [Core.Model.keepOpenAction("update-credentials", "Update credentials", {
-                accessKey: "U",
-                icon: "key",
-                visible: !!controller.profileFor(ap) && ap.security_class === "personal",
-                enabled: controller.actions.canUpdateCredentials(ap),
-                presentation: { group: "toolbar" }
-            }), Core.Model.keepOpenAction("check-connection", "Check status", {
+        return [Core.Model.keepOpenAction("check-connection", "Check status", {
                 accessKey: "K",
                 icon: "󰑐",
                 enabled: controller.connection.recoveryId.length === 0,

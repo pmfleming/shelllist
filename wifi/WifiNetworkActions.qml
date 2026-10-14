@@ -32,18 +32,6 @@ Item {
     function canConnect(ap) {
         return !controller.isActive(ap) && controller.connection.canBegin(ap);
     }
-    function canUpdateCredentials(ap) {
-        // Reuse the existing versioned personal-password editor; do not guess
-        // enterprise/WEP fields or replace their configuration with defaults.
-        return !controller.actionInFlight && !!profileFor(ap)
-            && !!ap.key && ap.security_class === "personal" && controller.detailAp?.key === ap.key;
-    }
-    function updateCredentials(ap) {
-        if (!canUpdateCredentials(ap))
-            return false;
-        controller.advanced.selectSection("security");
-        return true;
-    }
     function canDisconnect(ap) {
         return controller.isActive(ap) && !controller.actionInFlight;
     }
@@ -131,7 +119,6 @@ Item {
             connect: function () {
                 return controller.connection.connect(ap);
             },
-            "update-credentials": function () { return updateCredentials(ap); },
             "cancel-connect": controller.connection.cancel,
             "cancel-pending-connection": controller.connection.cancel,
             "check-connection": function () { return controller.connection.checkStatus(true); },

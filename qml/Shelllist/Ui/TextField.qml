@@ -200,6 +200,7 @@ FieldFrame {
 
     FlatIconButton {
         objectName: "passwordVisibilityAction"
+        pointerFocusTarget: input
         commandScope: field.readOnly ? null : field
         accessKey: field.readOnly ? "" : "V"
         visible: field.showPasswordButton
@@ -218,6 +219,7 @@ FieldFrame {
     FlatIconButton {
         id: trailingActionButton
         objectName: "fieldTrailingAction"
+        pointerFocusTarget: input
         commandScope: field.readOnly ? null : field
 
         visible: field.trailingActionIcon.length > 0

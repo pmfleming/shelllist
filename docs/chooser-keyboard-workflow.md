@@ -956,10 +956,20 @@ honor the daemon's advertised remaining deadline and clear drafts on expiry.
 Ordinary Connect activates a saved profile without an initial password form; only
 NetworkManager's live SecretAgent request collects credentials. Terminal failures
 show native status/recovery text rather than opening another form automatically.
-For saved personal-password profiles, **Alt+U / Update credentials** explicitly
-opens the existing versioned Security editor. Opening it neither reveals nor
-updates a password and does not reconnect. This adds no guessed enterprise/WEP
-replacement fields and preserves the editor's deferred field transactions.
+Saved personal-password profiles are edited through Password on the
+**Security & privacy** tab. There is no header key button or Alt+U command.
+Opening the tab neither reveals nor updates a password and does not reconnect;
+the versioned editor retains its deferred field transactions.
+
+Password's eye command retains native editor focus, toggles an existing local
+value without replacing it, and requests the saved secret only for an empty
+field. A successful read rebases an unchanged empty transaction without saving;
+a replacement typed while the read is pending is retained. Repeated identical
+replies still reveal after a profile reload. Failed/unavailable reads retain the
+error and explicit retry. Shared TextField embedded actions keep focus in their
+editor rather than discarding its draft. `tst_wifi_operations.qml` exercises the
+eye clicks, repeated reveal, pending reads and no-write boundaries, and verifies
+that the removed header command and Alt+U shortcut remain unavailable.
 
 Remember network defaults on for each new connection intent. The disconnected
 network's profile card, password/hidden/enterprise forms and Qrca's scanned-network
