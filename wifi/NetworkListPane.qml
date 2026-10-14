@@ -26,7 +26,7 @@ ChooserListPane {
     searchActionToolTip: "Scan a Wi-Fi QR code"
     searchActionEnabled: !controller.promptActive && !controller.qr.scannerRunning
     filterText: controller.filterText
-    status: controller.status
+    status: controller.displayStatus
     onSearchActionRequested: controller.launchQrScanner()
     rowDelegate: Component {
         NetworkListRow {

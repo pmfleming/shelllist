@@ -39,6 +39,10 @@ ProviderChooserController {
     property bool networksLoaded: false
     property string networksError: ""
     property string status
+    property string secretSaveWarning: ""
+    property string secretSaveWarningKey: ""
+    readonly property string displayStatus: secretSaveWarning && status !== secretSaveWarning
+        ? secretSaveWarning + " " + status : status
     property var bandStatus: null
     // Result of the most recent wifi.qr.parse; never contains the passphrase.
     property var scannedQr: null
@@ -303,13 +307,29 @@ ProviderChooserController {
     }
 
     function handleSecretEvent(event: var): void {
-        const transition = Flow.secretTransition(event, promptMode(), prompt.secretRequestId);
+        const transition = Flow.secretTransition(event, promptMode(), prompt.secretRequestId, prompt.secretOutcomeRequestId);
         if (transition.stage === "requested")
             prompt.openDaemonSecretPrompt(event);
         else if (transition.stage === "cancelled")
             prompt.cancel();
-        else if (transition.stage === "persistence" && event.request_id === prompt.secretRequestId)
+        else if (transition.stage === "persistence" && event.request_id === prompt.secretOutcomeRequestId)
             prompt.secretPersistenceMessage = transition.message;
+        else if (transition.stage === "delivered") {
+            prompt.secretDeliveryMessage = transition.message;
+            // A late delivery event must not hide an earlier save failure.
+            if (prompt.secretPersistenceMessage)
+                return;
+        }
+        if (transition.stage === "persistence") {
+            const key = event.data.connection_path || event.request_id;
+            if (event.data.status !== "stored") {
+                secretSaveWarningKey = key;
+                secretSaveWarning = transition.message;
+            } else if (key === secretSaveWarningKey) {
+                secretSaveWarning = "";
+                secretSaveWarningKey = "";
+            }
+        }
         if (transition.message)
             status = transition.message;
     }

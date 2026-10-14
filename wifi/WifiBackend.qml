@@ -325,11 +325,12 @@ Io.DaemonBackend {
     function handleSecretResponse(envelope) {
         const result = Api.apiResult(envelope, "result") || ({});
         const persistenceMessage = controller.prompt.secretPersistenceMessage;
+        const deliveryMessage = controller.prompt.secretDeliveryMessage;
         if (!controller.prompt.secretResponse(result))
             return;
         console.info("shelllist wifi credentials response request_id=" + result.request_id + " status=" + result.status + " accepted=" + result.accepted);
         controller.status = result.accepted === true && result.status === "accepted"
-            ? persistenceMessage || "Credentials accepted; waiting for NetworkManager to connect…"
+            ? persistenceMessage || deliveryMessage || "Credentials received; waiting for delivery to NetworkManager…"
             : result.status === "unavailable"
                 ? "Credential request expired. Select the network and connect again."
                 : result.message || "Wi-Fi credentials were not accepted. Try again.";

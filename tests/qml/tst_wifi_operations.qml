@@ -197,6 +197,54 @@ DaemonTestCase {
         verify(c.status.includes("could not be saved"));
         verify(c.status.includes("Keyring locked"));
     }
+    function test_receiptDeliveryAndSaveFailureRemainDistinct_data() {
+        return ["rdp", "rpd", "drp", "dpr", "prd", "pdr"].map(order => ({tag: order, order: order}));
+    }
+    function test_receiptDeliveryAndSaveFailureRemainDistinct(data) {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.handleSecretEvent({event: "requested", request_id: "secret-order", data: {secret_keys: ["psk"], save_supported: true}});
+        const dialog = panel.page.children.find(item => item.visible && item.prompt === c.prompt && item.maximumCardWidth === 620);
+        const password = findChild(dialog, "fieldInput");
+        verify(!!password);
+        password.forceActiveFocus();
+        keyClick(Qt.Key_A);
+        keyClick(Qt.Key_Return);
+        verify(c.prompt.secretSubmitting);
+        let delivered = false;
+        let failed = false;
+        for (const step of data.order) {
+            if (step === "r") {
+                c.backend.handleSecretResponse({protocol: "nm-api", version: 2, ok: true, data: {result: {request_id: "secret-order", accepted: true, status: "accepted"}}});
+                verify(!c.prompt.credentialOpen);
+                compare(c.prompt.credentialValues, ({}));
+            } else if (step === "d") {
+                c.handleSecretEvent({event: "delivered", request_id: "secret-order", data: {}});
+                delivered = true;
+            } else {
+                c.handleSecretEvent({event: "persistence", request_id: "secret-order", data: {status: "failed", error: "Keyring locked"}});
+                failed = true;
+            }
+            verify(c.status.includes(failed ? "could not be saved" : delivered ? "sent to NetworkManager" : "received"));
+        }
+        c.handleSecretEvent({event: "requested", request_id: "newer-secret", data: {secret_keys: ["psk"], save_supported: true}});
+        const status = c.status;
+        c.handleSecretEvent({event: "delivered", request_id: "secret-order", data: {}});
+        compare(c.status, status, "old delivery cannot overwrite a newer request");
+    }
+    function test_connectionSuccessCannotHideSaveFailure() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.handleSecretEvent({event: "persistence", request_id: "save-one", data: {connection_path: "/profile/one", status: "failed", error: "Keyring locked"}});
+        c.connection.applyResult({status: "connected", message: "Connected to Synthetic"}, "", "connect-one");
+        compare(c.status, "Connected to Synthetic");
+        verify(panel.page.listItem.status.includes("could not be saved"));
+        verify(panel.page.listItem.status.includes("Connected to Synthetic"));
+        c.handleSecretEvent({event: "persistence", request_id: "other-save", data: {connection_path: "/profile/other", status: "stored"}});
+        verify(panel.page.listItem.status.includes("could not be saved"), "another profile's save cannot clear the warning");
+        c.handleSecretEvent({event: "persistence", request_id: "retry-save", data: {connection_path: "/profile/one", status: "stored"}});
+        verify(!panel.page.listItem.status.includes("could not be saved"));
+    }
     function test_rememberSwitchRoutesTemporaryConnect() {
         const panel = makePanel();
         openNetwork(panel, false);

@@ -17,14 +17,22 @@ Item {
     property bool saveSecretSupported: false
     property bool secretSubmitting: false
     property string secretPersistenceMessage: ""
+    property string secretDeliveryMessage: ""
+    property string secretOutcomeRequestId: ""
 
     function secretResponse(result) {
         if (!secretSubmitting || result.request_id !== secretRequestId)
             return false;
         secretSubmitting = false;
-        if (result.accepted === true && result.status === "accepted")
+        if (result.accepted === true && result.status === "accepted") {
+            const persistence = secretPersistenceMessage;
+            const delivery = secretDeliveryMessage;
             cancel();
-        else if (result.status === "unavailable")
+            // Clear credentials, but retain correlation for post-reply outcomes.
+            secretOutcomeRequestId = result.request_id;
+            secretPersistenceMessage = persistence;
+            secretDeliveryMessage = delivery;
+        } else if (result.status === "unavailable")
             cancel();
         return true;
     }
@@ -98,6 +106,8 @@ Item {
         const spec = Policy.daemonSecretSpec(event.data);
         secretSubmitting = false;
         secretPersistenceMessage = "";
+        secretDeliveryMessage = "";
+        secretOutcomeRequestId = event.request_id || "";
         secretRequestId = event.request_id || "";
         saveSecretSupported = !!event.data.save_supported;
         openCredentials("daemon-secret", "Network credentials", spec.detail, spec.fields, null);
@@ -117,6 +127,8 @@ Item {
         secretRequestId = "";
         secretSubmitting = false;
         secretPersistenceMessage = "";
+        secretDeliveryMessage = "";
+        secretOutcomeRequestId = "";
         saveSecret = true;
         saveSecretSupported = false;
     }

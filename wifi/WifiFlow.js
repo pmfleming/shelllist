@@ -57,7 +57,7 @@ function bandTransition(event, requestId) {
     };
 }
 
-function secretTransition(event, mode, requestId) {
+function secretTransition(event, mode, requestId, outcomeRequestId) {
     if (event.event === "requested")
         return {
             stage: "requested"
@@ -66,6 +66,11 @@ function secretTransition(event, mode, requestId) {
         return {
             stage: "cancelled",
             message: event.data.reason === "expired" ? "Credential request expired. Select the network and connect again." : "NetworkManager cancelled the Wi-Fi secret request."
+        };
+    if (event.event === "delivered" && event.request_id === outcomeRequestId)
+        return {
+            stage: "delivered",
+            message: "Credentials sent to NetworkManager; waiting for connection…"
         };
     if (event.event !== "persistence")
         return {

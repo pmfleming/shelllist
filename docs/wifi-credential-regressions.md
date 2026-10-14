@@ -14,7 +14,40 @@ Tests use synthetic passwords, fake D-Bus peers and recording UI transports.
 No real network activation, password disclosure, service restart or reboot is
 part of the automated pass.
 
-## Automated evidence
+## Post-deployment correction
+
+The original pass below missed complete scanner startup and real-provider timeout
+behavior. The deployed scanner had a read-only Flow `implicitHeight` assignment;
+keyring persistence still blocked password delivery, and timeout Dismiss calls
+coincided with GNOME keyring crashes. The original Qrca output below is **not** a
+working scanner build.
+
+Corrected validation:
+
+- **634 Qt checks passed**, one existing skip; strict QML lint passes. Actual
+  Enter submission exercises all six receipt/delivery/persistence event orders.
+  A save warning remains visible after connection success and is cleared only
+  by successful saving for the same profile, not another profile's success.
+- **122 Rust tests passed**, four ignored (including the separately run
+  real-provider test); Clippy with warnings denied passes.
+- The complete packaged scanner now passes an isolated offscreen install check:
+  `/nix/store/pwlmn0l27s3zhiv1dv1kdi0kgvagwlns-qrca-26.04.3`.
+  The same test rejects the old deployed output with the original read-only
+  property error. Scanner fix commit: `0ee7d46`.
+- Real GNOME keyring 50.0/Gcr 3.41.2 passes live-dialog timeout, repeat/coalescing,
+  Escape cancellation, fresh-client secret recovery and provider-exit tests in
+  a private bus/display/HOME/network namespace. Synthetic fixture unlock uses
+  GNOME's internal test/PAM API; this does not establish real login/PAM behavior.
+- The daemon now dispatches credentials before saving, provides a bounded native
+  password handoff while the keyring is locked, and never Dismisses a live unlock
+  on timeout. Finish an unresolved unlock dialog before retrying saving; expired
+  saves are not replayed. Remember remains on by default with explicit opt-out.
+
+No live service restart, camera access, network change or reboot was performed.
+The matching provider test instructions and detailed daemon coverage are in
+`../nm-daemon/docs/wifi-credential-regressions.md`.
+
+## Original automated evidence (superseded by the correction above)
 
 - `tests/run-qml-tests.sh` with `QML_XHR_ALLOW_FILE_READ=1`: **627 passed,
   0 failed, 1 existing renderer skip**, Qt 6.11.1 offscreen/software. Counts include
@@ -24,8 +57,8 @@ part of the automated pass.
 - `nm-daemon` `cargo test --lib`: **116 passed, 0 failed, 3 existing opt-in
   tests ignored**. `cargo clippy --all-targets -- -D warnings`: passes.
 - The patched Qrca 26.04.3 package builds against the deployment's pinned
-  nixpkgs revision `8eeec934ae0dbeca3d7868c059568a65c08b2fc3`, including its QML
-  install check. Its output is
+  nixpkgs revision `8eeec934ae0dbeca3d7868c059568a65c08b2fc3`, including build-time
+  QML checking, but without complete scanner startup. Its broken output was
   `/nix/store/9ahaxrcpl379nr1n5jzgh8zspp1ya9lp-qrca-26.04.3`.
 - The product Nix Qt check includes `nix/qrca` for the actual scanner button
   component, and the scanner package is also a named flake check. A full combined
@@ -55,7 +88,7 @@ or QR payloads are logged.
 ## Live acceptance still required after deployment
 
 Build/deploy the matching Shelllist and nm-daemon revisions together; the checked
-out sources use protocol v2, while the investigated running services used v1.
+out sources use protocol v2 and add a separate credential-delivery event.
 A source commit alone does not update the running Nix-store applications.
 
 On a spare/test connection, with a recovery network available:
