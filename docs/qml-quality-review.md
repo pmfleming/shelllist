@@ -4,6 +4,9 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
+The [five focused improvements](qml-quality-next-five.md) start from `bf01181`
+and record each implementation, measurement and native validation separately.
+
 The [2026-10-15 focused review](qml-maintenance-2026-10-15.md) starts
 from clean `e296b2b`: simpler Wi-Fi classification, a typed classification hook,
 shared detail sizing/headings and one Applications page loader. Production

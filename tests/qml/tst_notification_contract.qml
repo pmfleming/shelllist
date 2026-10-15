@@ -234,6 +234,24 @@ DaemonTestCase {
         state.flushEvents();
         verify(state.notifications.available);
     }
+    function test_operationSnapshotsRespectErrorsAndEventVersion_data() {
+        return [{tag: "current", outcome: "success", stale: false},
+            {tag: "newer-event", outcome: "success", stale: true},
+            {tag: "failed", outcome: "stale", stale: false}];
+    }
+    function test_operationSnapshotsRespectErrorsAndEventVersion(data) {
+        const state = make();
+        const call = start(state, "invokeAction");
+        if (data.stale) event(state, "dndCleared");
+        const response = clone(fixture().replies.invokeAction[data.outcome]);
+        response.data = {snapshot: clone(fixture().snapshot.data.snapshot)};
+        response.data.snapshot.notifications.dnd = true;
+        reply(call, response);
+        verifyReleased(state, call);
+        compare(state.notifications.dnd, data.outcome === "success" && !data.stale);
+        compare(state.lastError, response.ok ? "" : response.error.message);
+        compare(mutations(state).length, 1, "snapshot handling cannot replay the action");
+    }
     function test_cancelAcknowledgementCannotPublishSnapshotOrClearAnotherError() {
         const state = make();
         prepare(state, "cancelDelete");

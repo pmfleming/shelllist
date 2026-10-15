@@ -18,13 +18,13 @@ Io.BarDaemonBackend {
     function request(prefix: string, method: string, params: var, context: var): bool {
         const id = nextRequestId(prefix);
         const next = Object.assign({}, requests);
-        next[id] = Object.assign({generation: store.dataGeneration, eventVersion: store.eventVersion}, context || ({}));
+        next[id] = Object.assign({kind: prefix, generation: store.dataGeneration, eventVersion: store.eventVersion}, context || ({}));
         requests = next;
         return call(id, method, params);
     }
     function snapshot(): void {
         if (!snapshotPending() && !Object.keys(requests).some(id => id.startsWith("snapshot-")))
-            request("snapshot", Api.methods.snapshot, {}, {snapshot: true});
+            request("snapshot", Api.methods.snapshot, {}, {});
     }
     function queryCenter(params: var, context: var): bool {
         return request("center", Api.methods.notificationsQueryCenter, params, {center: context});
@@ -33,7 +33,7 @@ Io.BarDaemonBackend {
         return request("dnd", Api.methods.notificationsSetDnd, {
             enabled: enabled,
             until_unix_ms: until
-        }, {dnd: true});
+        }, {});
     }
     function setAppPolicy(key: string, policy: var): bool {
         return request("app-policy", Api.methods.notificationsSetAppPolicy, {app_key: key, policy: policy}, {policyKey: key});
@@ -42,7 +42,7 @@ Io.BarDaemonBackend {
         return request("prepare-delete", Api.methods.notificationsPrepareDelete, {app_key: key, selected: selected}, {deleteGeneration: generation});
     }
     function deleteConfirmed(token: string, cancel: bool): bool {
-        return request("delete", Api.methods.notificationsDelete, {token: token, cancel: cancel}, {deleteOperation: !cancel, cancelDelete: cancel});
+        return request("delete", Api.methods.notificationsDelete, {token: token, cancel: cancel}, {cancelDelete: cancel});
     }
     function dismiss(id: int): bool {
         return request("dismiss", Api.methods.notificationsDismiss, {
@@ -97,22 +97,31 @@ Io.BarDaemonBackend {
     function acknowledge(context: var, data: var, error: string, errorCode: string): void {
         // Scoped readers/settings/consent own their result, including errors.
         // They must not fall through to generic snapshot or error publication.
-        if (context.center) {
+        switch (context.kind) {
+        case "center":
             store.centerResponse(context.center, data.notification_center, error, errorCode);
             return;
-        }
-        if (context.policyKey !== undefined) {
+        case "app-policy": {
             const policyError = error || (!data.notifications?.app_policies?.[context.policyKey] ? qsTr("Invalid application policy acknowledgement") : "");
             store.finishAppPolicy(context.policyKey, data.notifications, policyError);
             store.lastError = policyError;
             return;
         }
-        if (context.deleteGeneration !== undefined) { store.finishPrepareDelete(context.deleteGeneration, data.delete_confirmation, error); return; }
-        if (context.cancelDelete) return;
-        if (context.deleteOperation) { store.finishDelete(error || (!NotificationValidation.integerIn(data.deleted, 0, 100200) ? qsTr("Invalid deletion acknowledgement. Refresh before retrying.") : "")); return; }
+        case "prepare-delete":
+            store.finishPrepareDelete(context.deleteGeneration, data.delete_confirmation, error);
+            return;
+        case "delete":
+            if (!context.cancelDelete)
+                store.finishDelete(error || (!NotificationValidation.integerIn(data.deleted, 0, 100200) ? qsTr("Invalid deletion acknowledgement. Refresh before retrying.") : ""));
+            return;
+        default:
+            acknowledgeOperation(context, data, error);
+        }
+    }
+    function acknowledgeOperation(context: var, data: var, error: string): void {
         if (context.replyKey !== undefined)
             store.finishReply(context.replyKey, context.text, error);
-        if (context.dnd)
+        if (context.kind === "dnd")
             store.finishDnd(context.eventVersion === store.eventVersion ? data.notifications : null, error);
         if (context.operationKey !== undefined)
             store.finishOperation(context.operationKey);
@@ -120,7 +129,7 @@ Io.BarDaemonBackend {
             store.lastError = error;
             return;
         }
-        if (!context.snapshot)
+        if (context.kind !== "snapshot")
             store.lastError = "";
         if (!data.snapshot)
             return;
