@@ -379,14 +379,9 @@
             '';
           };
 
-          default = pkgs.symlinkJoin {
-            name = "shelllist";
-            paths = [
-              self.packages.${system}.shelllistApplication
-              barDaemon
-            ];
-            meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
-          };
+          # Client executables remain runtime adapters, not exported backend
+          # services. The UI never installs daemon/system integration metadata.
+          default = self.packages.${system}.shelllistApplication;
 
           portalLauncher = rustPlatform.buildRustPackage {
             pname = "shelllist-portal-launch";
@@ -726,52 +721,26 @@
                   { programs.shelllist.enable = true; }
                 ];
               };
-              withoutDiscovery = nixpkgs.lib.nixosSystem {
+              disabled = nixpkgs.lib.nixosSystem {
                 inherit system;
-                modules = [
-                  self.nixosModules.default
-                  {
-                    programs.shelllist = {
-                      enable = true;
-                      discovery.enable = false;
-                      media.youtubeMetadata.enable = true;
-                    };
-                  }
-                ];
+                modules = [ self.nixosModules.default ];
               };
             in
             pkgs.runCommand "shelllist-module-evaluation" { } ''
               test '${evaluated.config.systemd.user.services.shelllist.serviceConfig.ExecStart}' = '${
                 self.packages.${system}.default
               }/bin/shelllist run'
-              test '${evaluated.config.systemd.user.services.bar-daemon.serviceConfig.BusName}' = 'org.laufan.BarDaemon'
-              test '${evaluated.config.systemd.user.services.bar-daemon.environment.BAR_DAEMON_NOTIFICATION_BACKEND}' = 'native'
-              test '${toString evaluated.config.programs.shelllist.media.youtubeMetadata.enable}' = ""
-              test '${toString (evaluated.config.systemd.user.services.bar-daemon.environment ? BAR_DAEMON_YOUTUBE_METADATA)}' = ""
-              test '${withoutDiscovery.config.systemd.user.services.bar-daemon.environment.BAR_DAEMON_YOUTUBE_METADATA}' = '1'
-              test '${builtins.concatStringsSep " " evaluated.config.systemd.user.services.bar-daemon.conflicts}' = 'swaync.service'
-              test '${toString evaluated.config.security.polkit.enable}' = '1'
-              test '${toString evaluated.config.networking.networkmanager.enable}' = '1'
-              test '${evaluated.config.networking.networkmanager.dns}' = 'systemd-resolved'
-              test '${toString evaluated.config.networking.networkmanager.connectionConfig.mdns}' = '0'
-              test '${toString evaluated.config.services.resolved.enable}' = '1'
-              test '${evaluated.config.services.resolved.settings.Resolve.MulticastDNS}' = 'resolve'
-              test '${toString (builtins.elem 5353 evaluated.config.networking.firewall.allowedUDPPorts)}' = '1'
-              test '${toString withoutDiscovery.config.services.resolved.enable}' = ""
-              test '${toString withoutDiscovery.config.networking.networkmanager.enable}' = ""
-              test '${toString (builtins.elem 5353 withoutDiscovery.config.networking.firewall.allowedUDPPorts)}' = ""
-              test '${toString evaluated.config.programs.shelllist.resources.enableRaplAccess}' = '1'
-              printf '%s' ${nixpkgs.lib.escapeShellArg evaluated.config.services.udev.extraRules} \
-                | grep -F 'SUBSYSTEM=="powercap"' >/dev/null
-              test -f '${
-                self.packages.${system}.default
-              }/share/dbus-1/services/org.freedesktop.Notifications.service'
-              test -f '${
-                self.packages.${system}.default
-              }/share/dbus-1/system-services/org.laufan.BarBatteryHelper.service'
-              test -f '${self.packages.${system}.default}/share/dbus-1/system.d/org.laufan.BarBatteryHelper.conf'
-              test -f '${self.packages.${system}.default}/share/polkit-1/actions/org.laufan.bar-daemon.policy'
-              test -f '${self.packages.${system}.default}/lib/systemd/system/bar-battery-helper.service'
+              test '${toString (evaluated.config.systemd.user.services ? bar-daemon)}' = ""
+              test '${toString (disabled.config.systemd.user.services ? shelllist)}' = ""
+              test '${toString evaluated.config.security.polkit.enable}' = ""
+              test '${toString evaluated.config.networking.networkmanager.enable}' = ""
+              test '${toString evaluated.config.services.resolved.enable}' = ""
+              test '${toString (builtins.elem 5353 evaluated.config.networking.firewall.allowedUDPPorts)}' = ""
+              test ! -e '${self.packages.${system}.default}/share/dbus-1'
+              test ! -e '${self.packages.${system}.default}/share/polkit-1'
+              test ! -e '${self.packages.${system}.default}/lib/systemd'
+              test ! -e '${self.packages.${system}.default}/bin/bar-daemon'
+              test ! -e '${self.packages.${system}.default}/bin/bar-battery-helper'
               touch $out
             '';
 
