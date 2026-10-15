@@ -77,7 +77,7 @@ Enable in either the NixOS or Home Manager module, then rebuild/deploy both the
 updated daemon and UI:
 
 ```nix
-programs.shelllist.media.youtubeMetadata.enable = true;
+services.bar-daemon.media.youtubeMetadata.enable = true;
 ```
 
 The option requires the managed bar-daemon service. For other installations, set

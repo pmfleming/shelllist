@@ -125,9 +125,9 @@ imports = [ inputs.shelllist.nixosModules.default ];
 programs.shelllist.enable = true;
 ```
 
-Both modules install Shelllist and can supervise the resident host and `bar-daemon`. The bundled daemon owns `org.freedesktop.Notifications` and conflicts with `swaync.service`; disable other notification daemons. Configure `programs.shelllist.systemd.target` for a compositor-specific session target, `systemd.startBarDaemon = false` for D-Bus activation, or `systemd.environment` for theme overrides. Other domain daemons need their own running services or D-Bus activation.
+Both modules install and supervise only the Shelllist UI. Configure `programs.shelllist.systemd.target` for a compositor-specific session target or `systemd.environment` for theme overrides. All five domain daemons need independently configured services or D-Bus activation. Bar-daemon owns `org.freedesktop.Notifications` and conflicts with `swaync.service`; enable only one notification provider.
 
-NixOS additionally installs privileged battery integration and read-only Intel RAPL access. Set `programs.shelllist.resources.enableRaplAccess = false` to disable RAPL access.
+Privileged battery integration, location policy, RAPL access and networking belong to daemon-owned modules, not the UI. See [independent daemon deployment](docs/daemon-packaging.md) for module names and migration instructions.
 
 ## CLI
 

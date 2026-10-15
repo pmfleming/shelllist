@@ -256,7 +256,7 @@ visible. Revert retains initial focus and the modal's contained Tab traversal.
 ## Ownership
 
 `bar-daemon` remains the only display configuration owner. Enable
-`programs.shelllist.displays.enable` to permit changes. Existing preferences,
+`services.bar-daemon.displays.enable` to permit changes. Existing preferences,
 layout journals and `monitors.lua` are preserved. Display settings never change
 lid actions, suspend policy or DPMS. Battery & Power no longer owns display state,
 requests, subscriptions or controls.

@@ -82,7 +82,7 @@ Ui.ProviderChooserController {
         return !o.disabled;
     }).length
     readonly property int secondsLeft: trial ? Math.max(0, Math.ceil(trial.expires_at - clock / 1000)) : 0
-    readonly property string statusMessage: displayPolicyError || displayPolicyState.error || (!stateReady ? qsTr("Connecting…") : !displayPolicyState.available ? qsTr("Enable programs.shelllist.displays.enable to manage displays") : stale ? qsTr("Displays changed · reload the layout") : dirty && validationError ? validationError : displayPolicyState.status === "settling" ? qsTr("Waiting for external display…") : dockingApplying ? qsTr("Applying docking preference…") : "")
+    readonly property string statusMessage: displayPolicyError || displayPolicyState.error || (!stateReady ? qsTr("Connecting…") : !displayPolicyState.available ? qsTr("Enable services.bar-daemon.displays.enable to manage displays") : stale ? qsTr("Displays changed · reload the layout") : dirty && validationError ? validationError : displayPolicyState.status === "settling" ? qsTr("Waiting for external display…") : dockingApplying ? qsTr("Applying docking preference…") : "")
 
     navigationPrimaryEnabled: false
     provider: displayProvider

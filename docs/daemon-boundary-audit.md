@@ -5,7 +5,15 @@ All six planned migrations are now implemented locally; see the
 coordinated activation remain separate. The original findings below are retained
 as historical context and annotated with their implementation outcomes.
 
-## Current follow-up review
+## Current ownership reconciliation
+
+The [deployment ownership reconciliation](reviews/daemon-ownership-rollout.md)
+confirms that the October 8 domain follow-ups below now have native owners and
+frontend consumers. Shelllist packaging/modules have also been separated from
+daemon service and privilege registration. See that record for current scope;
+the opportunity review below describes its earlier source snapshot.
+
+## Historical follow-up review
 
 The [2026-10-08 opportunity review](daemon-opportunities-2026-10-08.md) checks
 current frontend and sibling-daemon working trees. It identifies additional work:
