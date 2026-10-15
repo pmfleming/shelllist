@@ -63,12 +63,13 @@ No new local editor/key model is introduced.
 
 ## Regression coverage
 
-- `tests/qml/tst_material_feedback.qml`: painted disabled icons in light/dark
-  themes and actual disabled/enabled pointer activation.
+- Shared native field/command suites retain activation guards; dedicated
+  disabled-icon paint checks were pruned, not replaced by equivalent evidence.
 - `tests/qml/tst_wifi_operations.qml`: actual Alt+K/X/D, Alt+Enter, F5 and pointer
-  routes; slow connect/disconnect, duplicate admission, delayed acknowledgements,
-  screenshot overlap, missing events, timer expiry, read retry bounds, transport
-  loss and malformed/late/foreign recovery replies.
+  routes; slow connect, credential acknowledgements/expiry, read retry bounds,
+  and malformed/late/foreign recovery replies. Some disconnect, transport-loss,
+  screenshot and presentation permutations were removed; see the
+  [current pruning review](../tests/test-pruning-current.md).
 - Daemon real D-Bus workflow: activation succeeds with unknown internet access
   without invoking a probe; the explicit probe remains functional.
 - Daemon runtime: progress/terminal ownership, cancellation deadline retains live

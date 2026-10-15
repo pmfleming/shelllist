@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Wifi as Wifi
-import "../../wifi/process" as Process
 
 DaemonTestCase {
     id: testCase
@@ -44,33 +43,6 @@ DaemonTestCase {
             }
         }
     }
-    Component {
-        id: commandFactory
-        Process.CommandProcess {
-            property int failedStarts: 0
-            property int exits: 0
-            onStartFailed: failedStarts++
-            onFinished: exits++
-        }
-    }
-    function test_processAdapterDetectsAsynchronousExecFailureOnce() {
-        const command = createTemporaryObject(commandFactory, testCase);
-        const child = findChild(command, "portalChildProcess");
-        verify(child !== null);
-        command.awaitingResult = true;
-        child.running = true;
-        child.running = false;
-        compare(command.failedStarts, 1);
-        child.exited(-1);
-        compare(command.exits, 0, "a late exit cannot acknowledge twice");
-        command.awaitingResult = true;
-        child.running = true;
-        child.started();
-        child.running = false;
-        child.exited(0);
-        compare(command.failedStarts, 1);
-        compare(command.exits, 1);
-    }
     function makePanel() {
         const panel = createTemporaryObject(panelFactory, testCase);
         verify(panel !== null);
@@ -95,22 +67,6 @@ DaemonTestCase {
         compare(panel.executor.commands.length, 0, "prepare alone cannot execute");
         reply(panel, {intent: value});
     }
-    function test_manualUsesClaimedUrlAndUiWorkspaceAndAcknowledges() {
-        const panel = makePanel();
-        verify(panel.controller.portal.launchManual("name:here", false));
-        compare(portalCalls()[0].params.mode, "manual");
-        compare(portalCalls()[0].params.connect_request_id, undefined);
-        const value = intent();
-        claim(panel, value);
-        compare(panel.executor.commands.length, 1);
-        compare(panel.executor.commands[0], ["shelllist-portal-launch", "--url", value.url, "--workspace", "name:here", "--expires-at-ms", String(value.expires_at_ms)]);
-        panel.executor.running = false;
-        panel.controller.backend.finishPortal(0, '{"outcome":"opened"}');
-        compare(portalCalls()[2].method, "network.portalComplete");
-        compare(portalCalls()[2].params, {launch_id: value.launch_id, outcome: "opened"});
-        reply(panel, {launch_id: value.launch_id, outcome: "opened"});
-        verify(!panel.controller.portal.busy);
-    }
     function test_overlapAndAutomaticSuppressionNeverLaunchOrInventIdentity() {
         const panel = makePanel();
         verify(panel.controller.portal.launchForConnect("connect-42", "4"));
@@ -123,7 +79,6 @@ DaemonTestCase {
     }
     function test_expiredAndChangedClaimsFailClosed_data() {
         return [
-            {tag: "expired", field: "expires_at_ms", value: 0},
             {tag: "changed-url", field: "url", value: "http://other.example/"}
         ];
     }

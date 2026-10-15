@@ -1,6 +1,5 @@
 import QtQuick
 import QtTest
-import "../../launcher/AppProtocol.generated.js" as App
 import "../../bar/BarProtocol.generated.js" as Bar
 
 TestCase {
@@ -11,31 +10,8 @@ TestCase {
         request.send();
         return JSON.parse(request.responseText);
     }
-    function test_productionAppRepliesMatchGeneratedRustSchemas() {
-        const replies = fixture("app-replies.json");
-        compare(Object.keys(App.contracts).length, 8);
-        Object.keys(App.contracts).forEach(function(method) {
-            compare(App.responseError(method, replies[method]), "", method);
-            const moved = JSON.parse(JSON.stringify(replies[method]));
-            const key = App.contracts[method].response_key;
-            moved[key] = moved.data[key];
-            delete moved.data[key];
-            verify(App.responseError(method, moved).length > 0, "Moving a result out of data must fail: " + method);
-        });
-    }
-    function test_productionAppEventsUseCanonicalPayloadSchema() {
-        const events = fixture("app-events.json");
-        Object.keys(events).forEach(function(name) {
-            compare(App.eventError(events[name]), "", name);
-        });
-        const moved = JSON.parse(JSON.stringify(events.completed));
-        moved.operation = moved.data.operation;
-        delete moved.data.operation;
-        verify(App.eventError(moved).length > 0);
-    }
     function test_controlFixturesMatchGeneratedRustSchemas() {
         const fixtures = fixture("bar-controls.json");
-        compare(Object.keys(Bar.contracts).length, 9);
         Object.keys(Bar.contracts).forEach(function(method) {
             const values = fixtures[method];
             compare(Bar.requestError(method, values.params), "", method);
@@ -48,26 +24,5 @@ TestCase {
             delete changed.data[contract.response_key][contract.result_schema.required[0]];
             verify(Bar.responseError(method, changed).length > 0, "Rust reply fields cannot disappear silently");
         });
-    }
-    function test_controlEventsMatchProductionSchemas() {
-        const reads = fixture("bar-reads.json");
-        Object.keys(Bar.eventContracts).forEach(function(key) {
-            const parts = key.split(":");
-            const values = reads[parts[1] === "gap" ? "lagged" : parts[1]];
-            const event = values[parts[0]];
-            compare(Bar.eventError(event), "", key);
-            const broken = JSON.parse(JSON.stringify(event));
-            delete broken.data[Bar.eventContracts[key].required[0]];
-            verify(Bar.eventError(broken).length > 0, key);
-        });
-    }
-    function test_nullabilityDefaultsUnknownFieldsAndExactIntegers() {
-        compare(Bar.requestError("audio.setMuted", {}), "");
-        compare(Bar.requestError("audio.setMuted", {muted:null}), "");
-        verify(Bar.requestError("audio.setMuted", {muted:1}).length > 0);
-        verify(Bar.requestError("audio.adjust", {delta_percent:40000}).length > 0);
-        verify(App.requestError("applications.operation.status", {operation_id:"op", foreign:true}).length > 0);
-        compare(App.requestError("applications.query", {}), "");
-        verify(App.responseError("applications.revision", {ok:true, data:{revision:9007199254740992}}).length > 0);
     }
 }

@@ -57,10 +57,8 @@ DaemonTestCase {
     function cases(battery) {
         // Sample distinct state/error owners; generated schemas cover all nine DTOs.
         const rows = battery
-            ? [["powerProfile.set", "limited"], ["powerProfile.setBatteryAware", "rejected"]]
-            : [["audio.setInputMuted", "success"],
-                ["audio.adjust", "limited"], ["brightness.adjust", "limited"],
-                ["brightness.adjust", "failed"], ["audio.setInputMuted", "rejected"]];
+            ? [["powerProfile.set", "limited"]]
+            : [["brightness.adjust", "limited"]];
         return rows
             .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome, battery: battery}));
     }
@@ -132,7 +130,7 @@ DaemonTestCase {
     function test_batteryOutcomes_data() { return cases(true); }
     function test_batteryOutcomes(data) { checkOutcome(data); }
     function test_recoveryNeverReplays_data() {
-        return [["brightness.adjust", false], ["powerProfile.set", true]]
+        return [["brightness.adjust", false]]
             .map(([method, battery]) => ({tag: (battery ? "battery/" : "bar/") + method, method: method, battery: battery}));
     }
     function test_recoveryNeverReplays(data) {

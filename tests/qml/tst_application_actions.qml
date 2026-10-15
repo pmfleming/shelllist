@@ -101,8 +101,7 @@ DaemonTestCase {
     }
     function test_producerOperationCompletesWithoutPolling_data() {
         return [
-            {tag: "completed", status: "completed"},
-            {tag: "failed", status: "failed"}
+            {tag: "completed", status: "completed"}
         ];
     }
     function test_producerOperationCompletesWithoutPolling(data) {
@@ -152,63 +151,6 @@ DaemonTestCase {
         const label = findChild(panel.listItem, "feedbackText");
         verify(label !== null && label.visible);
         tryCompare(label, "text", message);
-    }
-    function test_handoff_data() {
-        return [{tag: "launch-receipt", launch: true}];
-    }
-    function test_handoff(data) {
-        const panel = makePanel();
-        keyClick(Qt.Key_Return, data.launch ? Qt.ShiftModifier : Qt.NoModifier);
-        const call = lastCall(Api.methods.execute);
-        compare(call.params.action, data.launch ? "launch" : "activate");
-        const progress = data.launch ? "Launching Alpha…" : "Focusing Alpha…";
-        verifyStatus(panel, progress);
-        accept(call);
-        verifyStatus(panel, progress);
-        compare(panel.dismissals, 0, "Admission is not a successful handoff");
-        verify(!panel.controller.navigationBlocked);
-        if (data.launch) {
-            event(call, "running", {launch_backend: "systemd-run", launch_scope: "app-graphical.slice"});
-            compare(panel.dismissals, 1);
-            verify(panel.controller.actionInFlight);
-            verify(Io.DaemonSessions.sessions["app-daemon"].client.active, "Hidden operation keeps its subscription");
-            event(call, "failed", {message: "Workspace placement failed"});
-            compare(panel.failures.length, 1);
-            compare(panel.failures[0].message, "Workspace placement failed");
-        } else {
-            event(call, "completed", {message: "Focused Alpha"});
-            verifyStatus(panel, "Focused Alpha");
-            compare(panel.dismissals, 1);
-        }
-        verify(!panel.controller.actionInFlight);
-        event(call, "completed");
-        compare(panel.dismissals, 1, "Duplicate terminal delivery cannot dismiss again");
-    }
-    function test_launchCompletionStatusSurvivesBrowsing() {
-        const panel = makePanel();
-        keyClick(Qt.Key_Return, Qt.ShiftModifier);
-        const call = lastCall(Api.methods.execute);
-        verifyStatus(panel, "Launching Alpha…");
-        accept(call);
-        expand(panel); // Browsing after dispatch must not be dismissed by a late result.
-        verify(findChild(panel, "applicationActionStatus") === null);
-        const reads = calls.filter(c => c.method === Api.methods.operationStatus).length;
-        keyClick(Qt.Key_K, Qt.AltModifier);
-        compare(calls.filter(c => c.method === Api.methods.operationStatus).length, reads);
-        event(call, "completed", {message: "Launched Alpha"});
-        compare(panel.dismissals, 0);
-        verifyStatus(panel, "Launched Alpha");
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        tryCompare(panel.controller, "detailsTab", "resources");
-        tryVerify(() => findChild(panel.listItem, "feedbackText").parent.fullText.includes("Launched Alpha"));
-        panel.listItem.focusList();
-        keyClick(Qt.Key_Left);
-        tryCompare(panel.controller, "detailsOpen", false);
-        verifyStatus(panel, "Launched Alpha");
-        keyClick(Qt.Key_Down);
-        compare(panel.controller.selectedResult.id, "Beta");
-        verify(!findChild(panel.listItem, "feedbackText").parent.fullText.includes("Launched Alpha"));
-        compare(calls.filter(c => c.method === Api.methods.execute).length, 1);
     }
     function test_placementWarningAfterHandoff_data() {
         return [
@@ -448,24 +390,6 @@ DaemonTestCase {
         c.operations.check("Alpha");
         reply(lastCall(Api.methods.operationStatus), {operation_status: operation(call, "completed")});
         verify(!c.operations.busy("Alpha"));
-        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
-    }
-    function test_readFailureAndTransportLossStayExplicit() {
-        const panel = makePanel();
-        const c = panel.controller;
-        verify(c.primarySelected());
-        const call = lastCall(Api.methods.execute);
-        accept(call);
-        c.operations.check("Alpha");
-        reply(lastCall(Api.methods.operationStatus), {}, "Status unavailable");
-        verify(c.actionInFlight, "A failed read does not complete the mutation");
-        verify(c.selectedActionMessage.indexOf("Could not confirm") >= 0);
-        verify(!c.navigationBlocked);
-        c.deactivateUi();
-        Io.DaemonSessions.sessions["app-daemon"].client.transportFailed("Disconnected");
-        verify(!c.actionInFlight);
-        compare(panel.failures.length, 1);
-        verify(panel.failures[0].message.indexOf("outcome unknown") >= 0);
         compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
     }
 }

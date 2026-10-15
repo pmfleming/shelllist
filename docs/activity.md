@@ -67,8 +67,9 @@ or tooltip is added. A warning does not invalidate the observed system timezone.
 The visible top-bar clock/date and its accessible description both render the
 daemon's `utc_offset_seconds` using UTC getters, so an acknowledged timezone
 change takes effect without restarting Qt or relying on its local-time cache.
-Configured Home/weather places are not changed by this path. Qt coverage lives
-in `tst_timezone_clock.qml` and `tst_time_weather_locations.qml`.
+Configured Home/weather places are not changed by this path. Retained
+`tst_timezone_clock.qml` checks unavailable offsets; known-offset/rollover and
+location-ordering cases were pruned, not replaced by equivalent coverage.
 
 Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. Weather locations—including which location is home, labels, coordinates, and timezones—come entirely from `bar-daemon/activity.json`; no city is compiled into the UI. `bar-daemon` refreshes configured Open-Meteo locations concurrently at most every 15 minutes and retains each last successful forecast through transient failures.
 

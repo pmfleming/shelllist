@@ -75,7 +75,7 @@ DaemonTestCase {
     function test_bluetoothPairingVariants_data() {
         // Consent, validated native input and remote-owned display are distinct.
         // BluetoothRecovery retains PIN clearing and queued request ownership.
-        return ["service-authorization", "passkey", "display-passkey"]
+        return ["passkey", "display-passkey"]
             .map(kind => ({tag: kind, kind: kind}));
     }
     function test_bluetoothPairingVariants(data) {

@@ -46,18 +46,17 @@ that prerequisite rather than skipping or weakening its paint assertions.
 - Shared controls retain keyboard, pointer and assistive activation, busy/disabled
   guards, native masking/reveal, read-only editing, dropdown acknowledgement and
   cancellation, command availability, passive labels and close-time reordering.
-  Representative painted field contrast remains; exhaustive wrapper/header
-  geometry and palette-token snapshots do not.
+  Palette contrast remains in JavaScript; dedicated field/scanner paint and
+  per-wrapper geometry checks are no longer retained.
 - Bluetooth, Clipboard, Battery, Notifications and Wi-Fi retain domain
   acknowledgement, failed-save drafts, retries, stale identities/replies, leases,
   secret clearing, uncertain outcomes and destructive-operation guards. System
   choosers retain explicit media targets, capability checks, acknowledged settings
   and native tray-menu lifetime. Media artwork clearing, plain-text metadata and
   passive enrichment remain.
-- `tst_balanced_dashboard.qml` covers stable category identity, acknowledged
-  workspace activation, monitor-local selection/reveal and unavailable versus
-  zero battery readings. Exact chromatic/occupancy paint, whole-bar layout and
-  positive battery-fill matrices are no longer automated here.
+- `tst_balanced_dashboard.qml` retains acknowledged workspace activation and
+  unknown battery readings. Monitor-local reveal, known-zero bar-fill paint and
+  whole-bar presentation matrices have less direct evidence.
   `tst_media_chip.qml` samples narrow seek transport, circular artwork geometry,
   and keeps missing-player controls visible but disabled; system choosers exercise
   panel transport. Its RHI-only artwork pixel check remains an explicit existing
@@ -66,7 +65,8 @@ that prerequisite rather than skipping or weakening its paint assertions.
   request churn, stable identities, queued-update cancellation and
   progressive/native list updates. Wi-Fi retains cancellation acknowledgement.
   Notifications retain atomic center refresh, obsolete-read rejection, queued
-  revisions, timeline viewport restoration and reply ownership across reconnects.
+  revisions and reply ownership across reconnects; pixel-offset restoration is
+  no longer separately checked.
 - JavaScript retains unsafe-layout/numeric validation, unavailable versus measured
   zero, chart gaps, history/cursor failures, request identity, no-replay rules and
   battery safety. Material contrast covers 150 seed/mode combinations. Native
@@ -78,31 +78,34 @@ Expected negative-test application error logs are distinct from QML engine
 warnings and remain allowed. Offscreen tests do not replace live compositor,
 hardware, IME or screen-reader acceptance.
 
-## Current pruning checkpoint — baseline `46407b7`
+## Current pruning checkpoint — baseline `c4bd285`
 
-**618 → 414 inventory units: 204 removed (33.01%), 66.99% retained.**
-The unchanged counter gives `round(618 × 0.67) = 414`. Actual reductions are
-202 Qt cases/data rows and two hard-coded JavaScript schema-cardinality assertions;
-no filtering, hidden tests, scenario packing or new skips. Production, fixtures,
-runners and all five daemon contract checks are unchanged.
+**441 → 295 inventory units: 146 removed (33.11%), 66.89% retained.**
+The unchanged counter gives `round(441 × 0.67) = 295`. Actual reductions are
+143 Qt cases/data rows and three redundant/geometry-specific JavaScript assertion
+sites; no filtering, hidden tests, scenario packing or new skips. Production,
+fixtures, runners, the counter and all five daemon contract checks are unchanged.
 
 | Inventory unit | Before | After |
 | --- | ---: | ---: |
-| JavaScript assertion sites | 68 | 66 |
-| Qt behavioral cases/data rows, including existing skip | 535 | 333 |
+| JavaScript assertion sites | 71 | 68 |
+| Qt behavioral cases/data rows, including existing skip | 355 | 212 |
 | Rust tests | 8 | 8 |
 | Python tests | 2 | 2 |
 | Daemon contract suites | 5 | 5 |
-| **Total** | **618** | **414** |
+| **Total** | **441** | **295** |
 
-Full Qt: **460 passes, zero failures, one existing renderer skip** (332 executed
-behaviors + 128 excluded lifecycle hooks). Sixty-four suites remain. This mixed
-inventory is not coverage; 414 is not a cap on future regression tests.
+Full Qt: **315 passes, zero failures, one existing renderer skip** (211 executed
+behaviors + 104 excluded lifecycle hooks). Fifty-two suites remain. This mixed
+inventory is not coverage; 295 is not a cap on future regression tests.
 See [decisions, retained owners, validation and explicit gaps](test-pruning-current.md).
-Strict lint, Python tests, runtime smoke and the full current-source
-`local-build check shelllist --offline --keep-going` passed. The Nix Qt run
-independently reports the same 460/0/1 result with regenerated producer fixtures.
-Matching local evidence is in `target/test-pruning-46407b7/`.
+Strict lint, all 17 JavaScript suites, source-relative imports, Python, Rust search
+and runtime smoke pass. Four portal tests pass with an isolated temporary offline
+lock; the unchanged repository lock cannot run locked. Full current-source
+`local-build check . --offline --keep-going` is blocked by an unrelated untracked
+review file in sibling `daemon-framework`, so daemon contract gates/full release
+validation were not rerun. Matching evidence: `target/test-pruning-c4bd285/`.
+The preceding **618 → 414** review is historical: `git show c4bd285:tests/test-pruning-current.md`.
 
 ## Historical ownership regressions
 

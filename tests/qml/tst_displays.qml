@@ -43,32 +43,6 @@ DaemonTestCase {
             outputs: [{ id: 0, name: "eDP-1", width: 1920, height: 1200, refreshRate: 60, x: 0, y: 0, scale: 1.25, transform: 0, disabled: true, supported: true, internal: true, mirror_of: "", current_mode: "1920x1200@60.00Hz", modes: [{id: "1920x1200@60.00Hz", width: 1920, height: 1200, rate: 60, size: "1920x1200"}] },
                 { id: 1, name: "DP-1", width: 3840, height: 2160, refreshRate: 60, x: 1536, y: 0, scale: 1.5, transform: 0, disabled: false, supported: true, internal: false, mirror_of: "", current_mode: "3840x2160@60.00Hz", modes: [{id: "3840x2160@60.00Hz", width: 3840, height: 2160, rate: 60, size: "3840x2160"}] }] };
     }
-    function test_compactDiscardKeepsNativeCancelAndExplicitApproval() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        c.openDetails();
-        waitForDetails(panel);
-        c.edit("DP-1", "scale", 2);
-        verify(c.dirty);
-        c.closeDetails();
-        const modal = findChild(panel, "discardDisplayDraft");
-        tryCompare(findChild(modal, "detailAction:reject"), "activeFocus", true);
-        verify(modal.compactPresentation && !modal.actionSummaryVisible);
-        verify(!findChild(modal, "modalDetail").visible);
-        verify(!modal.enterEnabled, "no new Enter-to-discard shortcut");
-        compare(findChild(modal, "detailAction:accept").icon, "undo");
-        keyClick(Qt.Key_Escape);
-        verify(c.dirty && c.detailsOpen && !c.discardPrompt);
-        compare(calls.length, 0);
-        c.closeDetails();
-        tryCompare(findChild(modal, "detailAction:reject"), "activeFocus", true);
-        keyClick(Qt.Key_Tab);
-        verify(findChild(modal, "detailAction:accept").activeFocus);
-        keyClick(Qt.Key_Return);
-        verify(!c.dirty && !c.detailsOpen && !c.discardPrompt);
-        compare(calls.length, 0, "discard affects only the local draft");
-    }
     function test_normalizedModesRemainLocalUntilPreview() {
         const panel = makePanel();
         const c = panel.controller;
@@ -128,7 +102,6 @@ DaemonTestCase {
     }
     function test_enableDisableCommandsPreviewAndAcknowledge_data() {
         return [
-            {tag: "enable-laptop", index: 0, wasEnabled: false, keyboard: false, keep: true},
             {tag: "revert-disable", index: 1, wasEnabled: true, keyboard: true, keep: false}
         ];
     }
@@ -248,12 +221,6 @@ DaemonTestCase {
         waitForDetails(panel);
         return panel;
     }
-    function placementCases() {
-        return [
-            {tag: "left", side: "left", key: Qt.Key_L, x: -2560, y: 0},
-            {tag: "above", side: "above", key: Qt.Key_U, x: 0, y: -1440}
-        ];
-    }
     function beginMapDrag(panel) {
         const map = findChild(panel, "displayArrangementSummary");
         const pointer = findChild(map, "displayMapPointer-DP-1");
@@ -273,26 +240,6 @@ DaemonTestCase {
         compare(map.targetEdge.reference, "eDP-1");
         compare(map.targetEdge.side, side);
         return { x: x, y: y };
-    }
-    function test_dragAndButtonsUseIdenticalPlacement_data() { return [placementCases()[1]]; }
-    function test_dragAndButtonsUseIdenticalPlacement(data) {
-        const panel = arrangementPanel(false);
-        const c = panel.controller;
-        const original = JSON.stringify(c.draft);
-        const map = beginMapDrag(panel);
-        const factor = map.factor;
-        const drop = dragToEdge(map, data.side);
-        verify(findChild(map, "displayDropGhost").visible);
-        compare(map.candidate.error, "");
-        compare(map.factor, factor, "fitting stays frozen while choosing an edge");
-        compare(JSON.stringify(c.draft), original, "hover never edits the draft");
-        verify(!c.canPreview && !c.placeSelected("above"), "actions cannot mutate during a drag");
-        mouseRelease(map, drop.x, drop.y, Qt.LeftButton, Qt.AltModifier);
-        verify(!map.dragging && !c.layoutDragging && !map.activeFocus);
-        compare(c.selectedDraft.x, data.x);
-        compare(c.selectedDraft.y, data.y);
-        compare(c.referenceName, "eDP-1");
-        compare(calls.length, 0, "Alt cannot bypass relative placement or submit the draft");
     }
     function test_cancelledDragDoesNotCommit_data() {
         return [{tag: "escape", route: "escape"}];
@@ -478,30 +425,6 @@ DaemonTestCase {
         verify(c.displayLayoutAction("revert", {id: "mirror-trial"}));
         compare(calls[1].method, "displayLayout.revert");
     }
-    function test_disablingMirrorSourcePromotesCopiesAndMirrorTelemetryInvalidatesDrafts() {
-        const panel = makePanel();
-        const c = panel.controller;
-        const state = displayState();
-        state.outputs[0].disabled = false;
-        state.outputs[1].mirror_of = "eDP-1";
-        state.outputs[1].x = 0;
-        c.applyDisplayPolicy(state);
-        compare(c.draft[1].mirror_of, "eDP-1");
-        c.setDisplayContent("eDP-1", "DP-1");
-        compare(c.draft[0].mirror_of, "", "cannot mirror a mirror");
-        c.edit("eDP-1", "enabled", false);
-        verify(!c.draft[0].enabled && c.draft[1].enabled);
-        compare(c.draft[1].mirror_of, "", "the survivor becomes independent");
-        verify(c.canPreview);
-        verify(!c.canToggleEnabled("DP-1"));
-        c.reloadDraft();
-        c.edit("DP-1", "scale", 2);
-        const changed = displayState();
-        changed.outputs[0].disabled = false;
-        c.applyDisplayPolicy(changed);
-        verify(c.stale, "external changes to mirroring invalidate the draft");
-        compare(calls.length, 0);
-    }
     function test_dockingManualStateCanReturnToTheAlreadySavedPreference() {
         const panel = makePanel();
         const c = panel.controller;
@@ -583,25 +506,6 @@ DaemonTestCase {
         compare(resolution.value, "1920x1200");
         c.requestFinished(calls[0].id);
         compare(scale.value, "1.25");
-    }
-    function test_unknownDockingPolicyDoesNotDisableReportedFocusSettings() {
-        const panel = makePanel();
-        const c = panel.controller;
-        const state = focusState();
-        state.policy = {};
-        c.applyDisplayPolicy(state);
-        c.uiActive = true;
-        c.selectOutput("eDP-1");
-        c.openDetails();
-        waitForDetails(panel);
-        const choice = findChild(panel, "dockedLaptopBehavior");
-        compare(choice.value, "");
-        verify(!choice.enabled);
-        verify(!c.setPreferExternal(true));
-        c.openGlobalSettings();
-        verify(c.canSetFocus, "focus capability is independent of a docking preference");
-        compare(findChild(panel, "focusSetting-input:follow_mouse").value, "1");
-        compare(calls.length, 0);
     }
     function test_dockingWaitsForHardwareBeforeAcceptingOnOff_data() {
         return [{tag: "keep-on", preferExternal: false}];
@@ -698,64 +602,6 @@ DaemonTestCase {
         compare(calls.length, 1, "manual recovery is still draft-only until Preview");
         verify(!choice.interactive, "a manual draft still excludes docking writes");
     }
-    function test_dockingChoiceWaitsForAcknowledgementAndCanRetry() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        c.selectOutput("eDP-1");
-        c.openDetails();
-        waitForDetails(panel);
-        const choice = findChild(panel, "dockedLaptopBehavior");
-        const status = findChild(panel, "dockingSaveStatus");
-        panel.navigation.focusContent();
-        panel.navigation.currentTarget = choice;
-        keyClick(Qt.Key_Return);
-        tryVerify(() => choice.editSession.active);
-        keyClick(Qt.Key_Up); // Native arrows change only the local draft.
-        compare(calls.length, 0);
-        keyClick(Qt.Key_Return);
-        compare(calls.length, 1);
-        compare(calls[0].method, "displayPolicy.set");
-        compare(calls[0].params.prefer_external, false);
-        compare(choice.value, "auto-off");
-        compare(choice.currentIndex, 1, "do not optimistically display an unacknowledged choice");
-        compare(status.text, "Saving preference…");
-        verify(!choice.interactive);
-        c.requestFailed(calls[0].id, "Could not save preference");
-        verify(choice.interactive);
-        compare(choice.value, "auto-off");
-        compare(choice.currentIndex, 1);
-        verify(c.statusMessage.indexOf("Could not save") >= 0);
-        panel.navigation.currentTarget = choice;
-        keyClick(Qt.Key_Return);
-        tryVerify(() => choice.editSession.active);
-        keyClick(Qt.Key_Up);
-        compare(calls.length, 1);
-        keyClick(Qt.Key_Return);
-        compare(calls.length, 2);
-        const saved = displayState();
-        saved.policy.prefer_external = false;
-        saved.status = "all-displays";
-        saved.outputs[0].disabled = false;
-        c.applyDisplayPolicy(saved);
-        c.requestFinished(calls[1].id);
-        compare(choice.value, "keep-on");
-        compare(choice.currentIndex, 0);
-        verify(!c.dirty && !c.trial, "docking saves independently of the layout preview");
-        compare(c.displayPolicyError, "");
-        verify(calls.every(call => call.method === "displayPolicy.set"));
-        const count = calls.length;
-        c.edit("DP-1", "x", 1600);
-        verify(!choice.interactive);
-        choice.selected("auto-off");
-        compare(calls.length, count, "a layout draft prevents a concurrent docking write");
-        c.reloadDraft();
-        saved.layout.trial = {id: "trial", expires_at: Date.now() / 1000 + 20};
-        c.applyDisplayPolicy(saved);
-        verify(!choice.interactive);
-        choice.selected("auto-off");
-        compare(calls.length, count, "a layout trial also prevents docking writes");
-    }
     function test_draftSurvivesTelemetryAndUsesDaemonToken() {
         const panel = makePanel();
         const c = panel.controller;
@@ -799,26 +645,6 @@ DaemonTestCase {
         c.requestFinished(calls[1].id);
         verify(!c.dirty);
         compare(c.selectedDraft.scale, 1.5);
-    }
-    function test_snapshotReconciliationPreservesEditBoundaries_data() {
-        return [{tag: "clean", dirty: false, preview: false, stale: false},
-            {tag: "dirty", dirty: true, preview: false, stale: true},
-            {tag: "pending-preview", dirty: true, preview: true, stale: false}];
-    }
-    function test_snapshotReconciliationPreservesEditBoundaries(data) {
-        const c = makePanel().controller;
-        c.selectOutput("DP-1");
-        if (data.dirty) c.edit("DP-1", "scale", 2);
-        if (data.preview) verify(c.preview());
-        const count = calls.length;
-        const observed = displayState();
-        observed.baseline = "next-observation";
-        observed.outputs[1].scale = 1.75;
-        c.applyDisplayPolicy(observed);
-        compare(c.selectedDraft.scale, data.dirty ? 2 : 1.75);
-        compare(c.baselineToken, data.dirty ? "opaque-native-baseline" : "next-observation");
-        compare(c.stale, data.stale);
-        compare(calls.length, count, "observations never apply or replay a layout");
     }
     function test_reconnectionClearsOnlyResolvedCloseIntent() {
         const c = makePanel().controller;

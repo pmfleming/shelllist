@@ -211,13 +211,15 @@ checkout, not a claim that those unrelated changes were authored by this plan.
 
 ## Panel acceptance matrix
 
-Every row has normal/minimum light/dark captures, plus a separate fractional and
-live Wayland pass. Additional state/transaction evidence remains at the consumer
-boundary instead of being duplicated in a giant visual test.
+At the capture checkpoint every row had normal/minimum light/dark captures,
+plus a separate fractional/live Wayland pass. Current automated owners below
+are narrower; the [pruning review](../tests/test-pruning-current.md) records
+removed consumer/paint paths. Historical captures are not a promise of retained
+per-state test coverage.
 
 | Panel | Representative captures / states | Native regression owners (`tests/qml/`) |
 | --- | --- | --- |
-| Applications | Application, Settings, measured Resources, missing network data, minimum viewport | `tst_application_details`, `tst_application_settings`, `tst_application_resources`, `tst_application_actions` |
+| Applications | Application, Settings, measured Resources, missing network data, minimum viewport | `tst_application_details`, `tst_application_settings`, `tst_application_actions`; pure resource/history helpers |
 | Wi-Fi | IPv4/IPv6, long errors, narrow/required/read-only/invalid fields | `tst_ip_fields`, `tst_wifi_operations`, `tst_wifi_prompt`, `tst_wifi_portal` |
 | Bluetooth | Device, Settings, Information, adapter General/Pairing, unavailable controls | `tst_bluetooth_recovery` |
 | Clipboard | Data/Information, long text, loading with retained content | `tst_clipboard_preview`, `tst_clipboard_recovery` |
@@ -225,13 +227,13 @@ boundary instead of being duplicated in a giant visual test.
 | Battery & Power | Overview/Care/Power, unavailable telemetry, long failure, firmware controls | `tst_battery_presentation`, `tst_battery_suspend` |
 | Activity | Glance/Schedule, long event/todo, empty day, error with retained content | `tst_activity_days` |
 | Notifications | Previews/Controls/global settings, pending/error, singular count | `tst_notification_center`, `tst_notifications` |
-| Time & Weather | Time/Weather, solar/timezone, unknown forecasts, measured hero | `tst_time_weather_locations` |
+| Time & Weather | Time/Weather, solar/timezone, unknown forecasts, measured hero | `tst_timezone_clock` (unknown offsets only); panel captures are historical |
 | Audio | Output, ready commands, mute, long failure | `tst_system_choosers` (includes input/target guards) |
 | Media | Ready transport, pin/mode, long failure, passive metadata/artwork | `tst_system_choosers` |
 | Tray | Passive details without duplicate card, stable native-menu routes | `tst_system_choosers` |
 
-Shared `tst_field_interaction`, `tst_material_fields`, `tst_material_feedback`
-and chooser/command suites retain editable-only traversal, Enter/Tab save,
+Shared `tst_field_interaction` and chooser/command suites retain
+editable-only traversal, Enter/Tab save,
 Escape discard, snapshot/draft isolation, continuous-preview rollback and guarded
 activation. The [current pruning review](../tests/test-pruning-current.md)
 records reduced visual evidence: the redundant `PanelRoles` suite and several

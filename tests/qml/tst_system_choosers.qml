@@ -221,16 +221,4 @@ DaemonTestCase {
         verify(!root.chooser.perform("activate", tray.id));
         compare(tray.activationCount, 1);
     }
-    function test_trayProjectionNeverConfusesDuplicateOrPrototypeIdentities(): void {
-        const values = Entries.tray([
-            {id: "duplicate", title: "One", hasMenu: true},
-            {id: "duplicate", title: "Two", hasMenu: true},
-            {id: "__proto__", title: "Other", hasMenu: true, onlyMenu: true}
-        ]);
-        compare(values.length, 2);
-        verify(values[0].actions.filter(action => action.id !== "inspect").every(action => !action.enabled));
-        const other = values[1].actions;
-        verify(other.find(action => action.id === "menu").enabled);
-        verify(!other.find(action => action.id === "activate").enabled);
-    }
 }

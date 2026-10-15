@@ -38,12 +38,6 @@ const areas = history.powerAreas(watts.segments);
 assert.deepEqual(JSON.parse(JSON.stringify(areas.map(area => [area.charging, area.points.map(p => p.value)]))),
     [[false, [0]], [false, [12, 0]], [true, [0, 8]]],
     "power areas split at missing samples and change colour through zero");
-const zeroTransition = series([
-    point(0, 0, 80, false, { power_watts: 0, power_valid: true }),
-    point(minute, minute, 80, true, { power_watts: 0, power_valid: true, charging: true })
-], "power_watts");
-const zeroAreas = history.powerAreas(zeroTransition.segments);
-assert.equal(zeroAreas[0].points[1].x, 0.5, "zero-to-zero mode changes remain finite");
 // Keep protection against late cache data; Qt covers explicit inspection,
 // while exact chart pixels are intentionally outside the retained suite.
 const live = point(2 * day + 16 * minute, 31 * minute, 59);

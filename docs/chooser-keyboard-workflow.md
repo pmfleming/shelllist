@@ -224,7 +224,8 @@ Only explicitly disclosed Help can expand a supporting row. DNS/other native mul
 start at one line and grow to a bounded scrolling area; explicitly sized document
 editors retain their size and single-field transaction. See the
 [shared FormField implementation](../qml/Shelllist/Ui/FormField.qml) and
-`tst_compact_fields.qml`, `tst_ip_fields.qml`, `tst_material_feedback.qml`.
+the retained `tst_field_interaction.qml` and `tst_ip_fields.qml` transaction suites;
+exact composition and paint evidence is reduced as recorded in the pruning review.
 
 Bluetooth’s **Restore original name** is an icon-only trailing action inside the
 shared Name text field, not a separate labeled/explanatory row. Its accessible
@@ -576,8 +577,10 @@ PageUp/PageDown retain shared page semantics and reveal short-page content. Ther
 panel, Measurement details command, Alt+H disclosure or new chart-inspection key
 model. Accessible summaries retain full metric identities and observation data;
 unavailable/error/loading states and attribution exceptions stay explicit. See
-[resource measurement semantics](application-resources.md) and
-`tst_application_resources.qml` for actual key/pointer coverage.
+[resource measurement semantics](application-resources.md). Native
+`tst_application_details.qml` retains page replacement/discard; the dedicated
+resource range/geometry suite was pruned. Shared field and pure history tests do
+not prove every resource-specific pointer/key route.
 
 ## Missing and arriving content
 
@@ -637,8 +640,8 @@ acknowledgement, retry, modal and rollback coverage. See the
 ## Validation
 
 The [current pruning review](../tests/test-pruning-current.md), measured from
-`c6451f8` plus incoming work (including the shared-chooser Lens refactor), reduces
-the established inventory **808 → 541** without changing this interaction contract.
+clean `c4bd285`, reduces the established inventory **441 → 295** without changing
+this interaction contract.
 Shared field transactions, native domain acknowledgement/recovery and representative
 destructive/failure paths remain. Repeated command/error/reconnect combinations,
 per-surface startup/shortcut routes, compatibility-only APIs, exact geometry/paint
@@ -1035,9 +1038,10 @@ Hover shows the nearest measurement;
 clicking either track enters the existing pointer-only inspection, with arrows
 and Escape inside that mode. Neither track joins Tab traversal or adds an entry
 command. The shared Range field retains deferred Enter/Tab save and Escape
-discard. `tst_battery_history.qml` covers signed Canvas pixels, palettes, gaps,
-zero/unavailable, forecasts and inspection; `tst_battery_presentation.qml` checks
-actual range transactions and traversal past the passive tracks.
+discard. Retained `tst_battery_history.qml` distinguishes unknown, zero and
+warning readings; pure history tests cover gaps and signed power. Dedicated
+Canvas/inspection and per-consumer range/traversal cases were pruned; shared
+field tests are not a claim of that removed consumer coverage.
 
 Battery care combines charge notification with protection. The bell's numerical
 target follows acknowledged protection / one-time-full-charge state. Resume/stop

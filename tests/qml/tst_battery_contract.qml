@@ -72,9 +72,7 @@ DaemonTestCase {
     function test_outcomes_data() {
         // Limited readbacks exercise acknowledgement plus unverified hardware state.
         // Draft and calibration workflows below retain normal completion coverage.
-        return [["battery.chargeOnce", "limited"], ["battery.setProtection", "limited"],
-                ["battery.setAlertPolicy", "failed"],
-                ["battery.setChargingInhibited", "rejected"], ["battery.startCalibration", "readbackFailed"]]
+        return [["battery.setProtection", "limited"], ["battery.startCalibration", "readbackFailed"]]
             .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome}));
     }
     function test_outcomes(data) {
@@ -124,8 +122,7 @@ DaemonTestCase {
     }
     function test_newerDraft_data() {
         return [
-            {tag:"battery.setThresholds/ack", method:"battery.setThresholds", timeout:false},
-            {tag:"battery.setAlertPolicy/timeout", method:"battery.setAlertPolicy", timeout:true}
+            {tag:"battery.setThresholds/ack", method:"battery.setThresholds", timeout:false}
         ];
     }
     function test_newerDraft(data) {

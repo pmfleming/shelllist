@@ -138,52 +138,6 @@ DaemonTestCase {
             }
         }
     }
-    Component {
-        id: incubatingEditorFactory
-        Ui.DetailsNavigation {
-            id: navigation
-            width: 400
-            height: 100
-            contentItem: pageLoader
-            property alias loadPage: pageLoader.active
-            property bool restoredBeforeCompletion: false
-            property bool pendingBeforeCompletion: false
-            property int edits: 0
-            Loader {
-                id: pageLoader
-                anchors.fill: parent
-                active: false
-                asynchronous: true
-                sourceComponent: Ui.TextField {
-                    objectName: "incubatingNote"
-                    text: ""
-                    onEdited: navigation.edits++
-                    Component.onCompleted: {
-                        // Force a restore attempt while the child exists but its
-                        // Loader has not finished initializing the source value.
-                        navigation.restoreLocation();
-                        navigation.restoredBeforeCompletion = editSession.active;
-                        navigation.pendingBeforeCompletion = navigation.pendingMemory;
-                        text = "Initialized text";
-                    }
-                }
-            }
-        }
-    }
-    function test_restorationWaitsForLoaderCompletion() {
-        const navigation = createTemporaryObject(incubatingEditorFactory, testCase);
-        navigation.focusSessionLocation({target: "incubatingNote", editing: true,
-            selection: {cursor: 1, anchor: 3}});
-        navigation.loadPage = true;
-        tryVerify(() => navigation.editing);
-        verify(!navigation.restoredBeforeCompletion);
-        verify(navigation.pendingBeforeCompletion);
-        verify(navigation.contentReady);
-        compare(navigation.currentTarget.selectionState(), {cursor: 1, anchor: 3});
-        keyClick(Qt.Key_Return);
-        compare(navigation.edits, 0, "restoration captures the initialized value, not an empty draft");
-        compare(navigation.currentTarget.text, "Initialized text");
-    }
     function init() {
         failOnWarning(/.*/);
         Quickshell.environment = {SHELLLIST_NO_ANIMATIONS: "false"};
@@ -301,26 +255,6 @@ DaemonTestCase {
         compare(input.selectionEnd, 8);
         compare(surface.edits, 0);
     }
-    function test_changedRestorationContextFallsBackWithoutEditing_data() {
-        return [{tag: "removed-selection", change: "remove", search: true}];
-    }
-    function test_changedRestorationContextFallsBackWithoutEditing(data) {
-        const surface = makeSurface();
-        inspectSecondTab(surface);
-        closeInvocation(surface);
-        compare(surface.chooserController.focusMemory.region, "details");
-        if (data.change === "result")
-            surface.chooserController.select(1);
-        else if (data.change === "close")
-            surface.chooserController.closeDetails();
-        else
-            catalog(surface, []);
-        reopenInvocation(surface);
-        tryVerify(() => data.search ? surface.listItem.searchFocused : surface.listItem.listFocused);
-        verify(!surface.detailsNavigation.editing);
-        compare(surface.edits, 0);
-        compare(surface.chooserController.refreshes, 0);
-    }
     function test_readinessResumesFocusButNeverRestoresUnsavedValues() {
         const surface = makeSurface();
         inspectSecondTab(surface);
@@ -340,43 +274,5 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         keyClick(Qt.Key_Return);
         compare(surface.edits, 1, "only explicit native save publishes");
-    }
-    function test_listControlRestorationDoesNotActivate_data() {
-        return [{tag: "unavailable", available: false}];
-    }
-    function test_listControlRestorationDoesNotActivate(data) {
-        const surface = makeSurface();
-        const refresh = findChild(surface, "chooserRefreshButton");
-        refresh.forceActiveFocus();
-        tryCompare(refresh, "activeFocus", true);
-        closeInvocation(surface);
-        compare(surface.chooserController.focusMemory.region, "list-control");
-        surface.listItem.refreshEnabled = data.available;
-        reopenInvocation(surface);
-        tryVerify(() => data.available ? refresh.activeFocus : surface.listItem.searchFocused);
-        compare(surface.chooserController.refreshes, 0);
-        compare(surface.edits, 0);
-    }
-    function test_missingEditorAndTabFallBackWithoutMutations() {
-        const surface = makeSurface();
-        inspectSecondTab(surface);
-        select(surface, "b");
-        surface.showLevel = false;
-        select(surface, "a");
-        open(surface);
-        tryVerify(() => surface.detailsNavigation.browsing && surface.detailsNavigation.currentTarget?.objectName === "ordinaryNote");
-        surface.privateNote = true;
-        keyClick(Qt.Key_Return);
-        verify(surface.detailsNavigation.editing);
-        select(surface, "b");
-        select(surface, "a");
-        open(surface);
-        verify(surface.detailsNavigation.browsing, "password editor focus is never restored");
-        compare(surface.chooserController.viewMemory.pageState("two").target, "");
-        surface.listItem.focusList();
-        surface.chooserController.availableTabs = ["one"];
-        tryCompare(surface.chooserController, "detailsTab", "one");
-        verify(surface.listItem.listFocused);
-        compare(surface.edits, 0);
     }
 }

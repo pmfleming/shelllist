@@ -4,6 +4,12 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
+The subsequent [test pruning](../tests/test-pruning-current.md) measures from
+clean `c4bd285`: inventory **441 → 295**, native Qt **315/0/1**. Production is
+unchanged; this is not another production-metric improvement. Native lint,
+JavaScript and smoke pass, while the full sibling gate is blocked by an unrelated
+untracked framework review file. The preceding counts below are historical.
+
 The [five focused improvements](qml-quality-next-five.md) start from `bf01181`
 and record each implementation, measurement and native validation separately.
 All five are complete: full Qt **482/0/1**, strict lint and runtime smoke pass.

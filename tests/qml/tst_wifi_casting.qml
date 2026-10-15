@@ -118,51 +118,6 @@ DaemonTestCase {
         compare(controller.qr.password, "", "an old generation cannot fill a reopened dialog");
     }
 
-    function test_disablingCastingPersists_data() {
-        return [
-            {
-                tag: "disable",
-                initial: true
-            }
-        ];
-    }
-
-    function test_disablingCastingPersists(data) {
-        const panel = makePanel(data.initial);
-        const toggle = findChild(panel, "castingToggle");
-        verify(toggle !== null);
-        verify(toggle.enabled);
-        compare(toggle.checked, data.initial);
-        compare(panel.page.settingsPayload().advanced.casting_enabled, undefined, "unrelated edits must not rewrite the saved mDNS policy");
-
-        toggle.forceActiveFocus();
-        keyClick(Qt.Key_Space);
-        compare(toggle.checked, !data.initial);
-        verify(panel.page.securityDirty);
-        tryVerify(function () {
-            return testCase.calls.length > 0;
-        });
-        const request = calls[0];
-        verify(request.id.endsWith("::advanced-save"));
-        compare(request.method, "wifi.profile.operation");
-        compare(request.params.operation, "update");
-        compare(request.params.path, profile(data.initial).path);
-        compare(request.params.settings.expected_version, "saved-version");
-        compare(request.params.settings.advanced.casting_enabled, !data.initial);
-        compare(request.params.settings.mac_address_policy, "stable");
-        compare(request.params.settings.send_hostname, false);
-        verify(!panel.page.securityDirty);
-
-        panel.controller.backend.setPending("advanced-save", false);
-        panel.controller.advanced.applySave({
-            message: "Saved"
-        });
-        compare(calls[1].params.operation, "details");
-        panel.controller.advanced.applyProfile(profile(!data.initial));
-        compare(toggle.checked, !data.initial);
-        compare(panel.page.settingsPayload().advanced.casting_enabled, undefined);
-    }
-
     function test_partialSaveReloadsVersionButKeepsLiveFailureVisible() {
         const panel = makePanel(false);
         panel.page.setCastingEnabled(true);

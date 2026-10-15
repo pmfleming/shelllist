@@ -151,34 +151,6 @@ DaemonTestCase {
         controller.replacePairingPrompts([{request_id: "fresh", response_required: true}]);
         verify(!controller.pairingPromptOpen, "a late failure cannot restore the closed credential prompt");
     }
-    function test_unavailableInvalidatesCapabilitiesAndSelection() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        controller.handlePairingEvent({
-            event: "requested",
-            data: {
-                request_id: "a",
-                device_key: "buds",
-                response_required: true
-            }
-        });
-        const sink = controller.selectedSink;
-        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters,
-            devices: [Object.assign({}, controller.selectedDevice, {connected: false})]});
-        verify(!controller.setAudioDefault(sink), "cached audio endpoints cannot outlive connection capability");
-        verify(!controller.setAudioProfile({key: "sbc"}));
-        controller.invalidateBluetooth("BlueZ unavailable");
-        verify(!controller.hasSelection);
-        verify(controller.globalRequestInFlight);
-        compare(controller.audioDevices.length, 0);
-        compare(controller.adapters.length, 0);
-        compare(controller.pairingPrompts.length, 0);
-        verify(!controller.setAudioDefault({
-            key: "stale",
-            ready: true
-        }));
-        compare(calls.length, 0);
-    }
     function test_pairingInputSurvivesUnrelatedOperationsAndQueueRecovery() {
         const controller = makePanel().controller;
         const first = {
@@ -302,75 +274,6 @@ DaemonTestCase {
         id: bluetoothContentComponent
         Bt.BluetoothContent {}
     }
-    Component {
-        id: signalContentComponent
-        Bt.BluetoothContent {}
-    }
-    function test_signalUpdatesKeepSelectionAndNativeNameDraft() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        controller.uiActive = true;
-        controller.searchScope = "mine";
-        const content = createTemporaryObject(signalContentComponent, testCase, {
-            controller: controller, width: testCase.width, height: testCase.height
-        });
-        wait(0);
-        findChild(controller, "bluetoothBackend").pending = ({});
-        calls = [];
-        content.listItem.focusList();
-        keyClick(Qt.Key_Right);
-        tryVerify(() => content.detailsItem !== null);
-        controller.detailsTab = "settings";
-        tryCompare(controller, "detailsExpansionProgress", 1);
-        // Incubating Loader children exist before navigation can discover them.
-        // Wait for the settings editor to be available before sending keys.
-        tryCompare(content.detailsNavigation, "contentReady", true);
-        const name = findChild(content.detailsItem, "deviceNameInput");
-        verify(name !== null);
-        tryVerify(() => content.detailsNavigation.availableFields().includes(name));
-        content.listItem.focusList();
-        keyClick(Qt.Key_Tab);
-        for (let i = 0; i < 12 && content.detailsNavigation.currentTarget !== name; ++i)
-            keyClick(Qt.Key_Tab);
-        compare(content.detailsNavigation.currentTarget, name);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_A, Qt.ControlModifier);
-        keyClick(Qt.Key_X);
-        compare(name.text, "x");
-        const original = controller.allDevices[0];
-        const samples = [
-            {rssi: null, signal_strength: null, signal_live: false, text: "—", level: 0},
-            {rssi: -58, rssi_kind: "dbm", signal_strength: 70, signal_live: true, text: "70%", level: 3},
-            {rssi: 0, rssi_kind: "bredr-relative", signal_strength: null, signal_live: true, text: "0 dB", level: 0},
-            {rssi: -5, rssi_kind: "bredr-relative", signal_strength: null, signal_live: false, text: "-5 dB", level: 0},
-            {rssi: -70, rssi_kind: "dbm", signal_strength: 50, signal_live: false, text: "50%", level: 2}
-        ];
-        for (const sample of samples) {
-            controller.applySnapshot({
-                radio: controller.radio, adapters: controller.adapters,
-                devices: [Object.assign({}, original, sample)]
-            });
-            tryVerify(() => findChild(content.listItem, "bluetoothSignalValue") !== null);
-            const value = findChild(content.listItem, "bluetoothSignalValue");
-            compare(value.text, sample.text);
-            compare(value.opacity, sample.signal_live ? 1 : 0.58);
-            compare(findChild(content.listItem, "bluetoothSignalIcon").level, sample.level);
-            compare(controller.selectedDevice.key, "buds");
-            compare(name.text, "x");
-            verify(name.editSession.active);
-            compare(calls.length, 0, "telemetry must not submit a field draft");
-        }
-        controller.applySnapshot({
-            radio: controller.radio, adapters: controller.adapters,
-            devices: [Object.assign({}, original, {name: "Remote rename"})]
-        });
-        compare(name.text, "x", "even an updated name must not replace a local draft");
-        keyClick(Qt.Key_Escape);
-        compare(name.text, "Remote rename");
-        verify(!name.editSession.active);
-        compare(calls.length, 0);
-        content.destroy();
-    }
     function test_audioProfileSingleNativeOperationPreservesPartialSuccess() {
         const panel = makePanel();
         panel.controller.uiActive = true;
@@ -459,49 +362,6 @@ DaemonTestCase {
         compare(panel.controller.status, "Audio profile applied, but could not remember it: Permission denied");
         content.destroy();
         wait(0); // Destroy the surface before its controller-owned fixture.
-    }
-    function test_audioProfilePublishesOnlyFinalOutcome_data() {
-        return [
-            {tag: "missing", outcome: null, message: "Audio profile outcome unconfirmed; refresh before retrying"}
-        ];
-    }
-    function test_audioProfilePublishesOnlyFinalOutcome(data) {
-        const panel = makePanel(), controller = panel.controller;
-        const backend = findChild(controller, "bluetoothBackend");
-        setupAudioProfile(panel);
-        verify(controller.setAudioProfile({key: "aac", label: "AAC"}));
-        const messages = [];
-        controller.statusChanged.connect(() => messages.push(controller.status));
-        backend.acceptSharedResponse("audio-set-profile", {protocol: "bt-api", version: 2, ok: true,
-            data: {audio_devices: [], profile_outcome: data.outcome}}, "");
-        compare(messages, [data.message], "never emit an intermediate success before reading the outcome");
-        compare(calls.length, 1, "missing or partial acknowledgement must not replay the operation");
-        verify(!backend.requestRunning);
-    }
-    function test_requestErrorsKeepReadAndMutationFeedbackSeparate_data() {
-        return [{tag: "audio-set-profile", read: false}];
-    }
-    function test_requestErrorsKeepReadAndMutationFeedbackSeparate(data) {
-        const controller = makePanel().controller;
-        const backend = findChild(controller, "bluetoothBackend");
-        for (const stage of ["send", "response"]) {
-            controller.listError = "Previous read failed";
-            if (stage === "send") backend.sendFailed(data.tag, "Denied");
-            else backend.acceptSharedResponse(data.tag, {protocol: "bt-api", version: 2, ok: false, error: {message: "Denied"}}, "");
-            compare(controller.status, "Denied");
-            compare(controller.listError, data.read ? "Denied" : "Previous read failed");
-        }
-        compare(calls.length, 0);
-    }
-    function findToggle(item, title) {
-        if (item.title === title && item.checked !== undefined)
-            return item;
-        for (const child of item.children || []) {
-            const match = findToggle(child, title);
-            if (match)
-                return match;
-        }
-        return null;
     }
     function test_renameDraftSurvivesFailureAndEditorRecreation() {
         const panel = makePanel();
@@ -728,46 +588,5 @@ DaemonTestCase {
         compare(Object.keys(controller.adapterEdits.draft("other").fields).length, 0);
         wait(750);
         compare(adapterCalls().length, 1);
-    }
-    Component {
-        id: deviceDetailsComponent
-        Bt.BluetoothDeviceDetails {
-            uiScale: 1
-        }
-    }
-    function findButton(item, label) {
-        if (item.label === label && typeof item.clicked === "function")
-            return item;
-        for (const child of item.children || []) {
-            const found = findButton(child, label);
-            if (found)
-                return found;
-        }
-        return null;
-    }
-    function test_policyResetIsScopedToDeviceOverrides() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const details = createTemporaryObject(deviceDetailsComponent, panel, {
-            controller: controller,
-            width: 720,
-            height: 1000
-        });
-        verify(details !== null);
-        const reset = findButton(details, "Reset");
-        verify(reset !== null);
-        verify(reset.visible);
-        const forget = findButton(details, "Forget");
-        verify(forget !== null && forget.visible);
-        compare(reset.parent, forget.parent);
-        compare(findChild(panel.page, "restoreDeviceName").accessibleName, "Restore original name");
-        reset.clicked();
-        compare(calls.length, 1);
-        compare(calls[0].method, "bluetooth.device.policy.update");
-        compare(calls[0].params.key, "buds");
-        for (const field of ["reconnect_on_resume", "trust_after_pair", "power_on_connect", "wait_for_services", "fast_pair_controls_enabled", "audio_route_on_connect", "preferred_audio_profile_key"])
-            compare(calls[0].params[field], null);
-        verify(!controller.triggerDetailAction("reset-policy"));
-        compare(calls.length, 1);
     }
 }

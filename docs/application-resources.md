@@ -135,15 +135,14 @@ glyphs, bars, scales and statistics are passive and add no navigation commands.
 Page keys retain shared semantics and scroll short panes. There is no chart
 inspection mode, cleanup action or info disclosure.
 
-`tests/qml/tst_application_resources.qml` checks native range transactions,
-arriving snapshots during a draft, independently available totals, loading-window
-transitions and the real application header/tab stack. Dark/light, normal/short
-cases verify contained readings, disjoint plot slots, a common compact column,
-aligned time axis, readable font floors, short-page scrolling and extra width
-being allocated to charts. Further cases check independently missing series,
-measured zero, union-of-series gap shading and live theme updates. Native tab
-navigation retains passive app-data and history-owner fencing checks. JavaScript
-tests retain precision, weighting/window/coverage validation and interval clipping.
+The dedicated native resource range/geometry suite was removed in the
+[current pruning review](../tests/test-pruning-current.md). Shared field tests
+retain transaction behavior, and `tst_application_details.qml` instantiates the
+Resources page while checking page-replacement discard. Neither proves every
+resource-specific range/pointer or chart-paint path. JavaScript tests retain
+availability versus measured zero, native observed totals, stale-window and
+coverage validation, per-series gaps and clipped interval geometry. The earlier
+normal/minimum and light/dark captures below remain historical manual evidence.
 
 Implementation review evidence is local under `target/resource-history-list/`:
 Qt-rendered dark/light active histories, normal/minimum full detail captures,
@@ -153,7 +152,7 @@ they do not claim a human screen-reader or hardware accessibility review.
 ```sh
 node tools/build-typescript.mjs --check
 node tests/check-application-resources.js launcher/ApplicationResources.js contracts/app-resource-ui-contract.fixture.json
-node tests/check-resource-availability.js
-tests/run-qmlquality-tests.sh -input tests/qml/tst_application_resources.qml
+node tests/check-resource-availability.js launcher
+tests/run-qmlquality-tests.sh -input tests/qml/tst_application_details.qml
 tests/run-qmllint.sh
 ```

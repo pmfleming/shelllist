@@ -237,7 +237,6 @@ TestCase {
     }
     function test_tabKeepsPositionWhenSaveChangesAvailability_data() {
         return [
-            {tag: "disable-forward", change: "disable", backwards: false, skip: false},
             {tag: "hide-reverse-skip", change: "hide", backwards: true, skip: true}
         ];
     }
@@ -302,7 +301,7 @@ TestCase {
         verify(!surface.chooserController.detailsOpen);
     }
     function test_dropdownOptionClickSavePolicy_data() {
-        return [{tag: "deferred", immediate: false}, {tag: "save-on-click", immediate: true}];
+        return [{tag: "deferred", immediate: false}];
     }
     function test_dropdownOptionClickSavePolicy(data) {
         const surface = make();

@@ -129,25 +129,6 @@ DaemonTestCase {
         compare(calls.length, before, "malformed acknowledgement neither announces deletion nor replays it");
         content.destroy();
     }
-    function test_cardDeleteIsBorderlessAndRecordScopedWithoutMessageNavigation() {
-        const {state, controller, content} = make();
-        controller.openDetails();
-        controller.timeline.snapshot = {recent: [preview(1000, "named:Chat")], dates: [], date: "", next_offset: null};
-        tryVerify(() => findChild(content, "notificationCard-1000:1000000:delete") !== null);
-        tryCompare(controller, "detailsExpansionProgress", 1);
-        const list = findChild(content, "notificationTimelineList");
-        showRow(list, 0, ListView.Contain);
-        const button = findChild(content, "notificationCard-1000:1000000:delete");
-        compare(button.border.width, 0);
-        verify(!findChild(content, "notificationCard-1000:1000000:read"));
-        mouseClick(button);
-        const prepare = calls.filter(c => c.method === "notifications.prepareDelete").pop();
-        compare(prepare.params, {app_key: "named:Chat", selected: {id: 1000, created: 1000000}});
-        compare(controller.detailsTab, "notifications");
-        compare(controller.tabs.length, 2);
-        state.cancelDelete();
-        content.destroy();
-    }
     function test_latePrepareAfterClosureIsCancelledWithoutOpeningModal() {
         const {state, content} = make();
         state.prepareDelete("named:Chat", null, "Chat");
@@ -188,67 +169,6 @@ DaemonTestCase {
         compare(timeline.snapshot, good);
         content.destroy();
     }
-    function test_recentThreeThenClosedPeriodsAndPrimarySecondaryActions() {
-        const {state, controller, content} = make();
-        controller.openDetails();
-        const timeline = controller.timeline;
-        const context = () => ({view: "timeline", generation: timeline.generation, appKey: timeline.appKey, query: timeline.query, date: timeline.requestedDate, grouping: timeline.grouping, offset: 0, replacing: true, revision: state.observedHistoryRevision});
-        const value = timelinePage(0, [], null);
-        value.date = ""; value.count = 0; value.total_rows = 0;
-        timeline.receive(context(), value, "", "");
-        compare(timeline.error, "");
-        tryVerify(() => findChild(content, "notificationTimelineList") !== null);
-        const list = findChild(content, "notificationTimelineList");
-        tryCompare(list, "count", 4);
-        verify(list.height > 300, "exercise a real clipped detail viewport");
-        compare(list.rows.map(row => row.kind), ["message", "message", "message", "date"]);
-        compare(list.rows.slice(3).map(row => row.key), ["older"], "empty periods have neither title nor control");
-        verify(timeline.collapsed);
-        const actions = findChild(content, "surfaceActionRow");
-        compare(actions.primaryActions.map(action => action.id), ["silence"]);
-        compare(actions.secondaryActions.map(action => action.id), ["reset", "delete"]);
-        tryCompare(controller, "detailsExpansionProgress", 1);
-        tryVerify(() => findChild(content, "detailAction:silence") !== null
-            && findChild(content, "detailAction:reset") !== null);
-        const primary = findChild(content, "detailAction:silence");
-        const reset = findChild(content, "detailAction:reset");
-        tryVerify(() => primary.width > 0 && reset.width > 0);
-        waitForPolish(content);
-        verify(primary.width > reset.width);
-        verify(primary.mapToItem(content, 0, 0).y < reset.mapToItem(content, 0, 0).y);
-        verify(!content.detailsNavigation.targets.includes(primary) && !content.detailsNavigation.targets.includes(reset));
-        showRow(list, 3, ListView.Contain);
-        const older = findChild(content, "notificationDate-older");
-        verify(older !== null);
-        mouseClick(older.button);
-        compare(timeline.requestedDate, "older");
-        compare(list.rows.filter(row => row.kind === "message").length, 3, "recent cards stay visible while another period loads");
-        const period = timelinePage(0, [100,99], null);
-        period.count = 2; period.total_rows = 2; period.dates[3].count = 2;
-        timeline.receive(context(), period, "", "");
-        compare(timeline.error, "");
-        tryCompare(list, "count", 6);
-        showRow(list, 3, ListView.Contain);
-        mouseClick(findChild(content, "notificationDate-older").button);
-        tryCompare(list, "count", 4);
-        const empty = timelinePage(0, [], null);
-        empty.count = 0; empty.total_rows = 0; empty.dates[3].count = 0;
-        timeline.receive(context(), empty, "", "");
-        tryCompare(list, "count", 3);
-        tryVerify(() => !findChild(content, "notificationDate-older"));
-        const arrival = Object.assign({}, empty, {dates: empty.dates.map(d => ({key: d.key, count: d.key === "today" ? 1 : 0}))});
-        timeline.receive(context(), arrival, "", "");
-        tryCompare(list, "count", 4);
-        compare(list.rows[3].key, "today", "nonempty periods return on acknowledged arrival");
-        controller.setDetailsTab("controls");
-        tryVerify(() => findChild(content, "notificationAppDelivery") !== null);
-        compare(findChild(content, "surfaceActionRow").primaryActions[0].id, "silence");
-        state.notifications = Object.assign({}, state.notifications, {app_policies: {"named:Chat": {silent: true, group_similar: false, bypass_dnd: true}}});
-        keyClick(Qt.Key_E, Qt.AltModifier);
-        compare(policyCalls().length, 1);
-        compare(policyCalls()[0].params.policy, {silent: false, until_unix_ms: null, group_similar: true, bypass_dnd: false});
-        content.destroy();
-    }
     function test_expandedStackKeepsMemberDeleteIdentity() {
         const {state, controller, content} = make();
         controller.openDetails();
@@ -275,49 +195,6 @@ DaemonTestCase {
         const prepare = calls.filter(c => c.method === "notifications.prepareDelete").pop();
         compare(prepare.params, {app_key: "named:Chat", selected: {id: 99, created: 99000}});
         compare(controller.detailsTab, "notifications", "member commands cannot open a hidden reader");
-        content.destroy();
-    }
-    function test_timelineRefreshStagesThroughAnchorAndKeepsViewport() {
-        const {state, controller, content} = make();
-        controller.openDetails();
-        const timeline = controller.timeline;
-        timeline.requestedDate = "older"; timeline.collapsed = false;
-        const context = offset => ({view: "timeline", generation: timeline.generation, appKey: timeline.appKey, query: timeline.query, date: timeline.requestedDate, grouping: timeline.grouping, offset: offset, replacing: true, revision: state.observedHistoryRevision});
-        const ids = Array.from({length: 20}, (_, i) => 100 - i);
-        timeline.receive(context(0), timelinePage(0, ids, 20), "", "");
-        tryVerify(() => findChild(content, "notificationTimelineList") !== null);
-        const list = findChild(content, "notificationTimelineList");
-        tryVerify(() => list.count > 10);
-        tryCompare(controller, "detailsExpansionProgress", 1);
-        showRow(list, 10, ListView.Beginning);
-        const index = list.firstVisibleIndex();
-        verify(index >= 0);
-        const key = list.model.get(index).resultKey;
-        const offset = list.itemAtIndex(index).y - list.contentY;
-        timeline.staging = null;
-        const first = timelinePage(0, [101].concat(ids.slice(0, 19)), 20);
-        first.count = 21; first.total_rows = 21; first.dates[3].count = 21; first.anchor_reached = false;
-        first.recent = [1001,1000,999].map(id => preview(id, "named:Chat"));
-        timeline.receive(context(0), first, "", "");
-        const continuation = calls.filter(c => c.method === "notifications.queryCenter" && c.params.view === "timeline").pop().params;
-        compare(continuation.offset, 20);
-        compare(continuation.epoch, first.epoch);
-        compare(continuation.revision, first.revision);
-        compare(continuation.period_day, first.period_day);
-        compare(timeline.entries[0].preview.id, 100, "an incomplete refreshed window remains private");
-        compare(timeline.snapshot.recent[0].id, 1000, "recent previews and period rows publish atomically");
-        const second = timelinePage(20, [81], null);
-        second.count = 21; second.total_rows = 21; second.dates[3].count = 21;
-        second.recent = first.recent;
-        timeline.receive(context(20), second, "", "");
-        tryCompare(timeline, "busy", false);
-        tryVerify(() => !list.scrollSuspended && list.firstVisibleIndex() >= 0 && list.model.get(list.firstVisibleIndex()).resultKey === key);
-        const restored = list.firstVisibleIndex();
-        verify(restored >= 0);
-        compare(list.model.get(restored).resultKey, key);
-        verify(Math.abs(list.itemAtIndex(restored).y - list.contentY - offset) < 2);
-        compare(timeline.entries.length, 21);
-        compare(timeline.snapshot.recent[0].id, 1001);
         content.destroy();
     }
     function test_unownedTimelineRepliesKeepPendingWindow_data() {

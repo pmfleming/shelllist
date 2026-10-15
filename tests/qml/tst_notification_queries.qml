@@ -46,14 +46,6 @@ DaemonTestCase {
     function assertReadsOnly(s) {
         verify(requests(s).every(call => ["bar.snapshot", "notifications.queryCenter"].includes(call.method)));
     }
-    function test_appWindowsAreNativeOrderedAndDisjoint() {
-        const s = make(); const c = catalog(s); const before = clone(s.notifications);
-        respond(s, "apps", true);
-        compare(c.apps, fixture().cases.apps.success.data.notification_center.apps); verify(c.hasMore);
-        c.loadMore(); respond(s, "apps-next", true);
-        compare(c.apps.length, 52); compare(new Set(c.apps.map(a => a.key)).size, 52); verify(!c.hasMore);
-        compare(s.notifications, before); assertReadsOnly(s);
-    }
     function test_groupResolutionStagesPagesUntilAnchorArrives() {
         const s = make();
         const c = createTemporaryObject(controllerFactory, s, {notificationState:s}); verify(c !== null);
@@ -76,17 +68,6 @@ DaemonTestCase {
         compare(t.entries.length, 21); verify(!t.hasMore); compare(t.entries[20].members.length, 2);
         compare(t.snapshot.period_day, "2026-01-15"); compare(t.error, ""); assertReadsOnly(s);
     }
-    function test_errorsKeepPublishedCatalogWithoutReadLoops_data() {
-        return ["invalid"].map(key => ({tag:key, key:key}));
-    }
-    function test_errorsKeepPublishedCatalogWithoutReadLoops(data) {
-        const s = make(); const c = catalog(s); respond(s, "apps", true); const before = clone(c.apps);
-        c.reloadApps(); const call = lastCall(s, "notifications.queryCenter");
-        reply(call, fixture().errors[data.key]);
-        compare(c.apps, before); compare(c.rootError, fixture().errors[data.key].error.message); verify(!c.rootBusy);
-        const count = centerReads(s).length; wait(180); compare(centerReads(s).length, count);
-        c.reloadApps(); respond(s, "apps", false); compare(c.rootError, ""); assertReadsOnly(s);
-    }
     function test_staleContinuationRestartsReadAtRoot() {
         const s = make(); const c = catalog(s); respond(s, "apps", true);
         c.loadMore(); const continuation = lastCall(s, "notifications.queryCenter"); compare(continuation.params.offset, 50);
@@ -94,17 +75,5 @@ DaemonTestCase {
         tryCompare(c, "rootBusy", true);
         const root = lastCall(s, "notifications.queryCenter"); compare(root.params.offset, 0); compare(root.params.epoch, null);
         reply(root, fixture().cases.apps.success); compare(c.apps.length, 50); compare(c.rootError, ""); assertReadsOnly(s);
-    }
-    function test_oldSearchAndOldTransportResponsesAreFenced() {
-        const s = make(); const c = catalog(s); const old = lastCall(s, "notifications.queryCenter");
-        c.query = "no-match"; c.reloadApps(); const current = lastCall(s, "notifications.queryCenter");
-        reply(old, fixture().cases.apps.success); verify(c.rootBusy); compare(c.apps.length, 0);
-        reply(current, fixture().cases.empty.success); compare(c.rootError, ""); compare(c.apps.length, 0);
-        c.query = ""; c.reloadApps(); const lost = lastCall(s, "notifications.queryCenter");
-        clientReady = false; Io.DaemonSessions.sessions["bar-daemon"].client.transportFailed("Connection lost"); clientReady = true;
-        reply(lastCall(s, "bar.snapshot"), fixture().snapshot);
-        reply(lost, fixture().cases.apps.success); compare(c.apps.length, 0);
-        tryVerify(() => lastCall(s, "notifications.queryCenter").id !== lost.id);
-        respond(s, "apps", false); compare(c.apps.length, 50); assertReadsOnly(s);
     }
 }

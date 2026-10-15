@@ -130,20 +130,14 @@ has configurable Super+Shift+M; this desktop's Lua config deliberately uses Supe
 
 ## Tests
 
-- `tst_media_presentation.qml`: exact identity/source/fallback/classification,
-  browser-origin labels, deduplicated metadata, override policy, timing bounds,
-  paused/future/stale/invalid snapshots.
-- `tst_media_sources.qml`: service/browser icon fallback without invented covers,
-  source changes/clearing during an editable draft, unchanged field traversal,
-  service search, original-player command routing and disabled capability guards;
-  delayed YouTube artwork/channel updates preserve editing drafts and pinning,
-  show the full title as plain text, and clear with a new video.
-- `tst_system_choosers.qml`: actual rendered icons (theme and bundled fallbacks),
-  contained artwork, theme contrast, numeric values, selected-session isolation,
-  native key delivery for field drafts/save/discard and direct transport, pointer
-  seeking, capability and acknowledgement guards, inactive/hidden cleanup and no
-  implicit playback writes. Saving Bar controls does not hide panel commands.
-- `tst_surface_actions.qml`: ordered spacing/size/disabled omission, restoration and
-  enabled-command wrapping at normal/fractional/HiDPI scales, actual pointer/chord
-  activation and guards, plus explicit menu geometry, native More navigation,
-  disabled entries, chord isolation and focus restore.
+- `tst_system_choosers.qml`: native media-mode draft/save/discard and acknowledged
+  preferences, selected-player Enter, busy/capability and removed-player guards,
+  direct previous-track commands, and no implicit playback from inspection.
+- `tst_media_chip.qml`: separate opener/transport routes and retained controls on
+  player removal. The RHI-only rounded-artwork check remains skipped in software.
+- `tst_surface_actions.qml`: native command chords, duplicate/disabled command
+  guards, explicit menu navigation/modality and focus restoration.
+
+Passive source/enrichment, precise geometry/theme and metadata timing matrices
+were pruned; these retained tests do not prove those removed paths. See the
+[current pruning review](../tests/test-pruning-current.md) for scope and gaps.

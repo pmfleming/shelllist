@@ -66,28 +66,6 @@ DaemonTestCase {
         }
         fail("Missing named command: " + name);
     }
-    function test_reorderedRowsKeepIdentityAndLiveApplicationFallback() {
-        const app = application("desktop-application", 2, 0);
-        const panel = make(app);
-        const updated = application("desktop-application", 2, 0);
-        updated.name = "Renamed application";
-        updated.instances.reverse();
-        updated.instances[0].title = "";
-        setApplication(panel, updated);
-        verify(waitForPolish(panel.Window.window));
-        const row = findChild(panel, "windowRow-window-1");
-        tryCompare(row, "index", 0);
-        compare(findChild(row, "windowTitle-window-1").text, updated.name);
-        mouseClick(findChild(row, "focusWindow-window-1"));
-        compare(panel.controller.dispatched.length, 1);
-        compare(panel.controller.dispatched[0].window_id, "window-1", "The window ID, not the new row index, owns the command");
-        const actions = findChild(row, "windowActions-window-1");
-        actions.triggered("focusWindow-window-0");
-        compare(panel.controller.dispatched.length, 1, "Stale button IDs cannot become Close for a replacement window");
-        mouseClick(findChild(row, "closeWindow-window-1"));
-        compare(panel.controller.dispatched[1].action, "close-window");
-        compare(panel.controller.dispatched[1].window_id, "window-1");
-    }
     function test_pageReplacementDiscardsDraftWithoutSaving() {
         const app = Object.assign(application("desktop-application", 1, 0), {category: "shell", default_workspace_id: "1"});
         const panel = make(app);

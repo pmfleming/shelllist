@@ -58,40 +58,8 @@ DaemonTestCase {
         verify(controller.detailState.saveInFlight);
         compare(controller.detailState.committedDraft, "Originalx");
     }
-    function test_escapeDiscardsClipboardDraft_data() {
-        return [{tag: "failed", failed: true}];
-    }
-    function test_escapeDiscardsClipboardDraft(data) {
-        const controller = makeController();
-        if (data.failed)
-            failEdit(controller);
-        const panel = createTemporaryObject(editorPanelFactory, testCase, {controller: controller});
-        views = views.concat([panel]);
-        panel.detailsNavigation.focusContent(true);
-        keyClick(Qt.Key_Return);
-        const editor = findChild(panel, "clipboardTextEditor");
-        if (!data.failed)
-            reply(controller, "edit-begin", {edit: {id: "discard-lease", value: "Original"}});
-        compare(editor.text, data.failed ? "Keep this draft" : "Original");
-        calls = [];
-        keyClick(Qt.Key_End);
-        keyClick(Qt.Key_X);
-        keyClick(Qt.Key_Escape);
-        verify(panel.detailsNavigation.browsing);
-        verify(!controller.detailState.editing && !controller.detailState.editDirty);
-        compare(controller.detailState.editDraft, "");
-        compare(controller.detailState.editError, "");
-        compare(Object.keys(controller.detailState.failedDrafts).length, 0);
-        verify(!calls.some(call => call.method === "clipboard.entry.edit.commit"));
-        if (!data.failed)
-            compare(editor.text, "Original");
-        else
-            compare(controller.status, "Clipboard draft discarded");
-    }
-
     function test_compactDeleteConfirmation_data() {
-        return [{tag: "escape", route: "escape", width: 480},
-            {tag: "tab-return-deletes", route: "tab", width: 650}];
+        return [{tag: "tab-return-deletes", route: "tab", width: 650}];
     }
     function test_compactDeleteConfirmation(data) {
         const controller = makeController();
@@ -140,7 +108,7 @@ DaemonTestCase {
     }
 
     function test_bulkAndWipeCompactConfirmations_data() {
-        return [{tag: "selected-many", count: 3}, {tag: "wipe", count: 0}];
+        return [{tag: "wipe", count: 0}];
     }
     function test_bulkAndWipeCompactConfirmations(data) {
         const controller = makeController();
@@ -457,23 +425,10 @@ DaemonTestCase {
         compare(list.footerItem.height, 0);
         compare(historyCalls().length, 2);
     }
-    function test_stalePageRefreshesInsteadOfRetryingCursor() {
-        const controller = pagedController();
-        controller.loadMoreHistory();
-        reply(controller, controller.activeHistoryQueryId, {}, "stale-cursor: history changed");
-        compare(controller.historyCursor, "");
-        compare(controller.historyPageError, "");
-        tryVerify(function () {
-            return historyCalls().length === 2;
-        });
-        compare(historyCalls()[1].params.cursor, null);
-    }
-
     function test_saveAndPasteUsesOneWriteAndKeepsHiddenHandshake_data() {
         return [{tag: "prepared", prepared: true, stale: false},
             {tag: "publication-failed", prepared: false, stale: false},
-            {tag: "reopened-session", prepared: true, stale: true},
-            {tag: "different-outcome-session", prepared: true, outcome: "different"}];
+            {tag: "reopened-session", prepared: true, stale: true}];
     }
     function test_saveAndPasteUsesOneWriteAndKeepsHiddenHandshake(data) {
         const controller = makeController();
@@ -502,7 +457,7 @@ DaemonTestCase {
     }
 
     function test_commitCompletionAfterResultNavigationKeepsTheNewPreview_data() {
-        return [{tag: "acknowledged", error: ""}, {tag: "uncertain", error: "Outcome unknown"}];
+        return [{tag: "uncertain", error: "Outcome unknown"}];
     }
     function test_commitCompletionAfterResultNavigationKeepsTheNewPreview(data) {
         const controller = makeController();

@@ -19,10 +19,11 @@ against its own fill. Normal, hover, pressed, checked, disabled and keyboard-foc
 states retain readable text and at least 44px height. Native button activation,
 action capabilities and accessible labels remain intact.
 
-`tests/qml/tst_wifi_scanner_contrast.qml` renders the actual packaged button
-source over black/white camera substitutes, checks pixels and contrast in all
-states, and exercises native keyboard/disabled behavior. This is not a hardware
-camera or physical-screen accessibility acceptance test.
+The dedicated scanner button paint/contrast/native-activation suite was removed
+in the [test pruning review](../../tests/test-pruning-current.md). The palette
+and activation contract above is unchanged, but its per-state rendered evidence
+is no longer retained. The install/startup check below does not replace camera,
+contrast, keyboard or physical-screen accessibility acceptance.
 
 The package's install check now runs `tests/check-qrca-startup.py` against the
 **complete installed application** on a private D-Bus session, offscreen, without

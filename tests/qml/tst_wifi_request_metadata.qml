@@ -1,8 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Shelllist.Io as Io
 import Shelllist.Wifi as Wifi
-import "../../wifi/NmApi.js" as NmApi
 
 DaemonTestCase {
     id: tests
@@ -21,15 +19,6 @@ DaemonTestCase {
         clientReady = true;
         failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop).*/);
     }
-    function test_everyFrontendMethodHasAnExplicitResponseRoute() {
-        const c = make();
-        Object.keys(NmApi.methods).forEach(function(name) {
-            const method = NmApi.methods[name];
-            const info = c.backend.classifyRequest(method, {});
-            verify(info.responseHandler.length > 0, method);
-            verify(["portal", "connection-status"].includes(info.responseHandler) || !!c.backend.responseHandlers[info.responseHandler], method);
-        });
-    }
     function test_classificationIsCapturedFromMethodAndVariant_data() {
         return [
             {tag:"mutation-with-read-id", id:"networks", method:"wifi.profile.operation", params:{operation:"forget",path:"profile"}, exclusive:true, handler:"profile", execution:"effect"},
@@ -37,11 +26,6 @@ DaemonTestCase {
             {tag:"unknown-with-portal-id", id:"portal-fake", method:"new.mutation", params:{}, exclusive:true, handler:"", execution:"effect"},
             {tag:"cache-refresh-is-not-a-read", id:"networks", method:"wifi.networks", params:{cached:true,refresh_cache:true}, exclusive:false, handler:"networks", execution:"operation"},
             {tag:"portal-is-independent-effect", id:"arbitrary", method:"network.portalClaim", params:{}, exclusive:false, handler:"portal", execution:"effect"},
-            {tag:"scan", id:"arbitrary", method:"wifi.scan", params:{}, exclusive:false, handler:"scan-start", execution:"operation"},
-            {tag:"qr-connect", id:"arbitrary", method:"wifi.qr.connect", params:{}, exclusive:false, handler:"connect-start", execution:"operation"},
-            {tag:"statistics", id:"arbitrary", method:"network.statistics.watch", params:{}, exclusive:false, handler:"statistics-watch", execution:"operation"},
-            {tag:"non-boolean-refresh", id:"arbitrary", method:"wifi.networks", params:{refresh_cache:1}, exclusive:false, handler:"networks", execution:"read"},
-            {tag:"inherited-method", id:"arbitrary", method:"constructor", params:{}, exclusive:true, handler:"", execution:"effect"},
             {tag:"inherited-variant", id:"arbitrary", method:"wifi.profile.operation", params:{operation:"__proto__"}, exclusive:true, handler:"profile", execution:"effect"}
         ];
     }
@@ -62,35 +46,6 @@ DaemonTestCase {
         clientReady = false;
         c.backend.failSharedTransport("injected owner loss");
         compare(Object.keys(c.backend.requestMetadata).length, 0);
-    }
-    function test_classificationSnapshotsAreIndependent() {
-        const c = make();
-        c.backend.classifyRequest("wifi.qr.connect", {}).execution = "read";
-        c.backend.classifyRequest("wifi.status", {}).conflictDomain = "wifi-link";
-        compare(c.backend.classifyRequest("wifi.qr.connect", {}).execution, "operation");
-        compare(c.backend.classifyRequest("wifi.status", {}).conflictDomain, "none");
-    }
-    function test_controlLookingCallIdStillRoutesAsCallAndCleansUp() {
-        const c = make();
-        verify(c.backend.call("subscribe-not-a-control", "wifi.disconnect", {}));
-        const call = calls[calls.length - 1];
-        Io.DaemonSessions.sessions["nm-daemon"].client.response(call.id, null, "injected lost reply", call.route);
-        verify(c.status.includes("injected lost reply"));
-        compare(Object.keys(c.backend.requestMetadata).length, 0);
-        compare(c.backend.nonConnectRunning, false);
-    }
-    function test_sendExceptionRetiresMetadata() {
-        const c = make();
-        const sessions = Io.DaemonSessions.sessions;
-        try {
-            Io.DaemonSessions.sessions = ({});
-            verify(!c.backend.call("arbitrary", "wifi.profile.operation", {operation:"update"}));
-            compare(Object.keys(c.backend.requestMetadata).length, 0);
-            compare(Object.keys(c.backend.pending).length, 0);
-            verify(c.status.includes("unavailable"));
-        } finally {
-            Io.DaemonSessions.sessions = sessions;
-        }
     }
     function test_completionCannotDeleteMetadataForReusedId() {
         const c = make();

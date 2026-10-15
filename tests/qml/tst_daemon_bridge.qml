@@ -93,7 +93,7 @@ TestCase {
     }
 
     function test_unexpectedExit_data() {
-        return [{tag: "clean-but-unsolicited", code: 0}, {tag: "failed", code: 1}];
+        return [{tag: "failed", code: 1}];
     }
 
     function test_unexpectedExit(data) {
@@ -120,20 +120,4 @@ TestCase {
         f.bridge.active = false;
     }
 
-    function test_closeFromReadyNotification() {
-        const f = fixture();
-        f.bridge.readyChanged.connect(function () {
-            if (f.bridge.ready)
-                f.bridge.active = false;
-        });
-        f.bridge.automaticSubscribe = true;
-        f.bridge.active = true;
-        f.process.started();
-        compare(f.bridge.lifecycle, "stopping");
-        verify(!f.bridge.ready);
-        compare(f.process.writes.length, 0);
-        compare(f.bridge.queuedLines.length, 0);
-        exitProcess(f, 0);
-        compare(f.bridge.failures, 0);
-    }
 }

@@ -88,8 +88,7 @@ DaemonTestCase {
     function test_outcomes_data() {
         // Preserve distinct draft, consent, policy and active-record error owners.
         // Race tests below and native notification workflows cover ordinary acks.
-        return [["setAppPolicy", "failed"], ["prepareDelete", "failed"],
-                ["invokeAction", "stale"], ["snooze", "success"]]
+        return [["prepareDelete", "failed"], ["invokeAction", "stale"]]
             .map(([key, outcome]) => ({tag: key + "/" + outcome, key: key, outcome: outcome}));
     }
     function test_outcomes(data) {
@@ -121,26 +120,6 @@ DaemonTestCase {
         }
         if (data.key === "delete") compare(state.deleteConfirmation, null, "Consumed deletion consent is never reused");
         compare(mutations(state).length, count + 1, "Errors and stale IDs cannot replay an effect");
-    }
-    function test_timeoutsDoNotReplay_data() {
-        return ["reply"].map(key => ({tag: key, key: key}));
-    }
-    function test_timeoutsDoNotReplay(data) {
-        const state = make();
-        prepare(state, data.key);
-        const identity = state.keyFor(1);
-        const call = start(state, data.key);
-        const count = mutations(state).length;
-        Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id, null, "Notification outcome unknown", call.route);
-        verifyReleased(state, call);
-        verify(state.backend.ready && state.nativeAvailable, "A single timeout is not a disconnect");
-        wait(0);
-        compare(mutations(state).length, count);
-        if (data.key === "reply") {
-            compare(state.drafts[identity], call.params.text);
-            compare(state.replies[identity].error, "Notification outcome unknown");
-        }
-        if (["prepareDelete", "delete", "cancelDelete"].includes(data.key)) compare(state.deleteConfirmation, null);
     }
     function test_reconnectNeverReplays_data() {
         return ["reply"].map(key => ({tag: key, key: key}));
@@ -235,8 +214,7 @@ DaemonTestCase {
         verify(state.notifications.available);
     }
     function test_operationSnapshotsRespectErrorsAndEventVersion_data() {
-        return [{tag: "current", outcome: "success", stale: false},
-            {tag: "newer-event", outcome: "success", stale: true},
+        return [{tag: "newer-event", outcome: "success", stale: true},
             {tag: "failed", outcome: "stale", stale: false}];
     }
     function test_operationSnapshotsRespectErrorsAndEventVersion(data) {

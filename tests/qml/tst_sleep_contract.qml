@@ -78,8 +78,7 @@ DaemonTestCase {
     }
     function test_replies_data() {
         // Lifecycle/cancellation tests cover action success; retain separate error owners.
-        return [["powerSleep.setKeepAwake", "failed"], ["powerSleep.setPolicy", "success"],
-                ["powerSleep.setPolicy", "failed"], ["powerSleep.hibernate", "uncertain"]]
+        return [["powerSleep.setPolicy", "failed"], ["powerSleep.hibernate", "uncertain"]]
             .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome}));
     }
     function test_replies(data) {
@@ -145,7 +144,7 @@ DaemonTestCase {
     }
     function test_terminalOutcomes_data() {
         // Failed versus unknown execution, not every daemon diagnostic label.
-        return [["suspend", "job-failed"], ["hibernate", "interrupted-dispatch"]]
+        return [["hibernate", "interrupted-dispatch"]]
             .map(([action, outcome]) => ({tag: action + "/" + outcome, action: action, outcome: outcome}));
     }
     function test_terminalOutcomes(data) {
@@ -201,19 +200,6 @@ DaemonTestCase {
         verify(controller.suspendBusy, "Countdown cancellation is not systemd job cancellation");
         event(controller, fixture().events.hibernate.completed);
         compare(controller.powerSuspend.operation.phase, "completed");
-        compare(effects(controller).length, 1);
-    }
-    function test_lostCancellationReplyIsNotReplayed() {
-        const controller = make();
-        prepare(controller, "powerSleep.cancelCritical");
-        start(controller, "powerSleep.cancelCritical");
-        clientReady = false;
-        Io.DaemonSessions.sessions["bar-daemon"].client.transportFailed("Cancellation outcome unknown");
-        verify(!controller.actionInFlight);
-        compare(controller.lastError, "Cancellation outcome unknown");
-        clientReady = true;
-        reply(lastCall(controller, "bar.snapshot"), fixture().snapshot);
-        wait(0);
         compare(effects(controller).length, 1);
     }
 }

@@ -115,5 +115,7 @@ fallback. SwayNC retains its existing managed-settings notice; native-only contr
 are disabled.
 
 Qt tests: `tst_notification_center.qml`, `tst_notifications.qml`,
-`tst_notification_icons.qml`, plus shared navigation and bar suites.
+`tst_notification_contract.qml`, `tst_notification_queries.qml` and shared
+navigation suites. Icon resolution and pixel-offset/period-header presentation
+have less direct evidence after [pruning](../tests/test-pruning-current.md).
 Rust tests: `activity::notifications`, including `redesign_tests`.

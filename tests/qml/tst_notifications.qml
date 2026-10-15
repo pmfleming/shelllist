@@ -21,21 +21,6 @@ DaemonTestCase {
         id: contentComponent
         Activity.NotificationContent {}
     }
-    Component {
-        id: fakeBackendComponent
-        Activity.NotificationBackend {
-            property bool requestedDnd: false
-            property var requestedUntil: null
-            property int dndCalls: 0
-            function setDnd(enabled: bool, until: var): bool {
-                requestedDnd = enabled;
-                requestedUntil = until;
-                dndCalls++;
-                return true;
-            }
-            active: false
-        }
-    }
 
     function init() {
         failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop).*/);
@@ -97,13 +82,6 @@ DaemonTestCase {
         compare(controller.catalog.rootError, "");
         controller.rebuildRecords();
     }
-    function projectTimeline(controller, previews) {
-        controller.timeline.busy = false;
-        controller.timeline.requestedDate = previews.length > 3 ? "older" : "";
-        controller.timeline.collapsed = previews.length <= 3;
-        controller.timeline.snapshot = {recent: previews.slice(0, 3), dates: ["today", "week", "month", "older"].map(key => ({key: key, count: key === "older" ? Math.max(0, previews.length - 3) : 0})), date: controller.timeline.requestedDate, next_offset: null};
-        controller.timeline.entries = previews.slice(3).map(p => ({key: p.id + ":" + p.created_unix_ms, preview: p, members: [{id: p.id, created: p.created_unix_ms}]}));
-    }
     function startCenter() {
         const controller = makeController(makeState());
         controller.uiActive = true;
@@ -118,67 +96,6 @@ DaemonTestCase {
         controller.notificationState.backend.finish(rootRequest(controller), {notification_center: value}, error || "", code || "");
     }
     function stagedPage() { return Object.assign(appPage([app(200, "First")], "", 0, 1, 2), {anchor_reached: false}); }
-    function descendants(item) {
-        return Array.from(item.children || []).reduce((items, child) => items.concat(descendants(child)), [item]);
-    }
-    function test_dndAcknowledgementAndRetry() {
-        const state = makeState();
-        state.backend = createTemporaryObject(fakeBackendComponent, state, {
-            store: state
-        });
-        compare(state.dndDurationMinutes, 30);
-        state.setDndDuration(60);
-        compare(state.dndDurationMinutes, 60);
-        compare(state.backend.dndCalls, 0);
-        const now = Date.now();
-        verify(state.setDndEnabled(true));
-        verify(state.backend.requestedDnd);
-        verify(state.backend.requestedUntil >= now + 3600000);
-        verify(!state.notifications.dnd, "daemon owns acknowledged DND state");
-        verify(state.dndPending);
-        verify(!state.setDndEnabled(false), "one outstanding DND request");
-        state.finishDnd(null, "Disconnected");
-        compare(state.dndError, "Disconnected");
-        verify(!state.notifications.dnd);
-        state.retryDnd();
-        compare(state.backend.dndCalls, 2);
-        state.finishDnd({available: true, dnd: true}, "");
-        verify(state.notifications.dnd);
-        state.setDndDuration(0);
-        compare(state.backend.requestedUntil, null);
-        verify(state.dndPending);
-        state.finishDnd({available: true, dnd: true, dnd_until_unix_ms: null}, "");
-        state.setDndEnabled(false);
-        verify(!state.backend.requestedDnd);
-        compare(state.backend.requestedUntil, null);
-    }
-    function test_replyAcknowledgementAndFailure() {
-        const state = makeState();
-        const key = state.keyFor(100);
-        state.setDraft(key, "Hello");
-        verify(state.replyNotification(key, "Hello"));
-        compare(state.drafts[key], "Hello");
-        verify(state.replies[key].pending);
-        verify(!state.replyNotification(key, "Hello"));
-        const controller = makeController(state);
-        controller.catalog.reloadApps();
-        finishApps(controller, null, "Read failed");
-        verify(!controller.catalog.rootBusy);
-        compare(controller.catalog.rootError, "Read failed");
-        verify(state.replies[key].pending, "a read failure cannot retire the reply");
-        const failed = Object.keys(state.backend.requests).find(id => id.startsWith("reply-"));
-        state.backend.acceptSharedResponse(failed, null, "Connection lost");
-        compare(state.drafts[key], "Hello");
-        verify(!state.replies[key].pending);
-        compare(state.replies[key].error, "Connection lost");
-        verify(state.replyNotification(key, "Hello"));
-        const retried = Object.keys(state.backend.requests).find(id => id.startsWith("reply-"));
-        state.backend.finish(retried, {}, "");
-        compare(state.drafts[key], undefined);
-        state.setDraft(key, "Newer draft");
-        state.finishReply(key, "Older draft", "");
-        compare(state.drafts[key], "Newer draft");
-    }
     function test_centerRefreshNeverPublishesPartialAppPages() {
         const state = makeState();
         const controller = makeController(state);
@@ -246,22 +163,6 @@ DaemonTestCase {
         verify(state.isLive(reused), "a new generation accepts reset revisions");
         compare(state.drafts[newKey], "New draft");
     }
-    function test_coalescedTransientReplacementThenClose() {
-        const state = makeState();
-        state.applySnapshot({notifications: {available: true, history_revision: 1}, notification_active: {available: true, revision: 1, notifications: [notification(1)]}});
-        const controller = makeController(state);
-        state.backend.snapshot();
-        const oldSnapshot = Object.keys(state.backend.requests).find(id => id.startsWith("snapshot-"));
-        state.queueEvent(false, {available: true, revision: 2, notifications: [Object.assign({}, notification(1), {hints: {transient: true}})]});
-        state.queueEvent(false, {available: true, revision: 3, notifications: []});
-        state.queueEvent(true, {available: true, history_revision: 3});
-        state.flushEvents();
-        state.backend.finish(oldSnapshot, {snapshot: {notification_active: {available: true, revision: 1, notifications: [notification(1)]}}}, "");
-        compare(state.notificationActive.revision, 3, "a stale snapshot cannot undo newer events");
-        controller.catalog.reloadApps();
-        finishApps(controller, Object.assign(appPage([]), {revision: "3"}));
-        compare(controller.catalog.apps.length, 0, "coalescing cannot retain deleted persisted content");
-    }
     function test_keyboardSearchUsesNativeCatalogAndRejectsSupersededReplies() {
         const state = makeState();
         const controller = makeController(state);
@@ -307,20 +208,6 @@ DaemonTestCase {
         finishApps(controller, Object.assign(appPage([app(201)]), {revision: "2"}));
         compare(catalog.apps.map(app => app.latest.id), [201]);
         compare(catalog.revision, "2");
-    }
-    function test_rejectInvalidCenterPages_data() {
-        return [
-            {tag: "invalid-id", patch: {apps: [app(4294967296)]}}
-        ];
-    }
-    function test_rejectInvalidCenterPages(data) {
-        const controller = startCenter(), catalog = controller.catalog;
-        const visible = JSON.stringify(catalog.apps);
-        finishApps(controller, Object.assign(appPage([app(99)]), data.patch));
-        compare(JSON.stringify(catalog.apps), visible);
-        verify(catalog.rootError.length > 0);
-        verify(!catalog.rootBusy);
-        compare(catalog.staging.length, 0);
     }
     function test_unownedCenterResponsesCannotRetireAppRead_data() {
         return [

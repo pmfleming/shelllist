@@ -85,8 +85,7 @@ DaemonTestCase {
     }
     function test_replyOutcomes_data() {
         // Native Displays workflows cover confirm/revert/focus success and policy retry.
-        return [["displayLayout.confirm", "uncertain"], ["displayLayout.revert", "failed"],
-                ["displayPolicy.set", "success"]]
+        return [["displayLayout.confirm", "uncertain"], ["displayLayout.revert", "failed"]]
             .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome}));
     }
     function test_replyOutcomes(data) {
@@ -123,29 +122,6 @@ DaemonTestCase {
         }
         compare(effects(controller).length, 1, "Failures and uncertain replies cannot replay effects");
     }
-    function test_reconnectReadsWithoutReplaying_data() {
-        return ["displayLayout.preview"]
-            .map(method => ({tag: method, method: method}));
-    }
-    function test_reconnectReadsWithoutReplaying(data) {
-        const controller = make();
-        prepare(controller, data.method);
-        const call = start(controller, data.method);
-        clientReady = false;
-        Io.DaemonSessions.sessions["bar-daemon"].client.transportFailed("Display outcome unknown");
-        verify(!controller.actionInFlight && !controller.stateReady);
-        verify(!controller.backend.isPending(call.route.localId));
-        compare(controller.displayPolicyError, "Display outcome unknown");
-        const reads = requests(controller).filter(call => call.method === "bar.snapshot").length;
-        clientReady = true;
-        compare(requests(controller).filter(call => call.method === "bar.snapshot").length, reads + 1);
-        const state = fixture().replies[data.method].recovery;
-        reply(lastCall(controller, "bar.snapshot"), fixture().snapshots[state]);
-        compare(controller.displayPolicyState, fixture().snapshots[state].data.snapshot.display_policy);
-        verify(controller.stateReady && !controller.actionInFlight);
-        wait(0);
-        compare(effects(controller).length, 1, "Recovery observes the result; it cannot reapply or confirm an uncertain change");
-    }
     function test_daemonRollbackAndExpiryAreAuthoritative() {
         const controller = make();
         const call = start(controller, "displayLayout.preview");
@@ -170,16 +146,6 @@ DaemonTestCase {
         verify(controller.dockingFailed);
         verify(controller.statusMessage.includes("Layout rollback failed"));
         verify(!controller.canEdit && !controller.canSetPolicy);
-        compare(effects(controller).length, 0);
-    }
-    function test_externalChangeMakesLocalDraftStaleWithoutApplyingIt() {
-        const controller = make();
-        controller.edit("eDP-1", "scale", 2);
-        const draft = JSON.stringify(controller.draft);
-        event(controller, "stale");
-        verify(controller.stale && !controller.canPreview);
-        compare(JSON.stringify(controller.draft), draft);
-        verify(!controller.preview());
         compare(effects(controller).length, 0);
     }
     function test_explicitCloseRevertsOnceButLostRevertIsNotReplayed() {

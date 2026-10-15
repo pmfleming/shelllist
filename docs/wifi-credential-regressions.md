@@ -92,14 +92,13 @@ The matching provider test instructions and detailed daemon coverage are in
 | Enter sends the actual named password while connection is in progress | `tst_wifi_operations` |
 | Form stays open until owned acknowledgement; foreign reply is ignored | `tst_wifi_operations` |
 | Expired/unavailable request clears secrets and requires explicit reconnect | `tst_wifi_operations`; SecretAgent registry tests |
-| Save failure survives event-before-reply and reply-before-event ordering | `tst_wifi_operations` |
+| Save failure survives delivery → persistence → receipt | `tst_wifi_operations`; other ordering permutations were pruned |
 | Remember defaults on; explicit off is propagated and does not leak to a different network | `tst_wifi_prompt`, `tst_wifi_operations` |
 | Temporary activation uses native `persist=volatile`, disables autoconnect, and drops cloned UUID | `daemon_connect` and `nm::activate` tests |
 | NOT_SAVED flags prevent keyring persistence | `daemon_secret` tests |
 | Locked collection unlocks before CreateItem; cancelled/timed-out prompts fail | `keyring` fake-D-Bus tests |
 | Saved UUID secret survives a new agent session and changed NM path; noninteractive lookup cannot unlock | `keyring` fake-D-Bus tests |
-| Actual rendered scanner text, opaque backgrounds and outlines retain contrast in six states | `tst_wifi_scanner_contrast` over black/white preview substitutes |
-| Scanner keyboard activation remains native; disabled action cannot activate | `tst_wifi_scanner_contrast` |
+| Scanner contrast and native button activation | Dedicated per-state suite pruned; no equivalent paint/activation acceptance claimed |
 
 The native tests exposed and fixed a stale `Locked` property-cache read after
 unlock. The UI tests exposed and fixed a persistence warning being overwritten

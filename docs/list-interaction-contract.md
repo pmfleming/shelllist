@@ -23,4 +23,9 @@ Do not add another reconciliation loop in a domain view. Domain-specific row
 selection and refresh behavior override `ResultRow.pick()` and
 `ChooserListPane.requestRefresh()` rather than assigning callback properties.
 
-The runtime smoke test validates that the exported component loads with the shared UI module, and `tst_result_list_reactivation.qml` exercises reopening, edited-ID replacement through the real keyed result store, and progressive fills. It also checks that normal scrolling can move away from the selection. Shared-list use and wheel ownership remain review requirements rather than source-token assertions.
+Runtime smoke validates that the exported component loads with the shared UI
+module. `tst_keyed_list_model.qml` retains stable-key reorders, progressive rebuilds
+and stale-work cancellation. The dedicated reactivation/selection-reveal suite was
+pruned; those model tests do not prove every viewport or reopening path.
+Shared-list use and wheel ownership remain review requirements rather than
+source-token assertions. See the [current pruning review](../tests/test-pruning-current.md).

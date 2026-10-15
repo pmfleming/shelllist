@@ -50,32 +50,8 @@ DaemonTestCase {
         verify(c.backend.isPending(call.route.localId));
         return call;
     }
-    function test_outcomes_data() {
-        // Native chooser/media tests cover command activation; sample response owners.
-        return [["select", "success"], ["seek", "rejected"], ["set-mode", "rejected"]]
-            .map(([key, outcome]) => ({tag: key + "/" + outcome, key: key, outcome: outcome}));
-    }
-    function test_outcomes(data) {
-        const c = make();
-        const before = JSON.stringify(c.media);
-        const call = start(c, data.key);
-        compare(JSON.stringify(c.media), before, "No optimistic playback/selection acknowledgement");
-        const response = fixture().cases[data.key][data.outcome];
-        reply(call, response);
-        verify(!c.backend.isPending(call.route.localId));
-        if (response.ok) {
-            compare(c.backend.operationError, "");
-            if (response.data.media) compare(c.media, response.data.media);
-            else compare(JSON.stringify(c.media), before, "Command acceptance is not a playback observation");
-            if (response.data.updates) compare(c.updates, response.data.updates);
-        } else {
-            compare(c.backend.operationError, response.error.message);
-            compare(JSON.stringify(c.media), before);
-        }
-        compare(effects(c).length, 1);
-    }
     function test_noReplay_data() {
-        return [["play-pause", false], ["seek", true]]
+        return [["seek", true]]
             .map(([key, disconnect]) => ({tag: key + (disconnect ? "/disconnect" : "/timeout"), key: key, disconnect: disconnect}));
     }
     function test_noReplay(data) {

@@ -52,7 +52,7 @@ DaemonTestCase {
         verify(c.backend.isPending(call.route.localId)); return call;
     }
     function test_outcomes_data() {
-        return [["refresh", "success"], ["range", "failed"], ["create", "rejected"]]
+        return [["range", "failed"]]
             .map(([key, outcome]) => ({tag: key + "/" + outcome, key: key, outcome: outcome}));
     }
     function test_outcomes(data) {

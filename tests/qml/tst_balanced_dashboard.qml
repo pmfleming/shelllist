@@ -77,29 +77,8 @@ DaemonTestCase {
         compare(calls.length, 2);
         compare(calls[1].params.workspace_id, 4);
     }
-    function test_workspaceRevealAndMonitorLocalSelection(): void {
-        const bar = fixture();
-        bar.width = 300;
-        bar.controller.workspaces = {
-            monitors: [{name: "test", active_workspace_id: 12}, {name: "other", active_workspace_id: 2}],
-            focused_monitor: "other", workspaces: [
-                {id: 1, monitor: "test", windows: 1, urgent: true},
-                {id: 12, monitor: "test", windows: 1}, {id: 2, monitor: "other", windows: 1}]
-        };
-        verify(waitForPolish(bar.Window.window));
-        const selected = findChild(bar, "barWorkspace:12");
-        verify(selected.active && selected.Accessible.checked);
-        verify(!findChild(bar, "barWorkspace:2").active, "selection is local to this output, not the focused monitor");
-        const viewport = findChild(bar, "workspaceViewport");
-        tryVerify(() => viewport.contentX > 0);
-        const point = selected.mapToItem(viewport, 0, 0);
-        verify(point.x >= 0 && point.x + selected.width <= viewport.width);
-        verify(findChild(bar, "workspaceUrgencyAggregate").visible, "offscreen urgency is retained");
-        compare(calls.length, 0);
-    }
     function test_batteryReadingAndExternalMark_data(): var {
         return [
-            {tag: "empty", state: {available: true, percentage: 0, critical: true}, fraction: 0, mark: "priority_high", word: "Critical"},
             {tag: "null-reading", state: {available: true, percentage: null}, fraction: 0, mark: "help_outline", word: "unavailable"}
         ];
     }

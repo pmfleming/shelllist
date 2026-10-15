@@ -68,42 +68,6 @@ DaemonTestCase {
         compare(panel.surface.detailsNavigation.currentTarget, target);
         return target;
     }
-    function test_sleepFieldTransactionsAndLinkedTraversal() {
-        const panel = make("power");
-        const sleep = browse(panel, "suspendDelay-battery");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Down);
-        compare(calls.length, 0);
-        keyClick(Qt.Key_Escape);
-        compare(sleep.value, "30");
-        compare(sleep.editSession.displayedValue, "30");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Tab);
-        compare(calls.length, 1);
-        compare(calls[0].method, "powerSleep.setPolicy");
-        compare(calls[0].params.battery.sleep_minutes, 45);
-        compare(calls[0].params.same_profile, true, "daemon retains responsibility for applying the linked profile");
-        verify(!sleep.interactive, "submitted policy keeps its pending guard");
-        panel.controller.suspendPolicyFinished();
-        calls = [];
-        browse(panel, "suspendSameProfile");
-        keyClick(Qt.Key_Return);
-        compare(calls.length, 1);
-        compare(calls[0].params.same_profile, false);
-        panel.controller.suspendPolicyFinished();
-        verify(waitForRendering(panel));
-        browse(panel, "hibernateDelay-battery");
-        keyClick(Qt.Key_Tab);
-        compare(panel.surface.detailsNavigation.currentTarget, findChild(panel, "suspendDelay-plugged"), "source headings are passive");
-        keyClick(Qt.Key_Tab);
-        compare(panel.surface.detailsNavigation.currentTarget, findChild(panel, "hibernateDelay-plugged"));
-        keyClick(Qt.Key_Tab);
-        compare(panel.surface.detailsNavigation.currentTarget, findChild(panel, "criticalBatteryEnabled"), "Help and recovery commands are not field stops");
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(panel.surface.detailsNavigation.currentTarget, findChild(panel, "hibernateDelay-plugged"));
-        compare(calls.length, 1, "traversal does not save or relink profiles");
-    }
     function test_independentCriticalProtectionAndRecovery() {
         const panel = make("power");
         panel.controller.applySuspendPolicy({available: false, error: "Managed idle sleep unavailable", policy: panel.controller.suspendPolicyDraft});
@@ -139,50 +103,6 @@ DaemonTestCase {
         compare(calls[2].method, "powerSleep.cancelCritical");
         verify(!findChild(panel, "criticalBatteryCancel").enabled, "pending cancellation cannot be repeated");
     }
-    function test_powerModeDraftAndAcknowledgement() {
-        const panel = make();
-        const mode = findChild(panel, "batteryPowerModeProfile");
-        compare(panel.surface.detailsNavigation.currentTarget, mode);
-        compare(findChild(mode, "segment-balanced").Accessible.name, "Balanced");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        compare(mode.displayedValue, "performance");
-        compare(mode.value, "balanced");
-        compare(calls.length, 0);
-        keyClick(Qt.Key_Escape);
-        compare(mode.displayedValue, "balanced");
-        const saver = findChild(mode, "segment-power-saver");
-        mouseClick(saver, saver.width / 2, saver.height / 2);
-        compare(mode.displayedValue, "power-saver");
-        compare(calls.length, 0, "pointer choice is still a local draft");
-        keyClick(Qt.Key_Return);
-        compare(calls.length, 1);
-        compare(calls[0].method, "powerProfile.set");
-        compare(calls[0].params.profile, "power-saver");
-        compare(mode.value, "balanced", "save is not acknowledgement");
-        verify(!mode.interactive);
-        panel.controller.operationFinished(calls[0].id);
-        panel.controller.applyPowerProfile({available: true, profile: "power-saver", profiles: [{name: "power-saver"}, {name: "balanced"}, {name: "performance"}]});
-        compare(mode.value, "power-saver");
-    }
-    function test_hardwareTuningWritesOnlyOnActivation() {
-        tests.width = 340;
-        const panel = make("power");
-        panel.controller.applyPowerProfile(Object.assign({}, panel.controller.powerProfile, {
-            battery_aware: true,
-            actions: [{name: "amdgpu_dpm", description: "Adjust GPU dynamic power management", enabled: false}]
-        }));
-        verify(waitForRendering(panel));
-        const action = browse(panel, "batteryHardwareAction-amdgpu_dpm");
-        compare(calls.length, 0, "layout/icons do not submit settings");
-        keyClick(Qt.Key_Return);
-        compare(calls.length, 1);
-        compare(calls[0].method, "powerProfile.setActionEnabled");
-        compare(calls[0].params.action, "amdgpu_dpm");
-        compare(calls[0].params.enabled, true);
-        verify(!action.checked, "toggle waits for daemon acknowledgement");
-        verify(!action.interactive);
-    }
     function test_activeBeforeViewIsVisible() {
         // Cold entry: activation/host focus signals can predate view readiness.
         const panel = createTemporaryObject(factory, tests, {visible: false, initiallyActive: true});
@@ -195,25 +115,6 @@ DaemonTestCase {
         keyClick(Qt.Key_Return);
         verify(panel.surface.detailsNavigation.editing, "Enter works without an initial Tab");
         keyClick(Qt.Key_Escape);
-    }
-    function test_historyRangeRemainsTheOnlyChartField() {
-        const panel = make();
-        const card = findChild(panel, "batteryHistoryCard");
-        const graph = findChild(card, "batteryTimelineGraph");
-        const range = browse(panel, "batteryHistoryRange");
-        verify(!graph.activeFocusOnTab);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        compare(range.displayedValue, "24");
-        compare(card.range, "6", "range choice remains a local field draft");
-        keyClick(Qt.Key_Escape);
-        compare(range.displayedValue, "6");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        keyClick(Qt.Key_Tab);
-        compare(card.range, "24");
-        compare(panel.surface.detailsNavigation.currentTarget, findChild(panel, "batteryEnergyPeriod"), "Tab continues to energy period, skipping tracks and labels");
-        compare(calls.length, 0, "history presentation never dispatches a battery mutation");
     }
     function test_combinedChargingTargetsAndDeferredThresholds() {
         const panel = make("care");

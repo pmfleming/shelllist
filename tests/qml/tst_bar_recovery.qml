@@ -79,22 +79,8 @@ DaemonTestCase {
         wait(0);
         compare(reads(backend).length, 2, "A complete newer push satisfies recovery");
     }
-    function test_separateDomainsRecoverIndependently() {
-        const controller = make();
-        const backend = controller.backend;
-        const initial = reads(backend)[0];
-        reply(initial, {});
-        event(initial, "audio.changed", "gap", {});
-        event(initial, "battery.changed", "gap", {});
-        compare(reads(backend).length, 3);
-        compare(reads(backend)[1].params.streams, ["audio.changed"]);
-        compare(reads(backend)[2].params.streams, ["battery.changed"]);
-        reply(reads(backend)[2], {battery: {available: true, percentage: 20}});
-        compare(controller.battery.percentage, 20);
-        compare(Object.keys(backend.requestPolicy.requests).length, 1);
-    }
     function test_failedRecoveryReleasesFlightWithoutLooping_data() {
-        return [{tag: "timeout", malformed: false}, {tag: "missing-domain", malformed: true}];
+        return [{tag: "timeout", malformed: false}];
     }
     function test_failedRecoveryReleasesFlightWithoutLooping(data) {
         const controller = make();
@@ -113,19 +99,6 @@ DaemonTestCase {
         compare(reads(backend).length, 2);
         event(initial, "audio.changed", "gap", {});
         compare(reads(backend).length, 3);
-    }
-    function test_effectReplyCannotResurrectNewerMonitorFailure() {
-        const controller = make();
-        const backend = controller.backend;
-        const initial = reads(backend)[0];
-        reply(initial, {audio: {available: true, volume_percent: 30}});
-        verify(backend.adjustAudio(5));
-        const effect = calls[calls.length - 1];
-        event(initial, "audio.changed", "changed", {available: false, volume_percent: 30, error: "audio monitor panicked"});
-        Io.DaemonSessions.sessions["bar-daemon"].client.response(effect.id,
-            {protocol: "bar-api", version: 2, ok: true, data: {audio: {available: true, volume_percent: 35}}}, "", effect.route);
-        verify(!backend.isPending(effect.route.localId), "the effect acknowledgement still completes");
-        verify(!controller.audio.available);
     }
     function test_processLossInvalidatesStateAndOldGenerationReply() {
         const controller = make();

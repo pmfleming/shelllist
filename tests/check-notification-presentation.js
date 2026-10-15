@@ -26,8 +26,6 @@ const entries = [{key: "2:2000", preview, members: [{id: 2, created: 2000}, {id:
 const original = JSON.stringify({snapshot, entries});
 const rows = context.timelineRows(snapshot, "older", false, entries, {"2:2000": true}, true);
 equal(rows.map(row => row.key).join(), "1:1000,week,older,2:2000,member:2:2000,member:3:3000,more", "native order and stable member identities");
-equal(rows[5].preview.summary, "Stack", "members retain the native preview content");
-equal(rows[5].preview.id, 3, "member identity replaces only the preview identity");
 equal(JSON.stringify({snapshot, entries}), original, "projection leaves its window untouched");
 for (const [date, collapsed] of [["older", true], ["today", false]])
     equal(context.timelineRows(snapshot, date, collapsed, entries, {}, true).map(row => row.key).join(),
