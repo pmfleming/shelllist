@@ -391,6 +391,24 @@ DaemonTestCase {
         c.handleSecretEvent({event: "delivered", request_id: "secret-order", data: {}});
         compare(c.status, status, "old delivery cannot overwrite a newer request");
     }
+    function test_keyringWarningRetainsItsConnectionOwner_data() {
+        return [{tag: "same-profile", path: "/profile/old", cleared: true},
+            {tag: "other-profile", path: "/profile/new", cleared: false}];
+    }
+    function test_keyringWarningRetainsItsConnectionOwner(data) {
+        const c = makePanel().controller;
+        c.handleSecretEvent({event: "requested", request_id: "current", data: {secret_keys: ["psk"], save_supported: true}});
+        c.handleSecretEvent({event: "persistence", request_id: "old", data: {connection_path: "/profile/old", status: "failed", error: "Locked"}});
+        const warning = c.secretSaveWarning;
+        verify(warning.includes("Locked"));
+        compare(c.prompt.secretPersistenceMessage, "", "an older outcome cannot attach to the active prompt");
+        c.handleSecretEvent({event: "persistence", request_id: "old", data: {connection_path: data.path, status: "stored"}});
+        compare(c.secretSaveWarning, data.cleared ? "" : warning);
+        compare(c.secretSaveWarningKey, data.cleared ? "" : "/profile/old");
+        c.handleSecretEvent({event: "delivered", request_id: "current", data: {}});
+        verify(c.status.includes("sent to NetworkManager"));
+        compare(calls.length, 0, "feedback cannot submit or replay credentials");
+    }
     function test_rememberSwitchRoutesTemporaryConnect_data() {
         return [{tag: "saved", saved: true}];
     }

@@ -34,3 +34,20 @@ lint passes. No assertions, exclusions or skips were weakened. Qt runs use the
 existing `QML_XHR_ALLOW_FILE_READ=1` fixture prerequisite. Full sibling Nix,
 hardware/compositor, IME, human accessibility and profiler/coverage validation
 are not claimed.
+
+## 2 — Credential feedback ownership
+
+Flatten credential-event dispatch and give keyring persistence its own method.
+The active prompt's receipt/delivery/persistence feedback stays request-owned;
+the retained save warning stays connection-owned and clears only for that same
+connection. A late delivery still cannot hide its prompt's save outcome. No
+credential handling, expiry, native prompt transaction or retry policy changes.
+
+`handleSecretEvent` **12/24/85 → 7/7/38**; new
+`rememberSecretPersistence` **5/5/26**. Production function sums change
+**7,999/5,480/35,604 → 7,999/5,468/35,583**; source grows four lines. Locality,
+leverage and expanded clones are unchanged. Two native cases distinguish a
+same-profile save from another profile's save while a newer prompt owns delivery;
+existing actual Enter, expiry and receipt/delivery/save-failure ordering cases pass.
+
+Validation: full Qt **477/0/1**, strict lint and daemon-boundary JavaScript pass.
