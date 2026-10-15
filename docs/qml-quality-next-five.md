@@ -51,3 +51,21 @@ same-profile save from another profile's save while a newer prompt owns delivery
 existing actual Enter, expiry and receipt/delivery/save-failure ordering cases pass.
 
 Validation: full Qt **477/0/1**, strict lint and daemon-boundary JavaScript pass.
+
+## 3 — Typed tray execution after shared command guards
+
+Keep active-invocation, menu, live-result and enabled-action checks in `perform`;
+use a predicate rather than retaining an unused action object. A separate tray
+executor receives the uniquely resolved typed `SystemTrayItem`, not a selected
+row index or inferred active application. Audio/media routes remain unchanged.
+This is a responsibility/locality improvement, not a new command/navigation API.
+
+`perform` **18/23/100 → 13/19/72**; new tray executor **6/5/32**. Production
+function sums **7,999/5,468/35,583 → 8,000/5,469/35,587**; production source
+shrinks one line. Aggregate complexity/effort rises slightly from the new method;
+mean locality/leverage and clones stay unchanged. Native Alt+U/D/A commands act
+on a prototype-looking stable tray ID; menu ownership, duplicate live identities
+and deactivation block dispatch. Existing media target/capability, preferences,
+Audio acknowledgement and native-menu lifetime tests remain.
+
+Validation: full Qt **478/0/1**, strict lint and UI drift review pass.

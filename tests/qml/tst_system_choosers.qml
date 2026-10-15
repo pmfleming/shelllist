@@ -195,6 +195,32 @@ DaemonTestCase {
         verify(root.chooser.navigationBlocked);
         tryCompare(root.chooser, "navigationBlocked", false, 2500);
     }
+    function test_trayCommandsKeepLiveIdentityAndInvocationGuards(): void {
+        const root = fixture();
+        const tray = createTemporaryObject(trayFactory, testCase, {id: "__proto__", title: "Tray app"});
+        TrayFixture.SystemTray.items.values = [tray];
+        root.chooser.kind = "tray";
+        root.chooser.activateUi("");
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsItem && root.content.detailsNavigation.contentReady);
+        keyClick(Qt.Key_U, Qt.AltModifier);
+        compare(tray.scrollTotal, 15);
+        keyClick(Qt.Key_D, Qt.AltModifier);
+        compare(tray.scrollTotal, 0);
+        keyClick(Qt.Key_A, Qt.AltModifier);
+        compare(tray.activationCount, 1);
+        root.chooser.trayMenuActive = true;
+        verify(!root.chooser.perform("scroll-up", tray.id));
+        root.chooser.trayMenuActive = false;
+        const duplicate = createTemporaryObject(trayFactory, testCase, {id: tray.id});
+        TrayFixture.SystemTray.items.values = [tray, duplicate];
+        verify(!root.chooser.perform("activate", tray.id));
+        compare(duplicate.activationCount, 0);
+        root.chooser.deactivateUi();
+        verify(!root.chooser.perform("activate", tray.id));
+        compare(tray.activationCount, 1);
+    }
     function test_trayProjectionNeverConfusesDuplicateOrPrototypeIdentities(): void {
         const values = Entries.tray([
             {id: "duplicate", title: "One", hasMenu: true},

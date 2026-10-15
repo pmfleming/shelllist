@@ -85,24 +85,23 @@ Ui.ProviderChooserController {
         if (!uiActive || trayMenuActive)
             return false;
         const entry = sourceEntries.find(value => value.id === id);
-        const action = entry && entry.actions.find(value => value.id === actionId && value.enabled !== false);
-        if (!action)
+        if (!entry || !entry.actions.some(value => value.id === actionId && value.enabled !== false))
             return false;
         if (actionId === "inspect") {
             openDetails();
             focusDetailsRequested();
             return true;
         }
-        if (kind === "audio") {
-            if (actionId === "mixer")
-                return barController.triggerModuleAction("audio-mixer");
-            return barController.adjustAudio(actionId === "quieter" ? -5 : 5);
-        }
+        if (kind === "audio")
+            return actionId === "mixer" ? barController.triggerModuleAction("audio-mixer")
+                : barController.adjustAudio(actionId === "quieter" ? -5 : 5);
         if (kind === "media") {
             const offset = actionId === "rewind" ? -30 : actionId === "forward" ? 30 : null;
             return barController.backend.mediaOperationFor(id, offset === null ? actionId : "seek", offset);
         }
-        const item = uniqueTrayItem(id);
+        return executeTrayAction(actionId, uniqueTrayItem(id));
+    }
+    function executeTrayAction(actionId: string, item: SystemTrayItem): bool {
         if (!item)
             return false;
         switch (actionId) {
