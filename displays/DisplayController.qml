@@ -117,21 +117,26 @@ Ui.ProviderChooserController {
             revertOnArrival = false;
         stateReady = true;
         clock = Date.now();
-        const layoutChanged = (displayPolicyState.baseline || "") !== baselineToken || Model.fingerprint(outputs) !== baselineFingerprint || !!(displayPolicyState.policy || {}).prefer_external !== baselinePreference;
-        const changedOutsidePreview = pendingAction !== "preview" && layoutChanged;
+        reconcileDraft(previousTrial);
+        settleHiddenTrial();
+    }
+    function reconcileDraft(previousTrial: string): void {
         if (trial) {
             if (baselineTopology && Model.topology(outputs) !== baselineTopology)
                 stale = true;
-        } else if (previousTrial || (!dirty && changedOutsidePreview)) {
+            return;
+        }
+        const changedOutsidePreview = pendingAction !== "preview" && ((displayPolicyState.baseline || "") !== baselineToken || Model.fingerprint(outputs) !== baselineFingerprint || !!(displayPolicyState.policy || {}).prefer_external !== baselinePreference);
+        if (previousTrial || (!dirty && changedOutsidePreview)) {
             // A trial ended authoritatively; the new observed layout is the baseline.
             baselineDraft = [];
             draft = [];
             if (!actionInFlight)
                 reloadDraft();
-        } else if (changedOutsidePreview) {
-            stale = true;
+            return;
         }
-        settleHiddenTrial();
+        if (changedOutsidePreview)
+            stale = true;
     }
     function refresh(): void {
         if (backend.ready)

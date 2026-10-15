@@ -800,6 +800,26 @@ DaemonTestCase {
         verify(!c.dirty);
         compare(c.selectedDraft.scale, 1.5);
     }
+    function test_snapshotReconciliationPreservesEditBoundaries_data() {
+        return [{tag: "clean", dirty: false, preview: false, stale: false},
+            {tag: "dirty", dirty: true, preview: false, stale: true},
+            {tag: "pending-preview", dirty: true, preview: true, stale: false}];
+    }
+    function test_snapshotReconciliationPreservesEditBoundaries(data) {
+        const c = makePanel().controller;
+        c.selectOutput("DP-1");
+        if (data.dirty) c.edit("DP-1", "scale", 2);
+        if (data.preview) verify(c.preview());
+        const count = calls.length;
+        const observed = displayState();
+        observed.baseline = "next-observation";
+        observed.outputs[1].scale = 1.75;
+        c.applyDisplayPolicy(observed);
+        compare(c.selectedDraft.scale, data.dirty ? 2 : 1.75);
+        compare(c.baselineToken, data.dirty ? "opaque-native-baseline" : "next-observation");
+        compare(c.stale, data.stale);
+        compare(calls.length, count, "observations never apply or replay a layout");
+    }
     function test_reconnectionClearsOnlyResolvedCloseIntent() {
         const c = makePanel().controller;
         c.edit("DP-1", "x", 1800);

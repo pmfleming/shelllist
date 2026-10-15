@@ -69,3 +69,22 @@ and deactivation block dispatch. Existing media target/capability, preferences,
 Audio acknowledgement and native-menu lifetime tests remain.
 
 Validation: full Qt **478/0/1**, strict lint and UI drift review pass.
+
+## 4 — Display observation versus draft reconciliation
+
+`applyDisplayPolicy` publishes the observation/results and always settles hidden
+trials. `reconcileDraft` alone decides whether an authoritative trial ended,
+changed topology invalidates a trial draft, a clean baseline can reload, or a
+dirty draft must become stale. Trial and reset paths exit that helper early;
+unacknowledged Preview observations still cannot replace or invalidate its draft.
+No baseline, docking, validation, Preview/Keep/Revert or rollback guard changes.
+
+`applyDisplayPolicy` **18/23/92 → 5/4/25**; new reconciliation method
+**14/15/64**. Production sums **8,000/5,469/35,587 → 8,001/5,465/35,584**;
+source grows five lines. Locality/leverage/clones remain unchanged. Three added
+native observation cases cover clean reload, dirty invalidation and pending
+Preview preservation, with no follow-up writes; existing actual field edits,
+trial confirmation/expiry, hidden-trial reversion and topology tests pass.
+
+Validation: full Qt **481/0/1**, strict lint, display-model JavaScript and UI drift
+review pass.
