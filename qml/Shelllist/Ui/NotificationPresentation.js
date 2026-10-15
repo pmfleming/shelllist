@@ -11,10 +11,6 @@ function previewHeading(record) {
     const summary = String(n.summary || "").replace(/\s+/g, " ").trim();
     return summary.toLowerCase() === String(n.app_name || "").trim().toLowerCase() ? "" : summary;
 }
-function previewTitle(record) {
-    const n = notificationFor(record);
-    return previewHeading(record) || String(n.body || n.summary || "").replace(/\s+/g, " ").trim();
-}
 function previewBody(record) {
     const body = String(notificationFor(record).body || "").replace(/\s+/g, " ").trim();
     return body === previewHeading(record) ? "" : body;
@@ -24,6 +20,30 @@ function previewBody(record) {
 function recordKey(record) {
     const n = notificationFor(record);
     return String(n.id) + ":" + String(n.created_unix_ms);
+}
+
+// Project an already validated native window. No sorting, date classification,
+// request state or mutation belongs here; only newly allocated rows are changed.
+function timelineRows(snapshot, requestedDate, collapsed, entries, expandedStacks, loadingMore) {
+    const rows = (snapshot.recent || []).map(preview => ({kind: "message", key: recordKey(preview), preview: preview, count: 1, stack: false}));
+    for (const date of snapshot.dates || []) {
+        if (!date.count) continue;
+        rows.push({kind: "date", key: date.key, count: date.count});
+        if (date.key !== requestedDate || date.key !== snapshot.date || collapsed) continue;
+        appendTimelineEntries(rows, entries, expandedStacks);
+        if (loadingMore) rows.push({kind: "more", key: "more"});
+    }
+    return rows;
+}
+function appendTimelineEntries(rows, entries, expandedStacks) {
+    for (const entry of entries) {
+        const expanded = expandedStacks[entry.key] === true;
+        rows.push({kind: "message", key: entry.key, preview: entry.preview, count: entry.members.length, stack: entry.members.length > 1, expanded: expanded});
+        if (!expanded) continue;
+        for (const member of entry.members)
+            rows.push({kind: "message", key: "member:" + member.id + ":" + member.created,
+                preview: Object.assign({}, entry.preview, {id: member.id, created_unix_ms: member.created}), count: 1, stack: false});
+    }
 }
 
 function isReplyAction(action) {

@@ -6,6 +6,9 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 The [five focused improvements](qml-quality-next-five.md) start from `bf01181`
 and record each implementation, measurement and native validation separately.
+All five are complete: full Qt **482/0/1**, strict lint and runtime smoke pass.
+Peak responsibilities and aggregate cognitive complexity/effort improve; source
+grows and locality/leverage/clone counts stay unchanged. Lens remains incomplete.
 
 The [2026-10-15 focused review](qml-maintenance-2026-10-15.md) starts
 from clean `e296b2b`: simpler Wi-Fi classification, a typed classification hook,

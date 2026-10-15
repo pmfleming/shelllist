@@ -401,7 +401,9 @@ read deadlines belong to `bar-daemon`; the frontend retains transport, ownership
 and stale-window guards, not a storage retry loop.
 
 Native windows stage refreshes atomically and fence stale revisions, epochs,
-queries, period changes and local-midnight rollover. Frontend notification readers
+queries, period changes and local-midnight rollover. The center's pure row
+projection preserves validated native order and member identities; it must not
+infer periods, initiate reads or add field stops. Frontend notification readers
 share wire-shape validation, not request ownership or publication. Timeline
 continuations keep accumulated entries and metadata in one unpublished window;
 an owned completion consumes that window once and only a validated continuation

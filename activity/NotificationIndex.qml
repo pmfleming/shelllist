@@ -63,24 +63,6 @@ Item {
     function dateLabel(key: string): string {
         return ({today: qsTr("Today"), week: qsTr("This week"), month: qsTr("This month"), older: qsTr("Older")})[key] || key;
     }
-    function rows(): var {
-        const result = (timeline.snapshot.recent || []).map(preview => ({kind: "message", key: Ui.NotificationPresentation.recordKey(preview), preview: preview, count: 1, stack: false}));
-        for (const date of timeline.snapshot.dates || []) {
-            if (!date.count) continue;
-            result.push({kind: "date", key: date.key, count: date.count});
-            if (date.key !== timeline.requestedDate || date.key !== timeline.snapshot.date || timeline.collapsed) continue;
-            for (const entry of timeline.entries) {
-                const expanded = timeline.expandedStacks[entry.key] === true;
-                result.push({kind: "message", key: entry.key, preview: entry.preview, count: entry.members.length, stack: entry.members.length > 1, expanded: expanded});
-                if (expanded) for (const member of entry.members) {
-                    result.push({kind: "message", key: "member:" + member.id + ":" + member.created,
-                        preview: Object.assign({}, entry.preview, {id: member.id, created_unix_ms: member.created}), count: 1, stack: false});
-                }
-            }
-            if (timeline.hasMore || timeline.busy) result.push({kind: "more", key: "more"});
-        }
-        return result;
-    }
     Column {
         id: header
         width: parent.width
@@ -105,7 +87,9 @@ Item {
         onMovementStarted: { restoreRetry.stop(); page.restoring = false; }
         spacing: Ui.Theme.spacingSm
         cacheBuffer: 200
-        readonly property var rows: page.rows()
+        readonly property var rows: Ui.NotificationPresentation.timelineRows(page.timeline.snapshot,
+            page.timeline.requestedDate, page.timeline.collapsed, page.timeline.entries,
+            page.timeline.expandedStacks, page.timeline.hasMore || page.timeline.busy)
         model: Core.SerializedListModel {
             rows: history.rows.map(row => ({key: row.key, payload: row}))
         }

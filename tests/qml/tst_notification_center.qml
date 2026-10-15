@@ -249,6 +249,34 @@ DaemonTestCase {
         compare(policyCalls()[0].params.policy, {silent: false, until_unix_ms: null, group_similar: true, bypass_dnd: false});
         content.destroy();
     }
+    function test_expandedStackKeepsMemberDeleteIdentity() {
+        const {state, controller, content} = make();
+        controller.openDetails();
+        const timeline = controller.timeline;
+        timeline.requestedDate = "older";
+        timeline.collapsed = false;
+        const value = timelinePage(0, [100], null);
+        value.count = 2; value.total_rows = 1; value.dates[3].count = 2;
+        value.entries[0].members.push({id: 99, created: 99000});
+        timeline.receive({view: "timeline", generation: timeline.generation, appKey: timeline.appKey,
+            query: timeline.query, date: "older", grouping: timeline.grouping, offset: 0,
+            replacing: true, revision: state.observedHistoryRevision}, value, "", "");
+        compare(timeline.error, "");
+        tryVerify(() => findChild(content, "notificationTimelineList") !== null);
+        const list = findChild(content, "notificationTimelineList");
+        tryCompare(list, "count", 5);
+        tryCompare(controller, "detailsExpansionProgress", 1);
+        showRow(list, 4, ListView.Contain);
+        mouseClick(findChild(content, "notificationCard-100:100000:expand"));
+        tryCompare(list, "count", 7);
+        compare(list.rows.slice(-2).map(row => row.key), ["member:100:100000", "member:99:99000"]);
+        showRow(list, 6, ListView.Contain);
+        mouseClick(findChild(content, "notificationCard-member:99:99000:delete"));
+        const prepare = calls.filter(c => c.method === "notifications.prepareDelete").pop();
+        compare(prepare.params, {app_key: "named:Chat", selected: {id: 99, created: 99000}});
+        compare(controller.detailsTab, "notifications", "member commands cannot open a hidden reader");
+        content.destroy();
+    }
     function test_timelineRefreshStagesThroughAnchorAndKeepsViewport() {
         const {state, controller, content} = make();
         controller.openDetails();

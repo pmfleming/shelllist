@@ -88,3 +88,50 @@ trial confirmation/expiry, hidden-trial reversion and topology tests pass.
 
 Validation: full Qt **481/0/1**, strict lint, display-model JavaScript and UI drift
 review pass.
+
+## 5 — Pure timeline row projection and dead presentation API removal
+
+Move row projection from `NotificationIndex` into the existing shared notification
+presentation helper, with explicit plain inputs and a bounded entry appender.
+It preserves native period order, recent previews, stack/member identities and
+load-more placement without mutating the source window or owning requests.
+This lowers nested view logic without creating another panel wrapper. Remove the
+unused `previewTitle` fallback after checking all source/import consumers; native
+heading/body presentation remains unchanged. Update the interaction contract's
+projection boundary, not its keys.
+
+Former `rows`: **13/21/74**. New `timelineRows`: **9/11/43**, entry appender:
+**4/5/23**. Production sums **8,001/5,465/35,584 → 7,997/5,457/35,561**;
+production source grows one line. Component effort falls partly because computation
+moves into JS: it is not evidence that runtime work disappeared. Locality/leverage
+and clone counts remain unchanged. A native pointer test expands a rendered stack
+and deletes its second member by captured native identity. Pure tests check native
+order, closed/superseded periods and source immutability. A local differential
+check finds 144 identical old/new projections across period, collapse, expansion
+and loading combinations.
+
+Validation: full Qt **482/0/1**, strict lint, notification-presentation and daemon-
+boundary JavaScript, source-relative imports, runtime smoke and UI drift review
+pass. Lens audit remains **incomplete**, not a verified clean contract.
+
+## Combined result and limits
+
+| Production metric | `bf01181` | After all five |
+| --- | ---: | ---: |
+| Function cyclomatic sum | 7,998 | 7,997 |
+| Function cognitive sum | 5,478 | 5,457 |
+| Function weighted effort sum | 35,592 | 35,561 |
+| Component weighted effort sum | 46,038 | 45,981 |
+| Source lines | 35,865 | 35,883 |
+| Mean locality / leverage | 75.672 / 38.016 | unchanged |
+| Expanded clone groups / production covered lines | 180 / 1,277 | unchanged |
+| Parser diagnostics | 0 | 0 |
+
+Tracked physical code grows **66,713 → 66,859**, including ten additional native
+behaviors and pure regressions. These five improvements prioritize explicit
+ownership and smaller peak responsibilities; they are **not** an overall LOC or
+clone reduction. The complete expanded clone scans omit zero windows/groups at
+500,000 keys / 1,000 windows per key / 10,000 groups. The ordinary Lens scan remains
+capped. No quality thresholds, suppressions, production scope or discovery filters
+were relaxed. Full sibling release/build, hardware and human acceptance remain
+unverified as noted above.
