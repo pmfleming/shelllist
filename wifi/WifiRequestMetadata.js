@@ -17,61 +17,44 @@ var reads = {
     "operation.status": "connection-status"
 };
 var effects = {
-    "wifi.setEnabled": "power",
-    "wifi.band.set": "band-set",
-    "wifi.disconnect": "disconnect",
-    "hotspot.start": "hotspot-start",
-    "hotspot.stop": "hotspot-stop",
-    "vpn.connect": "vpn-connect",
-    "vpn.disconnect": "vpn-disconnect",
-    "network.activateProfile": "activate-profile",
-    "network.deactivate": "deactivate-connection"
+    "wifi.setEnabled": {responseHandler: "power"},
+    "wifi.band.set": {responseHandler: "band-set", execution: "operation"},
+    "wifi.disconnect": {responseHandler: "disconnect"},
+    "hotspot.start": {responseHandler: "hotspot-start", execution: "operation"},
+    "hotspot.stop": {responseHandler: "hotspot-stop"},
+    "vpn.connect": {responseHandler: "vpn-connect", execution: "operation"},
+    "vpn.disconnect": {responseHandler: "vpn-disconnect"},
+    "network.activateProfile": {responseHandler: "activate-profile", execution: "operation"},
+    "network.deactivate": {responseHandler: "deactivate-connection"},
+    "wifi.scan": {responseHandler: "scan-start", concurrency: "scan", execution: "operation"},
+    "wifi.connectTarget": {responseHandler: "connect-start", concurrency: "connect", execution: "operation"},
+    "wifi.qr.connect": {responseHandler: "connect-start", concurrency: "connect", execution: "operation"},
+    "network.portalPrepare": {responseHandler: "portal", conflictDomain: "portal", concurrency: "portal"},
+    "network.portalClaim": {responseHandler: "portal", conflictDomain: "portal", concurrency: "portal"},
+    "network.portalComplete": {responseHandler: "portal", conflictDomain: "portal", concurrency: "portal"}
 };
+var profileReads = {details: "advanced-load", share: "share", "reveal-secret": "advanced-secret"};
+
+function read(handler) {
+    return {responseHandler: handler, conflictDomain: "none", concurrency: "read", sensitivity: "sensitive-read", execution: "read"};
+}
+function effect(overrides) {
+    return Object.assign({responseHandler: "", conflictDomain: "wifi-link", concurrency: "exclusive", sensitivity: "effect", execution: "effect"}, overrides);
+}
 function classify(method, params) {
-    var info = {responseHandler: "", conflictDomain: "wifi-link", concurrency: "exclusive", sensitivity: "effect", execution: "effect"};
-    function read(handler) {
-        info.responseHandler = handler;
-        info.conflictDomain = "none";
-        info.concurrency = "read";
-        info.sensitivity = "sensitive-read";
-        info.execution = "read";
+    if (method === "wifi.networks" && params.refresh_cache === true)
+        // A stale-cache read can schedule a real background radio scan.
+        return effect({responseHandler: "networks", conflictDomain: "wifi-scan", concurrency: "cache-refresh", execution: "operation"});
+    if (Object.prototype.hasOwnProperty.call(reads, method))
+        return read(reads[method]);
+    if (method === "wifi.profile.operation") {
+        if (Object.prototype.hasOwnProperty.call(profileReads, params.operation))
+            return read(profileReads[params.operation]);
+        return effect({responseHandler: params.operation === "update" ? "advanced-save" : "profile"});
     }
-    if (Object.prototype.hasOwnProperty.call(reads, method)) {
-        read(reads[method]);
-        if (method === "wifi.networks" && params.refresh_cache === true) {
-            // A stale-cache read can schedule a real background radio scan.
-            info.conflictDomain = "wifi-scan";
-            info.concurrency = "cache-refresh";
-            info.sensitivity = "effect";
-            info.execution = "operation";
-        }
-    } else if (Object.prototype.hasOwnProperty.call(effects, method)) {
-        info.responseHandler = effects[method];
-        if (["wifi.band.set", "hotspot.start", "vpn.connect", "network.activateProfile"].includes(method))
-            info.execution = "operation";
-    } else if (method === "wifi.profile.operation") {
-        const handlers = {details: "advanced-load", share: "share", "reveal-secret": "advanced-secret"};
-        if (Object.prototype.hasOwnProperty.call(handlers, params.operation))
-            read(handlers[params.operation]);
-        else
-            info.responseHandler = params.operation === "update" ? "advanced-save" : "profile";
-    } else if (method === "wifi.secret.provide") {
-        info.responseHandler = params.cancel ? "secret-cancel" : "secret-provide";
-    } else if (method === "wifi.scan") {
-        info.responseHandler = "scan-start";
-        info.concurrency = "scan";
-        info.execution = "operation";
-    } else if (["wifi.connectTarget", "wifi.qr.connect"].includes(method)) {
-        info.responseHandler = "connect-start";
-        info.concurrency = "connect";
-        info.execution = "operation";
-    } else if (method === "network.statistics.watch") {
-        read("statistics-watch");
-        info.execution = "operation";
-    } else if (["network.portalPrepare", "network.portalClaim", "network.portalComplete"].includes(method)) {
-        info.responseHandler = "portal";
-        info.conflictDomain = "portal";
-        info.concurrency = "portal";
-    }
-    return info;
+    if (method === "wifi.secret.provide")
+        return effect({responseHandler: params.cancel ? "secret-cancel" : "secret-provide"});
+    if (method === "network.statistics.watch")
+        return Object.assign(read("statistics-watch"), {execution: "operation"});
+    return effect(Object.prototype.hasOwnProperty.call(effects, method) ? effects[method] : {});
 }

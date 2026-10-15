@@ -53,6 +53,8 @@
     { "from": "shell/SurfaceRegistry.qml", "to": "qml/Shelllist/Battery/BatteryController.qml" },
     { "from": "launcher/ApplicationContent.qml", "to": "launcher/ApplicationListPane.qml" },
     { "from": "launcher/ApplicationContent.qml", "to": "launcher/ApplicationDetails.qml" },
+    { "from": "launcher/ApplicationDetails.qml", "to": "launcher/ApplicationPage.qml" },
+    { "from": "launcher/ApplicationDetails.qml", "to": "launcher/ApplicationResourcesPage.qml" },
     { "from": "launcher/ApplicationDetails.qml", "to": "launcher/ApplicationSettingsPage.qml" },
     { "from": "activity/TimeWeatherContent.qml", "to": "activity/TimeWeatherListPane.qml" },
     { "from": "activity/TimeWeatherContent.qml", "to": "activity/TimeWeatherDetails.qml" },

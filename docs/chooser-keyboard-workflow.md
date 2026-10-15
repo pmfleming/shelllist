@@ -450,6 +450,9 @@ there is no header More menu or Alt+M route. Individual-window and desktop-defin
 commands belong only to the Application tab, including its shared Alt+J content
 menu. Switching to Resources or Settings removes those page-local commands without
 changing submitted operations, backend guards or the remaining header shortcuts.
+One asynchronous loader instantiates only the selected application detail page;
+page replacement still discards an unsaved field without submitting it. Native
+`tst_application_details.qml` covers cycling all three pages and that boundary.
 
 Application window and desktop-action groups use passive shared `DetailColumnCard`
 containers and remain information/commands only, not editable fields. Each

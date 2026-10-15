@@ -4,6 +4,14 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
+The [2026-10-15 focused review](qml-maintenance-2026-10-15.md) starts
+from clean `e296b2b`: simpler Wi-Fi classification, a typed classification hook,
+shared detail sizing/headings and one Applications page loader. Production
+complexity, effort, locality and leverage improve modestly; clone-covered lines
+fall while group counts stay unchanged. Tracked code shrinks five lines including
+regressions. Full Qt **472/0/1**, strict lint and runtime smoke pass; Lens remains
+incomplete and full sibling/hardware acceptance remains unverified.
+
 The [four-pass follow-up](qml-quality-followups.md) starts from `051f462` and records
 separate fixes/refactors and validation for the resource test environment,
 notification timeline, Bluetooth responses and application operation outcomes.

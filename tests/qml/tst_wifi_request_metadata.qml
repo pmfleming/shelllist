@@ -36,7 +36,13 @@ DaemonTestCase {
             {tag:"read-with-mutation-id", id:"disconnect", method:"wifi.profile.operation", params:{operation:"details",path:"profile"}, exclusive:false, handler:"advanced-load", execution:"read"},
             {tag:"unknown-with-portal-id", id:"portal-fake", method:"new.mutation", params:{}, exclusive:true, handler:"", execution:"effect"},
             {tag:"cache-refresh-is-not-a-read", id:"networks", method:"wifi.networks", params:{cached:true,refresh_cache:true}, exclusive:false, handler:"networks", execution:"operation"},
-            {tag:"portal-is-independent-effect", id:"arbitrary", method:"network.portalClaim", params:{}, exclusive:false, handler:"portal", execution:"effect"}
+            {tag:"portal-is-independent-effect", id:"arbitrary", method:"network.portalClaim", params:{}, exclusive:false, handler:"portal", execution:"effect"},
+            {tag:"scan", id:"arbitrary", method:"wifi.scan", params:{}, exclusive:false, handler:"scan-start", execution:"operation"},
+            {tag:"qr-connect", id:"arbitrary", method:"wifi.qr.connect", params:{}, exclusive:false, handler:"connect-start", execution:"operation"},
+            {tag:"statistics", id:"arbitrary", method:"network.statistics.watch", params:{}, exclusive:false, handler:"statistics-watch", execution:"operation"},
+            {tag:"non-boolean-refresh", id:"arbitrary", method:"wifi.networks", params:{refresh_cache:1}, exclusive:false, handler:"networks", execution:"read"},
+            {tag:"inherited-method", id:"arbitrary", method:"constructor", params:{}, exclusive:true, handler:"", execution:"effect"},
+            {tag:"inherited-variant", id:"arbitrary", method:"wifi.profile.operation", params:{operation:"__proto__"}, exclusive:true, handler:"profile", execution:"effect"}
         ];
     }
     function test_classificationIsCapturedFromMethodAndVariant(data) {
@@ -56,6 +62,13 @@ DaemonTestCase {
         clientReady = false;
         c.backend.failSharedTransport("injected owner loss");
         compare(Object.keys(c.backend.requestMetadata).length, 0);
+    }
+    function test_classificationSnapshotsAreIndependent() {
+        const c = make();
+        c.backend.classifyRequest("wifi.qr.connect", {}).execution = "read";
+        c.backend.classifyRequest("wifi.status", {}).conflictDomain = "wifi-link";
+        compare(c.backend.classifyRequest("wifi.qr.connect", {}).execution, "operation");
+        compare(c.backend.classifyRequest("wifi.status", {}).conflictDomain, "none");
     }
     function test_controlLookingCallIdStillRoutesAsCallAndCleansUp() {
         const c = make();

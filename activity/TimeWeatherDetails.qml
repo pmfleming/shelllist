@@ -9,11 +9,9 @@ Ui.ActionDetailsPane {
     required property TimeWeatherController controller
     required property date now
     readonly property var city: controller.selectedCity
-    readonly property int footerHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
 
     chooserController: controller
     emptyText: "Select a city"
-    controlHeight: footerHeight
     icon: city.home ? "󰋜" : "󰍎"
     iconColor: Ui.Theme.accent
     title: city.label || "City"
@@ -21,7 +19,7 @@ Ui.ActionDetailsPane {
 
     Ui.TabbedDetailsStack {
         anchors.fill: parent
-        footerHeight: pane.footerHeight
+        footerHeight: pane.controlHeight
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab
         tabs: [

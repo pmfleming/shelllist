@@ -11,7 +11,6 @@ Ui.ActionDetailsPane {
     readonly property ClipboardDetailsController detailState: controller.detailState
     readonly property var entry: controller.selectedEntry || ({})
     readonly property bool actionsReady: !!detailState.value && !detailState.loading && !controller.actionInFlight
-    readonly property int toolbarHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property bool image: entry.kind === "image"
     readonly property bool link: entry.kind === "link"
     readonly property bool binary: entry.kind === "binary"
@@ -97,7 +96,6 @@ Ui.ActionDetailsPane {
 
     chooserController: controller
     emptyText: "Select a clipboard entry"
-    controlHeight: toolbarHeight
     icon: selected.icon || "󰅇"
     iconColor: entry.current ? Ui.Theme.active : Ui.Theme.accent
     title: selected.title || "Clipboard entry"

@@ -20,7 +20,9 @@ Item {
     property var validateEvent: null
     // Local, non-secret classification captured before dispatch. Never sent as
     // daemon authorization, and never inferred from a caller-chosen request ID.
-    property var classifyRequest: null
+    function classifyRequest(method: string, params: var): var {
+        return ({});
+    }
     property var requestMetadata: ({})
 
     readonly property bool requestRunning: pendingCount > 0
@@ -109,7 +111,7 @@ Item {
             console.warn("shelllist " + daemonName + " request rejected id=" + id + " reason=already-pending");
             return false;
         }
-        const metadata = Object.assign({}, classifyRequest ? classifyRequest(method, params || ({})) : {}, {kind: "call", method: method});
+        const metadata = Object.assign({}, classifyRequest(method, params || ({})), {kind: "call", method: method});
         recordRequestMetadata(id, metadata);
         const validationError = validateRequest ? validateRequest(method, params || ({})) : "";
         if (validationError) {

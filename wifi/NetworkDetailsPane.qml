@@ -10,12 +10,10 @@ ActionDetailsPane {
 
     required property WifiController controller
     readonly property var ap: controller.detailAp
-    readonly property int detailControlHeight: Math.max(36, Math.round(42 * uiScale))
-    readonly property int footerHeight: detailControlHeight
     readonly property string connectionLabel: Presentation.connectionStateLabel(controller, ap)
     readonly property bool signInRequired: Presentation.connectivityRequiresSignIn(Presentation.activeConnectivity(controller))
     readonly property color connectionColor: signInRequired ? Theme.warning : Theme.active
-    readonly property real cardBudget: Math.max(420, bodyHeight - footerHeight - 3 * sectionSpacing - 2)
+    readonly property real cardBudget: Math.max(420, bodyHeight - controlHeight - 3 * sectionSpacing - 2)
     readonly property real connectionCardHeight: Math.max(220, Math.round(cardBudget * 0.44))
     readonly property real networkCardHeight: Math.max(130, Math.round(cardBudget * 0.255))
 
@@ -24,7 +22,6 @@ ActionDetailsPane {
     sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, uiScale)
     emptyText: "Select a network"
     emptyFontSize: 20
-    controlHeight: detailControlHeight
     signalIcon: true
     iconColor: Theme.accent
     title: Presentation.networkName(ap)
@@ -40,7 +37,7 @@ ActionDetailsPane {
 
     TabbedDetailsStack {
         anchors.fill: parent
-        footerHeight: pane.footerHeight
+        footerHeight: pane.controlHeight
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab
         tabs: [

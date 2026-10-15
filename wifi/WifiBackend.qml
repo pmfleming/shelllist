@@ -15,7 +15,9 @@ Io.DaemonBackend {
     streams: NmApi.subscribedStreams
     recoverProtocolErrors: false
     active: controller.statusMonitorActive || controller.uiActive || requestRunning || controller.connection.running || controller.promptActive || (controller.portal && controller.portal.busy)
-    classifyRequest: RequestMetadata.classify
+    function classifyRequest(method: string, params: var): var {
+        return RequestMetadata.classify(method, params);
+    }
     readonly property bool listRunning: pendingRequests.some(info => info.method === NmApi.methods.wifi_networks)
     readonly property bool scanRunning: pendingRequests.some(info => info.concurrency === "scan") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: pendingRequests.some(info => info.concurrency === "connect")
@@ -57,7 +59,6 @@ Io.DaemonBackend {
             "secret-provide": backend.handleSecretResponse,
             "secret-cancel": backend.handleSecretResponse,
             "qr-parse": backend.handleQrParse,
-            "qr-connect": backend.handleConnectStart,
             "hotspot-capabilities": function (value) {
                 controller.hotspot.applyCapabilities(Api.apiData(value, "hotspot") || null);
             },

@@ -15,13 +15,9 @@ Ui.DetailColumnCard {
         Layout.fillWidth: true
         spacing: Ui.Theme.spacingXs
 
-        Ui.ThemeText {
-            Layout.fillWidth: true
+        Ui.SectionLabel {
             text: qsTr("Lock & suspend")
-            font.pixelSize: Ui.Theme.groupHeadingSize
-            font.weight: Ui.Theme.groupHeadingWeight
             Layout.minimumWidth: 0
-            wrapMode: Text.Wrap
         }
 
         Ui.ActionButton {

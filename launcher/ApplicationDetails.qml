@@ -10,12 +10,9 @@ Ui.ActionDetailsPane {
     required property ApplicationController controller
     readonly property var selected: controller.selectedResult || ({})
     readonly property var application: controller.selectedApplication || ({})
-    readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
-    readonly property int footerHeight: actionHeight
 
     chooserController: controller
     emptyText: "Select an application"
-    controlHeight: actionHeight
     icon: "󰀻"
     iconSource: Quickshell.iconPath(application.icon || "application-x-executable", "application-x-executable")
     iconColor: Ui.Theme.accent
@@ -35,7 +32,7 @@ Ui.ActionDetailsPane {
 
     Ui.TabbedDetailsStack {
         anchors.fill: parent
-        footerHeight: pane.footerHeight
+        footerHeight: pane.controlHeight
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab
         tabs: [
@@ -64,34 +61,35 @@ Ui.ActionDetailsPane {
 
         Loader {
             anchors.fill: parent
-            active: pane.controller.detailsTab === "application"
             asynchronous: true
-            sourceComponent: ApplicationPage {
-                controller: pane.controller
-                application: pane.application
-                uiScale: pane.uiScale
-            }
+            active: sourceComponent !== null
+            sourceComponent: pane.controller.detailsTab === "application" ? applicationPage
+                : pane.controller.detailsTab === "resources" ? resourcesPage
+                : pane.controller.detailsTab === "settings" ? settingsPage : null
         }
+    }
 
-        Loader {
-            anchors.fill: parent
-            active: pane.controller.detailsTab === "resources"
-            asynchronous: true
-            sourceComponent: ApplicationResourcesPage {
-                controller: pane.controller
-                application: pane.application
-                uiScale: pane.uiScale
-            }
+    Component {
+        id: applicationPage
+        ApplicationPage {
+            controller: pane.controller
+            application: pane.application
+            uiScale: pane.uiScale
         }
-
-        Loader {
-            anchors.fill: parent
-            active: pane.controller.detailsTab === "settings"
-            asynchronous: true
-            sourceComponent: ApplicationSettingsPage {
-                controller: pane.controller
-                application: pane.application
-            }
+    }
+    Component {
+        id: resourcesPage
+        ApplicationResourcesPage {
+            controller: pane.controller
+            application: pane.application
+            uiScale: pane.uiScale
+        }
+    }
+    Component {
+        id: settingsPage
+        ApplicationSettingsPage {
+            controller: pane.controller
+            application: pane.application
         }
     }
 }

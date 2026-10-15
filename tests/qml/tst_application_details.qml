@@ -88,6 +88,24 @@ DaemonTestCase {
         compare(panel.controller.dispatched[1].action, "close-window");
         compare(panel.controller.dispatched[1].window_id, "window-1");
     }
+    function test_pageReplacementDiscardsDraftWithoutSaving() {
+        const app = Object.assign(application("desktop-application", 1, 0), {category: "shell", default_workspace_id: "1"});
+        const panel = make(app);
+        keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
+        tryVerify(() => findChild(panel, "applicationCategory") !== null && panel.detailsNavigation.contentReady);
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        verify(panel.detailsNavigation.editing);
+        for (const page of ["applicationPage", "applicationResourcesPage", "applicationSettingsPage"]) {
+            keyClick(Qt.Key_Tab, Qt.ControlModifier);
+            tryVerify(() => findChild(panel, page) !== null && panel.detailsNavigation.contentReady);
+        }
+        compare(findChild(panel, "applicationPage"), null);
+        compare(findChild(panel, "applicationResourcesPage"), null);
+        compare(findChild(panel, "applicationCategory").value, "shell");
+        compare(calls.filter(call => call.method === "applications.settings.update").length, 0);
+    }
     function test_altJRetainsAllDesktopAndWindowCommands() {
         const panel = make(application("desktop-application", 1, 12));
         keyClick(Qt.Key_J, Qt.AltModifier);

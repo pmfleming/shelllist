@@ -9,14 +9,11 @@ Ui.ActionDetailsPane {
 
     required property BluetoothController controller
     readonly property bool editingText: ((deviceLoader.item as BluetoothDevicePage)?.editingName ?? false) || ((adapterLoader.item as BluetoothAdapterPage)?.editing ?? false)
-    readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
-    readonly property int footerHeight: actionHeight
     readonly property bool deviceContext: controller.hasSelection && controller.detailsTab !== "adapter"
 
     chooserController: controller
     emptyText: "Select a Bluetooth device"
     contentAvailable: controller.hasSelection || controller.detailsTab === "adapter"
-    controlHeight: actionHeight
     icon: deviceContext ? controller.selectedResult.icon : "󰒓"
     iconColor: !deviceContext || controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
     iconBorderColor: Ui.Theme.mix(Ui.Theme.strongBorder, Ui.Theme.surface, 0.40)
@@ -30,7 +27,7 @@ Ui.ActionDetailsPane {
     Ui.TabbedDetailsStack {
         anchors.fill: parent
         objectName: "bluetoothDetailsTabs"
-        footerHeight: pane.footerHeight
+        footerHeight: pane.controlHeight
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.deviceContext ? pane.controller.detailsTab : pane.controller.adapterSettingsTab
         tabs: pane.deviceContext ? [

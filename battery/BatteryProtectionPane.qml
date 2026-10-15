@@ -112,12 +112,8 @@ Column {
             objectName: "batteryChargingActionRow"
             Layout.fillWidth: true
             Layout.topMargin: Ui.Theme.spacingSm
-            Ui.ThemeText {
-                Layout.fillWidth: true
+            Ui.SectionLabel {
                 text: qsTr("Charging actions")
-                font.pixelSize: Ui.Theme.groupHeadingSize
-                font.weight: Ui.Theme.groupHeadingWeight
-                wrapMode: Text.Wrap
             }
             Ui.SurfaceActionRow {
                 objectName: "batteryChargingActions"

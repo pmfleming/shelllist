@@ -8,10 +8,8 @@ Ui.ActionDetailsPane {
     id: pane
     required property DisplayController controller
     objectName: "displayDetails"
-    readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     chooserController: controller
     contentAvailable: true
-    controlHeight: actionHeight
     icon: controller.globalSettingsOpen ? "󰒓" : controller.selectedResult ? controller.selectedResult.icon : "󰍹"
     iconColor: controller.globalSettingsOpen ? Ui.Theme.accent : controller.selectedOutput && !controller.selectedOutput.disabled ? Ui.Theme.active : Ui.Theme.mutedText
     title: controller.globalSettingsOpen ? qsTr("Display settings") : controller.selectedResult ? controller.selectedResult.title : qsTr("Displays")
