@@ -100,7 +100,7 @@
           inherit shelllistSearch shelllistTimezoneAssets;
 
           materialColors = import ./nix/material-colors.nix { inherit pkgs; };
-          wifiQrScanner = pkgs.callPackage ./nix/qrca.nix { };
+          wifiQrScanner = pkgs.callPackage ./nix/qrca.nix { inherit nmDaemon; };
 
           # Development-only: never part of the resident host or installed bar.
           materialGallery = pkgs.writeShellApplication {

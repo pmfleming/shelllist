@@ -995,6 +995,13 @@ an impossible save choice. Neither behavior deletes an existing profile. Only ex
 disk-write confirmation reports stored; a failed confirmation does not imply that
 native activation failed or prove that no password reached disk.
 
+Qrca retains its scanned-network Remember control but delegates connection to
+nm-daemon's `wifi.qr.connect` through the JSONL client. It never independently
+rewrites a saved profile. The password stays off process arguments, completion
+requires the matching terminal event, and transport failure never replays a
+connection. A failure to observe completion directs the user to Wi-Fi settings;
+receiving the request is not connection success.
+
 ## Native Wi-Fi prompt descriptors
 
 Hidden-network fields, defaults, security mappings and conditional required fields
