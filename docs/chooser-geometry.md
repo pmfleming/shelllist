@@ -40,8 +40,9 @@ comparison and 1×/1.25×/2× render checks are recorded in the
   shows fewer rows, not smaller targets.
 - Expanded canvas width is 960–1040px. The inspector has at least 495px before
   its own padding. The list is not replaced by details on small outputs.
-- Frame height is 75% of work-area height, bounded to 360–900px and clamped to
-  the available area. Search, result count and telemetry do not size the frame.
+- Frame height is 90% of work-area height, bounded to 360–900px and clamped to
+  the available area. This gives shorter screens more room while retaining the
+  900px cap on larger screens. Search, result count and telemetry do not size the frame.
 - The tested supported split envelope is **976×600 logical work-area pixels**
   or larger at the default font sizes. This is a measured implementation bound,
   not a new owner requirement or a claim of large-text accessibility acceptance.
@@ -95,6 +96,9 @@ remain the intended behavior, but every card/width combination is no longer
 individually checked.
 
 ## Validation
+
+`tst_popover_height.qml` checks laptop-height sizing, the large-screen cap,
+minimum/emergency bounds and vertical centering using the shared geometry.
 
 `tst_chooser_geometry.qml` was removed in the
 [2026-10-06 pruning](reviews/test-pruning-2026-10-06.md). Its broad geometry/input

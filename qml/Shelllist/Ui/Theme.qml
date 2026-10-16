@@ -114,7 +114,7 @@ Item {
     readonly property int popupClosedWidth: 453
     readonly property int popupOpenWidth: 1040
     readonly property int detailsGapWidth: 12
-    readonly property real popupHeightRatio: 0.75
+    readonly property real popupHeightRatio: 0.90
     readonly property real densityMinimum: 0.82
     readonly property real densityMaximum: 1.12
     readonly property int densityReferenceHeight: 850
