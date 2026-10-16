@@ -280,20 +280,20 @@ DaemonTestCase {
                 c.handleSecretEvent({event: "delivered", request_id: "secret-order", data: {}});
                 delivered = true;
             } else {
-                c.handleSecretEvent({event: "persistence", request_id: "secret-order", data: {status: "failed", error: "Keyring locked"}});
+                c.handleSecretEvent({event: "persistence", request_id: "secret-order", data: {status: "failed", error: "NetworkManager confirmation failed", storage_provider: "networkmanager"}});
                 failed = true;
             }
-            verify(c.status.includes(failed ? "could not be saved" : delivered ? "sent to NetworkManager" : "received"));
+            verify(c.status.includes(failed ? "could not be confirmed" : delivered ? "sent to NetworkManager" : "received"));
         }
         c.handleSecretEvent({event: "requested", request_id: "newer-secret", data: {secret_keys: ["psk"], save_supported: true}});
         const status = c.status;
         c.handleSecretEvent({event: "delivered", request_id: "secret-order", data: {}});
         compare(c.status, status, "old delivery cannot overwrite a newer request");
     }
-    function test_keyringWarningRetainsItsConnectionOwner_data() {
+    function test_storageWarningRetainsItsConnectionOwner_data() {
         return [{tag: "other-profile", path: "/profile/new", cleared: false}];
     }
-    function test_keyringWarningRetainsItsConnectionOwner(data) {
+    function test_storageWarningRetainsItsConnectionOwner(data) {
         const c = makePanel().controller;
         c.handleSecretEvent({event: "requested", request_id: "current", data: {secret_keys: ["psk"], save_supported: true}});
         c.handleSecretEvent({event: "persistence", request_id: "old", data: {connection_path: "/profile/old", status: "failed", error: "Locked"}});

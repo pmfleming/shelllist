@@ -957,7 +957,7 @@ command. Answering an outstanding SecretAgent request is allowed during the
 connection that requested it. The form remains open, with repeat submission
 blocked, until its matching acknowledgement. Failed dispatch preserves the draft;
 expired/unavailable requests clear secrets and require an explicit new connection.
-A late cancellation or reply cannot close another request's form. Keyring
+A late cancellation or reply cannot close another request's form. NetworkManager
 persistence is separate from credential acceptance and link activation. Forms also
 honor the daemon's advertised remaining deadline and clear drafts on expiry.
 
@@ -984,8 +984,16 @@ network's profile card, password/hidden/enterprise forms and Qrca's scanned-netw
 confirmation expose an explicit opt-out. Opt-out creates a volatile,
 non-autoconnecting profile without updating an existing saved identity; it does
 not delete an earlier saved network (use Forget for that). SecretAgent requests
-marked NOT_SAVED never offer saving. A supported SecretAgent remember choice
-controls keyring storage, not deletion of an existing profile.
+marked NOT_SAVED never offer saving. A system-owned SecretAgent request keeps
+Remember checked and unavailable: omitting a deferred save cannot prevent NM
+from persisting its reply. One-time use requires cancelling and starting a separate
+temporary connection; the saved profile and its password remain unchanged. An old
+backend without retention metadata likewise cannot offer a trustworthy native
+use-once toggle. Mixed system/agent ownership blocks submission and directs the
+user to explicit migration or a separate temporary connection; it cannot offer
+an impossible save choice. Neither behavior deletes an existing profile. Only explicit NM
+disk-write confirmation reports stored; a failed confirmation does not imply that
+native activation failed or prove that no password reached disk.
 
 ## Native Wi-Fi prompt descriptors
 

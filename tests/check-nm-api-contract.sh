@@ -108,6 +108,11 @@ jq -e '
   .data.fixtures."wifi-qr.parse".qr.has_password == true and
   (.data.fixtures."wifi-qr.parse".qr | has("password") | not) and
   .data.fixtures."wifi-qr.parse-open".qr.auth == "open" and
+  .data.fixtures."wifi-secret.capabilities".secret_agent.keyring.available == false and
+  .data.fixtures."wifi-secret.capabilities".secret_agent.keyring.persistence_supported == false and
+  .data.fixtures."wifi-secret.capabilities".secret_agent.storage.provider == "networkmanager" and
+  any(.data.fixtures."wifi-secret.stream".events[]; .event == "requested" and .data.save_required == true) and
+  any(.data.fixtures."wifi-secret.stream".events[]; .event == "persistence" and .data.status == "stored" and .data.storage_provider == "networkmanager") and
   (.data.fixtures."network-health.stream".events[] | select(.event == "device") | .data.health.reason.category == "authentication")
 ' "$method_actual" >/dev/null
 

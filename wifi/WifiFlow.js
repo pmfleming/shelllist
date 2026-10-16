@@ -78,7 +78,7 @@ function secretTransition(event, mode, requestId, outcomeRequestId) {
         };
     return {
         stage: "persistence",
-        message: event.data.status === "stored" ? "Wi-Fi secret saved to the keyring." : "Wi-Fi password could not be saved: " + (event.data.error || event.data.status)
+        message: event.data.status === "stored" ? (event.data.storage_provider === "networkmanager" ? "Wi-Fi credentials saved by NetworkManager." : "Wi-Fi credentials saved.") : "Wi-Fi credential storage could not be confirmed: " + (event.data.error || event.data.status)
     };
 }
 

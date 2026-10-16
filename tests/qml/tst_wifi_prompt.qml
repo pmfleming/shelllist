@@ -2,7 +2,12 @@ import QtQuick
 import QtTest
 
 TestCase {
+    id: testCase
     name: "WifiPrompt"
+    width: 640
+    height: 480
+    when: windowShown
+    visible: true
 
     property var prompt
     property var capturedSecrets
@@ -65,6 +70,7 @@ TestCase {
         });
         compare(prompt.credentialFields.length, 2);
         verify(prompt.saveSecret, "remember defaults on for each supported request");
+        verify(prompt.saveSecretRequired, "legacy backends cannot promise save:false is temporary");
         verify(prompt.submitCredentials(fakeController, {
             password: "login-secret",
             "private-key-password": "key-secret"
@@ -91,6 +97,53 @@ TestCase {
         verify(!prompt.saveSecret, "temporary native credentials must not be saved");
         verify(prompt.submitCredentials(fakeController, {psk: "test-password"}));
         verify(!capturedSecrets.save);
+    }
+
+    function test_nativeRequiredStorageCannotBeUncheckedAndEscapeCancels() {
+        prompt.openDaemonSecretPrompt({request_id: "native", data: {
+            secret_keys: ["psk"], save_supported: true, save_required: true,
+            storage_provider: "networkmanager"
+        }});
+        const component = Qt.createComponent(Qt.resolvedUrl("../../wifi/WifiCredentialDialog.qml"));
+        compare(component.status, Component.Ready, component.errorString());
+        const dialog = createTemporaryObject(component, testCase, {prompt: prompt, width: 640, height: 480});
+        verify(dialog !== null);
+        dialog.cancelled.connect(function () { prompt.cancel(); });
+        const remember = findChild(dialog, "rememberCredentials");
+        verify(remember !== null);
+        verify(remember.visible && remember.checked);
+        verify(!remember.enabled);
+        mouseClick(remember);
+        verify(prompt.saveSecret, "a disabled remember control cannot promise use-once");
+        prompt.saveSecret = false; // controller must also reject a programmatic downgrade
+        verify(!prompt.submitCredentials(fakeController, {psk: "synthetic-test-only"}));
+        verify(capturedSecrets === null);
+        dialog.forceActiveFocus();
+        keyClick(Qt.Key_Escape);
+        verify(!prompt.credentialOpen);
+        compare(Object.keys(prompt.credentialValues).length, 0);
+        verify(capturedSecrets === null);
+    }
+
+    function test_agentOwnedRequestDoesNotOfferImplicitMigration() {
+        prompt.openDaemonSecretPrompt({request_id: "legacy", data: {
+            secret_keys: ["psk"], save_supported: false, save_required: false,
+            migration_required: true, storage_provider: "networkmanager"
+        }});
+        verify(!prompt.saveSecret && !prompt.saveSecretRequired);
+        verify(prompt.credentialDetail.indexOf("explicit migration") >= 0);
+        verify(prompt.submitCredentials(fakeController, {psk: "synthetic-test-only"}));
+        verify(!capturedSecrets.save);
+    }
+
+    function test_mixedOwnershipRequiresMigrationRatherThanAnImpossibleSaveChoice() {
+        prompt.openDaemonSecretPrompt({request_id: "mixed", data: {
+            secret_keys: ["password", "private-key-password"],
+            save_supported: false, save_required: true, migration_required: true
+        }});
+        verify(prompt.credentialDetail.indexOf("Mixed credential ownership") >= 0);
+        verify(!prompt.submitCredentials(fakeController, {password: "synthetic", "private-key-password": "synthetic"}));
+        verify(capturedSecrets === null);
     }
 
     function test_validatesHiddenAndEnterpriseSchema() {

@@ -15,6 +15,7 @@ Item {
     property string secretRequestId: ""
     property bool saveSecret: true
     property bool saveSecretSupported: false
+    property bool saveSecretRequired: false
     property bool secretSubmitting: false
     property string secretPersistenceMessage: ""
     property string secretDeliveryMessage: ""
@@ -75,6 +76,7 @@ Item {
         password = nextPassword;
         saveSecret = true;
         saveSecretSupported = false;
+        saveSecretRequired = false;
         open = true;
     }
 
@@ -87,7 +89,7 @@ Item {
     }
 
     function openCredentials(nextMode, nextTitle, nextDetail, fields, nextNetwork) {
-        saveSecret = nextMode === "daemon-secret" ? saveSecretSupported : true;
+        saveSecret = nextMode === "daemon-secret" ? (saveSecretSupported || saveSecretRequired) : true;
         credentialMode = nextMode;
         credentialTitle = nextTitle;
         credentialDetail = nextDetail;
@@ -121,7 +123,18 @@ Item {
         secretOutcomeRequestId = event.request_id || "";
         secretRequestId = event.request_id || "";
         saveSecretSupported = !!event.data.save_supported;
-        openCredentials("daemon-secret", "Network credentials", spec.detail, spec.fields, null);
+        // Older agents cannot prove that save:false prevents NM persistence.
+        // Keep their supported requests remembered, rather than offer a false
+        // use-once guarantee. New temporary requests explicitly say false.
+        saveSecretRequired = event.data.save_required === undefined ? saveSecretSupported : !!event.data.save_required;
+        let detail = spec.detail;
+        if (saveSecretRequired && !saveSecretSupported)
+            detail += " Mixed credential ownership requires explicit migration before this saved profile can be answered. Cancel and connect with Remember network off for one-time use.";
+        else if (saveSecretRequired)
+            detail += " This profile remembers credentials. For a one-time connection, cancel and connect with Remember network off.";
+        else if (event.data.migration_required)
+            detail += " These credentials are for this request only. Saving requires explicit migration to NetworkManager.";
+        openCredentials("daemon-secret", "Network credentials", detail, spec.fields, null);
         secretExpiry.stop();
         if (Number.isFinite(event.data.timeout_ms) && event.data.timeout_ms >= 0) {
             secretExpiry.interval = Math.max(1, Math.min(2147483647, Math.ceil(event.data.timeout_ms)));
@@ -148,6 +161,7 @@ Item {
         secretOutcomeRequestId = "";
         saveSecret = true;
         saveSecretSupported = false;
+        saveSecretRequired = false;
     }
 
     function submitNetworkPassword(controller, value) {
@@ -178,6 +192,14 @@ Item {
         if (credentialMode === "daemon-secret") {
             if (secretSubmitting || !secretRequestId)
                 return false;
+            if (saveSecretRequired && !saveSecretSupported) {
+                controller.status = "This profile requires explicit credential migration. Cancel and use a temporary connection for one-time credentials.";
+                return false;
+            }
+            if (saveSecretRequired && !saveSecret) {
+                controller.status = "This profile remembers credentials. Cancel and use a temporary connection for one-time credentials.";
+                return false;
+            }
             secretSubmitting = true;
             if (!controller.connection.provideSecrets(secretRequestId, values, saveSecret)) {
                 secretSubmitting = false;

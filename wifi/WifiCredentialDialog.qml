@@ -66,19 +66,20 @@ ModalFrame {
     }
 
     ToggleRow {
+        objectName: "rememberCredentials"
         width: parent.width
         height: Theme.controlHeight
-        visible: dialog.prompt.credentialMode !== "daemon-secret" || dialog.prompt.saveSecretSupported
-        enabled: !dialog.prompt.secretSubmitting
+        visible: dialog.prompt.credentialMode !== "daemon-secret" || dialog.prompt.saveSecretSupported || dialog.prompt.saveSecretRequired
+        enabled: !dialog.prompt.secretSubmitting && !dialog.prompt.saveSecretRequired
         title: qsTr("Remember network")
         showSubtitle: false
         checked: dialog.prompt.saveSecret
-        onClicked: dialog.prompt.saveSecret = !dialog.prompt.saveSecret
+        onClicked: if (!dialog.prompt.saveSecretRequired) dialog.prompt.saveSecret = !dialog.prompt.saveSecret
     }
 
     icon: "wifi"
     actions: [
-        {id: "accept", label: prompt.credentialMode === "daemon-secret" ? qsTr("Provide credentials") : qsTr("Connect"), icon: "wifi", enabled: !prompt.secretSubmitting, presentation: {group: "primary"}},
+        {id: "accept", label: prompt.credentialMode === "daemon-secret" ? qsTr("Provide credentials") : qsTr("Connect"), icon: "wifi", enabled: !prompt.secretSubmitting && !(prompt.saveSecretRequired && !prompt.saveSecretSupported), presentation: {group: "primary"}},
         {id: "cancel", label: qsTr("Cancel"), icon: "close", presentation: {group: "toolbar"}}
     ]
     onActionTriggered: function(actionId) {
