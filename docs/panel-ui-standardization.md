@@ -63,6 +63,13 @@ Browsing uses a marker only; editing adds an editor-local background and lower l
   flows share this presentation. Codes, fields, trial countdowns and all domain
   guards are retained; see the interaction contract's compact-confirmation section.
 
+City pickers use one shared searchable-choice editor in `FormField`, with Cancel
+beside Confirm through `inlineHeaderActions`. Add/Manual supply the identity icon;
+the repeated action-summary footer is omitted. Search suggestions reuse the same
+`ChoicePopup`/`DropDownOptionDelegate` composition as ordinary dropdowns. The shared
+UI maintainer owns the extracted popup's unchanged 12px radius (not a new panel
+style override). Required Manual-location consequences and submission guards remain.
+
 ## Execution and evidence
 
 Each phase is a separate commit. Local, non-mutating captures and logs are under

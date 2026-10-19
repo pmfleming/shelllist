@@ -121,8 +121,11 @@ and pauses automatic location. It does not change Home or implicitly save a city
 Return to Automatic changes policy but retains the last effective place until fresh
 accepted evidence arrives. It remains reachable on Home when Current is suppressed.
 
-The picker uses shared required-input modal traversal. Typing searches natively,
-selecting stays local, and submit/cancel are explicit. Removal confirms the captured
+The picker has one searchable City control using shared required-input modal
+traversal. Type to search, Down/Up to browse suggestions, then Enter or click to
+choose. Selection stays local; only explicit confirmation submits. Escape closes
+suggestions before cancelling the modal. Add/Manual use their identity glyphs;
+Cancel sits beside Confirm in the header, without an action-summary footer. Removal confirms the captured
 saved-city identity and never removes Home/Current. Late replies cannot retarget
 another picker or claim success on request admission. Failures remain separate from
 Activity read status, with shared surface feedback and no automatic write replay.

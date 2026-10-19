@@ -10,44 +10,34 @@ PromptDialog {
     property var choices: []
     property string choice: ""
     property bool searching: false
-    property string queryLabel: qsTr("City search")
     property string choiceLabel: qsTr("City")
     signal queryEdited(string query)
     signal choiceSelected(string value)
 
     inputVisible: false
     actionsVisible: true
+    inlineHeaderActions: true
+    actionSummaryVisible: false
     enterEnabled: false
+    escapeEnabled: !search.popupVisible
     instruction: ""
 
-    function focusInput(): void { search.focusInput(false); }
+    function focusInput(): void { search.focusInput(true); }
 
-    ColumnLayout {
-        width: parent.width
-        spacing: dialog.bodySpacing
-        FormField {
+    FormField {
+        Layout.fillWidth: true
+        label: dialog.choiceLabel
+        SearchChoiceField {
+            id: search
+            objectName: "searchChoiceQuery"
             Layout.fillWidth: true
-            label: dialog.queryLabel
-            TextField {
-                id: search
-                objectName: "searchChoiceQuery"
-                Layout.fillWidth: true
-                text: dialog.query
-                maximumLength: 120
-                onEdited: function(text) { dialog.queryEdited(text); }
-            }
-        }
-        FormField {
-            Layout.fillWidth: true
-            label: dialog.choiceLabel
-            DropDownList {
-                objectName: "searchChoiceCandidate"
-                Layout.fillWidth: true
-                options: dialog.choices
-                value: dialog.choice
-                placeholder: dialog.searching ? qsTr("Searching…") : qsTr("Select a city")
-                onSelected: function(value) { dialog.choiceSelected(value); }
-            }
+            query: dialog.query
+            options: dialog.choices
+            value: dialog.choice
+            searching: dialog.searching
+            maximumLength: 120
+            onQueryEdited: function(query) { dialog.queryEdited(query); }
+            onSelected: function(value) { dialog.choiceSelected(value); }
         }
     }
 }

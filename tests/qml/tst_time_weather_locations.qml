@@ -170,15 +170,98 @@ DaemonTestCase {
         reply(s,s.locations.mutationId,{location_control:Object.assign(control(true,2),{operation_id:request.params.request_id,operation_status:"applied"})});
         compare(s.locations.pickerMode,"");compare(s.locations.controlState.revision,2);
     }
+    function test_singleCityControl_data() { return [{tag:"normal-dark",w:1280,scheme:Qt.Dark},{tag:"minimum-light",w:976,scheme:Qt.Light},{tag:"collapsed-dark",w:976,scheme:Qt.Dark,collapsed:true}]; }
+    function test_singleCityControl(data) {
+        Ui.Theme.previewColorScheme=data.scheme;
+        const s=start(false,data.w);
+        if (data.collapsed) width=s.owner.closedWindowWidth;
+        s.locations.openPicker("add");
+        const modal=findChild(s.view,"timeWeatherCityPicker"), editor=findChild(modal,"searchChoiceQuery");
+        tryVerify(()=>editor.inputActiveFocus);
+        compare(findChild(modal,"searchChoiceCandidate"),null);
+        compare(modal.icon,"add");verify(!findChild(modal,"promptActionSummary").visible);
+        const accept=findChild(modal,"detailAction:accept"), cancel=findChild(modal,"detailAction:reject");
+        const a=accept.mapToItem(modal,0,accept.height/2), c=cancel.mapToItem(modal,0,cancel.height/2);
+        verify(Math.abs(a.y-c.y)<=1);verify(c.x+cancel.width<=a.x);
+        verify(Math.abs(editor.mapToItem(modal,editor.width,0).x-(a.x+accept.width))<=1,"single editor uses the whole shared field column");
+        verify(!accept.enabled);
+        capture(s.view,"add-picker-"+data.tag);
+        keyClick(Qt.Key_D);keyClick(Qt.Key_U);
+        compare(s.locations.query,"du");compare(mutations().length,0);
+        tryVerify(()=>s.locations.searchId.length>0);
+        reply(s,s.locations.searchId,{places:[place("Dublin","Europe/Dublin"),Object.assign(place("Dublin","America/New_York"),{region:"Ohio",latitude:40.0992,longitude:-83.1141})]});
+        tryVerify(()=>editor.popupVisible);
+        keyClick(Qt.Key_Down);compare(editor.highlightedIndex,0);
+        keyClick(Qt.Key_Down);compare(editor.highlightedIndex,1);
+        keyClick(Qt.Key_Up);compare(editor.highlightedIndex,0);
+        compare(editor.text,"du");compare(s.locations.choice,"");verify(!accept.enabled);
+        compare(s.owner.selectedCity.id,"weather:home","arrows never browse underlying cities");
+        capture(s.view.Window.window.contentItem,"add-choices-"+data.tag);
+        keyClick(Qt.Key_Return);compare(s.locations.choice,"0");
+        verify(!editor.popupVisible);verify(accept.enabled);compare(mutations().length,0);
+        verify(editor.text.includes("Dublin"));
+        // Modal Tab visits header commands, not a second City editor or the panel.
+        keyClick(Qt.Key_Tab);tryVerify(()=>accept.activeFocus || cancel.activeFocus);
+        if (!accept.activeFocus) keyClick(Qt.Key_Tab);
+        tryVerify(()=>accept.activeFocus);keyClick(Qt.Key_Return);
+        compare(mutations().length,1);compare(mutations()[0].method,"locations.add");
+        compare(mutations()[0].params.place.timezone,"Europe/Dublin");
+        keyClick(Qt.Key_Escape);
+    }
+    function test_suggestionEscapePointerAndReplacementStayLocal() {
+        const s=start(false);s.locations.openPicker("add");
+        const editor=findChild(s.view,"searchChoiceQuery");tryVerify(()=>editor.inputActiveFocus);
+        keyClick(Qt.Key_Down);tryVerify(()=>editor.popupVisible);
+        keyClick(Qt.Key_Escape);tryVerify(()=>!editor.popupVisible);
+        compare(s.locations.pickerMode,"add");compare(s.locations.choice,"");
+        keyClick(Qt.Key_Down);compare(editor.highlightedIndex,0);
+        s.locations.candidates=[place("Dublin","Europe/Dublin")];
+        compare(editor.highlightedIndex,-1);
+        keyClick(Qt.Key_Return);compare(s.locations.choice,"");compare(mutations().length,0);
+        const option=findChild(editor.popup.contentItem,"dropDownOption-0");tryVerify(()=>option!==null);
+        mouseClick(option);compare(s.locations.choice,"0");verify(!editor.popupVisible);
+        compare(mutations().length,0);
+        // Starting another query immediately invalidates the old candidate.
+        keyClick(Qt.Key_X);compare(s.locations.choice,"");compare(s.locations.query,"x");
+        keyClick(Qt.Key_Escape);tryVerify(()=>!s.locations.modalOpen);
+        compare(mutations().length,0);
+    }
+    function test_longSuggestionListScrollsAndTabLeavesTheSingleEditor() {
+        const s=start(false,976);s.locations.openPicker("add");
+        const editor=findChild(s.view,"searchChoiceQuery");tryVerify(()=>editor.inputActiveFocus);
+        s.locations.candidates=Array.from({length:12},(_,index)=>place("City "+index,"Europe/Dublin"));
+        for (let i=0;i<12;i++) keyClick(Qt.Key_Down);
+        compare(editor.highlightedIndex,11);
+        tryVerify(()=>editor.popup.contentItem.contentY>0);
+        capture(s.view.Window.window.contentItem,"long-city-choices");
+        tryVerify(()=>{
+            const list=editor.popup.contentItem, window=s.view.Window.window;
+            const p=list.mapToItem(window.contentItem,0,0);
+            const editorTop=editor.mapToItem(window.contentItem,0,0).y;
+            return p.y>=0 && p.y+list.height<=window.height
+                && (p.y-editor.popup.topPadding>=editorTop+editor.height
+                    || p.y+list.height+editor.popup.bottomPadding<=editorTop);
+        });
+        tryVerify(()=>{
+            const last=findChild(editor.popup.contentItem,"dropDownOption-11");
+            if (!last) return false;
+            const p=last.mapToItem(editor.popup.contentItem,0,0);
+            return p.y>=0 && p.y+last.height<=editor.popup.contentItem.height;
+        });
+        compare(s.locations.choice,"");compare(mutations().length,0);
+        keyClick(Qt.Key_Tab,Qt.ShiftModifier);tryVerify(()=>!editor.popupVisible);
+        verify(findChild(findChild(s.view,"timeWeatherCityPicker"),"detailAction:reject").activeFocus);
+        keyClick(Qt.Key_Escape);tryVerify(()=>!s.locations.modalOpen);
+    }
     function test_addAcknowledgementDoesNotRetargetReopenedPicker() {
         const s=start(false);s.view.listItem.focusSearch();keyClick(Qt.Key_A,Qt.AltModifier);
         tryCompare(s.locations,"pickerMode","add");
         s.locations.candidates=[place("Dublin","Europe/Dublin")];
-        const choice=findChild(s.view,"searchChoiceCandidate");
-        choice.forceActiveFocus();keyClick(Qt.Key_Down);
-        // Native choice remains a modal draft: it never adds on its own.
-        compare(mutations().length,0);
-        s.locations.selectChoice("0");
+        const choice=findChild(s.view,"searchChoiceQuery");
+        choice.focusInput(false);keyClick(Qt.Key_Down);
+        // Arrow browsing remains a modal draft, never an implicit Add.
+        compare(mutations().length,0);compare(s.locations.choice,"");
+        keyClick(Qt.Key_Return);compare(s.locations.choice,"0");
         mouseClick(findChild(findChild(s.view,"timeWeatherCityPicker"),"detailAction:accept"));
         const request=s.locations.mutationId;compare(mutations()[0].method,"locations.add");
         keyClick(Qt.Key_Escape);tryVerify(()=>!s.locations.modalOpen);

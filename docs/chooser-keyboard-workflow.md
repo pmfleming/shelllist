@@ -1077,10 +1077,19 @@ the existing search trailing plus (Alt+Enter from search, or Alt+A). Commands al
 work through shared navigation while collapsed; no city-row action gutter or new
 field stops are introduced. Manual/Automatic act on location policy, not Home.
 
-Add and Manual use shared `SearchChoiceDialog`, a required-input modal composed
-from shared search/choice fields and explicit submit/cancel commands. Typing only
-requests bounded native search reads; choosing a candidate stays local. Submission
-captures identity/revision and awaits native acknowledgement. Escape cancels the
+Add and Manual use shared `SearchChoiceDialog` with one `SearchChoiceField`, not
+separate search and City selectors. Its shared `FormField` label stays left of the
+native editor. Typing requests bounded, debounced native search reads. Down opens
+and browses suggestions; Up browses back; Enter or an option click chooses a local
+candidate without submitting. Left/Right, selection, Home/End and IME input remain
+native text editing. Escape first closes suggestions, then cancels the modal.
+Tab/Shift+Tab traverse the single editor and explicit modal commands; neither the
+embedded dropdown arrow nor suggestions become extra field stops. Replacement
+results clear an old highlight instead of silently choosing a different city.
+The modal has the Add/Manual identity glyph and Cancel immediately left of Confirm
+in the shared inline header; there is no repeated action-summary footer.
+`ChoicePopup` and `DropDownOptionDelegate` share the ordinary dropdown composition.
+Submission captures identity/revision and awaits native acknowledgement. Escape cancels the
 unsubmitted choice; closing a submitted dialog does not undo or replay its command.
 Remove uses shared compact confirmation, initially focused on Cancel. Modals block
 underlying commands/refresh/tabs. Native safety/authorization remains authoritative;

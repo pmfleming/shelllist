@@ -120,31 +120,11 @@ Controls.ComboBox {
         owner: control
     }
 
-    popup: Controls.Popup {
-        closePolicy: Controls.Popup.CloseOnPressOutside
-        y: control.height + Theme.spacingXs
-        width: control.width
-        padding: Theme.spacingSm
-        height: Math.min(control.options.length, 6) * Theme.formCompactHeight + topPadding + bottomPadding
-
-        contentItem: ScrollableListView {
-            Keys.onPressed: function (event) { control.editSession.handleKey(event); }
-            clip: true
-            implicitHeight: contentHeight
-            model: control.popup.visible ? control.delegateModel : null
-            currentIndex: control.highlightedIndex
-            boundsBehavior: Flickable.StopAtBounds
-        }
-
-        background: Rectangle {
-            radius: 12
-            color: Theme.surfaceRaised
-            border.width: 1
-            border.color: Theme.border
-        }
-
-        // The newly focused option must never wait behind a fade.
-        enter: null
-        exit: null
+    popup: ChoicePopup {
+        owner: control
+        optionCount: control.options.length
+        model: visible ? control.delegateModel : null
+        currentIndex: control.highlightedIndex
+        onKeyPressed: function(event) { control.editSession.handleKey(event); }
     }
 }

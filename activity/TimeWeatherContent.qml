@@ -49,6 +49,7 @@ Ui.ProviderChooserSurface {
     }
     Ui.SearchChoiceDialog {
         objectName: "timeWeatherCityPicker"
+        icon: content.controller.locations.pickerMode === "add" ? "add" : "my_location"
         visible: content.controller.locations.pickerMode.length > 0
         title: content.controller.locations.pickerMode === "add" ? qsTr("Add city") : qsTr("Set current location manually")
         detail: content.controller.locations.pickerMode === "manual" ? qsTr("Sets the system timezone and pauses automatic location. Home remains Amsterdam.") : ""

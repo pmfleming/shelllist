@@ -26,6 +26,7 @@ FieldFrame {
     property int leftPadding: Theme.formPadding
     property int rightPadding: Theme.formPadding
     readonly property alias inputActiveFocus: input.activeFocus
+    readonly property alias inputMethodComposing: input.inputMethodComposing
     property string placeholder: ""
     property bool password: false
     // Classification is independent of whether an explicit reveal is visible.

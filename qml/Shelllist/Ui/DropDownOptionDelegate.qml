@@ -4,7 +4,8 @@ import QtQuick.Controls as Controls
 Controls.AbstractButton {
     id: option
 
-    required property DropDownList owner
+    // Both DropDownList and SearchChoiceField provide the shared option interface.
+    required property var owner
     required property int index
     required property var modelData
     // A saved check is acknowledgement, never the field-local choice draft.

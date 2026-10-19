@@ -1,7 +1,7 @@
 # Time & Weather location implementation
 
-Current design: [revision 4 HTML plan](time-panel-location-plan.html), including the
-post-implementation Current-city clarification below.
+Current design: [revision 5 HTML plan](time-panel-location-plan.html), including the
+post-implementation Current-city and single-control picker clarifications below.
 
 ## Commit stages
 
@@ -112,8 +112,8 @@ nix develop ../bar-daemon --no-write-lock-file --command \
 
 ## Current-city clarification
 
-Implemented after screenshot review; native commit `d12f6b1` and the accompanying
-Shelllist follow-up commit:
+Implemented after screenshot review; native commit `d12f6b1` and Shelllist
+`2432629`:
 
 - Only one populated Current entry away from Home. The native projection replaces
   that stable entry instead of appending; missing/invalid location never creates a
@@ -138,6 +138,36 @@ Shelllist follow-up commit:
   and `GetAccepted` returned **Access denied**. This is a separate live-access
   blocker, not permission to fabricate a current city or bypass authorization.
   No service, system policy or timezone was changed during this correction.
+
+## Single-control city picker
+
+The subsequent screenshot correction replaces separate search and City fields with
+one shared `SearchChoiceField` inside `SearchChoiceDialog`:
+
+- Type to request filtered native candidates, Down/Up to highlight, Enter or click
+  to choose locally. Only the separate Confirm command submits Add/Manual.
+- Left/Right, Home/End, text selection and IME composition stay with the native
+  editor. Escape closes suggestions first, then cancels the modal. Tab/Shift+Tab
+  traverse one editor and modal commands; the dropdown arrow is not another stop.
+- New results clear stale highlighting. Native request generation/revision checks,
+  no-write-on-typing, captured submission identity and no-replay guards are unchanged.
+- Add uses the plus identity icon; Manual uses the target. Cancel sits immediately
+  left of Confirm in the shared inline header. No “Add · Cancel” footer remains.
+- Ordinary and searchable dropdowns use the same extracted `ChoicePopup` and
+  `DropDownOptionDelegate`. The shared UI maintainer owns the unchanged 12px popup
+  radius copied from `DropDownList`; this is not a panel-local style override.
+- Validation: **372 Qt passed, zero failed, one existing renderer skip**, including
+  **20** Time/Weather checks. Strict qmllint passes with the same unrelated
+  unused-import informational diagnostic. Actual pointer/keys cover asynchronous
+  search results, popup Escape, selection versus submission, stale highlights,
+  long-list scrolling, single-editor Tab traversal and modal command geometry.
+  The shared popup fits above/below the editor within window margins and reveals
+  the highlighted result after model/layout updates, without covering the query.
+- Re-rendered `target/time-location-review/add-picker-*.png` and `add-choices-*.png`
+  at normal/dark, minimum/light and the real 453px collapsed chooser width. Reviewed
+  full editor-column fit, the suggestion list, icon and aligned command buttons.
+  These are Qt renders of recording fixtures, not live geocoder/system tests.
+  No hardware IME or human screen-reader validation was performed.
 
 ## Deployment acceptance still required
 
