@@ -67,9 +67,14 @@ or tooltip is added. A warning does not invalidate the observed system timezone.
 The visible top-bar clock/date and its accessible description both render the
 daemon's `utc_offset_seconds` using UTC getters, so an acknowledged timezone
 change takes effect without restarting Qt or relying on its local-time cache.
-Configured Home/weather places are not changed by this path. Retained
-`tst_timezone_clock.qml` checks unavailable offsets; known-offset/rollover and
-location-ordering cases were pruned, not replaced by equivalent coverage.
+Configured Home/weather places are not changed by this path. The authority asks
+GeoClue first, accepts positively identified IP fallback directly, and otherwise
+requires matching canonical coordinate-derived IP/GeoClue timezones (no distance
+limit). Missing confirmation retries without changing the observed timezone.
+Accepted current-location coordinates may be coarse IP estimates, not precise
+physical position. The UI remains read-only and gains no field/navigation stops.
+`tst_timezone_clock.qml` checks unavailable offsets and the actual clock button's
+live offset change, fractional offset, date rollover and pending-confirmation state.
 
 Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. Weather locations—including which location is home, labels, coordinates, and timezones—come entirely from `bar-daemon/activity.json`; no city is compiled into the UI. `bar-daemon` refreshes configured Open-Meteo locations concurrently at most every 15 minutes and retains each last successful forecast through transient failures.
 
