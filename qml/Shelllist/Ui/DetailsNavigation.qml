@@ -562,7 +562,7 @@ FocusScope {
         id: commandMenu
         parent: navigation.additionalCommandItem && navigation.additionalCommandItem.visible ? navigation.additionalCommandItem : navigation
         property Item commandRoot: null
-        readonly property list<ActionControl> commands: (commandRoot ? navigation.collectCommands(commandRoot) : navigation.contentCommands).filter(item => !item.accessKey)
+        readonly property list<ActionControl> commands: (commandRoot ? navigation.collectCommands(commandRoot) : navigation.contentCommands).filter(item => !item.accessKey || item.includeInCommandMenu)
         // A removed/replaced subtree or command must not redirect Enter to a
         // different window, including while the global Alt+J menu is open.
         onCommandRootChanged: if (visible) close()

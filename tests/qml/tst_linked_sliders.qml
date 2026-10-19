@@ -74,6 +74,37 @@ TestCase {
         return nav;
     }
     function input(field) { return findChild(field, "labeledValueSliderInput"); }
+    function test_noEditButtonAndExactCommandMenu() {
+        const nav = make();
+        const command = nav.first.exactCommand;
+        compare(command.width, 0); compare(command.height, 0);
+        verify(!command.activeFocusOnTab);
+        verify(command.Accessible.ignored, "no phantom accessible button on the slider row");
+        compare(command.parent, nav.first, "command metadata is outside the row's layout hosts");
+        compare(nav.contentCommands.length, 1, "only the current field exposes its exact command");
+        compare(nav.contentCommands[0], command);
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        tryVerify(() => nav.commandMenuOpen);
+        const menu = findChild(nav, "detailsCommandMenu");
+        compare(menu.count, 1);
+        keyClick(Qt.Key_Return);
+        tryVerify(() => nav.first.exactDialog.visible);
+        tryVerify(() => nav.first.exactDialog.ownsKeyboardFocus);
+        verify(!nav.commandMenuOpen);
+        compare(nav.writes, 0);
+        keyClick(Qt.Key_Escape);
+        compare(nav.currentTarget, nav.first);
+        tryVerify(() => nav.browsing);
+        nav.cycleFocus(false);
+        compare(nav.currentTarget, nav.second);
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        tryVerify(() => nav.commandMenuOpen);
+        keyClick(Qt.Key_Return);
+        tryVerify(() => nav.second.exactDialog.visible);
+        verify(!nav.first.exactDialog.visible);
+        keyClick(Qt.Key_Escape);
+        compare(nav.writes, 0);
+    }
     function test_chargeStepsConstraintsAndTransactions() {
         const nav = make({low: 70});
         keyClick(Qt.Key_Return);

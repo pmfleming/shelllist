@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 
 // One normal slider field; exact values/Never are an explicit modal command.
 // The caller owns units, constraints, acknowledgement and domain validation.
@@ -49,12 +48,13 @@ LabeledValueSlider {
         exactDialog.visible = true;
     }
 
-    accessories: FlatIconButton {
+    // No inline edit button or reserved gutter: dragging is the primary route.
+    property ActionControl exactCommand: ActionControl {
+        parent: row
         objectName: "linkedSliderExactCommand"
-        Layout.preferredWidth: Theme.formActionSize
-        Layout.preferredHeight: Theme.formActionSize
-        iconSize: Theme.formActionIconSize
-        icon: "edit"
+        activeFocusOnTab: false
+        Accessible.ignored: true
+        includeInCommandMenu: true
         accessKey: "V"
         commandScope: row
         accessibleName: qsTr("Exact value for %1").arg(row.label)

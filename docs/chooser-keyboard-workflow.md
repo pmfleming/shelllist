@@ -125,8 +125,13 @@ track, swapping endpoints or moving the companion. Incoming peer changes reject
 an uncommitted save rather than reinterpret it. An out-of-scale exact source is
 shown numerically without a misleading clamped handle or automatic write.
 
-Scoped **Alt+V**, also available through the trailing edit command, opens the
-shared exact-value `PromptDialog`. Opening discards an unsaved slider edit.
+Dragging is the primary pointer interaction; there is no inline edit button or
+reserved command gutter. Scoped **Alt+V**, also listed in **Alt+J** for the current
+slider, opens the shared exact-value `PromptDialog`. Its presentation-free
+`ActionControl` opts into `includeInCommandMenu` despite having an access key;
+commands without that opt-in keep their existing menu policy. The value and
+labels remain passive, not click-to-edit targets or extra Tab stops.
+Opening the exact-value command discards an unsaved slider edit.
 The modal uses ordinary required-input traversal and explicit Save/Cancel; typing
 never writes. Only integer values satisfying the current domain limits may save.
 Sleep exposes **Never** as an explicit modal option, not zero on the numeric

@@ -30,7 +30,9 @@ notification, and one compact command row. Both sliders use the same fixed
 non-linear ruler: 50, 55, 60, 65, 70, 75%, then each percentage point to 100%.
 A companion marker and hatched unavailable interval expose the strict ordering.
 Arrows and pointer motion select valid stops without moving the other threshold;
-Enter/Tab saves and Escape discards. Scoped Alt+V opens the shared exact-value
+Enter/Tab saves and Escape discards. Dragging remains the primary pointer route;
+there is no inline edit button or reserved button gutter. Scoped Alt+V (also in
+the Alt+J command menu for the current slider) opens the shared exact-value
 modal for any valid integer percentage, including below 50% and intermediate
 values. Existing off-scale values are retained, never rounded on display.
 Threshold submission still uses the existing pair owner, delayed save,
