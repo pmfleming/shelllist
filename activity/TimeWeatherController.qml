@@ -22,7 +22,6 @@ ActivityController {
     }
     property string detailsTab: "time"
     property string filterText: ""
-    property double currentTimeMs: 0
     screenshotStartMessage: "Capturing Time & Weather window…"
     rangeQueriesEnabled: false
     readonly property var cities: (activity.locations || []).slice().sort(compareCities)
@@ -96,10 +95,7 @@ ActivityController {
     }
 
     onCitiesChanged: Qt.callLater(rebuildCityModel)
-    Component.onCompleted: {
-        currentTimeMs = Date.now();
-        rebuildCityModel();
-    }
+    Component.onCompleted: rebuildCityModel()
 
     QtObject {
         id: citySelection
@@ -123,13 +119,6 @@ ActivityController {
         if (citySelection.queryText !== filterText)
             citySelection.queryText = filterText;
         rebuildCityModel();
-    }
-
-    Timer {
-        interval: 30000
-        repeat: true
-        running: controller.uiActive
-        onTriggered: controller.currentTimeMs = Date.now()
     }
 
     ListModel {

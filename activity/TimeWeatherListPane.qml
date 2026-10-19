@@ -7,6 +7,7 @@ Ui.ChooserListPane {
     id: pane
 
     required property TimeWeatherController controller
+    required property double nowMs
     chooserController: controller
     resultModel: controller.cityModel
     emptyIcon: "cloud"
@@ -25,7 +26,7 @@ Ui.ChooserListPane {
     rowDelegate: Component {
         TimeWeatherListRow {
             listPane: pane
-            nowMs: pane.controller.currentTimeMs
+            nowMs: pane.nowMs
         }
     }
 }

@@ -1026,6 +1026,9 @@ select another row, create editable stops, or publish settings. Shared label/hea
 composition retains full accessible text when the subtitle elides. Native
 `tst_time_weather_estimates.qml` covers metadata arrival, identity retention,
 Tab fallback and result-arrow navigation at normal/minimum widths in both themes.
+List and detail times share a single view-owned clock: activation refreshes it
+immediately, then it refreshes at minute boundaries while active. Clock updates
+are passive and local; they do not rebuild selection, add stops or issue reads.
 
 ## Native domain projections
 

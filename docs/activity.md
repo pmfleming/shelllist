@@ -80,6 +80,11 @@ retains manual choices across restart, blocks NetworkManager-reported VPNs,
 revalidates stale GeoClue caches and respects confirmation cooldowns. These guards
 remain backend-owned. Session offset updates use a cached zone locally across DST;
 accepted-state revisions avoid repeated authorized reads when nothing changed.
+The panel's list and details share one `Ui.LiveClock`, refreshed immediately on
+activation and scheduled at wall-clock minute boundaries while open. Closing
+stops its timer; reopening never reuses the previous visit's time. Each tick
+reschedules from the current wall time rather than accumulating interval drift.
+These display refreshes make no backend requests.
 `tst_timezone_clock.qml` checks unavailable offsets and the actual clock button's
 live offset change, fractional offset, date rollover and pending-confirmation
 state, including absence of a false “Timezone unavailable” tooltip.

@@ -17,6 +17,7 @@ Ui.ProviderChooserSurface {
     listComponent: Component {
         TimeWeatherListPane {
             controller: content.controller
+            nowMs: content.now.getTime()
         }
     }
     detailsComponent: Component {
@@ -39,6 +40,6 @@ Ui.ProviderChooserSurface {
     Ui.LiveClock {
         id: liveClock
         active: content.controller.uiActive
-        updateInterval: 30000
+        alignToMinute: true
     }
 }
