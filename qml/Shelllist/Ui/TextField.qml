@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 FieldFrame {
@@ -122,6 +123,10 @@ FieldFrame {
         selectionColor: Theme.accent
         selectedTextColor: Theme.accentText
         cursorDelegate: Rectangle {
+            objectName: "fieldCursor"
+            // Custom delegates must hide their own paint when native input moves
+            // to results, field browsing, another editor or a modal/menu.
+            visible: input.cursorVisible && input.activeFocus && input.enabled && !input.readOnly
             width: 2
             color: Theme.accent
         }

@@ -228,6 +228,40 @@ DaemonTestCase {
         tryVerify(() => second.detailsNavigation.sessionLocation !== null);
         return second;
     }
+    function test_caretsFollowRestoredOwner() {
+        const surface = makeSurface();
+        surface.listItem.focusSearch();
+        const search = findChild(surface.listItem, "fieldInput");
+        tryVerify(() => findChild(search, "fieldCursor") !== null);
+        const searchCursor = findChild(search, "fieldCursor");
+        verify(searchCursor.visible);
+        open(surface);
+        keyClick(Qt.Key_Return);
+        const input = findChild(surface.detailsNavigation.currentTarget, "fieldInput");
+        tryVerify(() => findChild(input, "fieldCursor") !== null);
+        const editorCursor = findChild(input, "fieldCursor");
+        verify(editorCursor.visible);
+        verify(!searchCursor.visible);
+        closeInvocation(surface);
+        verify(!editorCursor.visible);
+        verify(!searchCursor.visible);
+        reopenInvocation(surface);
+        tryVerify(() => input.activeFocus);
+        verify(editorCursor.visible);
+        verify(!searchCursor.visible, "restored editing must not paint a search caret");
+        keyClick(Qt.Key_Escape);
+        verify(surface.detailsNavigation.browsing);
+        verify(!editorCursor.visible);
+        closeInvocation(surface);
+        reopenInvocation(surface);
+        tryVerify(() => surface.detailsNavigation.browsing);
+        verify(!editorCursor.visible);
+        verify(!searchCursor.visible);
+        surface.listItem.focusSearch();
+        verify(searchCursor.visible);
+        compare(surface.edits, 0);
+    }
+
     function test_newNavigationCancelsDeferredEditorRestoration() {
         const surface = recreatedView();
         surface.chooserController.focusSearchRequested();

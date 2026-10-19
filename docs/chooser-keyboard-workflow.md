@@ -162,6 +162,19 @@ Escape-to-stop-editing step.
 
 ## Highlighting
 
+Text carets identify the native editor that currently owns keyboard input, not
+an expanded surface or a remembered cursor position. The shared `TextField`
+custom caret follows native cursor visibility and active focus, and is hidden
+for disabled/read-only inputs. Search retains its query and cursor state when
+focus leaves, but its caret is hidden while results, detail browsing, another
+editor, a command menu or a modal owns input. Details may remain expanded while
+search is focused; search then shows its caret normally. Printable result keys
+still transfer focus to search before insertion. Browsing a field shows only its
+marker, never an inactive text caret. Returning from save/discard or restoring a
+session updates these indicators without changing focus or transaction behavior.
+Native caret regressions are covered in `tst_chooser_keyboard.qml` and
+`tst_chooser_memory.qml`, alongside shared field transaction tests.
+
 Only the editable portion is highlighted: input box, slider, selected segment or
 switch—not the setting's label, explanatory text, row or card. Browsing uses
 only a compact opaque Primary marker with a Surface keyline; its background is
