@@ -227,7 +227,7 @@ per-state test coverage.
 | Battery & Power | Overview/Care/Power, unavailable telemetry, long failure, firmware controls | `tst_battery_presentation`, `tst_battery_suspend` |
 | Activity | Glance/Schedule, long event/todo, empty day, error with retained content | `tst_activity_days` |
 | Notifications | Previews/Controls/global settings, pending/error, singular count | `tst_notification_center`, `tst_notifications` |
-| Time & Weather | Time/Weather, solar/timezone, unknown forecasts, measured hero | `tst_timezone_clock` (live offsets, rollover, pending and unknown states); `tst_time_weather_estimates` (passive metadata, identity/navigation at normal/minimum sizes); panel captures are historical |
+| Time & Weather | Time/Weather, solar/timezone, unknown forecasts, measured hero | `tst_timezone_clock` (live offsets, rollover, pending and unknown states); `tst_time_weather_estimates` (passive metadata/navigation); `tst_time_weather_locations` (role icons, at-home handoff, uniform action headers, native modal keys and guarded mutations); earlier all-panel captures are historical |
 | Audio | Output, ready commands, mute, long failure | `tst_system_choosers` (includes input/target guards) |
 | Media | Ready transport, pin/mode, long failure, passive metadata/artwork | `tst_system_choosers` |
 | Tray | Passive details without duplicate card, stable native-menu routes | `tst_system_choosers` |

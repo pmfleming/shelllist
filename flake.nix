@@ -561,7 +561,7 @@
 
           barDaemonContract =
             apiContract "bar" barDaemon
-              "api:bar|activity|todos|workspace|media|audio|brightness|battery|powerProfile|powerSleep|displayPolicy|displayLayout|displayFocus|display-policy|power-profile|power-sleep|sleep-policy|osd-hardware|notifications|updates|timezone"
+              "api:bar|activity|locations|location|todos|workspace|media|audio|brightness|battery|powerProfile|powerSleep|displayPolicy|displayLayout|displayFocus|display-policy|power-profile|power-sleep|sleep-policy|osd-hardware|notifications|updates|timezone"
               [
                 ./bar/BarApi.js
                 ./activity/ActivityApi.js

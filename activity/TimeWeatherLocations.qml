@@ -8,7 +8,7 @@ Io.DaemonBackend {
     daemonName: "bar-daemon"
     expectedProtocol: Api.protocol
     expectedVersion: Api.version
-    active: controller.uiActive || mutationId.length > 0
+    active: controller.uiActive || mutationId.length > 0 || searchId.length > 0 || statusId.length > 0
 
     property string error: ""
     property string pickerMode: ""
@@ -19,11 +19,17 @@ Io.DaemonBackend {
     property var candidates: []
     property string choice: ""
     property string searchId: ""
+    property string searchQuery: ""
+    property int searchGeneration: -1
+    property string recoveringOperationKey: ""
     property string statusId: ""
     property string mutationId: ""
     property string mutationKind: ""
     property int submittedGeneration: -1
     property string submittedFilter: ""
+    property string submittedTarget: ""
+    property var submittedPlace: null
+    property double submittedRevision: -1
     property double capturedRevision: -1
     property var controlState: ({})
     property string operationKey: ""
@@ -74,7 +80,6 @@ Io.DaemonBackend {
     }
     function closeModal(): void {
         debounce.stop();
-        searchId = "";
         pickerMode = "";
         removal = null;
         candidates = [];
@@ -86,12 +91,13 @@ Io.DaemonBackend {
         query = text;
         choice = "";
         candidates = [];
-        searchId = "";
         error = "";
         debounce.restart();
     }
     function search(): void {
-        if (!pickerMode || query.trim().length < 2) return;
+        if (!pickerMode || query.trim().length < 2 || searchId) return;
+        searchQuery = query;
+        searchGeneration = modalGeneration;
         searchId = nextRequestId("location-search");
         call(searchId, Api.methods.locationsSearch, {query: query.trim()});
     }
@@ -124,10 +130,14 @@ Io.DaemonBackend {
         submit("automatic", {place: null, revision: controlState.revision});
     }
     function submit(kind: string, params: var): void {
+        recoveringOperationKey = "";
         mutationKind = kind;
         mutationId = nextRequestId("location-mutation");
         submittedGeneration = modalGeneration;
         submittedFilter = controller.filterText;
+        submittedTarget = String(params.id || "");
+        submittedPlace = params.place ? Object.assign({}, params.place) : null;
+        submittedRevision = params.revision;
         error = "";
         const methods = {add: Api.methods.locationsAdd, remove: Api.methods.locationsRemove, manual: Api.methods.locationSetManual, automatic: Api.methods.locationAutomatic};
         if (kind === "manual" || kind === "automatic") {
@@ -143,6 +153,10 @@ Io.DaemonBackend {
         if (id === searchId) {
             searchId = "";
             if (!pickerMode) return;
+            if (searchQuery !== query || searchGeneration !== modalGeneration) {
+                if (query.trim().length >= 2) debounce.restart();
+                return;
+            }
             if (failure) {error = failure; return;}
             if (!Array.isArray(data.places) || data.places.length > 12 || data.places.some(place => !validPlace(place))) {
                 error = qsTr("Invalid city search response"); return;
@@ -153,13 +167,21 @@ Io.DaemonBackend {
         } else if (id === statusId) {
             statusId = "";
             if (failure) { controlState = ({}); return; }
-            acceptControl(data.location_control);
+            if (acceptControl(data.location_control) && recoveringOperationKey
+                    && data.location_control.operation_id === recoveringOperationKey
+                    && data.location_control.operation_status === "applied") {
+                recoveringOperationKey = "";
+                error = "";
+                if (controller.uiActive && submittedGeneration === modalGeneration) closeModal();
+                controller.backend.snapshot();
+            }
         } else {
             const kind = mutationKind;
             mutationId = "";
             mutationKind = "";
             if (failure) {
                 error = failure;
+                if (kind === "manual" || kind === "automatic") recoveringOperationKey = operationKey;
                 readStatus();
                 controller.backend.snapshot();
                 return;
@@ -168,10 +190,20 @@ Io.DaemonBackend {
                 if (!data.location_control || data.location_control.operation_id !== operationKey
                         || data.location_control.operation_status !== "applied" || !acceptControl(data.location_control)) {
                     error = qsTr("Location outcome unconfirmed. Refresh before trying again.");
+                    recoveringOperationKey = operationKey;
                     readStatus(); return;
                 }
             } else {
-                if (!data.activity || !data.activity.location_catalog || typeof data.id !== "string") {
+                const returned = data.activity;
+                const revision = returned?.location_catalog?.revision;
+                const city = Array.isArray(returned?.locations) ? returned.locations.find(row => row.id === data.id) : null;
+                const targetValid = kind === "remove" ? data.id === submittedTarget && !city
+                    : !!city && !!city.place && !!submittedPlace && String(city.place.name).toLowerCase() === submittedPlace.name.toLowerCase()
+                        && Math.abs(city.place.latitude - submittedPlace.latitude) < 0.05
+                        && Math.abs(city.place.longitude - submittedPlace.longitude) < 0.05;
+                if (!returned || !Array.isArray(returned.locations) || returned.locations.length > 33
+                        || typeof revision !== "number" || !Number.isFinite(revision) || revision < submittedRevision
+                        || typeof data.id !== "string" || !targetValid) {
                     error = qsTr("City save outcome unconfirmed. Refresh before trying again.");
                     controller.backend.snapshot(); return;
                 }
@@ -193,8 +225,10 @@ Io.DaemonBackend {
     onTransportFailed: function(message) {
         searchId = "";
         statusId = "";
-        if (mutationId) error = qsTr("Location outcome unknown. Refresh before trying again.");
-        else error = message;
+        if (mutationId) {
+            error = qsTr("Location outcome unknown. Refresh before trying again.");
+            if (mutationKind === "manual" || mutationKind === "automatic") recoveringOperationKey = operationKey;
+        } else error = message;
         mutationId = "";
         controlState = ({});
     }

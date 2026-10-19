@@ -4,11 +4,12 @@ Approved design: [revision 3 HTML plan](time-panel-location-plan.html).
 
 ## Commit stages
 
-1. Contract and execution record — complete (this commit).
+1. Contract and execution record — complete, Shelllist `c92a4d5`.
 2. Native saved-city catalog, fixed Amsterdam Home and at-home projection — complete, bar-daemon `aa65230`.
 3. Authorized manual/automatic location authority controls and session API — complete, bar-daemon `376dba0`.
-4. Shared panel icon commands, picker and confirmation — complete (this commit).
-5. Integration fixtures, broader native/Qt tests and documentation — next.
+4. Shared panel icon commands, picker and confirmation — complete, Shelllist `a163bb6`.
+5. Integration fixtures, broader native/Qt tests and documentation — complete,
+   bar-daemon `582ecbb` and the final Shelllist validation commit.
 
 Each completed implementation stage is committed in its owning repository.
 Completion and validation are recorded below; a planned stage is not a claim of
@@ -55,3 +56,68 @@ Stage 4: new actual Qt consumer suite: 8 passed; retained estimate/navigation su
 TypeScript and daemon protocol bindings regenerated. Keyboard contract updated.
 The city picker uses shared PromptDialog/FormField/TextField/DropDownList composition;
 no numeric font/spacing/radius overrides were added to the panel.
+
+Stage 5:
+
+- Native all-targets: **191 passed, zero failed, three existing environment-dependent
+  tests ignored** (156 library, 34 authority, one startup integration). Strict Clippy
+  passes for the library and location-authority binary.
+- Full Qt consumer suite: **365 passed, zero failed, one skipped**. The dedicated
+  location suite passes **13** tests, including real keyboard/mouse interaction,
+  single-flight search, explicit submission, stale revision rejection, modal closure,
+  owned operation-status recovery, closed-panel completion, collapsed command access,
+  inspection-only Enter, no write replay and arrival/departure selection.
+- Full-suite fixture reads require `QML_XHR_ALLOW_FILE_READ=1`, as already supplied
+  by the Nix check. The initial standalone run without that flag had JSON parse
+  failures; the corrected run is the result above.
+- Strict qmllint passes (one unrelated existing unused-import informational
+  diagnostic). TypeScript regeneration, daemon-boundary and generated-contract JS
+  checks pass. The real native producer matches all nine existing Qt fixture files;
+  the checked bar contract is regenerated and its registry/API coverage includes
+  `location` and `locations`.
+- Native regression fixes retain protected Home on catalog failure and preserve
+  imported cities despite malformed later calendar configuration. Publications are
+  serialized; forecast I/O is bounded at 15 seconds. Catalogs allow 32 cities
+  including Home, keeping duplicated forecast snapshots bounded.
+- Actual Qt captures found and fixed missing shared icon-name registrations. They
+  also exposed a fixture sizing mistake: tests now use `PopoverGeometry`'s real
+  open canvas (1040 normal / 960 minimum) and assert that every command fits.
+  Arrival at Home preserves the outgoing detail tab rather than an older Home tab.
+  Time & Weather explicitly enables list Enter (disabled by the calendar base owner)
+  and tests that repeated Enter inspects without opening Manual or issuing writes.
+- Visual evidence: `target/time-location-review/` contains 14 reproducible Qt
+  captures: all three row roles and both tabs at normal/dark and minimum/light,
+  plus the manual picker and combined Home/Current roles. Reviewed role icons,
+  unchanged action composition, passive labels and left-label modal fields. These
+  use synthetic acknowledged state and unavailable forecast placeholders—not live
+  location/weather/provider evidence. Artifacts are ignored, not checked in.
+- `python3 tests/review-panel-ui.py --base a599abb`: zero changed-line or new-wrapper
+  prompts. No panel-specific numeric typography/spacing/radius exceptions added.
+
+Reproduce the main checks:
+
+```sh
+QML_XHR_ALLOW_FILE_READ=1 direnv exec . tests/run-qml-tests.sh
+direnv exec . tests/run-qmllint.sh
+mkdir -p target/time-location-review
+direnv exec . tests/run-qmlquality-tests.sh \
+  -input tests/manual/tst_time_location_review.qml -o -,txt
+nix develop ../bar-daemon --no-write-lock-file --command \
+  cargo test --manifest-path ../bar-daemon/Cargo.toml --locked --all-targets
+```
+
+## Deployment acceptance still required
+
+No service was installed/restarted and no live system timezone was changed. Local
+source builds/tests are not proof of installed system-bus/polkit authorization or
+real provider availability. Deploy matching Shelllist/session-daemon/authority
+packages and policies using the repository's current-source co-development workflow;
+there are no new private dependency pins. Then explicitly authorize a live smoke
+check: add/search/remove, manual timezone/readback, restart persistence, Automatic
+resume, travel home/away and interrupted-connection recovery. Confirm the real
+geocoder and automatic acquisition provider, and verify that an inactive/remote
+caller is rejected. Never remove the uncertain-write or administrative override
+fences to make that smoke check succeed.
+
+Pre-existing sibling `docs/location-timezone.md` and `flake.nix` edits remain
+uncommitted and untouched by these stage commits.

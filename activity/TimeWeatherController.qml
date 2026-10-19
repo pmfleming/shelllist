@@ -24,6 +24,7 @@ ActivityController {
     property string filterText: ""
     readonly property TimeWeatherLocations locations: TimeWeatherLocations { controller: controller }
     navigationBlocked: locations.modalOpen
+    navigationPrimaryEnabled: true
     detailActions: [
         {id: "manual", label: qsTr("Set current location manually"), icon: "my_location", accessKey: "L", enabled: locations.canControl, presentation: {group: "primary"}},
         {id: "automatic", label: qsTr("Return to Automatic"), icon: "explore", accessKey: "R", enabled: locations.canAutomatic, presentation: {group: "toolbar"}},
@@ -78,6 +79,16 @@ ActivityController {
             return city.id === selectedId;
         });
         const home = selectedId === "current-location" ? filteredCities.findIndex(city => city.home && city.current) : -1;
+        if (retained < 0 && home >= 0 && viewMemory) {
+            // This is the same effective location becoming Home, not an ordinary
+            // result browse. Preserve the outgoing tab instead of restoring an
+            // older Home tab (or the transient row at Current's old index).
+            const outgoing = viewMemory.records["time-weather::current-location"];
+            const tab = outgoing?.tab || detailsTab;
+            const key = "time-weather::" + filteredCities[home].id;
+            viewMemory.records[key] = Object.assign({pages: Object.create(null)}, viewMemory.records[key] || ({}), {tab: tab, open: detailsOpen});
+            detailsTab = tab;
+        }
         citySelection.selectedIndex = retained >= 0 ? retained : home >= 0 ? home : Math.max(0, Math.min(citySelection.selectedIndex, filteredCities.length - 1));
         retainedCityId = filteredCities[citySelection.selectedIndex]?.id || "";
         rebuildingCities = false;

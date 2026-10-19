@@ -75,7 +75,8 @@ Accepted current-location coordinates may be coarse IP estimates, not precise
 physical position. Current location retains its stable ID/title; its shared list
 and detail subtitles show e.g. **IP estimate · reported accuracy ~26 km**. Unknown
 source/accuracy is not guessed, and reported accuracy is not a guaranteed radius.
-The UI remains read-only and gains no field/navigation stops. The authority also
+Estimate metadata remains passive and gains no field/navigation stops. The separate
+explicit location commands described below do not turn metadata into editors. The authority also
 retains manual choices across restart, blocks NetworkManager-reported VPNs,
 revalidates stale GeoClue caches and respects confirmation cooldowns. These guards
 remain backend-owned. Session offset updates use a cached zone locally across DST;
@@ -97,7 +98,56 @@ state, including absence of a false “Timezone unavailable” tooltip.
 shared Tab/result-arrow navigation and normal/minimum light/dark layouts, plus
 forecast failure, unavailable timezone presentation and recovery to real UTC.
 
-Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. Weather locations—including which location is home, labels, coordinates, and timezones—come entirely from `bar-daemon/activity.json`; no city is compiled into the UI. `bar-daemon` refreshes configured Open-Meteo locations concurrently at most every 15 minutes and retains each last successful forecast through transient failures.
+### City and current-location management
+
+Home is protected Amsterdam (`Europe/Amsterdam`), supplied by native product
+policy—not compiled into QML. A house denotes Home and a target denotes Current.
+When the acknowledged effective place shares Amsterdam's canonical timezone,
+the native list suppresses the separate Current item and gives Home both roles.
+Home's coordinates/map/weather remain Amsterdam's. Unknown location is not Home,
+and equal current UTC offsets do not establish timezone identity. Saved cities
+in the same timezone remain independent. Arrival home hands selection to Home
+where the filter permits, retaining the detail tab; departure never steals it.
+
+The existing search trailing plus opens Add (Alt+Enter from search / Alt+A).
+Every city and both tabs share one Manual-location primary (Alt+L), and Automatic
+(Alt+R) / Remove (Alt+D) secondaries. Protected and unavailable actions retain
+geometry. List Enter only opens details. Manual opens the shared city picker,
+prefilled with the inspected place; explicit confirmation sets the system timezone
+and pauses automatic location. It does not change Home or implicitly save a city.
+Return to Automatic changes policy but retains the last effective place until fresh
+accepted evidence arrives. It remains reachable on Home when Current is suppressed.
+
+The picker uses shared required-input modal traversal. Typing searches natively,
+selecting stays local, and submit/cancel are explicit. Removal confirms the captured
+saved-city identity and never removes Home/Current. Late replies cannot retarget
+another picker or claim success on request admission. Failures remain separate from
+Activity read status, with shared surface feedback and no automatic write replay.
+
+`bar-daemon` imports weather/world-clock configuration once into versioned
+`locations.json` beside its todo store. Calendar configuration is still read from
+`activity.json`; later city refreshes cannot reimport removed entries. A previous
+non-Amsterdam Home is retained as an ordinary saved city. Corrupt catalogs fail
+closed with protected Amsterdam still visible. Add/remove requires catalog revisions;
+per-city forecast caches survive unrelated changes. New city clocks work before a
+forecast is available. Online city search uses bounded Open-Meteo geocoding reads;
+Current itself does not start weather or reverse-geocoding requests.
+
+The system authority owns authorized Manual/Automatic controls, private durable
+mode/operation state, coordinate/zone validation and verified timedated writes.
+The session daemon is only a proxy/observer. Lost replies use read-only status
+recovery; external overrides and uncertain writes still require administrative
+reconciliation. Older/missing authority support leaves commands unavailable—no
+frontend shell-command fallback. Deploy the matching session daemon, location
+authority and system-bus/polkit policies together. See the sibling backend's
+`docs/time-location-catalog.md` and `docs/time-location-controls.md`.
+
+Shelllist requests only a buffered calendar range around the visible month.
+A compact `activity.changed` event schedules a debounced range refresh rather than
+carrying that range in every event. The native daemon refreshes Open-Meteo forecasts
+at most every 15 minutes after successful fetches and retains each last successful
+forecast through transient failures. Forecast requests are bounded so city mutations
+do not wait indefinitely behind provider I/O.
 
 In native notification mode, `bar-daemon` owns `org.freedesktop.Notifications` and publishes a bounded, recoverable snapshot containing only unsnoozed active records. That stream drives toasts and current action capabilities, not a second frontend history catalog. `notifications.queryCenter` merges live/persisted identities and supplies native app summaries, ordering, counts, Unicode-lowercase literal substring search, direct app-page seeks and selected full-record lookup. Search covers the newest 5,000 persisted records plus up to 200 unsnoozed live notifications, not merely loaded pages. This query limit does not prune stored history. Search uses the full body even though previews are bounded.
 
