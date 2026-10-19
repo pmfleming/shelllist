@@ -1,5 +1,6 @@
 import QtQuick
 import Shelllist.Ui as Ui
+import "WeatherVisuals.js" as Visuals
 
 ActivityController {
     id: controller
@@ -37,7 +38,7 @@ ActivityController {
     }
     screenshotStartMessage: "Capturing Time & Weather window…"
     rangeQueriesEnabled: false
-    readonly property var cities: (activity.locations || []).slice().sort(compareCities)
+    readonly property var cities: (activity.locations || []).filter(city => !city.current || city.home || Visuals.hasLocationClock(city)).sort(compareCities)
     readonly property var filteredCities: filterCities(cities, filterText)
     readonly property alias cityModel: cityListModel
     readonly property var selectedCity: filteredCities.length > 0 ? filteredCities[Math.max(0, Math.min(citySelection.selectedIndex, filteredCities.length - 1))] : ({})
@@ -78,7 +79,7 @@ ActivityController {
         const retained = filteredCities.findIndex(function (city) {
             return city.id === selectedId;
         });
-        const home = selectedId === "current-location" ? filteredCities.findIndex(city => city.home && city.current) : -1;
+        const home = selectedId === "current-location" ? filteredCities.findIndex(city => city.home) : -1;
         if (retained < 0 && home >= 0 && viewMemory) {
             // This is the same effective location becoming Home, not an ordinary
             // result browse. Preserve the outgoing tab instead of restoring an

@@ -30,13 +30,13 @@ DaemonTestCase {
         return {name:name,country:"",region:"",timezone:zone,latitude:coords[0],longitude:coords[1]};
     }
     function city(id, name, home, current) {
-        const p=place(current && !home ? "Dublin" : name,home?"Europe/Amsterdam":name==="Tokyo"?"Asia/Tokyo":"Europe/Dublin");
+        const p=place(current && name==="Current location" ? "Dublin" : name,home?"Europe/Amsterdam":name==="Tokyo"?"Asia/Tokyo":"Europe/Dublin");
         return {id:id,label:name,city:p.name,home:home,current:current,removable:!home&&!current,
             timezone:p.timezone,utc_offset_seconds:home?7200:name==="Tokyo"?32400:3600,abbreviation:home?"CEST":name==="Tokyo"?"JST":"IST",
             has_coordinates:true,latitude:p.latitude,longitude:p.longitude,has_weather:false,place:p};
     }
     function rows(atHome) {
-        const values=[city("weather:home","Amsterdam",true,atHome),city("city:1","Tokyo",false,false)];
+        const values=[city("weather:home","Amsterdam",true,false),city("city:1","Tokyo",false,false)];
         if (!atHome) values.push(city("current-location","Current location",false,true));
         return values;
     }
@@ -98,11 +98,50 @@ DaemonTestCase {
         verify(s.owner.detailsOpen);compare(s.owner.detailsTab,"weather");
         capture(s.view,"at-home");
         const home=findChild(s.view,"timeWeatherLocation::weather:home");
-        tryVerify(()=>findChild(home,"timeWeatherHomeCurrentIcon").visible);
-        verify(home.accessibleName.includes("Home") && home.accessibleName.includes("Current location"));
+        compare(findChild(home,"timeWeatherHomeCurrentIcon"),null);
+        verify(home.accessibleName.includes("Home") && !home.accessibleName.includes("Current location"));
+        compare(s.owner.cities.filter(c=>c.current).length,0);
+        compare(findChild(s.view,"timeWeatherLocation::current-location"),null);
         s.owner.activity=Object.assign({},s.owner.activity,{locations:rows(false)});
         tryCompare(s.owner.cityModel,"count",3);compare(s.owner.selectedCity.id,"weather:home");
+        compare(s.owner.cities.filter(c=>c.current).length,1);
         compare(mutations().length,0);
+    }
+    function test_unknownCurrentIsNotABlankResultAndHomeHasNoCurrentDecoration() {
+        const s=start(true);
+        const legacyHome=Object.assign({},rows(true)[0],{current:true,location_source:"ip",accuracy_meters:10000});
+        const unknown={id:"current-location",label:"Current location",current:true,clock_unavailable:true};
+        s.owner.activity=Object.assign({},s.owner.activity,{locations:[legacyHome,unknown]});
+        tryCompare(s.owner.cityModel,"count",1);
+        verify(!s.owner.cities.some(c=>c.id==="current-location"));
+        const home=findChild(s.view,"timeWeatherLocation::weather:home");
+        compare(home.leadingIcon,"home");compare(findChild(home,"timeWeatherHomeCurrentIcon"),null);
+        verify(!home.accessibleName.includes("Current location"));
+        verify(!home.accessibleName.includes("IP estimate"));
+        compare(mutations().length,0);
+    }
+    function test_manualOverridesAutomaticAndReplacesTheSingleCurrentAfterAcknowledgement() {
+        const s=start(false);s.locations.acceptControl(control(false,2));select(s,"city:1");openDetails(s);
+        mouseClick(findChild(s.view,"detailAction:manual"));tryCompare(s.locations,"pickerMode","manual");
+        mouseClick(findChild(findChild(s.view,"timeWeatherCityPicker"),"detailAction:accept"));
+        const request=mutations()[0];compare(request.method,"location.setManual");
+        compare(request.params.place.name,"Tokyo");
+        verify(!s.locations.canAutomatic);
+        compare(s.owner.cities.filter(c=>c.current).length,1);
+        compare(s.owner.cities.find(c=>c.current).place.name,"Dublin","no optimistic Current replacement");
+        reply(s,s.locations.mutationId,{location_control:Object.assign(control(true,3),{effective_place:request.params.place,operation_id:request.params.request_id,operation_status:"applied"})});
+        verify(s.locations.canAutomatic);
+        const current=Object.assign(city("current-location","Tokyo",false,true),{location_mode:"manual",location_source:"manual"});
+        s.owner.activity=Object.assign({},s.owner.activity,{locations:rows(true).concat([current])});
+        tryVerify(()=>s.owner.cities.find(c=>c.current)?.label==="Tokyo");
+        compare(s.owner.cities.filter(c=>c.current).length,1);
+        s.locations.returnAutomatic();const automatic=mutations()[1];
+        reply(s,s.locations.mutationId,{location_control:Object.assign(control(false,4),{operation_id:automatic.params.request_id,operation_status:"applied"})});
+        compare(s.owner.cities.find(c=>c.current).label,"Tokyo","Automatic waits for fresh accepted location");
+        s.owner.activity=Object.assign({},s.owner.activity,{locations:rows(true)});
+        tryCompare(s.owner.cityModel,"count",2);
+        verify(!s.owner.cities.some(c=>c.current));
+        compare(mutations().length,2);
     }
     function test_addIconAndShortcutDraftCancelAndStaleSearch() {
         const s=start(false);

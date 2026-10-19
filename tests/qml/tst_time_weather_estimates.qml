@@ -65,11 +65,12 @@ DaemonTestCase {
     function test_forecastFailureKeepsClockAndInvalidTimezoneNeverBecomesUtc() {
         const owner = createTemporaryObject(ownerFactory, testCase, {uiActive: true});
         const city = Object.assign({}, location("ip", 26000), {
+            id: "weather:reference", current: false,
             has_weather: true, weather: {available: false, error: "Forecast unavailable", utc_offset_seconds: 0}
         });
         owner.activity = Object.assign({}, owner.activity, {available: true, locations: [city]});
         const content = createTemporaryObject(contentFactory, testCase, {controller: owner, width: width, height: height});
-        const rowName = "timeWeatherLocation::current-location";
+        const rowName = "timeWeatherLocation::weather:reference";
         tryVerify(() => findChild(content, rowName) !== null);
         const row = findChild(content, rowName);
         row.nowMs = Date.UTC(2026, 9, 19, 12, 26);

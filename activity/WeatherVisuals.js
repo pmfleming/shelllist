@@ -78,7 +78,7 @@ function hasLocationClock(city) {
         && typeof city.utc_offset_seconds === "number" && Number.isFinite(city.utc_offset_seconds);
 }
 function locationEstimate(city) {
-    if (!city || !city.current)
+    if (!city || !city.current || city.home)
         return "";
     const source = city.location_source;
     if (source === "manual")

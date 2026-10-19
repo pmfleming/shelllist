@@ -103,9 +103,12 @@ forecast failure, unavailable timezone presentation and recovery to real UTC.
 Home is protected Amsterdam (`Europe/Amsterdam`), supplied by native product
 policy—not compiled into QML. A house denotes Home and a target denotes Current.
 When the acknowledged effective place shares Amsterdam's canonical timezone,
-the native list suppresses the separate Current item and gives Home both roles.
-Home's coordinates/map/weather remain Amsterdam's. Unknown location is not Home,
-and equal current UTC offsets do not establish timezone identity. Saved cities
+the native list shows Home only: no separate Current item, Current icon or Current
+metadata on Home. Home's coordinates/map/weather remain Amsterdam's. Current is a
+single populated entry away from Home, never a blank placeholder. With no usable
+accepted location, omit that entry; retain the last accepted place during acquisition
+without inventing a city. Unknown location is not Home, and equal current UTC offsets
+do not establish timezone identity. Saved cities
 in the same timezone remain independent. Arrival home hands selection to Home
 where the filter permits, retaining the detail tab; departure never steals it.
 
@@ -131,7 +134,8 @@ non-Amsterdam Home is retained as an ordinary saved city. Corrupt catalogs fail
 closed with protected Amsterdam still visible. Add/remove requires catalog revisions;
 per-city forecast caches survive unrelated changes. New city clocks work before a
 forecast is available. Online city search uses bounded Open-Meteo geocoding reads;
-Current itself does not start weather or reverse-geocoding requests.
+Current itself does not start weather or reverse-geocoding requests; it can reuse
+a matching saved city's forecast, never another city's merely matching timezone.
 
 The system authority owns authorized Manual/Automatic controls, private durable
 mode/operation state, coordinate/zone validation and verified timedated writes.

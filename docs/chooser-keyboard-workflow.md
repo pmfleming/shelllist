@@ -1062,8 +1062,11 @@ credential and connection validation remains authoritative.
 
 Home is protected Amsterdam. Its passive house icon and Current's target icon
 identify roles, not actions. When the native effective location is in Amsterdam's
-canonical timezone, the separate Current row is suppressed and Home carries both
-icons; Home's fixed coordinates and forecast never become the estimate. Equal UTC
+canonical timezone, only Home is presented: no separate Current row, Current icon,
+Current label or estimate metadata on Home. Home's fixed coordinates and forecast
+never become the estimate. There is at most one populated Current row away from
+Home. Unknown/unusable location has no blank placeholder; retain the last accepted
+place during acquisition and never invent a location from a timezone alone. Equal UTC
 offsets alone do not establish Home. Selection hands off from a disappearing
 Current to Home where the current query permits, and reappearance never steals it.
 
@@ -1089,7 +1092,9 @@ Location IDs and cross-source merging come from bar-daemon. The client retains
 locale sorting, filtering, focus and selection; list rebuilds retain the previous
 native ID even when labels or ordering change. Browsing arrows and detail-entry
 commands continue through the shared chooser surface. The accepted Current location
-row keeps its stable ID and title while its passive list/detail subtitle describes
+row keeps its stable ID; a known manually selected place supplies its city name,
+while automatic estimates retain the generic title rather than inventing a city.
+Its passive list/detail subtitle describes
 IP/non-IP/unknown provenance and optional **reported** accuracy. This is an estimate,
 not a verified physical position or guaranteed radius. Metadata changes do not
 select another row, create editable stops, or publish settings. Shared label/header

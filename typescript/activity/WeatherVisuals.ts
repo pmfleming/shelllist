@@ -88,6 +88,7 @@ function localDate(unixMs: Numeric, utcOffsetSeconds: Numeric): string {
 }
 
 type LocationCity = Readonly<{
+    home?: boolean;
     current?: boolean;
     location_source?: string;
     location_mode?: string;
@@ -104,7 +105,7 @@ function hasLocationClock(city: LocationCity | null | undefined): boolean {
 }
 
 function locationEstimate(city: LocationCity | null | undefined): string {
-    if (!city || !city.current)
+    if (!city || !city.current || city.home)
         return "";
     const source = city.location_source;
     if (source === "manual")
