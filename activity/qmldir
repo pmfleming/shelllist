@@ -22,6 +22,7 @@ internal WeatherHourlyForecast WeatherHourlyForecast.qml
 internal WeatherDailyForecast WeatherDailyForecast.qml
 internal ActivityTodoSection ActivityTodoSection.qml
 internal TimeWeatherDetails TimeWeatherDetails.qml
+internal TimeWeatherLocations TimeWeatherLocations.qml
 internal TimeWeatherListPane TimeWeatherListPane.qml
 internal TimeWeatherListRow TimeWeatherListRow.qml
 internal TimeWeatherTimePane TimeWeatherTimePane.qml

@@ -82,6 +82,7 @@ NotificationPresentation 1.0 NotificationPresentation.js
 PopoverGeometry 1.0 PopoverGeometry.qml
 PopupWindowHost 1.0 PopupWindowHost.qml
 PromptDialog 1.0 PromptDialog.qml
+SearchChoiceDialog 1.0 SearchChoiceDialog.qml
 PulsingLabel 1.0 PulsingLabel.qml
 ResultLabel 1.0 ResultLabel.qml
 ResultListFrame 1.0 ResultListFrame.qml

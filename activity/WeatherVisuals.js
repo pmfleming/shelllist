@@ -81,6 +81,8 @@ function locationEstimate(city) {
     if (!city || !city.current)
         return "";
     const source = city.location_source;
+    if (source === "manual")
+        return city.location_mode === "automatic" ? "Automatic · last manual location" : "Manual location";
     let text = source === "ip" ? "IP estimate" : source === "non_ip"
         ? "Location estimate (non-IP)" : "Location estimate (source unknown)";
     const accuracy = city.accuracy_meters;
@@ -89,7 +91,7 @@ function locationEstimate(city) {
             : (accuracy / 1000).toFixed(accuracy < 10000 ? 1 : 0).replace(/\.0$/, "") + " km";
         text += " · reported accuracy ~" + distance;
     }
-    return text;
+    return city.location_mode === "automatic" ? "Automatic · " + text : text;
 }
 function locationSubtitle(city) {
     const estimate = locationEstimate(city);

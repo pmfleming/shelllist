@@ -14,7 +14,7 @@ Ui.ResultRow {
     readonly property bool hasWeather: !!city.has_weather && !!weather.available
 
     objectName: "timeWeatherLocation::" + String(city.id || "")
-    accessibleName: city.label + ". " + Visuals.locationSubtitle(city) + ". " + (hasWeather ? weather.condition + ", " + temperature(weather.temperature_c) + ", " + percentage(weather.precipitation_probability) + " chance of rain" : "No weather") + ". " + localTime()
+    accessibleName: city.label + (city.home ? qsTr(". Home") : "") + (city.current ? qsTr(". Current location") : "") + ". " + Visuals.locationSubtitle(city) + ". " + (hasWeather ? weather.condition + ", " + temperature(weather.temperature_c) + ", " + percentage(weather.precipitation_probability) + " chance of rain" : "No weather") + ". " + localTime()
 
     function temperature(value: var): string {
         const number = Number(value);
@@ -28,8 +28,18 @@ Ui.ResultRow {
         return clockAvailable ? Visuals.localTime(nowMs, city.utc_offset_seconds) : "—";
     }
 
-    leadingIcon: city.home ? "󰋜" : "󰍎"
+    leadingIcon: city.home ? "home" : city.current ? "my_location" : "location_on"
     leadingIconColor: city.home ? Ui.Theme.accent : Ui.Theme.mutedText
+
+    Ui.GlyphLabel {
+        objectName: "timeWeatherHomeCurrentIcon"
+        visible: !!row.city.home && !!row.city.current
+        glyph: "my_location"
+        font.pixelSize: Ui.Theme.iconSizeSmall
+        color: Ui.Theme.accent
+        Accessible.name: qsTr("Current location")
+        Accessible.role: Accessible.StaticText
+    }
 
     Ui.ResultLabel {
         Layout.fillWidth: true

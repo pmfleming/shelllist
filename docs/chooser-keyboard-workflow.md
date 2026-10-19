@@ -1060,6 +1060,31 @@ credential and connection validation remains authoritative.
 
 ## Native time/weather locations
 
+Home is protected Amsterdam. Its passive house icon and Current's target icon
+identify roles, not actions. When the native effective location is in Amsterdam's
+canonical timezone, the separate Current row is suppressed and Home carries both
+icons; Home's fixed coordinates and forecast never become the estimate. Equal UTC
+offsets alone do not establish Home. Selection hands off from a disappearing
+Current to Home where the current query permits, and reappearance never steals it.
+
+All city headers and both tabs share one Manual-location primary (Alt+L), then
+Return to Automatic (Alt+R) and Remove (Alt+D) secondaries. Protected/unavailable
+commands retain shared geometry. List Enter still only opens details. Add uses
+the existing search trailing plus (Alt+Enter from search, or Alt+A). Commands also
+work through shared navigation while collapsed; no city-row action gutter or new
+field stops are introduced. Manual/Automatic act on location policy, not Home.
+
+Add and Manual use shared `SearchChoiceDialog`, a required-input modal composed
+from shared search/choice fields and explicit submit/cancel commands. Typing only
+requests bounded native search reads; choosing a candidate stays local. Submission
+captures identity/revision and awaits native acknowledgement. Escape cancels the
+unsubmitted choice; closing a submitted dialog does not undo or replay its command.
+Remove uses shared compact confirmation, initially focused on Cancel. Modals block
+underlying commands/refresh/tabs. Native safety/authorization remains authoritative;
+old or absent authority support leaves controls unavailable without shell fallbacks.
+`tst_time_weather_locations.qml` exercises actual pointer/key routes, same-header
+geometry, Home/Current roles, modal isolation and acknowledgement boundaries.
+
 Location IDs and cross-source merging come from bar-daemon. The client retains
 locale sorting, filtering, focus and selection; list rebuilds retain the previous
 native ID even when labels or ordering change. Browsing arrows and detail-entry

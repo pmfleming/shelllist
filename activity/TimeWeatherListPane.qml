@@ -19,6 +19,11 @@ Ui.ChooserListPane {
     refreshing: controller.activity.syncing
     busy: controller.activity.syncing || controller.screenshotInFlight
     powerEnabled: false
+    powerVisible: false
+    searchActionIcon: "add"
+    searchActionToolTip: qsTr("Add city")
+    searchActionEnabled: controller.locations.canAdd && !controller.locations.modalOpen
+    onSearchActionRequested: controller.locations.openPicker("add")
     refreshEnabled: !controller.activity.syncing && !controller.screenshotInFlight
     filterText: controller.filterText
     status: controller.screenshotStatus.length > 0 ? controller.screenshotStatus : (controller.activity.syncing ? "Updating time and weather…" : controller.cities.length + (controller.cities.length === 1 ? " city" : " cities"))

@@ -22,6 +22,18 @@ ActivityController {
     }
     property string detailsTab: "time"
     property string filterText: ""
+    readonly property TimeWeatherLocations locations: TimeWeatherLocations { controller: controller }
+    navigationBlocked: locations.modalOpen
+    detailActions: [
+        {id: "manual", label: qsTr("Set current location manually"), icon: "my_location", accessKey: "L", enabled: locations.canControl, presentation: {group: "primary"}},
+        {id: "automatic", label: qsTr("Return to Automatic"), icon: "explore", accessKey: "R", enabled: locations.canAutomatic, presentation: {group: "toolbar"}},
+        {id: "remove", label: qsTr("Remove city"), icon: "delete", accessKey: "D", enabled: locations.canRemove, presentation: {group: "toolbar", tone: "danger"}}
+    ]
+    function triggerDetailAction(actionId: string): void {
+        if (actionId === "manual") locations.openPicker("manual");
+        else if (actionId === "automatic") locations.returnAutomatic();
+        else if (actionId === "remove") locations.askRemove();
+    }
     screenshotStartMessage: "Capturing Time & Weather window…"
     rangeQueriesEnabled: false
     readonly property var cities: (activity.locations || []).slice().sort(compareCities)
@@ -49,10 +61,11 @@ ActivityController {
         });
     }
 
+    property string retainedCityId: ""
+    property bool rebuildingCities: false
     function rebuildCityModel(): void {
-        const previous = citySelection.selectedIndex >= 0 && citySelection.selectedIndex < cityListModel.count
-            ? cityListModel.get(citySelection.selectedIndex).resultData.payload : selectedCity;
-        const selectedId = previous.id || "";
+        const selectedId = retainedCityId;
+        rebuildingCities = true;
         cityListModel.clear();
         filteredCities.forEach(function (city) {
             cityListModel.append({
@@ -64,7 +77,10 @@ ActivityController {
         const retained = filteredCities.findIndex(function (city) {
             return city.id === selectedId;
         });
-        citySelection.selectedIndex = retained >= 0 ? retained : Math.max(0, Math.min(citySelection.selectedIndex, filteredCities.length - 1));
+        const home = selectedId === "current-location" ? filteredCities.findIndex(city => city.home && city.current) : -1;
+        citySelection.selectedIndex = retained >= 0 ? retained : home >= 0 ? home : Math.max(0, Math.min(citySelection.selectedIndex, filteredCities.length - 1));
+        retainedCityId = filteredCities[citySelection.selectedIndex]?.id || "";
+        rebuildingCities = false;
     }
 
     function setDetailsTab(tab: string): void {
@@ -86,12 +102,19 @@ ActivityController {
     function activateUi(workspaceId): void {
         activateUiState(workspaceId);
         backend.snapshot();
+        locations.readStatus();
         Qt.callLater(rebuildCityModel);
     }
 
     function deactivateUi(): void {
+        locations.closeModal();
         deactivateUiState();
         screenshotStatus = "";
+    }
+
+    function refresh(): void {
+        backend.refresh();
+        locations.readStatus();
     }
 
     onCitiesChanged: Qt.callLater(rebuildCityModel)
@@ -101,6 +124,10 @@ ActivityController {
         id: citySelection
         property int selectedIndex: 0
         property string queryText: ""
+        onSelectedIndexChanged: {
+            if (!controller.rebuildingCities && selectedIndex >= 0 && selectedIndex < cityListModel.count)
+                controller.retainedCityId = cityListModel.get(selectedIndex).resultData.payload.id || "";
+        }
 
         function move(delta: int): void {
             selectedIndex = Math.max(0, Math.min(selectedIndex + delta, controller.filteredCities.length - 1));

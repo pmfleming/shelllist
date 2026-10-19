@@ -5,10 +5,10 @@ Approved design: [revision 3 HTML plan](time-panel-location-plan.html).
 ## Commit stages
 
 1. Contract and execution record — complete (this commit).
-2. Native saved-city catalog, fixed Amsterdam Home and at-home projection.
-3. Authorized manual/automatic location authority controls and session API.
-4. Shared panel icon commands, picker and confirmation.
-5. Integration fixtures, native/Qt tests and documentation.
+2. Native saved-city catalog, fixed Amsterdam Home and at-home projection — complete, bar-daemon `aa65230`.
+3. Authorized manual/automatic location authority controls and session API — complete, bar-daemon `376dba0`.
+4. Shared panel icon commands, picker and confirmation — complete (this commit).
+5. Integration fixtures, broader native/Qt tests and documentation — next.
 
 Each completed implementation stage is committed in its owning repository.
 Completion and validation are recorded below; a planned stage is not a claim of
@@ -44,3 +44,14 @@ incidentally in stage commits.
 
 Stage 1: source/design review; HTML local references checked. No runtime changes
 or live timezone/provider operations.
+
+Stage 2: locked native library: 154 passed, zero failed, one existing ignored
+fixture. Native protocol regenerated. Service fixtures do not contact weather HTTP.
+Stage 3: authority: 34 passed, zero failed, one existing ignored packaged-agent
+fixture; library: 154 passed, zero failed, one existing ignored test. Private bus
+covers real authorization denial/control/readback serialization; no host bus writes.
+Stage 4: new actual Qt consumer suite: 8 passed; retained estimate/navigation suite:
+6 passed. Strict qmllint passes (existing unrelated unused-import info remains).
+TypeScript and daemon protocol bindings regenerated. Keyboard contract updated.
+The city picker uses shared PromptDialog/FormField/TextField/DropDownList composition;
+no numeric font/spacing/radius overrides were added to the panel.

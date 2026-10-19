@@ -90,6 +90,7 @@ function localDate(unixMs: Numeric, utcOffsetSeconds: Numeric): string {
 type LocationCity = Readonly<{
     current?: boolean;
     location_source?: string;
+    location_mode?: string;
     accuracy_meters?: number | null;
     timezone?: string | null;
     clock_unavailable?: boolean;
@@ -106,6 +107,8 @@ function locationEstimate(city: LocationCity | null | undefined): string {
     if (!city || !city.current)
         return "";
     const source = city.location_source;
+    if (source === "manual")
+        return city.location_mode === "automatic" ? "Automatic · last manual location" : "Manual location";
     let text = source === "ip" ? "IP estimate" : source === "non_ip"
         ? "Location estimate (non-IP)" : "Location estimate (source unknown)";
     const accuracy = city.accuracy_meters;
@@ -114,7 +117,7 @@ function locationEstimate(city: LocationCity | null | undefined): string {
             : (accuracy / 1000).toFixed(accuracy < 10000 ? 1 : 0).replace(/\.0$/, "") + " km";
         text += " · reported accuracy ~" + distance;
     }
-    return text;
+    return city.location_mode === "automatic" ? "Automatic · " + text : text;
 }
 
 function locationSubtitle(city: LocationCity | null | undefined): string {

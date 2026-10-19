@@ -14,10 +14,11 @@ Ui.ActionDetailsPane {
 
     chooserController: controller
     emptyText: "Select a city"
-    icon: city.home ? "󰋜" : "󰍎"
+    icon: city.home ? "home" : city.current ? "my_location" : "location_on"
     iconColor: Ui.Theme.accent
     title: city.label || "City"
     subtitle: Visuals.locationSubtitle(city)
+    actions: controller.detailActions
 
     Ui.TabbedDetailsStack {
         anchors.fill: parent
