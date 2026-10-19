@@ -115,6 +115,7 @@ ChooserSurface {
         detailsNavigation.additionalCommandItem: surface.additionalCommandItem
         detailsNavigation.visible: surface.chooserController.detailsRendered || surface.commandsWithoutDetails
         detailsNavigation.enabled: surface.chooserController.detailsOpen || surface.commandsWithoutDetails
+        detailsNavigation.fieldController: surface.chooserController
         detailsNavigation.headerShortcutsEnabled: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && (surface.chooserController.detailsOpen || surface.commandsWithoutDetails) && surface.navigationEnabled && !surface.chooserController.navigationBlocked
         navigationAllowed: surface.navigationEnabled
         sessionContext: surface.sessionContext

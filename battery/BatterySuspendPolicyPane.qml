@@ -16,23 +16,7 @@ Ui.DetailColumnCard {
     BatterySectionHeading {
         Layout.fillWidth: true
         title: qsTr("Automatic sleep")
-        helpText: qsTr("Suspend after is measured from inactivity; Then hibernate is measured from suspend. Same settings shares one profile between battery and AC. The lid action is ignored while docked or using an external display; System default delegates to the system. The profile action uses this power source’s hibernate delay, even with inactivity set to Never. Waking cancels delayed hibernation; low battery may hibernate sooner. Keep awake blocks suspend and hibernate, not locking or screen blanking. Use only one automatic power manager.")
-    }
-
-    function delayOptions(current: int): var {
-        const minutes = [0, 5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1440];
-        if (!minutes.includes(current)) {
-            minutes.push(current);
-            minutes.sort(function (a, b) {
-                return a - b;
-            });
-        }
-        return minutes.map(function (value) {
-            return {
-                value: String(value),
-                label: value === 0 ? qsTr("Never") : (value >= 60 && value % 60 === 0 ? qsTr("%1 h").arg(value / 60) : qsTr("%1 min").arg(value))
-            };
-        });
+        helpText: qsTr("Suspend at and Hibernate at use total uninterrupted idle time. Changing suspend keeps the hibernate endpoint fixed and changes the time spent suspended, including the delay used by the lid profile. With inactivity set to Never, Then hibernate is the delay after a lid-triggered suspend. The non-linear sliders run from 5 minutes to 12 hours, with progressively larger steps. Alt+V enters exact minutes or selects Never; longer existing settings are preserved. Hatching marks unavailable choices, and the thin line marks the other endpoint. Same settings shares one profile between battery and AC. The lid action is ignored while docked or using an external display; System default delegates to the system. The profile action uses this power source’s hibernate delay, even with inactivity set to Never. Waking cancels delayed hibernation; low battery may hibernate sooner. Keep awake blocks suspend and hibernate, not locking or screen blanking. Use only one automatic power manager.")
     }
 
     Ui.SettingRow {
@@ -105,6 +89,9 @@ Ui.DetailColumnCard {
             id: profile
             required property string modelData
             readonly property var settings: pane.controller.suspendPolicyDraft[modelData]
+            readonly property real hibernateTime: settings.hibernate_minutes > 0 ? settings.sleep_minutes + settings.hibernate_minutes : 0
+            readonly property bool linkedTimes: settings.sleep_minutes > 0 && settings.hibernate_minutes > 0
+            readonly property bool finiteSleepLocked: linkedTimes && !pane.controller.suspendPolicyState.hibernate_available
             readonly property string sourceName: pane.controller.suspendPolicyDraft.same_profile ? qsTr("Battery & plugged in") : (modelData === "battery" ? qsTr("On battery") : qsTr("Plugged in"))
             Layout.fillWidth: true
             Layout.minimumWidth: 0
@@ -142,45 +129,43 @@ Ui.DetailColumnCard {
                 }
             }
 
-            Ui.SettingRow {
+            Ui.LinkedValueSlider {
+                objectName: "suspendDelay-" + profile.modelData
                 Layout.fillWidth: true
-                title: qsTr("Suspend after")
-                accessibleName: qsTr("%1: suspend after inactivity").arg(profile.sourceName)
-                showHelpButton: false
-                compact: true
-
-                Ui.DropDownList {
-                    objectName: "suspendDelay-" + profile.modelData
-                    Layout.fillWidth: true
-                    options: pane.delayOptions(profile.settings.sleep_minutes)
-                    value: String(profile.settings.sleep_minutes)
-                    interactive: pane.interactive
-                    onSelected: function (value) {
-                        pane.controller.updateSuspendPolicy(profile.modelData, "sleep_minutes", Number(value));
-                    }
+                label: qsTr("Suspend at")
+                accessibleName: qsTr("%1: suspend at total idle minutes").arg(profile.sourceName)
+                unit: "min"
+                allowNever: true
+                from: 0
+                to: 10080
+                scaleValues: Ui.SliderScale.sleepValues()
+                minimumValue: profile.finiteSleepLocked ? profile.settings.sleep_minutes : (profile.linkedTimes ? Math.max(1, profile.hibernateTime - 10080) : 1)
+                maximumValue: profile.finiteSleepLocked ? profile.settings.sleep_minutes : (profile.linkedTimes ? Math.min(10080, profile.hibernateTime - 1) : 10080)
+                peerValue: profile.linkedTimes ? profile.hibernateTime : NaN
+                value: profile.settings.sleep_minutes
+                interactive: pane.interactive
+                onValueSelected: function (selectedValue) {
+                    pane.controller.updateSleepTimeline(profile.modelData, "suspend", selectedValue);
                 }
             }
 
-            Ui.SettingRow {
+            Ui.LinkedValueSlider {
+                objectName: "hibernateDelay-" + profile.modelData
                 Layout.fillWidth: true
-                title: qsTr("Then hibernate")
-                accessibleName: qsTr("%1: time suspended before hibernating").arg(profile.sourceName)
-                showHelpButton: false
-                compact: true
-
-                Ui.DropDownList {
-                    objectName: "hibernateDelay-" + profile.modelData
-                    Layout.fillWidth: true
-                    options: pane.delayOptions(profile.settings.hibernate_minutes).map(function (option) {
-                        return Object.assign({}, option, {
-                            enabled: option.value === "0" || !!pane.controller.suspendPolicyState.hibernate_available
-                        });
-                    })
-                    value: String(profile.settings.hibernate_minutes)
-                    interactive: pane.interactive && (profile.settings.sleep_minutes > 0 || pane.controller.suspendPolicyDraft.lid_action === "profile")
-                    onSelected: function (value) {
-                        pane.controller.updateSuspendPolicy(profile.modelData, "hibernate_minutes", Number(value));
-                    }
+                label: profile.settings.sleep_minutes > 0 ? qsTr("Hibernate at") : qsTr("Then hibernate")
+                accessibleName: profile.settings.sleep_minutes > 0 ? qsTr("%1: hibernate at total idle minutes").arg(profile.sourceName) : qsTr("%1: time suspended before hibernating").arg(profile.sourceName)
+                unit: "min"
+                allowNever: true
+                from: 0
+                to: 20160
+                scaleValues: Ui.SliderScale.sleepValues()
+                minimumValue: profile.settings.sleep_minutes + 1
+                maximumValue: pane.controller.suspendPolicyState.hibernate_available ? profile.settings.sleep_minutes + 10080 : 0
+                peerValue: profile.settings.sleep_minutes > 0 ? profile.settings.sleep_minutes : NaN
+                value: profile.hibernateTime
+                interactive: pane.interactive && (profile.settings.sleep_minutes > 0 || pane.controller.suspendPolicyDraft.lid_action === "profile")
+                onValueSelected: function (selectedValue) {
+                    pane.controller.updateSleepTimeline(profile.modelData, "hibernate", selectedValue);
                 }
             }
         }

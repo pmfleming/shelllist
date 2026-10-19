@@ -27,7 +27,7 @@ const commandSymbols = [
     "search", "history", "calendar_month", "checklist", "notifications_none", "wifi_off",
     "wifi", "today", "refresh", "arrow_back", "arrow_forward", "arrow_upward",
     "arrow_downward", "chevron_left", "more_horiz", "play_arrow", "pause",
-    "restore", "undo", "check", "close", "delete", "cancel", "help", "monitor",
+    "restore", "undo", "check", "close", "delete", "edit", "cancel", "help", "monitor",
     "speaker", "mic", "autorenew", "battery_charging_full", "battery_saver",
     "clear_all", "qr_code", "qr_code_scanner", "content_copy", "content_paste",
     "web_asset_off", "extension_off", "open_in_new", "unfold_more", "reply", "snooze", "schedule", "notifications", "notifications_off",

@@ -71,6 +71,7 @@ ChooserSurface {
         id: navigation
         anchors.fill: parent
         contentItem: surface.navigationContent
+        fieldController: surface.chooserController
         headerContentItem: body
         headerShortcutsEnabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked
         restorationAllowed: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && !surface.chooserController.navigationBlocked

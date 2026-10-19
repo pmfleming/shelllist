@@ -7,6 +7,17 @@ FocusScope {
     id: navigation
 
     property Item contentItem: null
+    // Shared field-owned modals reuse the host's existing command/route guard.
+    property ChooserController fieldController: null
+    property ModalFrame fieldModal: null
+    readonly property bool fieldModalOpen: fieldModal?.visible ?? false
+    Binding {
+        target: navigation.fieldController
+        property: "navigationBlocked"
+        value: true
+        when: navigation.fieldModalOpen && navigation.fieldController !== null
+        restoreMode: Binding.RestoreBindingOrValue
+    }
     // Selected-result commands may live beside the list, independent of details.
     property Item additionalCommandItem: null
     property bool headerShortcutsEnabled: false
@@ -31,7 +42,7 @@ FocusScope {
     property bool finishingEditor: false
     readonly property Flickable currentPage: pageForTarget(currentTarget)
     readonly property Item focusedTarget: targetForFocus(Window.window ? Window.window.activeFocusItem : null)
-    readonly property bool popupOpen: ((currentTarget as DropDownList)?.popup.visible ?? false) || commandMenuOpen
+    readonly property bool popupOpen: ((currentTarget as DropDownList)?.popup.visible ?? false) || commandMenuOpen || fieldModalOpen
     readonly property bool editing: editorTarget !== null && (activeFocus || popupOpen)
     readonly property bool browsing: browseCursor.activeFocus && !editing
     readonly property Item highlightedControl: editable(currentTarget) && (available(currentTarget) || editorTarget === currentTarget) ? currentTarget : null
@@ -118,6 +129,8 @@ FocusScope {
             revealTarget();
     }
     function suspendView(): void {
+        if (fieldModal) fieldModal.visible = false;
+        fieldModal = null;
         finishEditor(false);
         cancelSessionRestore();
         for (const row of actionRows) row.closePopup();

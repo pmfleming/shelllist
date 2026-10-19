@@ -13,7 +13,7 @@ Column {
     required property var device
     required property var protection
     signal calibrationRequested()
-    readonly property bool thresholdsEditable: controller.protectionSupported && !controller.batteryOperationActive && !controller.actionInFlight
+    readonly property bool thresholdsEditable: controller.protectionSupported && !controller.batteryOperationActive && !controller.thresholdOperationActive && !controller.actionInFlight
 
     width: parent.width
     spacing: Ui.Theme.spacingMd
@@ -24,7 +24,7 @@ Column {
         BatterySectionHeading {
             Layout.fillWidth: true
             title: qsTr("Charging & protection")
-            helpText: qsTr("Resume and stop set the charge limits. The bell follows the effective target, including a one-time full charge. Charging actions: full battery charges to 100% once; pause/play stops or resumes charging; circular arrow calibrates. Health is full capacity divided by design capacity; the cycle icon counts charge cycles.")
+            helpText: qsTr("Resume must be below stop. Both sliders use the same non-linear scale: 50–75% in five-point steps, then one-point steps to 100%. Alt+V enters any supported exact percentage, including values below 50%. Hatching marks unavailable choices; the thin line marks the other threshold. Resume and stop set the charge limits. The bell follows the effective target, including a one-time full charge. Charging actions: full battery charges to 100% once; pause/play stops or resumes charging; circular arrow calibrates. Health is full capacity divided by design capacity; the cycle icon counts charge cycles.")
         }
         Ui.FeedbackSource {
             active: !pane.controller.protectionSupported
@@ -48,29 +48,37 @@ Column {
             interactive: pane.thresholdsEditable
             onClicked: pane.controller.setProtection(!checked)
         }
-        Ui.PercentageSlider {
+        Ui.LinkedValueSlider {
             objectName: "batteryResumeCharging"
             Layout.fillWidth: true
             label: qsTr("Resume charging")
-            to: 99
+            from: 0
+            to: 100
+            scaleValues: Ui.SliderScale.chargeValues()
+            minimumValue: 0
+            maximumValue: pane.controller.draftEndPercent - 1
+            peerValue: pane.controller.draftEndPercent
             value: pane.controller.draftStartPercent
-            enabled: pane.thresholdsEditable
-            onEdited: function (dragging) {
-                pane.controller.updateStartPercent(Math.round(value), dragging);
+            interactive: pane.thresholdsEditable
+            onValueSelected: function (selectedValue) {
+                pane.controller.updateStartPercent(selectedValue, false);
             }
-            onEditingFinished: pane.controller.finishThresholdEditing()
         }
-        Ui.PercentageSlider {
+        Ui.LinkedValueSlider {
             objectName: "batteryStopCharging"
             Layout.fillWidth: true
             label: qsTr("Stop charging")
-            from: 1
+            from: 0
+            to: 100
+            scaleValues: Ui.SliderScale.chargeValues()
+            minimumValue: pane.controller.draftStartPercent + 1
+            maximumValue: 100
+            peerValue: pane.controller.draftStartPercent
             value: pane.controller.draftEndPercent
-            enabled: pane.thresholdsEditable
-            onEdited: function (dragging) {
-                pane.controller.updateEndPercent(Math.round(value), dragging);
+            interactive: pane.thresholdsEditable
+            onValueSelected: function (selectedValue) {
+                pane.controller.updateEndPercent(selectedValue, false);
             }
-            onEditingFinished: pane.controller.finishThresholdEditing()
         }
         Ui.FeedbackSource {
             active: !pane.controller.thresholdDraftValid

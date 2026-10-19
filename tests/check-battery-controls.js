@@ -177,4 +177,26 @@ for (const extra of [
     for (const [field, value] of [["percent", 0], ["percent", 21], ["grace_seconds", 0], ["grace_seconds", 301], ["enabled", "yes"]])
         assert.equal(c.updateSuspendPolicy("critical_battery", field, value), false);
 }
-console.log("battery controls: identity, auto-save exclusion, command guards and uncertain outcomes passed");
+{
+    const flow = library(flowPath);
+    const draft = {lid_action: "profile", same_profile: false,
+        battery: {sleep_minutes: 30, hibernate_minutes: 30},
+        plugged: {sleep_minutes: 60, hibernate_minutes: 120}};
+    const moved = flow.editSleepTimeline(draft, "battery", "suspend", 45, true);
+    assert.equal(moved.battery.hibernate_minutes, 15);
+    assert.equal(moved.plugged.hibernate_minutes, 120);
+    assert.equal(draft.battery.sleep_minutes, 30, "translation does not mutate the source");
+    for (const value of [-1, 60, 61, 10081, NaN, 30.5])
+        assert.equal(flow.editSleepTimeline(draft, "battery", "suspend", value, true), null);
+    for (const value of [1, 30, 10111, Infinity, 60.5])
+        assert.equal(flow.editSleepTimeline(draft, "battery", "hibernate", value, true), null);
+    assert.equal(flow.editSleepTimeline(draft, "battery", "hibernate", 90, false), null);
+    assert.equal(flow.editSleepTimeline(draft, "battery", "suspend", 45, false), null, "cannot indirectly change unavailable hibernation");
+    const never = flow.editSleepTimeline(draft, "battery", "suspend", 0, true);
+    assert.equal(never.battery.hibernate_minutes, 30);
+    assert.equal(flow.editSleepTimeline(never, "battery", "hibernate", 90, true).battery.hibernate_minutes, 90);
+    never.lid_action = "suspend";
+    assert.equal(flow.editSleepTimeline(never, "battery", "hibernate", 90, true), null);
+    assert.equal(flow.editSleepTimeline(draft, "battery", "hibernate", 0, false).battery.hibernate_minutes, 0);
+}
+console.log("battery controls: identity, auto-save exclusion, command guards, timeline pairs and uncertain outcomes passed");

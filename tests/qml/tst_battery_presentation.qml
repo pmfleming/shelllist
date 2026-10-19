@@ -141,6 +141,94 @@ DaemonTestCase {
         verify(findChild(panel, "batteryThresholdSaveStatus").active);
         verify(findChild(panel, "feedbackText").text.length > 0, "save feedback reaches the fixed panel slot");
     }
+    function test_linkedSleepSavesOneDerivedPairAndRetainsRetry() {
+        const panel = make("power");
+        const suspend = browse(panel, "suspendDelay-battery");
+        const hibernate = findChild(panel, "hibernateDelay-battery");
+        compare(suspend.value, 30); compare(hibernate.value, 60);
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right);
+        compare(suspend.value, 45); compare(hibernate.value, 60);
+        compare(panel.controller.suspendPolicyDraft.battery.sleep_minutes, 30);
+        compare(panel.controller.suspendPolicyDraft.battery.hibernate_minutes, 30);
+        compare(calls.length, 0, "neither stored duration changes before save");
+        keyClick(Qt.Key_Escape); compare(suspend.value, 30);
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right); keyClick(Qt.Key_Tab);
+        compare(calls.length, 1);
+        compare(calls[0].method, "powerSleep.setPolicy");
+        compare(calls[0].params.battery.sleep_minutes, 45);
+        compare(calls[0].params.battery.hibernate_minutes, 15);
+        verify(panel.controller.suspendPolicySaving);
+        verify(!suspend.interactive && !hibernate.interactive);
+        panel.controller.suspendPolicyFailed("not acknowledged");
+        wait(0); compare(calls.length, 1, "failure does not replay a pair");
+        keyClick(Qt.Key_R, Qt.AltModifier);
+        compare(calls.length, 2);
+        compare(calls[1].params.battery.hibernate_minutes, 15);
+        panel.controller.suspendPolicyFinished();
+        browse(panel, "hibernateDelay-battery");
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right); keyClick(Qt.Key_Return);
+        compare(calls.length, 3);
+        compare(calls[2].params.battery.sleep_minutes, 45);
+        compare(calls[2].params.battery.hibernate_minutes, 45, "90 total minus 45 idle");
+    }
+    function test_sleepNeverAndLidProfileKeepDurationMeaning() {
+        const panel = make("power");
+        browse(panel, "suspendDelay-battery");
+        keyClick(Qt.Key_V, Qt.AltModifier);
+        const suspend = findChild(panel, "suspendDelay-battery");
+        const dialog = suspend.exactDialog;
+        tryVerify(() => dialog.visible);
+        verify(panel.controller.navigationBlocked, "shared exact modal blocks panel commands");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        keyClick(Qt.Key_R, Qt.AltModifier);
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        keyClick(Qt.Key_F5);
+        compare(panel.controller.viewTab, "power");
+        compare(calls.length, 0);
+        const exact = findChild(dialog, "promptInput");
+        exact.focusInput(true); keyClick("0"); keyClick(Qt.Key_Return);
+        compare(calls.length, 1);
+        compare(calls[0].params.battery.sleep_minutes, 0);
+        verify(!panel.controller.navigationBlocked, "the preceding host guard is restored on close");
+        compare(calls[0].params.battery.hibernate_minutes, 30, "Never does not destroy lid-profile delay");
+        panel.controller.suspendPolicyFinished();
+        const hibernate = findChild(panel, "hibernateDelay-battery");
+        verify(!hibernate.interactive, "no idle sleep and no profile lid action");
+        const policy = JSON.parse(JSON.stringify(panel.controller.suspendPolicyDraft));
+        policy.lid_action = "profile";
+        panel.controller.applySuspendPolicy({available: true, hibernate_available: true, lid: {available: true}, policy: policy});
+        verify(hibernate.interactive); compare(hibernate.label, "Then hibernate"); compare(hibernate.value, 30);
+        browse(panel, "hibernateDelay-battery");
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right); keyClick(Qt.Key_Return);
+        compare(calls.length, 2);
+        compare(calls[1].params.battery.sleep_minutes, 0);
+        compare(calls[1].params.battery.hibernate_minutes, 45);
+        panel.controller.suspendPolicyFinished();
+        browse(panel, "criticalBatteryEnabled");
+        keyClick(Qt.Key_Return);
+        tryVerify(() => findChild(panel, "batterySafetyReview").visible);
+        verify(panel.controller.navigationBlocked, "the domain review binding survives the exact modal");
+        keyClick(Qt.Key_Escape);
+        verify(!panel.controller.navigationBlocked);
+    }
+    function test_unavailableHibernateOnlyAllowsNeverAndSeparateProfiles() {
+        const panel = make("power");
+        const policy = JSON.parse(JSON.stringify(panel.controller.suspendPolicyDraft));
+        policy.same_profile = false;
+        policy.plugged = {sleep_minutes: 60, hibernate_minutes: 120};
+        panel.controller.applySuspendPolicy({available: true, hibernate_available: false, lid: {available: true}, policy: policy});
+        const hibernate = browse(panel, "hibernateDelay-plugged");
+        compare(hibernate.value, 180);
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right); keyClick(Qt.Key_Return);
+        compare(calls.length, 0, "unsupported hibernation cannot be enabled or changed to a finite value");
+        keyClick(Qt.Key_V, Qt.AltModifier);
+        tryVerify(() => hibernate.exactDialog.visible);
+        const exact = findChild(hibernate.exactDialog, "promptInput");
+        exact.focusInput(true); keyClick("0"); keyClick(Qt.Key_Return);
+        compare(calls.length, 1);
+        compare(calls[0].params.plugged.hibernate_minutes, 0);
+        compare(calls[0].params.battery.hibernate_minutes, 30, "only the selected source changes");
+    }
     function test_calibrationReviewBlocksCommandsAndRetargeting() {
         const panel = make("care");
         const modal = findChild(panel, "batterySafetyReview");

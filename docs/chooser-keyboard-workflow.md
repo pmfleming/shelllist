@@ -115,6 +115,33 @@ Adjustments publish live, Enter/Tab retain the value, and Escape publishes the
 value captured at edit entry to restore it. Other sliders default to deferred
 save, including battery thresholds and Bluetooth timeouts.
 
+`LinkedValueSlider` is the shared non-linear, constrained slider composition.
+It remains one `LabeledValueSlider` field and uses the same `FieldEditSession`;
+its labels, scale endpoints, companion marker and hatching are passive. Both
+members of a pair use the same fixed `scaleValues` ruler. Arrows select the next
+allowed stop; Home/End select the first/last allowed stop. Pointer mapping uses
+that same ruler, including RTL. Limits restrict choices without stretching the
+track, swapping endpoints or moving the companion. Incoming peer changes reject
+an uncommitted save rather than reinterpret it. An out-of-scale exact source is
+shown numerically without a misleading clamped handle or automatic write.
+
+Scoped **Alt+V**, also available through the trailing edit command, opens the
+shared exact-value `PromptDialog`. Opening discards an unsaved slider edit.
+The modal uses ordinary required-input traversal and explicit Save/Cancel; typing
+never writes. Only integer values satisfying the current domain limits may save.
+Sleep exposes **Never** as an explicit modal option, not zero on the numeric
+ruler; its integer wire representation remains 0. Source/peer changes block a
+stale modal save and loss of availability closes it. Shared `DetailsNavigation`
+registers the field-owned modal and temporarily preserves/overrides the host
+controller's navigation guard; tab switching, refresh and underlying commands
+cannot run through it. Suspension closes it without saving, and dismissal restores
+the host's original guard binding. Modal acceptance submits an explicit exact-value
+command; it does not add a field Tab stop. Existing backend
+acknowledgement, retry and capability guards still own the outcome. Native tests
+in `tst_linked_sliders.qml` cover both routes, boundaries, snapshots, cancellation,
+RTL and retained off-scale values; Battery's consumer tests cover atomic timing
+translation, unavailable hibernation, separate profiles and recovery.
+
 Pointer entry into a shared field uses the same transaction as keyboard entry.
 Moving native focus directly between editors discards the previous unsaved draft
 before editing the next field; leaving the detail region discards that draft too.
@@ -488,7 +515,7 @@ contract and Qt interaction coverage.
    workflow is mandatory, not an optional migration mode. Do not add local
    Up/Down field traversal or Right-to-edit.
 2. Use shared `TextField`, `TextEditor`, `DropDownList`, `SegmentedControl`,
-   `ValueSlider`/`LabeledValueSlider`, `ToggleRow` and `ToggleSwitch` controls.
+   `ValueSlider`/`LabeledValueSlider`/`LinkedValueSlider`, `ToggleRow` and `ToggleSwitch` controls.
    Assign stable `objectName`/`focusKey` identities for ordinary restoration.
 3. For deferred settings, consume **`edited` / `selected` / `editingFinished`**,
    not `textChanged`, `valueChanged`, native `activated`, or focus loss. These
@@ -1096,8 +1123,13 @@ into sibling shared task cards, retaining the same controller and safety owners.
 “Same settings on battery & AC” names the link switch; passive source headings
 show “Battery & plugged in” or both “On battery” / “Plugged in” profiles. The
 reported source supplies the passive Current mark; unknown is not guessed.
-Suspend after / Then hibernate retain full time semantics in accessibility and
-Help. The docking/wake/low-battery caveat strip is replaced by explicit Help.
+Suspend at / Hibernate at use total uninterrupted idle minutes on linked,
+progressive sliders. Saving Suspend while both timers are finite preserves the
+Hibernate endpoint and atomically derives the backend's post-suspend duration.
+Saving Never preserves the other duration, including its lid-profile use. With
+idle sleep set to Never, Then hibernate instead edits the lid-profile delay;
+without that lid action it stays unavailable. Full semantics remain in
+accessibility and Help. The docking/wake/low-battery caveat strip is replaced by explicit Help.
 Critical threshold/grace fields appear only when enabled; their reveal and profile
 linking retain ordinary editable-only traversal. Compact Details / Retry settings
 (Alt+R) commands remain outside Tab, with independent diagnostic and saved-failure

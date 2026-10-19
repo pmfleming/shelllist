@@ -104,6 +104,37 @@ function validSuspendPolicyValue(profile, field, value) {
     return ["battery", "plugged"].includes(profile) && ["sleep_minutes", "hibernate_minutes"].includes(field) && Number.isInteger(value) && value >= 0 && value <= 10080;
 }
 
+// Translate a displayed idle-time endpoint without changing the wire contract.
+// Never keeps the other duration (also used by lid-triggered sleep) intact.
+function editSleepTimeline(draft, profile, endpoint, value, hibernateAvailable) {
+    if (!["battery", "plugged"].includes(profile) || !["suspend", "hibernate"].includes(endpoint) || !Number.isInteger(value) || value < 0)
+        return null;
+    const current = draft[profile];
+    if (!current) return null;
+    const sleep = current.sleep_minutes;
+    const delay = current.hibernate_minutes;
+    if (!validSuspendPolicyValue(profile, "sleep_minutes", sleep) || !validSuspendPolicyValue(profile, "hibernate_minutes", delay)) return null;
+    let nextSleep = sleep;
+    let nextDelay = delay;
+    if (endpoint === "suspend") {
+        nextSleep = value;
+        if (sleep > 0 && delay > 0 && value > 0) {
+            nextDelay = sleep + delay - value;
+            if (nextDelay <= 0) return null;
+        }
+    } else {
+        if ((value > 0 && !hibernateAvailable) || (sleep === 0 && draft.lid_action !== "profile")) return null;
+        nextDelay = value === 0 ? 0 : value - sleep;
+        if (value > 0 && nextDelay <= 0) return null;
+    }
+    if (nextDelay > 0 && nextDelay !== delay && !hibernateAvailable) return null;
+    if (!validSuspendPolicyValue(profile, "sleep_minutes", nextSleep) || !validSuspendPolicyValue(profile, "hibernate_minutes", nextDelay)) return null;
+    if (nextSleep === sleep && nextDelay === delay) return null;
+    const next = JSON.parse(JSON.stringify(draft));
+    next[profile] = Object.assign({}, current, {sleep_minutes: nextSleep, hibernate_minutes: nextDelay});
+    return next;
+}
+
 // The suspend policy with one field changed, or null when the change is invalid.
 function editSuspendPolicy(draft, profile, field, value) {
     if (!validSuspendPolicyValue(profile, field, value))

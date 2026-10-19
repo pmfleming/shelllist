@@ -25,8 +25,17 @@ Application energy keeps attribution/confidence in Help and accessibility, with
 
 ## Battery care
 
-Charging & protection contains protection, resume/stop thresholds, the charge
-notification, and one compact command row. The notification target follows the
+Charging & protection contains protection, linked resume/stop sliders, the charge
+notification, and one compact command row. Both sliders use the same fixed
+non-linear ruler: 50, 55, 60, 65, 70, 75%, then each percentage point to 100%.
+A companion marker and hatched unavailable interval expose the strict ordering.
+Arrows and pointer motion select valid stops without moving the other threshold;
+Enter/Tab saves and Escape discards. Scoped Alt+V opens the shared exact-value
+modal for any valid integer percentage, including below 50% and intermediate
+values. Existing off-scale values are retained, never rounded on display.
+Threshold submission still uses the existing pair owner, delayed save,
+acknowledgement, firmware readback and retry guards. Pending threshold operations
+disable conflicting threshold editors. The notification target follows the
 acknowledged stop threshold unless protection is disabled or one-time full charge
 is active, when it follows 100%. Alert and threshold save/error states stay
 independent. Suppress only idle success boilerplate and repeated device/range copy.
@@ -63,11 +72,32 @@ control is introduced; all cards share the existing controller/operation owners.
 “Same settings on battery & AC” visibly names the link switch. Passive source
 headings say “Battery & plugged in”, or “On battery” and “Plugged in” with both
 profiles visible when unlinked. “Current” follows the reported active profile,
-not a guessed source. Labels wrap without shrinking the switch. “Suspend after”
-and “Then hibernate” keep full inactivity/suspended-time meanings in accessibility
-and Automatic sleep Help. Help also explains docking, System default, the lid
-profile exception, waking, low battery and Keep awake; the old caveat pictogram
-strip is removed. Source labels and headings are not editable stops.
+not a guessed source. Labels wrap without shrinking the switch. The shared linked
+sliders show **Suspend at / Hibernate at**, both measured in total uninterrupted
+idle minutes. Their identical progressive ruler uses 5, 10, 15, 20, 25, 30, 45,
+60, 90, 120, 180, 240, 360, 480 and 720 minutes. Equal track distances are choices,
+not equal durations. Alt+V exposes exact minutes and an explicit Never option;
+previously supported longer/custom values remain available (up to seven days per
+stored duration). Help and accessible names explain the units and non-linear scale.
+
+The wire policy is unchanged: idle `sleep_minutes` plus suspended
+`hibernate_minutes`. With both finite, moving Suspend preserves the absolute
+Hibernate endpoint and submits both derived durations in one guarded policy write.
+Moving Hibernate changes only the post-suspend duration. No intermediate or
+per-drag backend writes occur. Never is 0 on the wire but is not a numeric ruler
+position: disabling idle sleep preserves the stored hibernate delay for the lid
+profile. When idle sleep is Never, the second label becomes **Then hibernate**
+and directly edits that lid-profile delay; it is unavailable without a profile
+lid action. Re-enabling idle sleep preserves that delay. Unavailable hibernation
+cannot acquire a finite value, including indirectly through a Suspend edit;
+explicit Never remains available. Separate battery/AC profiles and the existing
+same-profile backend semantics remain unchanged.
+
+Changing the derived delay also affects lid-profile hibernation; this is explained
+in Automatic sleep Help, not hidden as a widget-only change. Waking, inhibitors
+and critical-battery behavior mean total times are nominal, not guarantees. Help
+also explains docking, System default, waking, low battery and Keep awake; the old
+caveat pictogram strip stays removed. Source labels and headings are not editable stops.
 
 Automatic sleep ends with compact diagnostic Details and Retry settings commands;
 Retry retains Alt+R and the original dirty/error/critical-only guards, including
@@ -89,6 +119,32 @@ disabled, but independent critical protection and manual commands keep their own
 guards. No configuration is silently changed and no failed mutation is replayed.
 
 ## Shared presentation and validation
+
+`LinkedValueSlider` composes the existing shared `LabeledValueSlider`/`FieldRow`,
+`ValueSlider` transaction and `PromptDialog`. `SliderScale.js` owns pure ruler
+mapping; `BatteryFlow.editSleepTimeline` owns domain translation and validation.
+No panel-local key model or new editable telemetry stops are introduced. The
+shared UI maintainer owns the deliberate slider geometry (16px track, 24px peer
+marker, 6px hatch pitch), matching the existing slider track family rather than
+new font/spacing/radius roles. Passive axis labels use the shared metadata role.
+
+`tst_linked_sliders.qml` exercises actual pointer/keyboard edits, both step-size
+transitions, fixed bounds, exact/Never entry, cancellation, stale peers and
+capability loss. `tst_battery_presentation.qml` additionally checks derived pair
+wire payloads, no early writes, retry, separate profiles, lid-only delays and
+unavailable hibernation. `check-battery-controls.js` tests invalid timeline inputs
+and bounds without hardware writes. Human screen-reader/touch acceptance and
+physical suspend/hibernate/firmware validation remain separate acceptance gates.
+
+Linked-slider implementation checkpoint: strict QML lint passes; the full Qt
+suite passes **346 / 0 failed / 1 existing renderer skip**, with
+`QML_XHR_ALLOW_FILE_READ=1` for local contract fixtures. Battery controller/flow
+JavaScript and source import checks pass. Native synthetic pointer, touch and
+accessibility-action routes are exercised; these are not human accessibility
+acceptance. Offscreen software-rendered Care/Power captures at 453px and 340px,
+both themes, plus the exact-value modal were inspected under ignored
+`target/linked-sliders/`. The shared numeric-role review reports no new role
+prompts. No hardware settings were changed during validation.
 
 `SegmentedControl.circular` / `iconOnly`, option `icon` / `shortLabel`, and compact
 icon-bearing `ToggleRow` / `SettingRow` are opt-in. Existing consumers keep their

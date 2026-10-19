@@ -327,6 +327,17 @@ Ui.ChooserController {
         return saveSuspendPolicy();
     }
 
+    function updateSleepTimeline(profile: string, endpoint: string, value: real): bool {
+        if (!suspendPolicyState.available || suspendPolicySaving || actionInFlight)
+            return false;
+        const next = Flow.editSleepTimeline(suspendPolicyDraft, profile, endpoint, value, !!suspendPolicyState.hibernate_available);
+        if (!next) return false;
+        suspendPolicyDraft = next;
+        suspendPolicyCriticalOnly = false;
+        suspendPolicyDirty = true;
+        return saveSuspendPolicy();
+    }
+
     function saveSuspendPolicy(): bool {
         if ((!suspendPolicyState.available && !suspendPolicyCriticalOnly) || suspendPolicySaving || !suspendPolicyDirty || actionInFlight)
             return false;
@@ -541,12 +552,14 @@ Ui.ChooserController {
     }
 
     function updateStartPercent(value: int, dragging: bool): void {
+        if (!Presentation.thresholdRangeValid(value, draftEndPercent)) return;
         thresholdEditing = dragging;
         draftStartPercent = value;
         markThresholdChanged(false);
     }
 
     function updateEndPercent(value: int, dragging: bool): void {
+        if (!Presentation.thresholdRangeValid(draftStartPercent, value)) return;
         thresholdEditing = dragging;
         draftEndPercent = value;
         markThresholdChanged(false);
