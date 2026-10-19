@@ -72,9 +72,19 @@ GeoClue first, accepts positively identified IP fallback directly, and otherwise
 requires matching canonical coordinate-derived IP/GeoClue timezones (no distance
 limit). Missing confirmation retries without changing the observed timezone.
 Accepted current-location coordinates may be coarse IP estimates, not precise
-physical position. The UI remains read-only and gains no field/navigation stops.
+physical position. Current location retains its stable ID/title; its shared list
+and detail subtitles show e.g. **IP estimate · reported accuracy ~26 km**. Unknown
+source/accuracy is not guessed, and reported accuracy is not a guaranteed radius.
+The UI remains read-only and gains no field/navigation stops. The authority also
+retains manual choices across restart, blocks NetworkManager-reported VPNs,
+revalidates stale GeoClue caches and respects confirmation cooldowns. These guards
+remain backend-owned. Session offset updates use a cached zone locally across DST;
+accepted-state revisions avoid repeated authorized reads when nothing changed.
 `tst_timezone_clock.qml` checks unavailable offsets and the actual clock button's
-live offset change, fractional offset, date rollover and pending-confirmation state.
+live offset change, fractional offset, date rollover and pending-confirmation
+state, including absence of a false “Timezone unavailable” tooltip.
+`tst_time_weather_estimates.qml` covers passive estimate metadata, stable selection,
+shared Tab/result-arrow navigation and normal/minimum light/dark layouts.
 
 Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. Weather locations—including which location is home, labels, coordinates, and timezones—come entirely from `bar-daemon/activity.json`; no city is compiled into the UI. `bar-daemon` refreshes configured Open-Meteo locations concurrently at most every 15 minutes and retains each last successful forecast through transient failures.
 

@@ -72,6 +72,25 @@ function localDate(unixMs, utcOffsetSeconds) {
     return weekdays[value.getUTCDay()] + ", " + value.getUTCDate() + " "
         + months[value.getUTCMonth()] + " " + value.getUTCFullYear();
 }
+function locationEstimate(city) {
+    if (!city || !city.current)
+        return "";
+    const source = city.location_source;
+    let text = source === "ip" ? "IP estimate" : source === "non_ip"
+        ? "Location estimate (non-IP)" : "Location estimate (source unknown)";
+    const accuracy = city.accuracy_meters;
+    if (typeof accuracy === "number" && Number.isFinite(accuracy) && accuracy >= 0) {
+        const distance = accuracy < 1000 ? Math.round(accuracy) + " m"
+            : (accuracy / 1000).toFixed(accuracy < 10000 ? 1 : 0).replace(/\.0$/, "") + " km";
+        text += " · reported accuracy ~" + distance;
+    }
+    return text;
+}
+function locationSubtitle(city) {
+    const estimate = locationEstimate(city);
+    const zone = city && city.timezone || "Timezone unavailable";
+    return estimate ? estimate + " · " + zone : zone;
+}
 function utcOffset(utcOffsetSeconds) {
     const totalMinutes = Math.round(Number(utcOffsetSeconds || 0) / 60);
     const sign = totalMinutes >= 0 ? "+" : "−";

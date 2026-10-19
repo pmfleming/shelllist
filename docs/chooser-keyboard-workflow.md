@@ -1018,7 +1018,14 @@ credential and connection validation remains authoritative.
 Location IDs and cross-source merging come from bar-daemon. The client retains
 locale sorting, filtering, focus and selection; list rebuilds retain the previous
 native ID even when labels or ordering change. Browsing arrows and detail-entry
-commands continue through the shared chooser surface.
+commands continue through the shared chooser surface. The accepted Current location
+row keeps its stable ID and title while its passive list/detail subtitle describes
+IP/non-IP/unknown provenance and optional **reported** accuracy. This is an estimate,
+not a verified physical position or guaranteed radius. Metadata changes do not
+select another row, create editable stops, or publish settings. Shared label/header
+composition retains full accessible text when the subtitle elides. Native
+`tst_time_weather_estimates.qml` covers metadata arrival, identity retention,
+Tab fallback and result-arrow navigation at normal/minimum widths in both themes.
 
 ## Native domain projections
 

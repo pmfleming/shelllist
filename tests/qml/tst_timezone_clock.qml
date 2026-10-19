@@ -31,6 +31,8 @@ TestCase {
             error: "IP confirmation unavailable · timezone unchanged · retrying automatically"};
         compare(time.text, "05:30");
         compare(date.text, "01-01");
+        verify(button.descriptor.tooltip.indexOf("Timezone unavailable") < 0);
+        verify(button.accessibleName.indexOf("2027-01-01 05:30 NPT +0545") >= 0);
     }
     function test_unavailableOffsetDoesNotClaimUtcOrCachedZone() {
         const now = new Date("2026-10-14T15:39:00Z");

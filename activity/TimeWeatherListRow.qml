@@ -12,7 +12,8 @@ Ui.ResultRow {
     readonly property var weather: city.weather || ({})
     readonly property bool hasWeather: !!city.has_weather && !!weather.available
 
-    accessibleName: city.label + ". " + (hasWeather ? weather.condition + ", " + temperature(weather.temperature_c) + ", " + percentage(weather.precipitation_probability) + " chance of rain" : "No weather") + ". " + localTime()
+    objectName: "timeWeatherLocation::" + String(city.id || "")
+    accessibleName: city.label + ". " + Visuals.locationSubtitle(city) + ". " + (hasWeather ? weather.condition + ", " + temperature(weather.temperature_c) + ", " + percentage(weather.precipitation_probability) + " chance of rain" : "No weather") + ". " + localTime()
 
     function temperature(value: var): string {
         const number = Number(value);
@@ -32,7 +33,7 @@ Ui.ResultRow {
     Ui.ResultLabel {
         Layout.fillWidth: true
         title: row.city.label || "Location"
-        subtitle: row.city.timezone || "Timezone unavailable"
+        subtitle: Visuals.locationSubtitle(row.city)
         titleWeight: row.city.home ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
         uiScale: row.uiScale
     }

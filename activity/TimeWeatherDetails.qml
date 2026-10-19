@@ -2,9 +2,11 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
+import "WeatherVisuals.js" as Visuals
 
 Ui.ActionDetailsPane {
     id: pane
+    objectName: "timeWeatherDetails"
 
     required property TimeWeatherController controller
     required property date now
@@ -15,7 +17,7 @@ Ui.ActionDetailsPane {
     icon: city.home ? "󰋜" : "󰍎"
     iconColor: Ui.Theme.accent
     title: city.label || "City"
-    subtitle: city.timezone || "Timezone unavailable"
+    subtitle: Visuals.locationSubtitle(city)
 
     Ui.TabbedDetailsStack {
         anchors.fill: parent
