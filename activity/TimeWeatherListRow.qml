@@ -9,6 +9,7 @@ Ui.ResultRow {
     required property var resultData
     required property double nowMs
     readonly property var city: resultData.payload || ({})
+    readonly property bool clockAvailable: Visuals.hasLocationClock(city)
     readonly property var weather: city.weather || ({})
     readonly property bool hasWeather: !!city.has_weather && !!weather.available
 
@@ -24,7 +25,7 @@ Ui.ResultRow {
         return Number.isFinite(number) ? Math.round(number) + "%" : "—";
     }
     function localTime(): string {
-        return Visuals.localTime(nowMs, Number(city.utc_offset_seconds || 0));
+        return clockAvailable ? Visuals.localTime(nowMs, city.utc_offset_seconds) : "—";
     }
 
     leadingIcon: city.home ? "󰋜" : "󰍎"
@@ -136,7 +137,7 @@ Ui.ResultRow {
         Ui.ThemeText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            text: row.city.abbreviation || Visuals.utcOffset(row.city.utc_offset_seconds)
+            text: row.clockAvailable ? row.city.abbreviation || Visuals.utcOffset(row.city.utc_offset_seconds) : "—"
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.metadataSize
         }

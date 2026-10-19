@@ -11,7 +11,8 @@ Ui.DetailFlickable {
     required property date now
 
     readonly property var weather: city.weather || ({})
-    readonly property int offsetSeconds: Number(city.utc_offset_seconds || 0)
+    readonly property bool clockAvailable: Visuals.hasLocationClock(city)
+    readonly property int offsetSeconds: clockAvailable ? city.utc_offset_seconds : 0
     readonly property double sunrise: Number(weather.sunrise_unix_ms || 0)
     readonly property double sunset: Number(weather.sunset_unix_ms || 0)
     readonly property bool hasSunTimes: sunrise > 0 && sunset > sunrise
@@ -36,7 +37,7 @@ Ui.DetailFlickable {
     }
 
     function time(value: var): string {
-        return Number(value || 0) > 0 ? Visuals.localTime(value, offsetSeconds) : "—";
+        return clockAvailable && Number(value || 0) > 0 ? Visuals.localTime(value, offsetSeconds) : "—";
     }
 
     onSunProgressChanged: sunCanvas.requestPaint()
@@ -91,15 +92,18 @@ Ui.DetailFlickable {
             }
 
             Ui.ThemeText {
-                text: Visuals.localTime(pane.now.getTime(), pane.offsetSeconds)
+                objectName: "locationClockTime"
+                text: pane.clockAvailable ? Visuals.localTime(pane.now.getTime(), pane.offsetSeconds) : "—"
                 font.pixelSize: Ui.Theme.heroClockSize
             }
             Ui.ThemeText {
-                text: Visuals.localDate(pane.now.getTime(), pane.offsetSeconds)
+                objectName: "locationClockDate"
+                text: pane.clockAvailable ? Visuals.localDate(pane.now.getTime(), pane.offsetSeconds) : "—"
                 color: Ui.Theme.mutedText
             }
             Ui.ThemeText {
-                text: (pane.city.abbreviation ? pane.city.abbreviation + "  ·  " : "") + Visuals.utcOffset(pane.offsetSeconds)
+                objectName: "locationClockZone"
+                text: pane.clockAvailable ? (pane.city.abbreviation ? pane.city.abbreviation + "  ·  " : "") + Visuals.utcOffset(pane.offsetSeconds) : qsTr("Timezone unavailable")
                 color: Ui.Theme.accent
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 font.weight: Ui.Theme.fontWeightDemiBold
@@ -323,12 +327,14 @@ Ui.DetailFlickable {
             anchors.top: parent.top
             anchors.rightMargin: Ui.Theme.spacingMd
             anchors.topMargin: 37
-            text: Visuals.utcOffset(pane.offsetSeconds)
+            text: pane.clockAvailable ? Visuals.utcOffset(pane.offsetSeconds) : qsTr("Timezone unavailable")
             color: Ui.Theme.accent
             font.weight: Ui.Theme.fontWeightDemiBold
         }
 
         TimezoneMap {
+            objectName: "locationTimezoneMap"
+            clockAvailable: pane.clockAvailable
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top

@@ -87,6 +87,42 @@ function localDate(unixMs: Numeric, utcOffsetSeconds: Numeric): string {
         + months[value.getUTCMonth()] + " " + value.getUTCFullYear();
 }
 
+type LocationCity = Readonly<{
+    current?: boolean;
+    location_source?: string;
+    accuracy_meters?: number | null;
+    timezone?: string | null;
+    clock_unavailable?: boolean;
+    utc_offset_seconds?: number | null;
+}>;
+
+function hasLocationClock(city: LocationCity | null | undefined): boolean {
+    return !!city && city.clock_unavailable !== true
+        && typeof city.timezone === "string" && city.timezone.trim().length > 0
+        && typeof city.utc_offset_seconds === "number" && Number.isFinite(city.utc_offset_seconds);
+}
+
+function locationEstimate(city: LocationCity | null | undefined): string {
+    if (!city || !city.current)
+        return "";
+    const source = city.location_source;
+    let text = source === "ip" ? "IP estimate" : source === "non_ip"
+        ? "Location estimate (non-IP)" : "Location estimate (source unknown)";
+    const accuracy = city.accuracy_meters;
+    if (typeof accuracy === "number" && Number.isFinite(accuracy) && accuracy >= 0) {
+        const distance = accuracy < 1000 ? Math.round(accuracy) + " m"
+            : (accuracy / 1000).toFixed(accuracy < 10000 ? 1 : 0).replace(/\.0$/, "") + " km";
+        text += " · reported accuracy ~" + distance;
+    }
+    return text;
+}
+
+function locationSubtitle(city: LocationCity | null | undefined): string {
+    const estimate = locationEstimate(city);
+    const zone = hasLocationClock(city) && city && city.timezone || "Timezone unavailable";
+    return estimate ? estimate + " · " + zone : zone;
+}
+
 function utcOffset(utcOffsetSeconds: Numeric): string {
     const totalMinutes = Math.round(Number(utcOffsetSeconds || 0) / 60);
     const sign = totalMinutes >= 0 ? "+" : "−";

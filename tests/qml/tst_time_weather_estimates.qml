@@ -62,6 +62,60 @@ DaemonTestCase {
         wait(0);
         Ui.Theme.previewColorScheme = oldScheme;
     }
+    function test_forecastFailureKeepsClockAndInvalidTimezoneNeverBecomesUtc() {
+        const owner = createTemporaryObject(ownerFactory, testCase, {uiActive: true});
+        const city = Object.assign({}, location("ip", 26000), {
+            has_weather: true, weather: {available: false, error: "Forecast unavailable", utc_offset_seconds: 0}
+        });
+        owner.activity = Object.assign({}, owner.activity, {available: true, locations: [city]});
+        const content = createTemporaryObject(contentFactory, testCase, {controller: owner, width: width, height: height});
+        const rowName = "timeWeatherLocation::current-location";
+        tryVerify(() => findChild(content, rowName) !== null);
+        const row = findChild(content, rowName);
+        row.nowMs = Date.UTC(2026, 9, 19, 12, 26);
+        compare(row.localTime(), "13:26");
+        verify(row.clockAvailable);
+        content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryCompare(owner, "detailsExpansionProgress", 1);
+        tryVerify(() => findChild(content, "locationClockZone") !== null);
+        compare(findChild(content, "locationClockZone").text, "IST  ·  UTC+1");
+        compare(findChild(content, "locationClockTime").text, Visuals.localTime(content.now.getTime(), 3600));
+        const before = calls.length;
+        for (const invalid of [
+            {timezone: "Invalid/Zone", clock_unavailable: true, utc_offset_seconds: 0},
+            {timezone: "", utc_offset_seconds: 0},
+            {utc_offset_seconds: undefined}
+        ]) {
+            owner.activity = Object.assign({}, owner.activity, {locations: [Object.assign({}, city, invalid)]});
+            tryVerify(() => {
+                const currentRow = findChild(content, rowName);
+                return currentRow !== null && currentRow.clockAvailable === false;
+            });
+            compare(findChild(content, rowName).localTime(), "—");
+            compare(findChild(content, "locationClockTime").text, "—");
+            compare(findChild(content, "locationClockDate").text, "—");
+            compare(findChild(content, "locationClockZone").text, "Timezone unavailable");
+            verify(!findChild(content, "locationTimezoneMap").hasOceanBand);
+            verify(content.detailsItem.subtitle.indexOf("Timezone unavailable") >= 0);
+            compare(content.detailsNavigation.availableFields().length, 0);
+        }
+        owner.activity = Object.assign({}, owner.activity, {locations: [Object.assign({}, city, {
+            timezone: "Etc/UTC", abbreviation: "UTC", utc_offset_seconds: 0
+        })]});
+        tryVerify(() => {
+            const currentRow = findChild(content, rowName);
+            return currentRow !== null && currentRow.clockAvailable === true;
+        });
+        const utcRow = findChild(content, rowName);
+        utcRow.nowMs = Date.UTC(2026, 9, 19, 12, 26);
+        compare(utcRow.localTime(), "12:26", "a real zero offset remains valid");
+        compare(findChild(content, "locationClockZone").text, "UTC  ·  UTC");
+        verify(findChild(content, "locationTimezoneMap").hasOceanBand);
+        compare(calls.length, before, "clock presentation must not request weather or write settings");
+        content.destroy();
+        wait(0);
+    }
     function test_missingInvalidAndNonIpAccuracyNeverInventPrecision() {
         for (const accuracy of [undefined, null, NaN, -1, "26000"])
             verify(Visuals.locationEstimate(location("non_ip", accuracy)).indexOf("accuracy") < 0);

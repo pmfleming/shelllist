@@ -1061,6 +1061,10 @@ Tab fallback and result-arrow navigation at normal/minimum widths in both themes
 List and detail times share a single view-owned clock: activation refreshes it
 immediately, then it refreshes at minute boundaries while active. Clock updates
 are passive and local; they do not rebuild selection, add stops or issue reads.
+City clock metadata is computed from IANA zones independently of forecasts. A
+weather failure does not disable a known clock; a missing/invalid zone is
+unavailable, never guessed as UTC. Unavailable time/date and map highlights stay
+passive, retain location identity and do not introduce editable stops or requests.
 
 ## Native domain projections
 

@@ -84,12 +84,18 @@ The panel's list and details share one `Ui.LiveClock`, refreshed immediately on
 activation and scheduled at wall-clock minute boundaries while open. Closing
 stops its timer; reopening never reuses the previous visit's time. Each tick
 reschedules from the current wall time rather than accumulating interval drift.
-These display refreshes make no backend requests.
+These display refreshes make no backend requests. The daemon calculates each
+location's current offset, abbreviation and map regions locally from its IANA
+zone at a shared projection instant, independently of forecast availability or
+cached provider offsets (including across DST). Missing/invalid zones carry
+`clock_unavailable: true`; the panel shows unavailable time/date rather than UTC
+and does not highlight a guessed timezone band. Real UTC remains valid.
 `tst_timezone_clock.qml` checks unavailable offsets and the actual clock button's
 live offset change, fractional offset, date rollover and pending-confirmation
 state, including absence of a false “Timezone unavailable” tooltip.
 `tst_time_weather_estimates.qml` covers passive estimate metadata, stable selection,
-shared Tab/result-arrow navigation and normal/minimum light/dark layouts.
+shared Tab/result-arrow navigation and normal/minimum light/dark layouts, plus
+forecast failure, unavailable timezone presentation and recovery to real UTC.
 
 Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. Weather locations—including which location is home, labels, coordinates, and timezones—come entirely from `bar-daemon/activity.json`; no city is compiled into the UI. `bar-daemon` refreshes configured Open-Meteo locations concurrently at most every 15 minutes and retains each last successful forecast through transient failures.
 

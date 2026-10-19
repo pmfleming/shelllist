@@ -72,6 +72,11 @@ function localDate(unixMs, utcOffsetSeconds) {
     return weekdays[value.getUTCDay()] + ", " + value.getUTCDate() + " "
         + months[value.getUTCMonth()] + " " + value.getUTCFullYear();
 }
+function hasLocationClock(city) {
+    return !!city && city.clock_unavailable !== true
+        && typeof city.timezone === "string" && city.timezone.trim().length > 0
+        && typeof city.utc_offset_seconds === "number" && Number.isFinite(city.utc_offset_seconds);
+}
 function locationEstimate(city) {
     if (!city || !city.current)
         return "";
@@ -88,7 +93,7 @@ function locationEstimate(city) {
 }
 function locationSubtitle(city) {
     const estimate = locationEstimate(city);
-    const zone = city && city.timezone || "Timezone unavailable";
+    const zone = hasLocationClock(city) && city && city.timezone || "Timezone unavailable";
     return estimate ? estimate + " · " + zone : zone;
 }
 function utcOffset(utcOffsetSeconds) {

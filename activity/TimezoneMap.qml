@@ -9,11 +9,12 @@ Rectangle {
 
     required property date now
     property int offsetSeconds: 0
+    property bool clockAvailable: true
     property real latitude: 0
     property real longitude: 0
     property bool hasCoordinates: false
     property list<string> regionIds: []
-    readonly property bool hasOceanBand: offsetSeconds % 3600 === 0 && offsetSeconds >= -12 * 3600 && offsetSeconds <= 12 * 3600
+    readonly property bool hasOceanBand: clockAvailable && offsetSeconds % 3600 === 0 && offsetSeconds >= -12 * 3600 && offsetSeconds <= 12 * 3600
     readonly property real oceanBandCenter: (offsetSeconds / 3600 * 15 + 180) * 2
     readonly property real oceanBandLeft: Math.max(0, oceanBandCenter - 15)
     readonly property real oceanBandWidth: hasOceanBand ? Math.min(720, oceanBandCenter + 15) - oceanBandLeft : 0
@@ -23,7 +24,7 @@ Rectangle {
     border.color: Ui.Theme.border
     clip: true
     Accessible.role: Accessible.Graphic
-    Accessible.name: "World map of geographic timezone areas. All regions at " + Visuals.utcOffset(offsetSeconds) + " are highlighted, local time " + Visuals.localTime(now.getTime(), offsetSeconds) + (hasCoordinates ? ". Location marked on the map" : "")
+    Accessible.name: (clockAvailable ? "World map of geographic timezone areas. All regions at " + Visuals.utcOffset(offsetSeconds) + " are highlighted, local time " + Visuals.localTime(now.getTime(), offsetSeconds) : "World map. Timezone unavailable") + (hasCoordinates ? ". Location marked on the map" : "")
 
     Item {
         id: mapViewport
@@ -58,7 +59,7 @@ Rectangle {
         }
 
         Repeater {
-            model: map.regionIds
+            model: map.clockAvailable ? map.regionIds : []
 
             delegate: Image {
                 required property string modelData
