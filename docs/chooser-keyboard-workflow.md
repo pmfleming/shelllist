@@ -197,8 +197,11 @@ requires an RHI renderer.
 
 The chromatic bar uses fixed-size icon-only category targets (Shell, Browser,
 Code, Media, Text for workspaces 1–5), never active-workspace labels or focused-app
-icon substitution. Acknowledged selection paints the accent glyph immediately
-at 22px rather than 20px, without a resting tile or lower dot/dash. Occupancy uses
+icon substitution. Shell uses the shared font-independent `TerminalGlyph`:
+a rounded chevron and underscore (`>_`), without a terminal-window frame. It is
+passive artwork inside the existing workspace action, not a separate target.
+Acknowledged selection paints the accent glyph immediately
+at 22px rather than 20px, without a resting tile or separate lower selection mark. Occupancy uses
 regular/semibold glyph weight and neutral/muted foregrounds; it is not a disabled
 state. Existing static urgency outlines and upper-right marks remain distinct.
 These visual changes add no focus targets or new keyboard behaviour.

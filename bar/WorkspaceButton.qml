@@ -41,16 +41,32 @@ Ui.ActionControl {
         color: "transparent"
         border.width: button.urgent ? 1 : 0
         border.color: Ui.Theme.danger
-        Ui.GlyphLabel {
-            objectName: "workspaceCategoryGlyph"
+        Item {
+            id: categoryIcon
             anchors.centerIn: parent
-            glyph: button.category ? button.category.icon : String(button.workspaceId)
-            color: button.active ? Ui.Theme.accent : button.occupied ? Ui.Theme.text : Ui.Theme.mutedText
-            font.pixelSize: button.active ? 22 : 20
-            // Packaged Material Symbols supports regular and semibold weights;
-            // the numeric fallback uses the same occupancy distinction.
-            font.weight: button.occupied ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
-            Accessible.ignored: true
+            width: button.active ? 22 : 20
+            height: width
+            readonly property bool terminal: button.category?.value === "shell"
+            readonly property color foreground: button.active ? Ui.Theme.accent : button.occupied ? Ui.Theme.text : Ui.Theme.mutedText
+
+            Ui.TerminalGlyph {
+                objectName: "workspaceTerminalGlyph"
+                anchors.fill: parent
+                visible: categoryIcon.terminal
+                color: categoryIcon.foreground
+                bold: button.occupied
+            }
+            Ui.GlyphLabel {
+                objectName: "workspaceCategoryGlyph"
+                anchors.centerIn: parent
+                visible: !categoryIcon.terminal
+                glyph: button.category ? button.category.icon : String(button.workspaceId)
+                color: categoryIcon.foreground
+                font.pixelSize: categoryIcon.width
+                // Other categories and the numeric fallback retain glyph weight.
+                font.weight: button.occupied ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
+                Accessible.ignored: true
+            }
         }
         Rectangle {
             objectName: "workspaceUrgency"

@@ -68,6 +68,7 @@ FocusRing 1.0 FocusRing.qml
 singleton FocusLocations 1.0 FocusLocations.qml
 singleton Format 1.0 Format.qml
 GlyphLabel 1.0 GlyphLabel.qml
+TerminalGlyph 1.0 TerminalGlyph.qml
 GroupCountBadge 1.0 GroupCountBadge.qml
 IconTile 1.0 IconTile.qml
 InteractiveBehavior 1.0 InteractiveBehavior.qml
