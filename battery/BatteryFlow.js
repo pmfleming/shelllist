@@ -87,6 +87,10 @@ function alertDraft(policy) {
     };
 }
 
+function validSleepDuration(value) {
+    return Number.isInteger(value) && value >= 0 && value <= 10080;
+}
+
 function validSuspendPolicyValue(profile, field, value) {
     if (profile === "critical_battery") {
         if (field === "enabled")
@@ -101,37 +105,33 @@ function validSuspendPolicyValue(profile, field, value) {
         return typeof value === "boolean";
     if (field === "lid_action")
         return ["system", "ignore", "lock", "suspend", "hibernate", "profile"].includes(value);
-    return ["battery", "plugged"].includes(profile) && ["sleep_minutes", "hibernate_minutes"].includes(field) && Number.isInteger(value) && value >= 0 && value <= 10080;
+    return ["battery", "plugged"].includes(profile) && ["sleep_minutes", "hibernate_minutes"].includes(field) && validSleepDuration(value);
 }
 
-// Translate a displayed idle-time endpoint without changing the wire contract.
-// Never keeps the other duration (also used by lid-triggered sleep) intact.
+// Translate endpoints only; availability, wire bounds and publication stay below.
+// Never preserves the other duration, including its use by lid-triggered sleep.
+function sleepTimelineDelay(sleep, delay, endpoint, value) {
+    if (value === 0) return endpoint === "suspend" ? delay : 0;
+    if (endpoint === "hibernate") return value > sleep ? value - sleep : null;
+    if (sleep === 0 || delay === 0) return delay;
+    return value < sleep + delay ? sleep + delay - value : null;
+}
+
 function editSleepTimeline(draft, profile, endpoint, value, hibernateAvailable) {
     if (!["battery", "plugged"].includes(profile) || !["suspend", "hibernate"].includes(endpoint) || !Number.isInteger(value) || value < 0)
         return null;
     const current = draft[profile];
-    if (!current) return null;
-    const sleep = current.sleep_minutes;
-    const delay = current.hibernate_minutes;
-    if (!validSuspendPolicyValue(profile, "sleep_minutes", sleep) || !validSuspendPolicyValue(profile, "hibernate_minutes", delay)) return null;
-    let nextSleep = sleep;
-    let nextDelay = delay;
-    if (endpoint === "suspend") {
-        nextSleep = value;
-        if (sleep > 0 && delay > 0 && value > 0) {
-            nextDelay = sleep + delay - value;
-            if (nextDelay <= 0) return null;
-        }
-    } else {
-        if ((value > 0 && !hibernateAvailable) || (sleep === 0 && draft.lid_action !== "profile")) return null;
-        nextDelay = value === 0 ? 0 : value - sleep;
-        if (value > 0 && nextDelay <= 0) return null;
-    }
-    if (nextDelay > 0 && nextDelay !== delay && !hibernateAvailable) return null;
-    if (!validSuspendPolicyValue(profile, "sleep_minutes", nextSleep) || !validSuspendPolicyValue(profile, "hibernate_minutes", nextDelay)) return null;
-    if (nextSleep === sleep && nextDelay === delay) return null;
+    if (!current || !validSleepDuration(current.sleep_minutes) || !validSleepDuration(current.hibernate_minutes)) return null;
+    if (endpoint === "hibernate" && current.sleep_minutes === 0 && draft.lid_action !== "profile") return null;
+    const values = {
+        sleep_minutes: endpoint === "suspend" ? value : current.sleep_minutes,
+        hibernate_minutes: sleepTimelineDelay(current.sleep_minutes, current.hibernate_minutes, endpoint, value)
+    };
+    if (!validSleepDuration(values.sleep_minutes) || !validSleepDuration(values.hibernate_minutes)) return null;
+    if (values.hibernate_minutes > 0 && values.hibernate_minutes !== current.hibernate_minutes && !hibernateAvailable) return null;
+    if (values.sleep_minutes === current.sleep_minutes && values.hibernate_minutes === current.hibernate_minutes) return null;
     const next = JSON.parse(JSON.stringify(draft));
-    next[profile] = Object.assign({}, current, {sleep_minutes: nextSleep, hibernate_minutes: nextDelay});
+    next[profile] = Object.assign({}, current, values);
     return next;
 }
 

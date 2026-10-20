@@ -198,5 +198,11 @@ for (const extra of [
     never.lid_action = "suspend";
     assert.equal(flow.editSleepTimeline(never, "battery", "hibernate", 90, true), null);
     assert.equal(flow.editSleepTimeline(draft, "battery", "hibernate", 0, false).battery.hibernate_minutes, 0);
+    assert.equal(flow.editSleepTimeline(draft, "battery", "hibernate", 60, true), null, "unchanged endpoints do not submit");
+    const maximum = {...draft, plugged: {sleep_minutes: 10080, hibernate_minutes: 1}};
+    const extended = flow.editSleepTimeline(maximum, "plugged", "hibernate", 20160, true);
+    assert.equal(extended.plugged.hibernate_minutes, 10080, "total endpoint may exceed either wire duration bound");
+    assert.equal(flow.editSleepTimeline(maximum, "plugged", "hibernate", 20161, true), null);
+    assert.equal(maximum.plugged.hibernate_minutes, 1, "rejected and accepted changes leave the source untouched");
 }
 console.log("battery controls: identity, auto-save exclusion, command guards, timeline pairs and uncertain outcomes passed");

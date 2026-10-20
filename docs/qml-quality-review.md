@@ -4,6 +4,9 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
+The [five-target follow-up](qml-quality-five-targets.md) starts from `3b2d9cd`
+and records each requested implementation and its validation in a separate commit.
+
 The [2026-10-20 maintenance review](qml-maintenance-2026-10-20.md) starts from
 clean `fba5e8a`: location completion ownership and complexity, shared Activity
 cards, local Bluetooth descriptors, a typed recovery backend and unused-code
