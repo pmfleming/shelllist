@@ -97,8 +97,9 @@ individually checked.
 
 ## Validation
 
-`tst_popover_height.qml` checks laptop-height sizing, the large-screen cap,
-minimum/emergency bounds and vertical centering using the shared geometry.
+The exact height/cap/centering matrix in `tst_popover_height.qml` was removed in
+the [ecosystem test review](../tests/test-reduction-ecosystem.md). Native-window
+smoke and work-area recovery remain; they do not prove every emergency-size case.
 
 `tst_chooser_geometry.qml` was removed in the
 [2026-10-06 pruning](reviews/test-pruning-2026-10-06.md). Its broad geometry/input

@@ -1,8 +1,12 @@
 # Test scope
 
-Keep tests at the narrowest **behavioral boundary** that catches a meaningful
-failure. Prefer representative scenarios over repeated fixtures. Do not mirror
-implementation tables or freeze visual choices unnecessarily.
+Prefer end-to-end user journeys and public-boundary integration tests. Keep local
+tests for unique failure modes that those flows cannot reasonably exercise; do
+not mirror implementation tables or freeze visual choices unnecessarily.
+
+The [ecosystem review](test-reduction-ecosystem.md) records the
+latest partial pruning and validation. **The requested 33% reduction is not met**;
+older checkpoints below must not be reused as the current baseline.
 
 ## Panel standardization acceptance
 
@@ -78,7 +82,7 @@ Expected negative-test application error logs are distinct from QML engine
 warnings and remain allowed. Offscreen tests do not replace live compositor,
 hardware, IME or screen-reader acceptance.
 
-## Current pruning checkpoint — baseline `c4bd285`
+## Previous pruning checkpoint — baseline `c4bd285`
 
 **441 → 295 inventory units: 146 removed (33.11%), 66.89% retained.**
 The unchanged counter gives `round(441 × 0.67) = 295`. Actual reductions are

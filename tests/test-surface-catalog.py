@@ -22,22 +22,6 @@ class SurfaceCatalogTests(unittest.TestCase):
     def setUp(self):
         self.catalog = json.loads(CATALOG.read_text())
 
-    def test_current_identity_order_loading_and_shortcut_compatibility(self):
-        generator.validate(self.catalog)
-        surfaces = self.catalog["surfaces"]
-        self.assertEqual([s["id"] for s in surfaces], [
-            "applications", "wifi", "bluetooth", "clipboard", "displays", "battery",
-            "activity", "notifications", "time-weather", "audio", "media", "tray",
-        ])
-        self.assertEqual(self.catalog["default_surface"], "applications")
-        self.assertEqual([s["id"] for s in surfaces if s["loading"] == "eager"], ["wifi", "bluetooth"])
-        self.assertEqual([s["id"] for s in surfaces if s["resident_state"]], ["notifications"])
-        self.assertEqual({s["home_manager_shortcut"]["option"]: s["home_manager_shortcut"]["default"]
-                          for s in surfaces if s["home_manager_shortcut"]}, {
-            "notificationsShortcut": "SUPER SHIFT, N", "audioShortcut": "SUPER SHIFT, A",
-            "mediaShortcut": "SUPER SHIFT, M", "trayShortcut": "SUPER SHIFT, T",
-        })
-
     def test_rejects_schema_default_and_missing_metadata(self):
         for key, value in [("schema_version", 2), ("schema_version", True),
                            ("default_surface", "absent"), ("default_surface", []),

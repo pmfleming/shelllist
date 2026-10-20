@@ -2,7 +2,6 @@ import QtQuick
 import Quickshell
 import Shelllist.Ui as Ui
 import Shelllist.Activity as Activity
-import "../../qml/Shelllist/Ui/MaterialIcons.js" as MaterialIcons
 
 DaemonTestCase {
     id: testCase
@@ -57,35 +56,6 @@ DaemonTestCase {
     function select(s,id) {s.owner.selectionModel.selectedIndex=s.owner.filteredCities.findIndex(c=>c.id===id);}
     function mutations() {return calls.filter(c=>["locations.add","locations.remove","location.setManual","location.returnToAutomatic"].includes(c.method));}
     function reply(s,id,data) {s.locations.finish(id,{protocol:"bar-api",version:2,ok:true,data:data},"");}
-    function test_sameHeaderForEveryCityAndBothTabs_data() {return [{tag:"normal-dark",w:1280,scheme:Qt.Dark},{tag:"minimum-light",w:976,scheme:Qt.Light}];}
-    function test_sameHeaderForEveryCityAndBothTabs(data) {
-        Ui.Theme.previewColorScheme=data.scheme;
-        const s=start(false,data.w);openDetails(s);compare(s.view.width,s.owner.openWindowWidth);
-        for (const icon of ["add","home","my_location","location_on","explore"]) compare(MaterialIcons.name(icon),icon);
-        let geometry="";
-        for (const id of ["weather:home","current-location","city:1"]) {
-            select(s,id);
-            for (const tab of ["time","weather"]) {
-                s.owner.setDetailsTab(tab);
-                const primary=findChild(s.view,"detailAction:manual");
-                tryVerify(()=>primary!==null && primary.visible);
-                const automatic=findChild(s.view,"detailAction:automatic"), remove=findChild(s.view,"detailAction:remove");
-                verify(automatic!==null && remove!==null);
-                compare(primary.width,56);compare(automatic.width,32);compare(remove.width,32);
-                for (const button of [primary,automatic,remove]) {
-                    const p=button.mapToItem(s.view,0,0);
-                    verify(p.x>=0 && p.x+button.width<=s.view.width,"all commands fit the real native canvas");
-                }
-                verify(primary.enabled && automatic.enabled);
-                compare(remove.enabled,id==="city:1");
-                verify(!primary.activeFocusOnTab && !automatic.activeFocusOnTab && !remove.activeFocusOnTab);
-                const current=JSON.stringify([primary.x,primary.y,automatic.x,automatic.y,remove.x,remove.y,s.view.detailsItem.headerHeight]);
-                if (geometry) compare(current,geometry);else geometry=current;
-                capture(s.view,data.tag+"-"+id.replace(/:/g,"-")+"-"+tab);
-            }
-        }
-        compare(mutations().length,0);
-    }
     function test_roleIconsArrivalHomeAndDepartureRetainNavigation() {
         const s=start(false);select(s,"current-location");openDetails(s);
         s.owner.setDetailsTab("weather");
@@ -170,7 +140,7 @@ DaemonTestCase {
         reply(s,s.locations.mutationId,{location_control:Object.assign(control(true,2),{operation_id:request.params.request_id,operation_status:"applied"})});
         compare(s.locations.pickerMode,"");compare(s.locations.controlState.revision,2);
     }
-    function test_singleCityControl_data() { return [{tag:"normal-dark",w:1280,scheme:Qt.Dark},{tag:"minimum-light",w:976,scheme:Qt.Light},{tag:"collapsed-dark",w:976,scheme:Qt.Dark,collapsed:true}]; }
+    function test_singleCityControl_data() { return [{tag:"normal-dark",w:1280,scheme:Qt.Dark},{tag:"collapsed-dark",w:976,scheme:Qt.Dark,collapsed:true}]; }
     function test_singleCityControl(data) {
         Ui.Theme.previewColorScheme=data.scheme;
         const s=start(false,data.w);

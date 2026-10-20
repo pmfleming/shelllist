@@ -79,56 +79,6 @@ DaemonTestCase {
         compare(calls.length, 2);
         compare(calls[1].params.workspace_id, 4);
     }
-    function test_terminalPromptArtworkAndAction_data(): var {
-        return [{tag: "dark", scheme: Qt.Dark}, {tag: "light", scheme: Qt.Light}];
-    }
-    function test_terminalPromptArtworkAndAction(data): void {
-        Ui.Theme.previewColorScheme = data.scheme;
-        const bar = fixture();
-        const shell = findChild(bar, "barWorkspace:1");
-        const icon = findChild(shell, "workspaceTerminalGlyph");
-        verify(icon.visible);
-        verify(!findChild(shell, "workspaceCategoryGlyph").visible);
-        verify(!findChild(findChild(bar, "barWorkspace:4"), "workspaceTerminalGlyph").visible);
-        compare(icon.color, Ui.Theme.accent);
-        compare(icon.width, 22);
-        verify(icon.bold);
-        verify(icon.Accessible.ignored && !icon.activeFocusOnTab);
-        verify(shell.Accessible.name.includes("Shell"));
-        verify(waitForRendering(icon));
-        // QtTest crops nested grabs in logical coordinates; sample the window
-        // origin and account for its physical pixels on fractional/HiDPI screens.
-        const pixels = grabImage(testCase);
-        const origin = icon.mapToItem(testCase, 0, 0);
-        const dpr = testCase.Screen.devicePixelRatio;
-        function sample(x, y) {
-            return pixels.pixel(Math.floor((origin.x + icon.width * x / 24) * dpr), Math.floor((origin.y + icon.height * y / 24) * dpr));
-        }
-        const background = sample(12, 12);
-        verify(String(sample(9, 12)) !== String(background), "chevron paints");
-        verify(String(sample(18, 19)) !== String(background), "underscore paints");
-        compare(sample(12, 5), background, "no top frame");
-        compare(sample(22, 12), background, "no right frame");
-
-        bar.controller.workspaces = Object.assign({}, bar.controller.workspaces, {
-            monitors: [{name: "test", active_workspace_id: 4}]
-        });
-        compare(icon.width, 20);
-        compare(icon.color, Ui.Theme.text);
-        verify(icon.bold);
-        bar.controller.workspaces = Object.assign({}, bar.controller.workspaces, {
-            workspaces: [{id: 1, monitor: "test", windows: 0, urgent: true}]
-        });
-        compare(icon.color, Ui.Theme.mutedText);
-        verify(!icon.bold);
-        verify(findChild(shell, "workspaceUrgency").visible);
-        compare(calls.length, 0, "passive artwork and state changes never dispatch");
-        click(icon);
-        compare(calls.length, 1);
-        compare(calls[0].method, BarApi.methods.workspaceFocus);
-        compare(calls[0].params.workspace_id, 1);
-        verify(!shell.active, "icon clicks still await compositor acknowledgement");
-    }
     function test_batteryReadingAndExternalMark_data(): var {
         return [
             {tag: "null-reading", state: {available: true, percentage: null}, fraction: 0, mark: "help_outline", word: "unavailable"}

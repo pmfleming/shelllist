@@ -96,6 +96,7 @@ DaemonTestCase {
     function test_multiplePinsFollowNativeOrderAndUnpinIndependently() {
         const ui = setup();
         clickAvatar(ui.list, 2, true);
+        const firstOperation = {id: "op-" + calls.length, action: "favorite", status: "completed", message: "Updated"};
         acknowledge(ui.controller, "favorite", [entry("third", true), entry("first"), entry("second")]);
         compare(ui.controller.selectedEntry.id, "third");
         compare(ui.controller.selectedIndex, 0);
@@ -103,6 +104,11 @@ DaemonTestCase {
         verify(ui.list.itemAtIndex(0).accessibleName.includes("Pinned"));
         clickAvatar(ui.list, 2, true);
         compare(actions()[1].params.entry_id, "second");
+        findChild(ui.controller, "clipboardBackend").acceptSharedEvent({
+            protocol: "clip-api", version: 2, stream: "clipboard.operation", event: "completed",
+            data: {operation: firstOperation}
+        });
+        verify(ui.controller.actionInFlight, "duplicate completion cannot retire the next pin operation");
         acknowledge(ui.controller, "favorite", [entry("second", true), entry("third", true), entry("first")]);
         compare(ui.controller.filteredResults.map(result => result.id), ["second", "third", "first"]);
         compare(ui.controller.filteredResults.filter(result => result.payload.favorite).length, 2);
@@ -113,45 +119,6 @@ DaemonTestCase {
         compare(ui.controller.selectedIndex, 1);
         compare(ui.controller.filteredResults[0].payload.favorite, true, "unpinning does not clear other pins");
         compare(ui.controller.selectedEntry.favorite, false);
-    }
-
-    function test_pinBadgeIsPassiveQuarterAvatar_data() {
-        return [{tag: "dark", scheme: Qt.Dark}, {tag: "light", scheme: Qt.Light}];
-    }
-    function test_pinBadgeIsPassiveQuarterAvatar(data) {
-        Ui.Theme.previewColorScheme = data.scheme;
-        const ui = setup();
-        const row = ui.list.itemAtIndex(0);
-        const avatar = findChild(row, "resultAvatar");
-        const badge = findChild(row, "resultAvatarBadge");
-        const glyph = findChild(row, "resultAvatarBadgeGlyph");
-        verify(!badge.visible);
-        clickAvatar(ui.list, 0, true);
-        acknowledge(ui.controller, "favorite", [entry("first", true), entry("second"), entry("third")]);
-        tryCompare(badge, "visible", true);
-        waitForRendering(ui.content);
-        compare(badge.width, avatar.width / 4);
-        compare(badge.height, avatar.height / 4);
-        compare(badge.x + badge.width, avatar.width);
-        compare(badge.y + badge.height, avatar.height);
-        compare(glyph.glyph, "push_pin");
-        compare(glyph.symbol, "push_pin", "badge uses a semantic icon, not literal text");
-        compare(glyph.color, Ui.Theme.mutedText);
-        compare(badge.color, Ui.Theme.surfaceRaised);
-        verify(!badge.activeFocusOnTab && !glyph.activeFocusOnTab);
-        verify(badge.Accessible.ignored && glyph.Accessible.ignored);
-        verify(row.accessibleName.includes("Pinned"));
-        keyClick(Qt.Key_Down);
-        compare(ui.controller.selectedIndex, 1);
-        verify(badge.visible, "pin remains visible on unselected rows");
-        compare(glyph.color, Ui.Theme.mutedText);
-        // The passive badge shares the avatar gesture, not a new command target.
-        mouseDoubleClickSequence(badge, badge.width / 2, badge.height / 2);
-        compare(actions().length, 2);
-        compare(actions()[1].params.action, "unfavorite");
-        compare(actions()[1].params.entry_id, "first");
-        acknowledge(ui.controller, "unfavorite", [entry("first"), entry("second"), entry("third")]);
-        tryCompare(badge, "visible", false);
     }
 
     function test_expandedButtonAndAltNOnBothTabs() {

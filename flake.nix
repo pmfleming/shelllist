@@ -803,13 +803,6 @@
             ]
           ];
 
-          flowPolicies = nodeCheck "flow-policies" [
-            [
-              ./tests/check-flow-policies.js
-              ./clipboard/ClipboardFlow.js
-            ]
-          ];
-
           ipValidation = nodeCheck "ip-validation" [
             [
               ./tests/check-ip-validation.js
