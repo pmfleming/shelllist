@@ -602,7 +602,7 @@ DaemonTestCase {
         compare(adapterCalls().length, 1, "a failed observation never replays an acknowledged write");
     }
     function test_adapterBatchRejectsMalformedAndLostOutcomes_data() {
-        return [{tag: "wrong-value"}, {tag: "disconnect"}];
+        return [{tag: "wrong-value"}, {tag: "duplicate-field"}, {tag: "wrong-adapter"}, {tag: "disconnect"}];
     }
     function test_adapterBatchRejectsMalformedAndLostOutcomes(data) {
         const panel = makePanel();
@@ -614,6 +614,8 @@ DaemonTestCase {
         const response = batchReply("adapter", adapterCalls()[0].params.changes);
         const batch = response.data.adapter_batch;
         if (data.tag === "wrong-value") batch.outcomes[0].value = "Other name";
+        if (data.tag === "duplicate-field") batch.outcomes[1] = batch.outcomes[0];
+        if (data.tag === "wrong-adapter") batch.key = "other";
         if (data.tag === "disconnect") {
             backend.resetTransportState();
             panel.controller.handleTransportFailure("Disconnected");

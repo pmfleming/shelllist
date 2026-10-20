@@ -264,21 +264,25 @@ Item {
     function receiveStatus(id, envelope, transportError) {
         if (!recoveryId || id !== recoveryId || recoveryRequestId !== requestId)
             return;
-        const error = backend.responseError(envelope, transportError, "Could not check connection status.");
+        const failure = backend.responseError(envelope, transportError, "Could not check connection status.");
+        const result = envelope?.data?.result;
+        const error = failure || statusError(result);
         if (error) {
             recoveryFailed(error);
             return;
         }
-        const result = (envelope.data || ({})).result;
-        if (!result || result.request_id !== requestId || result.stream !== NmApi.streams.wifi_connect || !["running", "finished"].includes(result.status)) {
-            recoveryFailed("The daemon could not confirm this connection operation.");
-            return;
-        }
+        applyStatus(result);
+    }
+    function statusError(result) {
+        if (!result || result.request_id !== requestId || result.stream !== NmApi.streams.wifi_connect || !["running", "finished"].includes(result.status))
+            return "The daemon could not confirm this connection operation.";
         const event = result.event;
-        if (result.status === "finished" && (!event || event.request_id !== requestId || !["succeeded", "failed", "cancelled"].includes(event.event))) {
-            recoveryFailed("The daemon returned an invalid connection result.");
-            return;
-        }
+        if (result.status === "finished" && (!event || event.request_id !== requestId || !["succeeded", "failed", "cancelled"].includes(event.event)))
+            return "The daemon returned an invalid connection result.";
+        return "";
+    }
+    function applyStatus(result) {
+        const event = result.event;
         retireRecovery();
         recoveryFailures = 0;
         if (result.status === "finished") {

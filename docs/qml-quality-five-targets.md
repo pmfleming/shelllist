@@ -56,3 +56,27 @@ passed: `clip-daemon/docs/quality-refactor-followup.md` is unrelated and untrack
 It was not modified or staged. Regeneration used the explicit installed
 `SHELLLIST_NM_DAEMON` override for the read-only registry command because the
 sibling debug binary was absent; all five outputs compare exactly.
+
+## 3 — Bluetooth acknowledgement and Wi-Fi status recovery
+
+Bluetooth batch-shape/identity/value validation is independent of pending-draft
+completion and per-field acknowledgement. Only confirmed applied fields disappear;
+partial/unknown outcomes and snapshot failures retain their existing recovery
+semantics. The captured request key is still consumed before any publication.
+Wi-Fi status receipt owns the read ID, validation owns operation/stream/terminal
+shape, and application owns progress/cancellation versus completion. Read failure
+cannot release the mutation guard or replay a connection.
+
+Bluetooth `finish` **19/20/95 → 5/4/23** (cyclomatic/cognitive/weighted effort);
+new validation and acknowledgement helpers are included in totals. Wi-Fi
+`receiveStatus` **20/20/93 → 6/5/27**, with validation **9/8/35** and application
+**7/7/36**. Combined production source **41534 → 41538**, cyclomatic
+**8537 → 8538**, cognitive **5969 → 5965**, effort **42034 → 42030**. Clones and
+mean locality/leverage are unchanged; this is principally a responsibility split.
+
+Validation: native Bluetooth **17/0/0**, Wi-Fi operations **19/0/0**, strict lint,
+Bluetooth lifecycle (241 checks) and daemon-boundary JavaScript pass. New native
+rows reject duplicate batch fields, another adapter, absent status, a foreign
+stream and a nonterminal event advertised as completion. Existing actual field
+save/discard, partial retry, late/duplicate reply, bounded read recovery and
+cancellation acknowledgement tests remain. No backend/keyboard contract changes.

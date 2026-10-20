@@ -361,6 +361,9 @@ DaemonTestCase {
     }
     function test_malformedOrUnknownRecoveryNeverClaimsCompletion_data() {
         return [
+            {tag: "missing", result: null},
+            {tag: "foreign-stream", result: {request_id: "connect-owned", status: "running", stream: "wifi.scan"}},
+            {tag: "nonterminal-event", result: {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "connect-owned", event: "progress"}}},
             {tag: "foreign-terminal", result: {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "other", event: "succeeded"}}}
         ];
     }
@@ -373,6 +376,7 @@ DaemonTestCase {
         verify(c.actionInFlight);
         compare(c.connection.recoveryId, "");
         verify(c.status.indexOf("unconfirmed") >= 0);
+        compare(calls.filter(call => call.method === "wifi.connectTarget").length, 0, "read failure never replays connection");
     }
     function test_qrDuringConnectOnlyParsesAndNeverRetainsCredentials() {
         const panel = makePanel();

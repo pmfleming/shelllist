@@ -65,32 +65,32 @@ Core.DraftStore {
         patch(key, { error: "" });
         return saveBatch(key);
     }
+    function validBatch(key: string, batch: var, submitted: var): bool {
+        if (!batch || batch.key !== key || !Array.isArray(batch.outcomes)
+                || batch.outcomes.length !== Object.keys(submitted).length) return false;
+        const seen = ({});
+        return batch.outcomes.every(function (outcome) {
+            if (!outcome || seen[outcome.field] || !Object.prototype.hasOwnProperty.call(submitted, outcome.field)
+                    || outcome.value !== submitted[outcome.field]
+                    || !["applied", "unknown", "not-attempted"].includes(outcome.state)) return false;
+            seen[outcome.field] = true;
+            return true;
+        });
+    }
     function finish(key: string, batch: var, error: string): string {
         const current = draft(key);
-        if (!current.pending)
-            return "";
-        const submitted = current.pendingValues;
-        const outcomes = batch && batch.outcomes;
-        if (!error) {
-            const seen = ({});
-            const valid = batch && batch.key === key && Array.isArray(outcomes)
-                && outcomes.length === Object.keys(submitted).length
-                && outcomes.every(function (outcome) {
-                    if (!outcome || seen[outcome.field] || !Object.prototype.hasOwnProperty.call(submitted, outcome.field)
-                        || outcome.value !== submitted[outcome.field]
-                        || !["applied", "unknown", "not-attempted"].includes(outcome.state))
-                        return false;
-                    seen[outcome.field] = true;
-                    return true;
-                });
-            if (!valid)
-                error = "Adapter outcome unconfirmed; inspect current settings before retrying";
-        }
+        if (!current.pending) return "";
+        if (!error && !validBatch(key, batch, current.pendingValues))
+            error = "Adapter outcome unconfirmed; inspect current settings before retrying";
         if (error) {
             patch(key, { pending: false, pendingValues: null, error: error });
             return error;
         }
-        const fields = Object.assign({}, current.fields);
+        return acknowledgeBatch(key, current.fields, batch);
+    }
+    function acknowledgeBatch(key: string, submittedFields: var, batch: var): string {
+        const outcomes = batch.outcomes;
+        const fields = Object.assign({}, submittedFields);
         for (const field of Object.keys(fields)) {
             if (outcomes.some(outcome => outcome.field === wireFields[field] && outcome.state === "applied"))
                 delete fields[field];
@@ -98,7 +98,7 @@ Core.DraftStore {
         const remaining = Object.keys(fields).length > 0;
         const failed = outcomes.find(outcome => outcome.state === "unknown");
         const message = remaining
-            ? "Adapter settings not fully confirmed; inspect current settings before retrying. " + ((failed && failed.error && failed.error.message) || "Some settings were not attempted")
+            ? "Adapter settings not fully confirmed; inspect current settings before retrying. " + (failed?.error?.message || "Some settings were not attempted")
             : "Bluetooth adapter settings updated";
         put(key, remaining ? { fields: fields, pending: false, error: message } : null);
         return batch.snapshot_error ? message + "; snapshot unavailable: " + (batch.snapshot_error.message || "Refresh required") : message;
