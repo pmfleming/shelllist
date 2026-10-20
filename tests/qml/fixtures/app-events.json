@@ -1,7 +1,7 @@
 {
   "applications.changed": {
     "data": {
-      "revision": 42
+      "revision": 9007199254740949
     },
     "event": "changed",
     "protocol": "app-api",
@@ -11,10 +11,10 @@
   },
   "applications.changed.subscribed": {
     "data": {
-      "catalog_revision": 1,
-      "runtime_revision": 4,
-      "settings_revision": 3,
-      "window_revision": 2
+      "catalog_revision": 9007199254740991,
+      "runtime_revision": 9007199254740984,
+      "settings_revision": 1,
+      "window_revision": 0
     },
     "event": "subscribed",
     "protocol": "app-api",
@@ -24,10 +24,10 @@
   },
   "applications.operation.subscribed": {
     "data": {
-      "catalog_revision": 1,
-      "runtime_revision": 4,
-      "settings_revision": 3,
-      "window_revision": 2
+      "catalog_revision": 9007199254740991,
+      "runtime_revision": 9007199254740984,
+      "settings_revision": 1,
+      "window_revision": 0
     },
     "event": "subscribed",
     "protocol": "app-api",
@@ -96,7 +96,7 @@
   },
   "windows.changed": {
     "data": {
-      "revision": 42
+      "revision": 9007199254740949
     },
     "event": "changed",
     "protocol": "app-api",
@@ -106,10 +106,10 @@
   },
   "windows.changed.subscribed": {
     "data": {
-      "catalog_revision": 1,
-      "runtime_revision": 4,
-      "settings_revision": 3,
-      "window_revision": 2
+      "catalog_revision": 9007199254740991,
+      "runtime_revision": 9007199254740984,
+      "settings_revision": 1,
+      "window_revision": 0
     },
     "event": "subscribed",
     "protocol": "app-api",

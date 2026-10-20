@@ -17,6 +17,10 @@ function load(file) {
 const app = load('launcher/AppProtocol.generated.js');
 const bar = load('bar/BarProtocol.generated.js');
 const fixture = name => JSON.parse(fs.readFileSync(path.join(root, 'tests/qml/fixtures', name), 'utf8'));
+// Producer examples deliberately start from full-width Rust revision hashes.
+// Validate every subscription/invalidation event, not only operation outcomes.
+for (const [name, event] of Object.entries(fixture('app-events.json')))
+    assert.equal(app.eventError(event), '', name);
 const replies = fixture('app-replies.json');
 for (const [method, contract] of Object.entries(app.contracts)) {
     assert.equal(app.responseError(method, replies[method]), '', method);

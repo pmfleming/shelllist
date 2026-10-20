@@ -99,6 +99,80 @@ DaemonTestCase {
         timer.running = false; // Break the timer binding: polling cannot hide lost pushes.
         return call;
     }
+    function reject(call, code) {
+        Io.DaemonSessions.sessions["app-daemon"].client.response(call.id,
+            {protocol: Api.protocol, version: Api.version, ok: false,
+                error: {code: code, message: "State changed", retryable: false}}, "", call.route);
+    }
+    function queryReply(call) {
+        reply(call, {applications: {revision: 2, hyprland_available: true,
+            applications: [application("Alpha", []), application("Beta", ["w3"])]}});
+    }
+    function test_producerInvalidationRefreshes_data() {
+        return [{tag: "applications", stream: Api.streams.applications},
+            {tag: "windows", stream: Api.streams.windows}];
+    }
+    function test_producerInvalidationRefreshes(data) {
+        const panel = makePanel();
+        panel.controller.refresh(false);
+        const query = lastCall(Api.methods.query);
+        queryReply(query);
+        const count = calls.filter(call => call.method === Api.methods.query).length;
+        deliverProducerEvent(query, producerEvent(data.stream));
+        tryCompare(panel.controller, "refreshInFlight", true);
+        compare(calls.filter(call => call.method === Api.methods.query).length, count + 1);
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 0);
+    }
+    function test_staleAdmissionRefreshesWithoutReplay() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.refresh(false);
+        const oldQuery = lastCall(Api.methods.query);
+        verify(c.primarySelected());
+        const action = lastCall(Api.methods.execute);
+        reject(action, "stale-state");
+        verify(!c.actionInFlight);
+        verify(c.operations.hasStaleFeedback);
+        compare(panel.dismissals, 0);
+        const recovery = lastCall(Api.methods.query);
+        verify(recovery.id !== oldQuery.id);
+        queryReply(oldQuery);
+        verify(c.operations.hasStaleFeedback, "A pre-rejection read cannot retire the warning");
+        queryReply(recovery);
+        tryCompare(c, "selectedActionMessage", "");
+        verify(!c.operations.hasStaleFeedback);
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+        compare(panel.dismissals, 0);
+    }
+    function test_staleRefreshFailureSurvivesUntilReopenSnapshot() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.catalogRevision = 2;
+        verify(c.primarySelected());
+        reject(lastCall(Api.methods.execute), "stale-state");
+        reply(lastCall(Api.methods.query), {}, "Read failed");
+        verify(c.operations.hasStaleFeedback);
+        c.deactivateUi();
+        const count = calls.filter(call => call.method === Api.methods.query).length;
+        c.activateUi("1");
+        tryVerify(() => calls.filter(call => call.method === Api.methods.query).length > count);
+        queryReply(lastCall(Api.methods.query));
+        tryCompare(c, "selectedActionMessage", "");
+        verify(!c.operations.hasStaleFeedback);
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+    }
+    function test_otherFailuresAreNotClearedBySnapshot() {
+        const panel = makePanel();
+        const c = panel.controller;
+        verify(c.primarySelected());
+        reject(lastCall(Api.methods.execute), "operation-failed");
+        verify(!c.operations.hasStaleFeedback);
+        compare(calls.filter(call => call.method === Api.methods.query).length, 0);
+        c.refresh(false);
+        queryReply(lastCall(Api.methods.query));
+        compare(c.selectedActionMessage, "State changed");
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+    }
     function test_producerOperationCompletesWithoutPolling_data() {
         return [
             {tag: "completed", status: "completed"}

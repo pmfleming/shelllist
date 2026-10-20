@@ -45,6 +45,7 @@ Ui.ProviderChooserController {
     signal backgroundActionFailed(string title, string message)
     property bool forceRefresh: false
     property double catalogRevision: -1
+    property int catalogQuerySequence: 0
     property string revisionRequestId: ""
     property var resourceHistory: []
     property var pendingResourceHistory: []
@@ -88,7 +89,7 @@ Ui.ProviderChooserController {
     }
     function activateUi(workspaceId: string): void {
         activateUiState(workspaceId);
-        if (catalogRevision < 0) {
+        if (catalogRevision < 0 || operations.hasStaleFeedback) {
             refresh(false);
             return;
         }
@@ -166,6 +167,7 @@ Ui.ProviderChooserController {
         }, applicationSearchLimit);
     }
     function requestApplications(id: string, text: string, generation: int, limit: int): void {
+        catalogQuerySequence++;
         const refreshCatalog = forceRefresh;
         forceRefresh = false;
         backend.query(id, "", categoryFilter, generation, limit, refreshCatalog);
@@ -260,6 +262,7 @@ Ui.ProviderChooserController {
         if (!isActiveQuery(id))
             return;
         catalogRevision = Number(page.revision);
+        operations.snapshotApplied(catalogQuerySequence);
         catalogError = "";
         resultsAboutToChange(true);
         applyProviderQuery(id, applicationProvider.resultsFor(page.applications));
@@ -280,8 +283,8 @@ Ui.ProviderChooserController {
         if (kind === "settings" && id === activeSettingsRequestId)
             activeSettingsRequestId = "";
     }
-    function handleFailure(id: string, message: string): void {
-        if (operations.fail(id, message) || operations.finishStatus(id, null, message))
+    function handleFailure(id: string, message: string, code: var): void {
+        if (operations.fail(id, message, code) || operations.finishStatus(id, null, message))
             return;
         if (id.startsWith("action-") || id.startsWith("operation-status-"))
             return; // Obsolete failures cannot overwrite another request.

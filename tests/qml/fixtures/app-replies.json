@@ -436,6 +436,16 @@
       "protocol": "app-api",
       "version": 2
     },
+    "stale-state": {
+      "error": {
+        "code": "stale-state",
+        "message": "Example stale-state",
+        "retryable": false
+      },
+      "ok": false,
+      "protocol": "app-api",
+      "version": 2
+    },
     "subscription-unavailable": {
       "error": {
         "code": "subscription-unavailable",

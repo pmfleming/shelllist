@@ -11,6 +11,7 @@ Item {
     property var pending: ({})
     property var feedback: Object.create(null)
     readonly property int count: Object.keys(pending).length
+    readonly property bool hasStaleFeedback: Object.values(feedback).some(record => record.staleAfterQuery !== undefined)
 
     function forTarget(targetId: string): var {
         return Object.values(pending).find(record => record.request.result.id === targetId) || null;
@@ -147,14 +148,29 @@ Item {
                 || !controller.selectedResult || controller.selectedResult.id !== record.request.result.id)
             controller.backgroundActionFailed(record.request.result.title, record.message);
     }
-    function fail(id: string, message: string): bool {
+    function fail(id: string, message: string, code: var): bool {
         const original = pending[id];
         if (!original)
             return false;
         const record = Object.assign({}, original, {message: message, status: "failed"});
+        // Only an explicit admission rejection is recoverable by a new snapshot.
+        // Transport failures and accepted operation outcomes retain their feedback.
+        const stale = code === "stale-state" && !original.operationId;
+        if (stale)
+            record.staleAfterQuery = controller.catalogQuerySequence;
         retire(record);
         reportFailure(record);
+        if (stale && controller.uiActive)
+            controller.refresh(false); // Read only; never replay the action.
         return true;
+    }
+    function snapshotApplied(sequence: int): void {
+        const next = Object.create(null);
+        for (const [targetId, record] of Object.entries(feedback)) {
+            if (record.staleAfterQuery === undefined || sequence <= record.staleAfterQuery)
+                next[targetId] = record;
+        }
+        feedback = next;
     }
     function check(targetId: string): void {
         const original = forTarget(targetId);

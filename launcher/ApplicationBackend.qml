@@ -15,7 +15,7 @@ Io.DaemonBackend {
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Application operation failed");
         if (error) {
-            controller.handleFailure(id, error);
+            controller.handleFailure(id, error, transportError ? "" : envelope?.error?.code);
             return;
         }
         const data = envelope.data || ({});

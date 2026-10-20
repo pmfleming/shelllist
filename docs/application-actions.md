@@ -60,6 +60,17 @@ successful handoff; irrelevant launch receipts or placement metadata cannot turn
 Close into a handoff. Event gaps trigger read-only status/catalog recovery.
 No recovery path replays a launch or close.
 
+Row actions send the daemon's target-scoped revision, not the page-wide revision.
+Rust decides whether the selected application's metadata, preferences or window
+scope changed; unrelated applications, focus order and title updates do not veto
+an action. All revision events use JavaScript-safe numeric tokens. A structured
+`stale-state` admission rejection triggers a read-only catalog refresh. Its
+feedback clears only after a successful query started after the rejection;
+failed/superseded reads cannot clear it. Reopening with unresolved stale feedback
+requests a new snapshot even if the cached page revision matches. This recovery
+does not clear ordinary operation failures, placement warnings or unknown
+transport outcomes, and never resubmits the action.
+
 Automatic operation-status checks are bounded to ten reads at two-second
 intervals; an unconfirmed outcome remains in the status bar afterward. Close reconciliation performs
 up to three catalog observations, then relies on normal window events or explicit
