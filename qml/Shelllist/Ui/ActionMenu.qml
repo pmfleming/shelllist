@@ -11,6 +11,12 @@ Controls.Popup {
     property int maximumVisibleItems: 6
     property string accessibleName: qsTr("More actions")
     property alias listObjectName: list.objectName
+    // Image trays reuse the same menu input/focus contract with another layout.
+    property int orientation: ListView.Vertical
+    property int initialIndex: -1
+    property Component actionDelegate: defaultDelegate
+    readonly property int currentIndex: list.currentIndex
+    readonly property bool listFocused: list.activeFocus
     property Item returnFocus: null
     signal triggered(var action)
     width: Math.min(parent.width, 360)
@@ -22,8 +28,11 @@ Controls.Popup {
     exit: null
     onAboutToShow: returnFocus = parent && parent.Window.window ? parent.Window.window.activeFocusItem : null
     onOpened: {
-        list.currentIndex = -1;
-        list.moveSelection(1);
+        list.currentIndex = available(initialIndex) ? initialIndex : -1;
+        if (list.currentIndex < 0)
+            list.moveSelection(1);
+        else
+            list.positionViewAtIndex(list.currentIndex, ListView.Contain);
         list.forceActiveFocus();
     }
     onClosed: if (returnFocus && returnFocus.visible && returnFocus.enabled)
@@ -52,6 +61,7 @@ Controls.Popup {
     contentItem: ListView {
         id: list
         model: menu.visible ? menu.actions : []
+        orientation: menu.orientation
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         Accessible.role: Accessible.PopupMenu
@@ -69,15 +79,20 @@ Controls.Popup {
         Keys.onPressed: function (event) {
             if (event.modifiers & (Qt.AltModifier | Qt.ControlModifier)) {
                 event.accepted = true;
-            } else if ([Qt.Key_Up, Qt.Key_Down, Qt.Key_Tab, Qt.Key_Backtab].includes(event.key)) {
-                moveSelection(event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier) ? -1 : 1);
+            } else if ([Qt.Key_Up, Qt.Key_Down, Qt.Key_Tab, Qt.Key_Backtab].includes(event.key)
+                    || (menu.orientation === ListView.Horizontal && [Qt.Key_Left, Qt.Key_Right].includes(event.key))) {
+                moveSelection(event.key === Qt.Key_Up || event.key === Qt.Key_Left || event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier) ? -1 : 1);
                 event.accepted = true;
             } else if ([Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space].includes(event.key)) {
                 if (!event.isAutoRepeat) menu.activate(currentIndex);
                 event.accepted = true;
             }
         }
-        delegate: Controls.ItemDelegate {
+        delegate: menu.actionDelegate
+    }
+    Component {
+        id: defaultDelegate
+        Controls.ItemDelegate {
             required property int index
             width: list.width
             height: menu.controlHeight

@@ -3,6 +3,7 @@ import QtCore
 import QtQuick
 import Shelllist.Ui as Ui
 import "BluetoothFlow.js" as BluetoothFlow
+import "BluetoothNoiseControl.js" as NoiseControl
 
 Ui.ProviderChooserController {
     id: bluetoothController
@@ -12,7 +13,7 @@ Ui.ProviderChooserController {
         controller: bluetoothController
     }
     sharedScreenshotEnabled: true
-    sharedScreenshotBlocked: anyActionInFlight || modalPromptOpen
+    sharedScreenshotBlocked: anyActionInFlight || modalPromptOpen || noiseControlOpen
     sharedScreenshotStartMessage: "Capturing Bluetooth window…"
     onSharedScreenshotStatusChanged: function (message) {
         status = message;
@@ -21,6 +22,13 @@ Ui.ProviderChooserController {
     readonly property alias nameEdits: nameEditState
     readonly property alias adapterEdits: adapterEditState
     property string detailsTab: "device"
+    property bool noiseControlOpen: false
+    property string noiseControlDeviceKey: ""
+    readonly property bool canChooseNoiseControl: uiActive && !uiSuspending && hasSelection
+        && !actionInFlight && !modalPromptOpen && NoiseControl.canSet(selectedDevice)
+    onCanChooseNoiseControlChanged: if (!canChooseNoiseControl) noiseControlOpen = false
+    onDetailsTabChanged: if (detailsTab !== "device") noiseControlOpen = false
+    onDetailsOpenChanged: if (!detailsOpen) noiseControlOpen = false
     viewMemory: detailsTab === "adapter" ? adapterMemory : deviceMemory
     readonly property Ui.ChooserMemory adapterMemory: Ui.ChooserMemory {
         controller: bluetoothController
@@ -84,7 +92,7 @@ Ui.ProviderChooserController {
     property string status: "Loading Bluetooth devices…"
     readonly property bool screenshotInFlight: sharedScreenshotInFlight
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
-    navigationBlocked: modalPromptOpen
+    navigationBlocked: modalPromptOpen || noiseControlOpen
     readonly property var selectedAdapter: adapters.find(function (adapter) {
         return adapter.key === preferredAdapterKey;
     }) || adapters.find(function (adapter) {
@@ -513,7 +521,31 @@ Ui.ProviderChooserController {
         pendingConfirmationAction = null;
         return hasSelection && executeSelected(actionId);
     }
+    function openNoiseControl(): bool {
+        if (!canChooseNoiseControl)
+            return false;
+        noiseControlDeviceKey = selectedDevice.key;
+        detailsTab = "device";
+        openDetails();
+        noiseControlOpen = true;
+        return true;
+    }
+    function setNoiseControl(deviceKey: string, mode: string): bool {
+        // Revalidate after the menu closes: focus restoration/snapshots may have
+        // changed the selection, capability or settable modes in the meantime.
+        if (!canChooseNoiseControl || deviceKey !== selectedDevice.key)
+            return false;
+        const state = (selectedDevice.fast_pair || {}).noise_control;
+        if (!NoiseControl.availableModes(state).some(option => option.value === mode && option.enabled))
+            return false;
+        if (state.active_mode === mode)
+            return true;
+        status = qsTr("Changing noise control…");
+        return backend.deviceOperation("set-noise-control", selectedDevice, {mode: mode});
+    }
     function executeDeviceAction(actionId, device) {
+        if (actionId === "noise-control")
+            return device.key === selectedDevice.key && openNoiseControl();
         if (deviceBusy(device.key) || backend.requestRunning)
             return false;
         if (actionId === "reset-policy") {
@@ -537,7 +569,11 @@ Ui.ProviderChooserController {
     }
     // ModalFrame restores valid preceding focus. Never enqueue a search-focus
     // request here: it can outlive closure and overwrite the next invocation.
-    onSelectedResultChanged: pendingConfirmationAction = null
+    onSelectedResultChanged: {
+        pendingConfirmationAction = null;
+        if (selectedResult?.payload?.key !== noiseControlDeviceKey)
+            noiseControlOpen = false;
+    }
 
     BluetoothBackend {
         id: backend

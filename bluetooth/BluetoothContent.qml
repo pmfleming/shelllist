@@ -11,7 +11,7 @@ Ui.ProviderChooserSurface {
     readonly property bool editingDetails: (detailsItem as BluetoothDeviceDetails)?.editingText ?? false
     sessionReady: !controller.refreshInFlight
     sessionContext: controller.detailsTab === "adapter" ? JSON.stringify(["adapter", controller.selectedAdapter.key || "", controller.adapterSettingsTab]) : JSON.stringify([controller.viewMemory.key, controller.viewMemory.tab])
-    navigationEnabled: !controller.modalPromptOpen
+    navigationEnabled: !controller.navigationBlocked
     detailsTabEnabled: navigationEnabled && controller.detailsOpen && (controller.hasSelection || controller.detailsTab === "adapter")
     refreshEnabled: controller.powered && !controller.refreshInFlight && !controller.actionInFlight && navigationEnabled && !editingDetails
 

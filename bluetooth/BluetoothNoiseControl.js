@@ -32,8 +32,15 @@ function availableModes(control) {
     return modeDefinitions.filter(function (mode) {
         return available.includes(mode.value);
     }).map(function (mode) {
-        return Object.assign({}, mode);
+        return Object.assign({}, mode, {
+            enabled: ((control && control.settable_modes) || []).includes(mode.value)
+        });
     });
+}
+
+function canSet(device) {
+    return !!device.connected && !!(device.capabilities || {}).can_set_noise_control
+        && availableModes((device.fast_pair || {}).noise_control).some(mode => mode.enabled);
 }
 
 function isActive(control, mode) {

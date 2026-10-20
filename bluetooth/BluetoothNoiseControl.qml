@@ -4,7 +4,7 @@ import QtQuick
 import Shelllist.Ui as Ui
 import "BluetoothNoiseControl.js" as NoiseControl
 
-Item {
+Ui.PointerActionControl {
     id: control
 
     required property BluetoothController controller
@@ -18,8 +18,11 @@ Item {
     visible: advertised
     implicitHeight: advertised ? iconExtent + Ui.Theme.spacingXs + modeLabel.implicitHeight : 0
 
-    Accessible.role: Accessible.StaticText
-    Accessible.name: activeMode.label
+    activeFocusOnTab: false
+    interactive: controller.canChooseNoiseControl
+    accessibleName: qsTr("Noise control: %1. Choose mode").arg(activeMode.label)
+    color: hovered && interactive ? Ui.Theme.hover : "transparent"
+    onClicked: controller.openNoiseControl()
 
     Image {
         id: icon

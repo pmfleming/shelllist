@@ -2,6 +2,7 @@ import Shelllist.Core as Core
 import "BluetoothBattery.js" as BluetoothBattery
 import "BluetoothFlow.js" as BluetoothFlow
 import "BluetoothGlyphs.js" as BluetoothGlyphs
+import "BluetoothNoiseControl.js" as NoiseControl
 
 Core.Provider {
     required property BluetoothController controller
@@ -62,6 +63,16 @@ Core.Provider {
                 visible: !!device.connected,
                 enabled: actionEnabled(caps.can_disconnect, device),
                 presentation: primaryPresentation("danger")
+            }), Core.Model.keepOpenAction("noise-control", "Noise control", {
+                accessKey: "C",
+                icon: "noise_control_off",
+                // Connect owns Alt+C while disconnected; never register both.
+                visible: !!device.connected && NoiseControl.isAdvertised((device.fast_pair || {}).noise_control),
+                enabled: actionEnabled(NoiseControl.canSet(device), device),
+                presentation: {
+                    group: "toolbar",
+                    tone: "normal"
+                }
             }), Core.Model.keepOpenAction("reset-policy", "Reset", {
                 accessKey: "R",
                 icon: "󰑓",

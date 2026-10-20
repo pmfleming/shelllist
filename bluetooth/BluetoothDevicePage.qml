@@ -12,7 +12,18 @@ Ui.DetailFlickable {
     readonly property alias editingName: settings.editingName
     readonly property string selectedTab: controller.detailsTab
 
+    Connections {
+        target: page.controller
+        function onNoiseControlOpenChanged(): void {
+            if (page.controller.noiseControlOpen)
+                page.revealItem(batteryRow);
+        }
+    }
+    Component.onCompleted: if (controller.noiseControlOpen) page.revealItem(batteryRow)
+
     Item {
+        id: batteryRow
+        objectName: "bluetoothBatteryRow"
         visible: page.selectedTab === "device"
         width: parent.width
         height: noiseControl.visible ? Math.max(batteryStatus.implicitHeight, noiseControl.y + noiseControl.implicitHeight) : batteryStatus.implicitHeight
@@ -33,6 +44,10 @@ Ui.DetailFlickable {
             y: batteryStatus.percentageBottom - iconExtent
             controller: page.controller
             referenceArtworkSize: batteryStatus.artworkSize
+        }
+
+        BluetoothNoiseControlTray {
+            controller: page.controller
         }
     }
 
