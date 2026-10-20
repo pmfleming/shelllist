@@ -147,7 +147,21 @@
     },
     "pipewire": {
       "requirement": "0.10",
-      "version": "0.10.0"
+      "version": "0.10.0",
+      "requirementExceptions": {
+        "bt-daemon/Cargo.toml": {
+          "requirement": "0.10.1",
+          "reason": "Bluetooth's validated upstream integration upgrades PipeWire bindings to 0.10.1 with the same v1_2_0 API floor; bar-daemon retains its existing bindings. No Rust PipeWire types cross daemon boundaries."
+        }
+      },
+      "lockExceptions": {
+        "bt-daemon/Cargo.lock": {
+          "versions": [
+            "0.10.1"
+          ],
+          "reason": "Bluetooth's validated PipeWire 0.10.1 binding upgrade is independent of bar-daemon's 0.10.0 lock; see bt-daemon/docs/reviews/upstream-upgrade-2026-10-20.md."
+        }
+      }
     },
     "reqwest": {
       "requirement": "0.12",

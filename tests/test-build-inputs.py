@@ -127,6 +127,17 @@ class BuildInputTests(unittest.TestCase):
         self.replace(self.locks[1], '1.0.229', '1.0.228')
         self.rejects("resolution drift")
 
+    def test_requirement_exception_is_narrow(self):
+        self.replace(self.manifests[0], 'serde = "1"', 'serde = "1.0.229"')
+        self.policy["shared"]["serde"]["requirementExceptions"] = {
+            self.manifests[0]: {"requirement": "1.0.229", "reason": "synthetic independent upgrade"}
+        }
+        # These fixtures double as canonical/vendored search: the manifest
+        # change is allowed by dependency policy, but still violates parity.
+        self.assertEqual(self.errors(), ["vendored search differs from canonical source"])
+        self.replace(self.manifests[1], 'serde = "1"', 'serde = "1.0.229"')
+        self.rejects("requirement must be")
+
     def test_exception_requires_reason(self):
         self.policy["shared"]["serde"]["lockExceptions"] = {
             self.locks[0]: {"versions": ["1.0.229"]}
