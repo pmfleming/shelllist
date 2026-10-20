@@ -26,8 +26,27 @@ Ui.ActionMenu {
     height: parent.height
     orientation: ListView.Horizontal
     padding: Ui.Theme.spacingSm
-    topPadding: padding + Ui.Theme.formActionSize
     dim: false
+    clip: true
+    enter: Transition {
+        NumberAnimation {
+            target: tray
+            property: "horizontalOffset"
+            from: tray.width
+            to: 0
+            duration: Ui.Theme.noAnimations ? 0 : Ui.Theme.animationNormal
+            easing.type: Easing.OutCubic
+        }
+    }
+    exit: Transition {
+        NumberAnimation {
+            target: tray
+            property: "horizontalOffset"
+            to: tray.width
+            duration: Ui.Theme.noAnimations ? 0 : Ui.Theme.animationNormal
+            easing.type: Easing.InCubic
+        }
+    }
     visible: controller.noiseControlOpen && contextAvailable
     actions: NoiseControl.availableModes(noiseControl).map(mode => Object.assign({}, mode, {
         deviceKey: tray.deviceKey
@@ -37,37 +56,16 @@ Ui.ActionMenu {
         if (!contextAvailable || !controller.uiActive || controller.uiSuspending)
             returnFocus = null;
     }
+    onVisibleChanged: controller.noiseControlPresented = visible
+    Component.onDestruction: if (controller) controller.noiseControlPresented = false
     onClosed: controller.noiseControlOpen = false
     onTriggered: function (action) {
         controller.setNoiseControl(action.deviceKey, action.value);
     }
 
     background: Rectangle {
-        radius: Ui.Theme.cardRadius
-        color: Ui.Theme.surfaceRaised
-        border.color: Ui.Theme.border
-        Ui.ThemeText {
-            anchors.left: parent.left
-            anchors.leftMargin: tray.padding + Ui.Theme.spacingXs
-            anchors.right: closeButton.left
-            anchors.verticalCenter: closeButton.verticalCenter
-            text: qsTr("Noise control")
-            font.pixelSize: Ui.Theme.groupHeadingSize
-            font.weight: Ui.Theme.groupHeadingWeight
-        }
-        Ui.FlatIconButton {
-            id: closeButton
-            objectName: "closeNoiseControlTray"
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: Ui.Theme.spacingXs
-            width: Ui.Theme.formActionSize
-            height: width
-            icon: "close"
-            label: qsTr("Close noise control")
-            activeFocusOnTab: false
-            onClicked: tray.close()
-        }
+        color: Ui.Theme.window
+        transform: Translate { x: tray.horizontalOffset }
     }
 
     actionDelegate: Component {
@@ -92,21 +90,14 @@ Ui.ActionMenu {
             Accessible.onPressAction: tray.activate(index)
             onClicked: tray.activate(index)
 
-            background: Rectangle {
-                anchors.fill: parent
-                anchors.margins: Ui.Theme.spacingXs
-                radius: Ui.Theme.controlRadius
-                color: option.current ? Ui.Theme.selected
-                    : option.hovered ? Ui.Theme.hover : "transparent"
-                border.color: option.highlighted ? Ui.Theme.accent : "transparent"
-                border.width: option.highlighted ? 2 : 0
-            }
+            background: Item {}
             contentItem: Column {
                 spacing: Ui.Theme.spacingXs
                 Image {
                     // Same crop as the existing hero artwork; no new assets.
+                    objectName: "noiseControlArtwork:" + option.modelData.value
                     width: Math.min(parent.width, Math.max(0, option.availableHeight
-                        - modeLabel.implicitHeight - stateLabel.implicitHeight - parent.spacing * 2))
+                        - modeLabel.implicitHeight - parent.spacing))
                     height: width
                     anchors.horizontalCenter: parent.horizontalCenter
                     source: option.modelData.image
@@ -115,7 +106,10 @@ Ui.ActionMenu {
                     sourceClipRect: Qt.rect(45.5, 40.5, 165, 165.5)
                     fillMode: Image.PreserveAspectFit
                     mipmap: true
-                    opacity: option.enabled ? 1 : Ui.Theme.disabledOpacity
+                    // Brightness describes device state, never the unsubmitted
+                    // keyboard candidate. Focus has its own label underline.
+                    opacity: option.current ? 1 : option.enabled ? Ui.Theme.disabledOpacity
+                        : Ui.Theme.disabledOpacity * Ui.Theme.disabledOpacity
                     Accessible.ignored: true
                 }
                 Ui.ThemeText {
@@ -124,17 +118,10 @@ Ui.ActionMenu {
                     text: option.modelData.label
                     font.pixelSize: Ui.Theme.metadataSize
                     font.weight: Ui.Theme.fontWeightDemiBold
+                    font.underline: option.highlighted && tray.listFocused
+                    color: option.highlighted && tray.listFocused ? Ui.Theme.accent : Ui.Theme.text
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
-                    Accessible.ignored: true
-                }
-                Ui.ThemeText {
-                    id: stateLabel
-                    width: parent.width
-                    text: option.current ? qsTr("✓ Active") : !option.enabled ? qsTr("Not settable") : " "
-                    color: option.current ? Ui.Theme.active : Ui.Theme.mutedText
-                    font.pixelSize: Ui.Theme.metadataSize
-                    horizontalAlignment: Text.AlignHCenter
                     Accessible.ignored: true
                 }
             }

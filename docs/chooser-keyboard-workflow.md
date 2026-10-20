@@ -344,9 +344,11 @@ approved compact confirmations also opt into inline actions as documented below.
 The shared inline option falls back to those tiers when commands cannot fit. See the
 [shared action row](../qml/Shelllist/Ui/SurfaceActionRow.qml).
 
-- Action buttons use **Alt+letter**, not Tab. `ActionControl.accessKey` defines a
-  command; `commandScope` can limit a repeated command to the current field/row
-  (e.g. Alt+H for its help). Duplicate active letters fail closed.
+- Action buttons normally use **Alt+letter**, not Tab. `ActionControl.accessKey`
+  defines a command; explicitly approved Ctrl commands (currently Bluetooth
+  **Ctrl+N**) use `accessModifier: "Ctrl"` in the same registry, never a parallel
+  panel-local shortcut. `commandScope` can limit a repeated command to the current
+  field/row (e.g. Alt+H for its help). Duplicate active chords fail closed.
 - Selected-result commands can use `ProviderChooserSurface.additionalCommandItem`
   with `commandsWithoutDetails`. They share `DetailsNavigation`'s access keys,
   command menu, modifier hints and modal guards even while details are collapsed;
@@ -370,7 +372,8 @@ The shared inline option falls back to those tiers when commands cannot fit. See
   must not run. Sensitive inputs never enter presentation memory.
 
 Header modifier-held hints remain: holding Alt shows command badges after
-250ms; holding Ctrl shows the detail-tab chord. AltGr does not show hints.
+250ms; holding Ctrl shows the detail-tab chord and any explicit Ctrl command
+badges. Ctrl commands never appear among Alt hints. AltGr does not show hints.
 There is no F1 overlay, hover tooltip or plain-letter action shortcut.
 
 ## Notifications app groups and detail tabs
@@ -889,20 +892,29 @@ partial/zero readings, unknowns, hidden/inactive pages and transport loss.
 ## Bluetooth noise-control tray
 
 Clicking the existing noise-control artwork or invoking the secondary **Noise
-control (Alt+C)** command opens the same image tray across the battery row. The
-tray overlays that row's existing bounds: no extra card, height change or movement
-of Audio or the footer. On a narrow inspector its choices scroll horizontally.
-From another detail tab, the command opens Device; if necessary, the existing
-page scroller reveals the battery row. It does not resize or rearrange content.
+control (Ctrl+N)** command opens the same image tray across the battery row. The
+tray slides in from right to left and back out to the right on dismissal, clipped
+to that row's existing bounds. It adds no card, height change or movement of Audio
+or the footer; reduced motion skips the slide. On a narrow inspector its choices
+scroll horizontally. From another detail tab, the command opens Device; if
+necessary, the existing page scroller reveals the battery row. It does not resize
+or rearrange content.
 
 This is a command-owned menu, not an editable field. Neither the artwork nor the
 secondary command is a field Tab stop. The shared `ActionMenu` owns focus return,
-modal outside/Escape dismissal and menu navigation. Left/Right (also Up/Down) and
-Tab/Shift+Tab browse enabled choices; Enter/Space or an option click selects.
-Browsing never writes. The current device-reported mode is checked independently
-of the candidate highlight. Other commands, refresh and detail-tab shortcuts are
-blocked while the tray is open. Alt+C remains **Connect** for disconnected devices;
-the Noise control command is only visible for connected devices advertising ANC.
+modal outside/Escape dismissal and menu navigation. There is no close button.
+Left/Right (also Up/Down) and Tab/Shift+Tab browse enabled choices; Enter/Space or
+an option click sets the candidate and closes. Escape or an outside click closes
+without setting. Browsing never writes. The device-reported mode's icon is bright;
+inactive icons are faded. There are no selection boxes or visible Active labels.
+A focused candidate has an underlined label, independently of device-state
+brightness; accessible checked/active semantics remain intact. Other commands,
+refresh and detail-tab shortcuts are blocked through the entire closing animation.
+Repeated activation during a transition cannot submit twice.
+
+Alt+O remains **Use as output** in Audio; it does not open noise control. Alt+C
+remains **Connect** for disconnected devices. Noise control's Ctrl+N command is
+only visible for connected devices advertising ANC.
 
 Only reported modes are listed; modes not currently settable stay visible but
 are disabled. A selection closes the tray and submits one capability-guarded
@@ -913,9 +925,10 @@ use the existing Bluetooth operation/status feedback; there is no automatic retr
 Version-1 unsigned ANC needs neither account-key setup nor an authenticated-control
 flag in the UI. Disconnect, selection/tab changes, modal prompts, lost capabilities
 and UI suspension discard an unsubmitted chooser without retargeting its action.
-`tst_bluetooth_noise_control.qml` exercises real pointer/Alt+C input, stable Audio
-geometry, modal shortcut blocking, focus return, disabled choices, request versus
-snapshot acknowledgement, failure and stale-context guards.
+`tst_bluetooth_noise_control.qml` exercises real pointer/Ctrl+N input, modifier
+badges, animated and reduced-motion dismissal, stable Audio geometry, modal
+shortcut blocking, focus return, disabled choices, request versus snapshot
+acknowledgement, failure and stale-context guards.
 
 ## Bluetooth signal telemetry
 

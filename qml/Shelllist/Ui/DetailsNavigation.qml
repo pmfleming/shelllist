@@ -316,9 +316,13 @@ FocusScope {
         return false;
     }
     function shortcutFor(button: ActionControl): string {
-        if (!button || commandButtons.indexOf(button) < 0 || !/^[A-IK-RT-Z]$/.test(button.accessKey) || commandButtons.filter(other => other.accessKey === button.accessKey).length !== 1)
+        if (!button || commandButtons.indexOf(button) < 0
+                || !["Alt", "Ctrl"].includes(button.accessModifier)
+                || !(button.accessModifier === "Ctrl" ? /^[A-Z]$/ : /^[A-IK-RT-Z]$/).test(button.accessKey)
+                || commandButtons.filter(other => other.accessKey === button.accessKey
+                    && other.accessModifier === button.accessModifier).length !== 1)
             return "";
-        return "Alt+" + button.accessKey;
+        return button.accessModifier + "+" + button.accessKey;
     }
     onHeaderShortcutsEnabledChanged: if (!headerShortcutsEnabled) {
         commandMenu.close();

@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
+import Shelllist.Ui as Ui
 import "../../bluetooth" as Bt
 
 DaemonTestCase {
@@ -9,6 +11,7 @@ DaemonTestCase {
     visible: true
     width: 1100
     height: 850
+    property var originalEnvironment
 
     Component {
         id: panelComponent
@@ -27,8 +30,10 @@ DaemonTestCase {
         }
     }
     function init() {
+        originalEnvironment = Quickshell.environment;
         failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop|Cannot assign|Unable to assign).*/);
     }
+    function cleanup() { Quickshell.environment = originalEnvironment; }
     function snapshot(mode, settable, connected, key) {
         return {
             radio: {available: true, operational: true, powered: true, adapter_count: 1},
@@ -66,7 +71,7 @@ DaemonTestCase {
         panel.controller.detailsOpen = true;
         tryVerify(() => findChild(panel, "bluetoothBatteryRow") !== null);
         tryVerify(() => findChild(panel, "detailAction:noise-control") !== null);
-        tryVerify(() => findChild(panel, "detailAction:noise-control").surfaceShortcut === "Alt+C");
+        tryVerify(() => findChild(panel, "detailAction:noise-control").surfaceShortcut === "Ctrl+N");
         panel.surface.listItem.focusList();
         waitForDetailLayout(panel);
         calls = [];
@@ -80,6 +85,14 @@ DaemonTestCase {
         const page = findChild(panel, "bluetoothDevicePage");
         const row = findChild(panel, "bluetoothBatteryRow");
         const audio = findChild(panel, "deviceAudio");
+        // Provider actions populate a Repeater after the page Loader. Its
+        // multipoint row must contribute to Audio before recording its size.
+        tryVerify(() => {
+            const multipoint = findChild(audio, "detailSetting:multipoint");
+            return multipoint && multipoint.height >= multipoint.implicitHeight
+                && multipoint.parent.height >= multipoint.height;
+        });
+        verify(waitForPolish(panel.Window.window), "settle nested Qt Quick Layouts, not just the outer Column");
         tryVerify(() => page && row && audio && row.width > 0 && row.height > 0
             && audio.visible && audio.height > 0 && audio.width === page.width
             && audio.y === row.y + row.height + page.cardSpacing
@@ -92,23 +105,47 @@ DaemonTestCase {
         return calls.filter(call => call.method === "bluetooth.device.operation");
     }
     function openKeyboard(panel) {
-        keyClick(Qt.Key_C, Qt.AltModifier);
+        tryCompare(panel.controller, "noiseControlPresented", false);
+        keyClick(Qt.Key_N, Qt.ControlModifier);
         tryCompare(panel.controller, "noiseControlOpen", true);
         tryVerify(() => findChild(panel, "noiseControlTray") !== null);
         const tray = findChild(panel, "noiseControlTray");
-        tryCompare(tray, "visible", true);
+        tryCompare(tray, "opened", true);
         tryVerify(() => findChild(panel, "noiseControlChoices").activeFocus);
         return tray;
     }
-    function test_mouseAndKeyboardShareOverlayAndConfirmedState() {
+    function test_mouseAndKeyboardShareOverlayAndConfirmedState_data() {
+        return [{tag: "reduced-motion", motion: false}, {tag: "animated", motion: true}];
+    }
+    function test_mouseAndKeyboardShareOverlayAndConfirmedState(data) {
+        Quickshell.environment = Object.assign({}, originalEnvironment, {
+            SHELLLIST_NO_ANIMATIONS: data.motion ? "0" : "1"
+        });
+        compare(Ui.Theme.noAnimations, !data.motion);
         const panel = makePanel();
         const controller = panel.controller;
         const row = findChild(panel, "bluetoothBatteryRow");
         const page = findChild(panel, "bluetoothDevicePage");
         const audio = findChild(panel, "deviceAudio");
         verify(audio.visible && audio.height > 0, "geometry assertion must include the real Audio card");
-        const before = {height: row.height, y: audio.y, contentHeight: page.contentHeight};
         const precedingFocus = panel.Window.window.activeFocusItem;
+        const noiseButton = findChild(panel, "detailAction:noise-control");
+        const icon = findChild(panel, "noiseControlIcon");
+        verify(!noiseButton.activeFocusOnTab && !icon.parent.activeFocusOnTab);
+        verify(!panel.surface.detailsNavigation.targets.includes(icon.parent));
+        const badge = findChild(noiseButton, "headerShortcutBadge");
+        keyPress(Qt.Key_Control);
+        tryCompare(badge, "visible", true);
+        compare(badge.text, "Ctrl+N");
+        keyRelease(Qt.Key_Control);
+        keyPress(Qt.Key_Alt);
+        tryCompare(findChild(panel.surface, "shortcutHints"), "showActions", true);
+        verify(!badge.visible, "Ctrl+N must not be advertised as an Alt command");
+        keyRelease(Qt.Key_Alt);
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        verify(!controller.noiseControlOpen, "Alt+C is no longer the noise-control shortcut");
+        waitForDetailLayout(panel);
+        const before = {height: row.height, y: audio.y, contentHeight: page.contentHeight};
         const tray = openKeyboard(panel);
         compare(tray.width, row.width);
         compare(tray.height, row.height);
@@ -118,8 +155,16 @@ DaemonTestCase {
         compare(row.height, before.height);
         compare(page.contentHeight, before.contentHeight);
         compare(tray.currentIndex, 0);
+        const choices = findChild(panel, "noiseControlChoices");
+        const activeImage = findChild(choices.itemAtIndex(0), "noiseControlArtwork:transparent");
+        const inactiveImage = findChild(choices.itemAtIndex(1), "noiseControlArtwork:adaptive");
+        compare(activeImage.opacity, 1);
+        verify(inactiveImage.opacity < activeImage.opacity);
+        verify(findChild(panel, "closeNoiseControlTray") === null);
         keyClick(Qt.Key_Right);
         compare(tray.currentIndex, 1);
+        compare(activeImage.opacity, 1);
+        verify(inactiveImage.opacity < 1, "browsing is not a confirmed mode change");
         keyClick(Qt.Key_Tab);
         compare(tray.currentIndex, 2, "Tab browses menu choices, never submits");
         keyClick(Qt.Key_D, Qt.AltModifier);
@@ -128,17 +173,21 @@ DaemonTestCase {
         compare(controller.detailsTab, "device");
         compare(calls.length, 0, "underlying shortcuts are blocked while choosing");
         keyClick(Qt.Key_Escape);
+        if (!Ui.Theme.noAnimations) {
+            verify(tray.visible && !tray.opened, "exit keeps the overlay until it slides out");
+            verify(controller.navigationBlocked, "closing animation still owns modal input");
+        }
         tryCompare(tray, "visible", false);
+        compare(tray.horizontalOffset, tray.width);
         compare(requests().length, 0);
         tryVerify(() => precedingFocus.activeFocus);
 
-        const icon = findChild(panel, "noiseControlIcon");
         mouseClick(icon, icon.width / 2, icon.height / 2);
-        tryCompare(tray, "visible", true);
-        const choices = findChild(panel, "noiseControlChoices");
+        tryCompare(tray, "opened", true);
         tryVerify(() => choices.itemAtIndex(1) !== null);
         const adaptive = choices.itemAtIndex(1);
         mouseClick(adaptive, adaptive.width / 2, adaptive.height / 2);
+        tray.activate(3); // Ignore repeated activation while the exit is running.
         tryCompare(tray, "visible", false);
         compare(requests().length, 1);
         compare(requests()[0].params, {key: "buds", operation: "set-noise-control", mode: "adaptive"});
@@ -156,6 +205,7 @@ DaemonTestCase {
         openKeyboard(panel);
         compare(tray.currentIndex, 1, "open at device-confirmed mode");
         keyClick(Qt.Key_Return);
+        tryCompare(tray, "visible", false);
         compare(requests().length, 1, "selecting the active mode is a no-op");
         compare(audio.y, before.y);
         compare(page.contentHeight, before.contentHeight);
@@ -226,12 +276,8 @@ DaemonTestCase {
         tryCompare(controller, "noiseControlOpen", false, 1000);
         compare(requests().length, 1, "outside click dismisses without submitting");
         openKeyboard(panel);
-        const close = findChild(panel, "closeNoiseControlTray");
-        mouseClick(close, close.width / 2, close.height / 2);
-        tryCompare(controller, "noiseControlOpen", false);
-        openKeyboard(panel);
         controller.deactivateUi();
         tryCompare(controller, "noiseControlOpen", false);
-        verify(!controller.navigationBlocked, "closing restores the host navigation guard");
+        tryVerify(() => !controller.navigationBlocked, 1000, "closing restores the host navigation guard");
     }
 }

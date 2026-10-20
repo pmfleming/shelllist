@@ -78,7 +78,7 @@ Item {
     }
     function keyFor(action): string {
         const key = String(action.accessKey || "").trim().toUpperCase();
-        return /^[A-Z]$/.test(key) && key !== "S" && key !== "M" && key !== "J" ? key : "";
+        return /^[A-Z]$/.test(key) && (action.accessModifier === "Ctrl" || !["S", "M", "J"].includes(key)) ? key : "";
     }
     function focusAction(actionId: string): void {
         const button = buttons.find(item => item.objectName === actionObjectNamePrefix + actionId);
@@ -102,6 +102,7 @@ Item {
         label: row.primaryAction ? row.primaryAction.label : ""
         icon: row.primaryAction ? row.primaryAction.icon || "play_arrow" : ""
         accessKey: row.primaryAction ? row.keyFor(row.primaryAction) : ""
+        accessModifier: row.primaryAction?.accessModifier || "Alt"
         toolTip: row.primaryAction ? (row.primaryAction.metadata || {}).toolTip || "" : ""
         enabled: !!row.primaryAction && row.primaryAction.enabled !== false
         tone: row.primaryAction ? row.actionTone(row.primaryAction, true) : "normal"
@@ -135,6 +136,7 @@ Item {
                 label: modelData.label || ""
                 icon: modelData.icon || "more_horiz"
                 accessKey: row.keyFor(modelData)
+                accessModifier: modelData.accessModifier || "Alt"
                 toolTip: (modelData.metadata || {}).toolTip || ""
                 enabled: modelData.enabled !== false
                 tone: row.actionTone(modelData, false)

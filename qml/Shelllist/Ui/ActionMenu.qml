@@ -13,6 +13,7 @@ Controls.Popup {
     property alias listObjectName: list.objectName
     // Image trays reuse the same menu input/focus contract with another layout.
     property int orientation: ListView.Vertical
+    property real horizontalOffset: 0
     property int initialIndex: -1
     property Component actionDelegate: defaultDelegate
     readonly property int currentIndex: list.currentIndex
@@ -45,7 +46,7 @@ Controls.Popup {
         return actions[index]?.label || "";
     }
     function activate(index: int): void {
-        if (!available(index))
+        if (!opened || !available(index))
             return;
         // Closing restores focus and can change the model: route the captured
         // action, never look it up again by index after closing.
@@ -62,6 +63,7 @@ Controls.Popup {
         id: list
         model: menu.visible ? menu.actions : []
         orientation: menu.orientation
+        transform: Translate { x: menu.horizontalOffset }
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         Accessible.role: Accessible.PopupMenu

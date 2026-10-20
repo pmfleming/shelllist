@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest
 import Shelllist.Ui as Ui
+import Shelllist.Core as Core
 
 TestCase {
     id: testCase
@@ -35,6 +36,32 @@ TestCase {
         }
     }
     function init() { failOnWarning(/.*/); }
+    function test_explicitControlChordSharesRegistryAndDuplicateGuards() {
+        const navigation = createTemporaryObject(navigationComponent, testCase);
+        const action = function(id, modifier) {
+            return Core.Model.keepOpenAction(id, id, {accessKey: "N", accessModifier: modifier,
+                presentation: {group: "toolbar"}});
+        };
+        navigation.actions = [action("alt", "Alt"), action("control", "Ctrl")];
+        navigation.focusContent(true);
+        tryVerify(() => navigation.headerButtons.some(button => button.surfaceShortcut === "Ctrl+N"));
+        keyClick(Qt.Key_N, Qt.ControlModifier);
+        compare(navigation.lastAction, "control");
+        keyClick(Qt.Key_N, Qt.AltModifier);
+        compare(navigation.lastAction, "alt");
+        compare(navigation.calls, 2);
+        navigation.actions = navigation.actions.concat([action("duplicate", "Ctrl")]);
+        tryVerify(() => navigation.headerButtons.filter(button => button.accessModifier === "Ctrl")
+            .every(button => button.surfaceShortcut === ""));
+        keyClick(Qt.Key_N, Qt.ControlModifier);
+        compare(navigation.calls, 2, "duplicate chords fail closed, not duplicate letters on different modifiers");
+        keyClick(Qt.Key_N, Qt.AltModifier);
+        compare(navigation.calls, 3);
+        navigation.headerShortcutsEnabled = false;
+        keyClick(Qt.Key_N, Qt.AltModifier);
+        keyClick(Qt.Key_N, Qt.ControlModifier);
+        compare(navigation.calls, 3, "both modifiers respect the same host guard");
+    }
     function test_overflowKeyboardSelectionAndFocusRestoration() {
         const navigation = createTemporaryObject(navigationComponent, testCase, {width: 60});
         navigation.actions = [

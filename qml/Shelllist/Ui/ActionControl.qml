@@ -11,6 +11,7 @@ Rectangle {
     property bool browseIndicatorVisible: true
     readonly property bool highlighted: activeFocus || browseFocused
     property string accessKey: ""
+    property string accessModifier: "Alt"
     // Presentation-free commands can remain discoverable alongside a shortcut.
     property bool includeInCommandMenu: false
     // Repeated commands (e.g. field help) can share a letter in disjoint scopes.

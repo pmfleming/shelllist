@@ -64,9 +64,9 @@ Core.Provider {
                 enabled: actionEnabled(caps.can_disconnect, device),
                 presentation: primaryPresentation("danger")
             }), Core.Model.keepOpenAction("noise-control", "Noise control", {
-                accessKey: "C",
+                accessKey: "N",
+                accessModifier: "Ctrl",
                 icon: "noise_control_off",
-                // Connect owns Alt+C while disconnected; never register both.
                 visible: !!device.connected && NoiseControl.isAdvertised((device.fast_pair || {}).noise_control),
                 enabled: actionEnabled(NoiseControl.canSet(device), device),
                 presentation: {

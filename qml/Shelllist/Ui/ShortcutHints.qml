@@ -21,6 +21,8 @@ Item {
     property bool ctrlReady: false
     readonly property bool showActions: listening && altReady && altDown && !ctrlDown && navigation.headerShortcutsEnabled && !navigation.popupOpen
     readonly property bool showTabs: listening && ctrlReady && ctrlDown && !altDown && tabsEnabled && !navigation.popupOpen
+    readonly property bool showControlActions: listening && ctrlReady && ctrlDown && !altDown
+        && navigation.headerShortcutsEnabled && !navigation.popupOpen
     readonly property list<DetailsTabBar> tabBars: collectTabBars(scope)
 
     function ownsFocus(item: Item): bool {
@@ -141,7 +143,8 @@ Item {
                 anchors.topMargin: -4
                 anchors.rightMargin: -4
                 text: actionSlot.modelData?.surfaceShortcut.replace("Alt+", "") ?? ""
-                visible: hints.showActions && text.length > 0 && !!actionSlot.modelData
+                visible: (actionSlot.modelData?.surfaceShortcut.startsWith("Ctrl+") ? hints.showControlActions : hints.showActions)
+                    && text.length > 0 && !!actionSlot.modelData
             }
         }
     }

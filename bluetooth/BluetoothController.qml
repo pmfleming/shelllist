@@ -13,7 +13,7 @@ Ui.ProviderChooserController {
         controller: bluetoothController
     }
     sharedScreenshotEnabled: true
-    sharedScreenshotBlocked: anyActionInFlight || modalPromptOpen || noiseControlOpen
+    sharedScreenshotBlocked: anyActionInFlight || modalPromptOpen || noiseControlOpen || noiseControlPresented
     sharedScreenshotStartMessage: "Capturing Bluetooth window…"
     onSharedScreenshotStatusChanged: function (message) {
         status = message;
@@ -23,6 +23,7 @@ Ui.ProviderChooserController {
     readonly property alias adapterEdits: adapterEditState
     property string detailsTab: "device"
     property bool noiseControlOpen: false
+    property bool noiseControlPresented: false
     property string noiseControlDeviceKey: ""
     readonly property bool canChooseNoiseControl: uiActive && !uiSuspending && hasSelection
         && !actionInFlight && !modalPromptOpen && NoiseControl.canSet(selectedDevice)
@@ -92,7 +93,7 @@ Ui.ProviderChooserController {
     property string status: "Loading Bluetooth devices…"
     readonly property bool screenshotInFlight: sharedScreenshotInFlight
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
-    navigationBlocked: modalPromptOpen || noiseControlOpen
+    navigationBlocked: modalPromptOpen || noiseControlOpen || noiseControlPresented
     readonly property var selectedAdapter: adapters.find(function (adapter) {
         return adapter.key === preferredAdapterKey;
     }) || adapters.find(function (adapter) {
@@ -522,7 +523,7 @@ Ui.ProviderChooserController {
         return hasSelection && executeSelected(actionId);
     }
     function openNoiseControl(): bool {
-        if (!canChooseNoiseControl)
+        if (!canChooseNoiseControl || noiseControlPresented)
             return false;
         noiseControlDeviceKey = selectedDevice.key;
         detailsTab = "device";

@@ -101,6 +101,7 @@ function action(input) {
         icon: stringValue(source.icon, ""),
         shortcut: stringValue(source.shortcut, ""),
         accessKey: stringValue(source.accessKey, "").trim().toUpperCase(),
+        accessModifier: enumValue(source.accessModifier, ["Alt", "Ctrl"], "Alt", "action.accessModifier"),
         role: role,
         kind: kind,
         enabled: booleanValue(source.enabled, true),
