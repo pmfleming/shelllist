@@ -811,8 +811,11 @@
           protocolBindings = pkgs.runCommand "shelllist-protocol-bindings-current" { } ''
             ${appDaemon}/bin/app-daemon debug contract-fixture > app.json
             ${barDaemon}/bin/bar-daemon debug contract-fixture > bar.json
-            ${inputs.daemon-framework.packages.${system}.protocolBindings}/bin/shelllist-protocol-js < app.json > app.js
-            ${inputs.daemon-framework.packages.${system}.protocolBindings}/bin/shelllist-protocol-js < bar.json > bar.js
+            generator=${inputs.daemon-framework.packages.${system}.protocolBindings}/bin/shelllist-protocol-js
+            $generator --runtime > runtime.js
+            $generator --runtime-module Shelllist.Io < app.json > app.js
+            $generator --runtime-module Shelllist.Io < bar.json > bar.js
+            diff -u ${./qml/Shelllist/Io/ProtocolValidation.generated.js} runtime.js
             diff -u ${./launcher/AppProtocol.generated.js} app.js
             diff -u ${./bar/BarProtocol.generated.js} bar.js
             touch $out

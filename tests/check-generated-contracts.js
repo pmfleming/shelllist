@@ -6,8 +6,12 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const root = process.argv[2] || path.resolve(__dirname, '..');
 function load(file) {
-    const context = vm.createContext({});
-    vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8').replace(/^\.pragma library\s*/m, ''), context);
+    const source = fs.readFileSync(path.join(root, file), 'utf8');
+    const imports = {};
+    if (source.includes('.import Shelllist.Io 1.0 as Runtime'))
+        imports.Runtime = {ProtocolValidation: load('qml/Shelllist/Io/ProtocolValidation.generated.js')};
+    const context = vm.createContext(imports);
+    vm.runInContext(source.replace(/^\.(pragma|import).*$/gm, ''), context);
     return context;
 }
 const app = load('launcher/AppProtocol.generated.js');

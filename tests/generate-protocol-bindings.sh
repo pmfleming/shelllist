@@ -14,20 +14,22 @@ fi
 
 render() {
   local source=$1 output=$2 temporary
+  shift 2
   if [[ $mode == generate ]]; then
-    "$tool" < "$source" > "$output"
+    "$tool" "$@" < "$source" > "$output"
     return
   fi
   temporary=$(mktemp)
-  "$tool" < "$source" > "$temporary"
+  "$tool" "$@" < "$source" > "$temporary"
   diff -u "$output" "$temporary"
   rm -f "$temporary"
 }
 
+render /dev/null "$root/qml/Shelllist/Io/ProtocolValidation.generated.js" --runtime
 render "$projects/app-daemon/test_support/app-api-v1.json" \
-  "$root/launcher/AppProtocol.generated.js"
+  "$root/launcher/AppProtocol.generated.js" --runtime-module Shelllist.Io
 render "$projects/bar-daemon/test_support/bar-api-v1.json" \
-  "$root/bar/BarProtocol.generated.js"
+  "$root/bar/BarProtocol.generated.js" --runtime-module Shelllist.Io
 render "$projects/bt-daemon/test_support/bt-api-v1.json" \
   "$root/bluetooth/BtProtocol.generated.js"
 render "$projects/clip-daemon/test_support/clip-api-v1.json" \
@@ -36,6 +38,6 @@ render "$projects/clip-daemon/test_support/clip-api-v1.json" \
 nm_registry=$(mktemp)
 nm_log=$(mktemp)
 trap 'rm -f "$nm_registry" "$nm_log"' EXIT
-RUST_LOG=off "$projects/nm-daemon/target/debug/nm-daemon" \
+RUST_LOG=off "${SHELLLIST_NM_DAEMON:-$projects/nm-daemon/target/debug/nm-daemon}" \
   --log-file "$nm_log" debug protocol-registry > "$nm_registry"
 render "$nm_registry" "$root/wifi/NmProtocol.generated.js"
