@@ -55,10 +55,11 @@ Initial subscription snapshots do not produce an OSD. Domain OSDs require a prev
   transitions can still be missed by the fallback. No raw keyboard access or
   extra input-device permissions are required.
 
-Retained `tests/qml/tst_bar_controls.qml` checks acknowledged readbacks and
-no-replay recovery. Dedicated OSD presentation/error/animation tests were removed
-in the [current pruning review](../tests/test-pruning-current.md); those paths
-have less direct evidence. The daemon's isolated PipeWire test uses only virtual devices:
+Readback and effect failures belong to the native daemon's audio/brightness
+boundary tests; shared JSONL and Bar recovery tests own frontend transport behavior.
+OSD presentation matrices and duplicate mocked control replays are retired; see
+[coverage tradeoffs](../tests/test-reduction-owners.md). The daemon's isolated
+PipeWire test uses only virtual devices:
 `cargo test --lib private_pipewire_control -- --ignored --nocapture`.
 
 ## Timeout policy

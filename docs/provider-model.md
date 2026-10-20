@@ -157,7 +157,7 @@ These adapters use the same result store and chooser navigation while retaining 
 ## Validation
 
 ```sh
-node tests/check-provider-model.js qml/Shelllist/Core/Model.js
+tests/run-qml-tests.sh # representative consumer journeys; model permutations retired
 tests/run-qml-tests.sh
 nix flake check
 ```

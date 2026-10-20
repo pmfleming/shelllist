@@ -91,12 +91,11 @@ zone at a shared projection instant, independently of forecast availability or
 cached provider offsets (including across DST). Missing/invalid zones carry
 `clock_unavailable: true`; the panel shows unavailable time/date rather than UTC
 and does not highlight a guessed timezone band. Real UTC remains valid.
-`tst_timezone_clock.qml` checks unavailable offsets and the actual clock button's
-live offset change, fractional offset, date rollover and pending-confirmation
-state, including absence of a false “Timezone unavailable” tooltip.
-`tst_time_weather_estimates.qml` covers passive estimate metadata, stable selection,
-shared Tab/result-arrow navigation and normal/minimum light/dark layouts, plus
-forecast failure, unavailable timezone presentation and recovery to real UTC.
+`tst_timezone_clock.qml` retains the clock button's live acknowledged offset
+changes. Native timezone and location tests own DST, invalid evidence and durable
+updates; Qt location journeys retain acknowledged manual selection and protected
+removal. Passive estimate/forecast/theme matrices are retired; see
+[current coverage](../tests/test-reduction-owners.md).
 
 ### City and current-location management
 
@@ -229,7 +228,6 @@ pointer routes.
 The checked `bar-api` fixture validates `bar/BarApi.js` and `activity/ActivityApi.js` against the backend registry. Focused checks are:
 
 ```sh
-node tests/check-notification-presentation.js qml/Shelllist/Ui/NotificationPresentation.js
 tests/run-qml-tests.sh
 nix build .#checks.x86_64-linux.barDaemonContract
 nix flake check

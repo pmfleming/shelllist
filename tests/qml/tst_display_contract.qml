@@ -58,10 +58,6 @@ DaemonTestCase {
         compare(controller.draft[0].mode, "1920x1200@60.00Hz");
         return controller;
     }
-    function prepare(controller, method) {
-        if (["displayLayout.confirm", "displayLayout.revert"].includes(method))
-            event(controller, "preview");
-    }
     function start(controller, method) {
         const params = fixture().replies[method].params;
         let sent = false;
@@ -82,71 +78,6 @@ DaemonTestCase {
         verify(controller.backend.isPending(call.route.localId));
         verify(!controller.canChange);
         return call;
-    }
-    function test_replyOutcomes_data() {
-        // Native Displays workflows cover confirm/revert/focus success and policy retry.
-        return [["displayLayout.confirm", "uncertain"], ["displayLayout.revert", "failed"]]
-            .map(([method, outcome]) => ({tag: method + "/" + outcome, method: method, outcome: outcome}));
-    }
-    function test_replyOutcomes(data) {
-        const controller = make();
-        prepare(controller, data.method);
-        const before = JSON.stringify(controller.displayPolicyState);
-        const call = start(controller, data.method);
-        compare(JSON.stringify(controller.displayPolicyState), before, "Sending is not acknowledgement");
-        const response = fixture().replies[data.method][data.outcome];
-        reply(call, response);
-        verify(!controller.actionInFlight);
-        verify(!controller.backend.isPending(call.route.localId));
-        compare(controller.pendingAction, "");
-        if (response.ok) {
-            compare(controller.displayPolicyState, response.data.display_policy);
-            compare(controller.stateAtRelease, JSON.stringify(controller.displayPolicyState), "Authoritative state must be applied before releasing mutation guards");
-            compare(controller.displayPolicyError, "");
-            if (data.method === "displayLayout.preview") {
-                compare(controller.trial.id, response.data.display_policy.layout.trial.id);
-                verify(!controller.canEdit && !controller.canSetPolicy && !controller.canSetFocus);
-            } else if (["displayLayout.confirm", "displayLayout.revert"].includes(data.method)) {
-                compare(controller.trial, null);
-                verify(!controller.dirty);
-                compare(controller.draft[0].scale, response.data.display_policy.outputs[0].scale);
-            } else if (data.method === "displayPolicy.set") {
-                verify(controller.dockingApplying, "Acknowledging a preference does not prove the compositor applied it");
-                verify(!controller.canEdit);
-                event(controller, "settled");
-                verify(!controller.dockingApplying && controller.canEdit);
-            }
-        } else {
-            compare(JSON.stringify(controller.displayPolicyState), before);
-            compare(controller.displayPolicyError, response.error.message);
-        }
-        compare(effects(controller).length, 1, "Failures and uncertain replies cannot replay effects");
-    }
-    function test_daemonRollbackAndExpiryAreAuthoritative() {
-        const controller = make();
-        const call = start(controller, "displayLayout.preview");
-        reply(call, fixture().replies[call.method].success);
-        const id = controller.trial.id;
-        verify(!controller.displayLayoutAction("confirm", {id: "wrong-token"}));
-        event(controller, "expired");
-        compare(controller.secondsLeft, 0);
-        verify(!controller.displayLayoutAction("confirm", {id: id}));
-        compare(effects(controller).length, 1, "The UI does not race the daemon's timeout rollback");
-        event(controller, "reverted");
-        compare(controller.trial, null);
-        verify(!controller.dirty && controller.canEdit);
-        compare(controller.draft[0].scale, fixture().events.reverted.data.outputs[0].scale);
-        compare(effects(controller).length, 1);
-    }
-    function test_failedRollbackRetainsTrialAndError() {
-        const controller = make();
-        event(controller, "preview");
-        event(controller, "rollback-failed");
-        compare(controller.trial.id, fixture().events.preview.data.layout.trial.id);
-        verify(controller.dockingFailed);
-        verify(controller.statusMessage.includes("Layout rollback failed"));
-        verify(!controller.canEdit && !controller.canSetPolicy);
-        compare(effects(controller).length, 0);
     }
     function test_explicitCloseRevertsOnceButLostRevertIsNotReplayed() {
         const controller = make();

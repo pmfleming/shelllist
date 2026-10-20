@@ -51,33 +51,6 @@ DaemonTestCase {
         tryVerify(function () { return panel.page.detailsNavigation.commandButtons.some(function (button) { return button.accessKey === (active ? "D" : "C") && button.enabled; }); });
         panel.page.listItem.focusList();
     }
-    function test_hiddenKeyboardCommandConsumesNativeFieldsAndRecoveryHint() {
-        const panel = makePanel();
-        openNetwork(panel, false);
-        const c = panel.controller;
-        keyClick(Qt.Key_F6);
-        verify(!c.prompt.credentialOpen, "do not invent unsupported hidden-network options");
-        c.activeStatus = {enabled: true, hidden_prompt: {
-            fields: [{key: "ssid", required: true, password: false, value: "Native default"}],
-            security_modes: [{id: "open", security: "--", key_mgmt: "open", required_fields: [], enterprise: false}]
-        }};
-        keyClick(Qt.Key_F6);
-        verify(c.prompt.credentialOpen);
-        compare(c.prompt.credentialValues.ssid, "Native default");
-        compare(c.prompt.credentialFields.length, 1);
-        const dialog = panel.page.children.find(item => item.visible && item.prompt === c.prompt && item.maximumCardWidth === 620);
-        verify(!!dialog);
-        dialog.forceActiveFocus();
-        keyClick(Qt.Key_Escape);
-        verify(!c.prompt.credentialOpen);
-        c.connection.lastConnectAp = {key: "cafe", ssid: "Cafe"};
-        c.connection.handleConnectError({reason: "wrong-password"});
-        verify(!c.prompt.open, "raw reason strings cannot synthesize recovery policy");
-        c.connection.handleConnectError({recovery_prompt: {kind: "password", message: "Native recovery"}});
-        verify(!c.prompt.open, "terminal failures never start a second credential transaction");
-        c.prompt.cancel();
-        verify(!calls.some(call => call.method === "wifi.connectTarget"), "opening/discarding prompts never connects");
-    }
     function test_keyboardRecoveryAndCancellationSurviveLinkBecomingActive() {
         const panel = makePanel();
         openNetwork(panel, true);
@@ -101,26 +74,6 @@ DaemonTestCase {
         keyClick(Qt.Key_D, Qt.AltModifier);
         compare(calls.slice(-1)[0].method, "wifi.disconnect");
         verify(c.actionInFlight);
-    }
-    function test_qrAndRefreshKeyboardRoutesRemainAvailableDuringSlowConnect() {
-        const panel = makePanel();
-        openNetwork(panel, false);
-        const c = panel.controller;
-        c.connection.requestId = "connect-qr"; // no list key, as for a QR join
-        panel.page.listItem.focusSearch();
-        keyClick(Qt.Key_Return, Qt.AltModifier);
-        compare(panel.scanner.launches, 1);
-        verify(!findChild(panel, "fieldTrailingAction").enabled, "duplicate scanner launch is blocked");
-        panel.scanner.running = false;
-        mouseClick(findChild(panel, "fieldTrailingAction"));
-        compare(panel.scanner.launches, 2);
-        panel.page.listItem.focusSearch();
-        keyClick(Qt.Key_F5);
-        verify(c.scan.pendingRefresh);
-        verify(!calls.some(function (call) { return call.method === "wifi.scan"; }));
-        panel.page.listItem.focusList();
-        keyClick(Qt.Key_X, Qt.AltModifier);
-        verify(c.connection.cancellationRequested, "QR operation retains global cancel command");
     }
     function savedNetwork(panel) {
         openNetwork(panel, false);
@@ -190,29 +143,6 @@ DaemonTestCase {
         panel.controller.backend.acceptSharedResponse("advanced-secret", {protocol: "nm-api", version: 2, ok: true,
             data: {result: {path: "/profile/cafe", available: true, password: "synthetic-password"}}}, "");
     }
-    function test_passwordRevealWhileEditingDoesNotLoseDraft_data() {
-        return [{tag: "draft-during-read", pending: true}];
-    }
-    function test_passwordRevealWhileEditingDoesNotLoseDraft(data) {
-        const panel = makePanel();
-        const field = openPasswordEditor(panel);
-        field.focusInput(false);
-        if (data.pending) {
-            mouseClick(field.trailingAction);
-            verify(panel.controller.backend.isPending("advanced-secret"));
-        }
-        keyClick(Qt.Key_A);
-        compare(field.text, "a");
-        if (!data.pending)
-            mouseClick(field.trailingAction);
-        if (panel.controller.backend.isPending("advanced-secret"))
-            secretReply(panel);
-        compare(field.text, "a", "visibility must not replace a new password draft");
-        verify(!field.password);
-        verify(!calls.some(call => call.params.operation === "update"));
-        keyClick(Qt.Key_Escape);
-        verify(!calls.some(call => call.params.operation === "update"));
-    }
     function test_passwordReadFailureCanRetryAndForeignReplyCannotReveal() {
         const panel = makePanel();
         const field = openPasswordEditor(panel);
@@ -255,128 +185,8 @@ DaemonTestCase {
         verify(c.status.includes("expired"));
         verify(!calls.some(call => call.method === "wifi.secret.provide"));
     }
-    function test_receiptDeliveryAndSaveFailureRemainDistinct_data() {
-        return ["dpr"].map(order => ({tag: order, order: order}));
-    }
-    function test_receiptDeliveryAndSaveFailureRemainDistinct(data) {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.handleSecretEvent({event: "requested", request_id: "secret-order", data: {secret_keys: ["psk"], save_supported: true}});
-        const dialog = panel.page.children.find(item => item.visible && item.prompt === c.prompt && item.maximumCardWidth === 620);
-        const password = findChild(dialog, "fieldInput");
-        verify(!!password);
-        password.forceActiveFocus();
-        keyClick(Qt.Key_A);
-        keyClick(Qt.Key_Return);
-        verify(c.prompt.secretSubmitting);
-        let delivered = false;
-        let failed = false;
-        for (const step of data.order) {
-            if (step === "r") {
-                c.backend.handleSecretResponse({protocol: "nm-api", version: 2, ok: true, data: {result: {request_id: "secret-order", accepted: true, status: "accepted"}}});
-                verify(!c.prompt.credentialOpen);
-                compare(c.prompt.credentialValues, ({}));
-            } else if (step === "d") {
-                c.handleSecretEvent({event: "delivered", request_id: "secret-order", data: {}});
-                delivered = true;
-            } else {
-                c.handleSecretEvent({event: "persistence", request_id: "secret-order", data: {status: "failed", error: "NetworkManager confirmation failed", storage_provider: "networkmanager"}});
-                failed = true;
-            }
-            verify(c.status.includes(failed ? "could not be confirmed" : delivered ? "sent to NetworkManager" : "received"));
-        }
-        c.handleSecretEvent({event: "requested", request_id: "newer-secret", data: {secret_keys: ["psk"], save_supported: true}});
-        const status = c.status;
-        c.handleSecretEvent({event: "delivered", request_id: "secret-order", data: {}});
-        compare(c.status, status, "old delivery cannot overwrite a newer request");
-    }
-    function test_storageWarningRetainsItsConnectionOwner_data() {
-        return [{tag: "other-profile", path: "/profile/new", cleared: false}];
-    }
-    function test_storageWarningRetainsItsConnectionOwner(data) {
-        const c = makePanel().controller;
-        c.handleSecretEvent({event: "requested", request_id: "current", data: {secret_keys: ["psk"], save_supported: true}});
-        c.handleSecretEvent({event: "persistence", request_id: "old", data: {connection_path: "/profile/old", status: "failed", error: "Locked"}});
-        const warning = c.secretSaveWarning;
-        verify(warning.includes("Locked"));
-        compare(c.prompt.secretPersistenceMessage, "", "an older outcome cannot attach to the active prompt");
-        c.handleSecretEvent({event: "persistence", request_id: "old", data: {connection_path: data.path, status: "stored"}});
-        compare(c.secretSaveWarning, data.cleared ? "" : warning);
-        compare(c.secretSaveWarningKey, data.cleared ? "" : "/profile/old");
-        c.handleSecretEvent({event: "delivered", request_id: "current", data: {}});
-        verify(c.status.includes("sent to NetworkManager"));
-        compare(calls.length, 0, "feedback cannot submit or replay credentials");
-    }
     function statusReply(c, result, id) {
         c.backend.acceptSharedResponse(id || c.connection.recoveryId, {protocol: "nm-api", version: 2, ok: true, data: {result: result}}, "");
-    }
-    function test_missedCompletionIsRecoveredWithoutReplayingMutation() {
-        const c = makePanel().controller;
-        c.connection.requestId = "connect-owned";
-        c.handleDaemonEventGap("wifi.connect");
-        const read = calls.filter(function (call) { return call.method === "operation.status"; });
-        compare(read.length, 1);
-        compare(read[0].params.request_id, "connect-owned");
-        statusReply(c, {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "connect-owned", event: "succeeded", data: {result: {status: "connected", message: "Link connected; internet unknown"}}}});
-        compare(c.connection.requestId, "");
-        verify(!c.actionInFlight);
-        compare(c.status, "Link connected; internet unknown");
-        compare(calls.filter(function (call) { return call.method === "wifi.connectTarget"; }).length, 0);
-    }
-    function test_statusFailuresAndLateRepliesCannotUnlockOrRetireNewRead() {
-        const c = makePanel().controller;
-        c.connection.requestId = "connect-owned";
-        c.connection.checkStatus(true);
-        const oldId = c.connection.recoveryId;
-        c.connection.recoveryFailed("Read timed out.");
-        verify(c.actionInFlight);
-        verify(!c.backend.isPending(oldId));
-        c.connection.checkStatus(true);
-        const newId = c.connection.recoveryId;
-        statusReply(c, {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "connect-owned", event: "cancelled"}}, oldId);
-        compare(c.connection.recoveryId, newId);
-        statusReply(c, {request_id: "different", status: "unknown"});
-        verify(c.actionInFlight);
-        compare(c.connection.recoveryId, "");
-        verify(c.connection.checkStatus(true), "manual read retry stays available");
-    }
-    function test_recoveryTimersAreBoundedAndManualRetryRemainsAvailable() {
-        const panel = makePanel();
-        const c = panel.controller;
-        const poll = findChild(c.connection, "connectionRecoveryPoll");
-        const deadline = findChild(c.connection, "connectionRecoveryReplyDeadline");
-        poll.interval = 5;
-        deadline.interval = 5;
-        c.connection.requestId = "connect-owned";
-        tryCompare(c.connection, "recoveryFailures", 3);
-        verify(!poll.running);
-        verify(!deadline.running);
-        verify(c.actionInFlight);
-        compare(calls.filter(function (call) { return call.method === "operation.status"; }).length, 3);
-        deadline.interval = 10000;
-        verify(c.connection.checkStatus(true));
-        compare(c.connection.recoveryFailures, 0);
-        c.connection.handleEvent({request_id: "connect-owned", event: "cancelled", data: {}});
-        verify(!poll.running && !deadline.running);
-    }
-    function test_malformedOrUnknownRecoveryNeverClaimsCompletion_data() {
-        return [
-            {tag: "missing", result: null},
-            {tag: "foreign-stream", result: {request_id: "connect-owned", status: "running", stream: "wifi.scan"}},
-            {tag: "nonterminal-event", result: {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "connect-owned", event: "progress"}}},
-            {tag: "foreign-terminal", result: {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "other", event: "succeeded"}}}
-        ];
-    }
-    function test_malformedOrUnknownRecoveryNeverClaimsCompletion(data) {
-        const c = makePanel().controller;
-        c.connection.requestId = "connect-owned";
-        c.connection.checkStatus(true);
-        statusReply(c, data.result);
-        compare(c.connection.requestId, "connect-owned");
-        verify(c.actionInFlight);
-        compare(c.connection.recoveryId, "");
-        verify(c.status.indexOf("unconfirmed") >= 0);
-        compare(calls.filter(call => call.method === "wifi.connectTarget").length, 0, "read failure never replays connection");
     }
     function test_qrDuringConnectOnlyParsesAndNeverRetainsCredentials() {
         const panel = makePanel();

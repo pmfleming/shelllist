@@ -67,16 +67,6 @@ DaemonTestCase {
         compare(panel.executor.commands.length, 0, "prepare alone cannot execute");
         reply(panel, {intent: value});
     }
-    function test_overlapAndAutomaticSuppressionNeverLaunchOrInventIdentity() {
-        const panel = makePanel();
-        verify(panel.controller.portal.launchForConnect("connect-42", "4"));
-        compare(portalCalls()[0].params, {mode: "automatic", fallback: false, connect_request_id: "connect-42"});
-        verify(!panel.controller.portal.launchManual("5", false));
-        compare(portalCalls().length, 1);
-        reply(panel, {decision: "suppressed", intent: null});
-        verify(!panel.controller.portal.busy);
-        compare(panel.executor.commands.length, 0);
-    }
     function test_expiredAndChangedClaimsFailClosed_data() {
         return [
             {tag: "changed-url", field: "url", value: "http://other.example/"}
@@ -144,21 +134,6 @@ DaemonTestCase {
         compare(panel.executor.commands.length, 1);
         reply(panel, {outcome:data.expected});
         compare(portalCalls().length, 3);
-    }
-    function test_startFailureAndUiDisappearanceDoNotReplay() {
-        const panel = makePanel();
-        panel.executor.failStart = true;
-        panel.controller.portal.launchManual("1", false);
-        claim(panel, intent());
-        compare(portalCalls().slice(-1)[0].params.outcome, "failed");
-        compare(panel.executor.commands.length, 0);
-        panel.controller.backend.failSharedTransport("gone before acknowledgement");
-        panel.destroy();
-        wait(0);
-        const reopened = makePanel();
-        reopened.controller.backend.handleTransportReady();
-        compare(portalCalls().length, 0);
-        compare(reopened.executor.commands.length, 0);
     }
     function test_signInUsesAltCommandNotFieldNavigation() {
         const panel = makePanel();

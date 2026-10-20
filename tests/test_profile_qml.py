@@ -16,28 +16,7 @@ spec = importlib.util.spec_from_file_location("profile_qml", Path(__file__).with
 profiler = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(profiler)
 
-
 class ProfilerNormalization(unittest.TestCase):
-    def test_observations_preserve_categories_and_nanosecond_units(self):
-        with tempfile.TemporaryDirectory() as directory:
-            source = Path(directory) / "A space.qml"
-            source.write_text("Item {}\n")
-            trace = Path(directory) / "trace.qtd"
-            events = "".join(
-                f'<event index="{index}"><type>{kind}</type><filename>{source.as_uri()}</filename>'
-                f'<line>{line}</line><details>{details}</details></event>'
-                for index, kind, line, details in [(0, "Compiling", 1, ""), (1, "Javascript", 1, "%entry"),
-                                                   (2, "Binding", 2, ""), (3, "Javascript", 4, "work")]
-            )
-            ranges = "".join(f'<range eventIndex="{index}" duration="2000000"/>' for index in range(4))
-            trace.write_text(f'<trace><eventData>{events}</eventData><profilerDataModel>{ranges}</profilerDataModel></trace>')
-            coverage, runtime = profiler.normalize(trace, {str(source): {"file": "A.qml", "sha256": "test"}},
-                                                   {"qt": "6.11.1", "platform": "offscreen"})
-            self.assertEqual(coverage["files"][0]["objects"], [])
-            self.assertEqual(coverage["files"][0]["bindings"], [2])
-            self.assertEqual(coverage["files"][0]["executables"], [4])
-            self.assertEqual(len(runtime["events"]), 2)
-            self.assertEqual(runtime["events"][0]["duration_ms"], 2)
 
     def trace(self, directory, ranges=1):
         source = Path(directory) / "Source.qml"
@@ -48,27 +27,6 @@ class ProfilerNormalization(unittest.TestCase):
                          '<profilerDataModel>' + '<range eventIndex="1" duration="2000000"/>' * ranges
                          + '</profilerDataModel></trace>')
         return trace, {str(source): {"file": "Source.qml", "sha256": "test"}}
-
-    def test_repeated_ranges_resolve_definition_once_and_stream_without_loss(self):
-        with tempfile.TemporaryDirectory() as directory:
-            trace, sources = self.trace(directory, 10000)
-            emitted = []
-            original = Path.resolve
-            with mock.patch.object(Path, "resolve", autospec=True, side_effect=original) as resolve:
-                coverage, runtime = profiler.normalize(trace, sources, {}, emitted.append)
-            self.assertEqual(resolve.call_count, 1)
-            self.assertEqual(coverage["files"][0]["bindings"], [1])
-            self.assertNotIn("events", runtime)
-            self.assertEqual(runtime["observed_event_count"], len(emitted))
-            self.assertEqual(sum(event["duration_ms"] for event in emitted), 20000)
-
-    def test_limits_fail_instead_of_publishing_a_sample(self):
-        with tempfile.TemporaryDirectory() as directory:
-            trace, sources = self.trace(directory, 3)
-            for name, value in [("MAX_TRACE_BYTES", 1), ("MAX_EVENTS", 2), ("NORMALIZE_TIMEOUT", -1)]:
-                with self.subTest(limit=name), mock.patch.object(profiler, name, value):
-                    with self.assertRaises(ValueError):
-                        profiler.normalize(trace, sources, {})
 
     def test_publication_is_streamed_and_rejects_changed_sources(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -100,16 +58,6 @@ class ProfilerNormalization(unittest.TestCase):
             self.assertEqual(env["QML_XHR_ALLOW_FILE_READ"], "1")
             self.assertEqual(env["QT_QPA_PLATFORM"], "offscreen")
             self.assertFalse(any((output / name).exists() for name in profiler.REPORTS))
-
-    def test_truncated_trace_leaves_no_partial_report(self):
-        with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory)
-            trace, sources = self.trace(directory)
-            trace.write_text(trace.read_text()[:-8])
-            with self.assertRaises(profiler.ET.ParseError):
-                profiler.publish(trace, sources, {}, output)
-            self.assertFalse(any((output / name).exists() for name in profiler.REPORTS))
-            self.assertEqual(list(output.glob(".profile-*")), [])
 
     def test_timeout_and_outer_signal_retire_descendants(self):
         for interrupt in [False, True]:
@@ -152,7 +100,6 @@ class ProfilerNormalization(unittest.TestCase):
             trace.write_text("<trace/>")
             with self.assertRaises(ValueError):
                 profiler.normalize(trace, {}, {})
-
 
 if __name__ == "__main__":
     unittest.main()

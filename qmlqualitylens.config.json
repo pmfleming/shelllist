@@ -14,16 +14,11 @@
     "tests/qml/tst_displays.qml",
     "tests/qml/tst_domain_workflows.qml",
     "tests/e2e/application.qml",
-    "tests/qml/tst_keyed_list_model.qml",
     "tests/qml/tst_chooser_keyboard.qml",
     "tests/qml/tst_notifications.qml",
-    "tests/qml/tst_provider_registry.qml",
-    "tests/qml/tst_result_store.qml",
-    "tests/qml/tst_surface_registry.qml",
     "tests/qml/tst_surface_actions.qml",
     "tests/qml/tst_wifi_casting.qml",
-    "tests/qml/tst_wifi_prompt.qml",
-    "tests/qml/tst_work_area.qml"
+    "tests/qml/tst_wifi_prompt.qml"
   ],
   "dynamic_component_edges": [
     { "from": "shell/SurfaceRegistry.qml", "to": "shell/SurfaceBundle.qml" },

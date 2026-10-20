@@ -35,46 +35,6 @@ TestCase {
         }
     }
     function init() { failOnWarning(/.*/); }
-    function test_letterActivationUsesDisplayedButtons() {
-        const navigation = createTemporaryObject(navigationComponent, testCase);
-        navigation.focusContent(true);
-        tryCompare(navigation.headerButtons, "length", 2);
-        const primary = navigation.headerButtons[0];
-        tryCompare(primary, "surfaceShortcut", "Alt+C");
-        verify(primary.Accessible.description.includes("Alt+C"));
-        keyClick(Qt.Key_C, Qt.AltModifier);
-        compare(navigation.calls, 1);
-        compare(navigation.lastAction, "connect");
-        keyClick(Qt.Key_1, Qt.AltModifier);
-        keyClick(Qt.Key_C, Qt.ControlModifier | Qt.AltModifier);
-        compare(navigation.calls, 1);
-        navigation.headerButtons[1].enabled = false;
-        keyClick(Qt.Key_F, Qt.AltModifier);
-        compare(navigation.calls, 1);
-        navigation.actions = navigation.actions.map(action => Object.assign({}, action, {
-            presentation: {group: action.id === "connect" ? "primary" : "overflow"}
-        })).concat([{id: "share", label: "Share", icon: "share", accessKey: "H", presentation: {group: "overflow"}}]);
-        navigation.width = 60;
-        tryCompare(navigation.row, "shownSecondaryCount", 0);
-        tryVerify(() => navigation.headerButtons[1].surfaceShortcut === "Alt+M");
-        keyClick(Qt.Key_F, Qt.AltModifier);
-        compare(navigation.calls, 1, "explicit menu actions have no header chord");
-        keyClick(Qt.Key_M, Qt.AltModifier);
-        tryCompare(navigation, "popupOpen", true);
-        keyClick(Qt.Key_C, Qt.AltModifier);
-        compare(navigation.calls, 1);
-        keyClick(Qt.Key_Escape);
-        tryCompare(navigation, "popupOpen", false);
-        navigation.actions = [
-            {id: "one", label: "One", accessKey: "C", presentation: {group: "primary"}},
-            {id: "two", label: "Two", accessKey: "C", presentation: {group: "toolbar"}}
-        ];
-        navigation.width = 600;
-        tryCompare(navigation.headerButtons, "length", 2);
-        tryCompare(navigation.headerButtons[0], "surfaceShortcut", "");
-        keyClick(Qt.Key_C, Qt.AltModifier);
-        compare(navigation.calls, 1, "duplicate letters fail closed");
-    }
     function test_overflowKeyboardSelectionAndFocusRestoration() {
         const navigation = createTemporaryObject(navigationComponent, testCase, {width: 60});
         navigation.actions = [

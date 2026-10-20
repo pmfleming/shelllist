@@ -150,12 +150,10 @@ The current launcher is not an omni-launcher. It does not provide arbitrary comm
 The checked frontend fixture is `contracts/app-api-ui-contract.fixture.json`. Relevant checks include:
 
 ```sh
-node tests/check-application-lifecycle.js launcher/ApplicationLifecycle.js
-node tests/check-application-history.js
-node tests/check-resource-availability.js
-node tests/check-application-resources.js launcher/ApplicationResources.js \
-  contracts/app-resource-ui-contract.fixture.json
-node tests/check-provider-model.js qml/Shelllist/Core/Model.js
+python3 tests/test-native-application.py \
+  --app-daemon ../app-daemon/target/debug/app-daemon \
+  --search target/native-search/debug/shelllist-search
+node tests/check-generated-contracts.js .
 nix build .#checks.x86_64-linux.appDaemonContract
 tests/run-qml-tests.sh
 ```

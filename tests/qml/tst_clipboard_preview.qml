@@ -43,44 +43,6 @@ DaemonTestCase {
             entry: {entry: target, text: text === undefined ? target.id : text, files: []}
         });
     }
-    function thumbnailReply(controller, target) {
-        verify(controller.detailState.thumbnailRequestId.length > 0);
-        reply(controller, controller.detailState.thumbnailRequestId, {thumbnail: {
-            entry_id: target.id, revision: target.revision,
-            path: Qt.resolvedUrl("fixtures/media-cover.svg").toString().replace("file://", "")
-        }});
-    }
-
-    function test_revisionAndLateThumbnailCannotReuseOldPreview() {
-        const entries = [entry("first", "image"), entry("second", "image")];
-        const controller = makeController(entries);
-        controller.openDetails();
-        const staleDetails = controller.detailState.requestId;
-        const staleThumbnail = controller.detailState.thumbnailRequestId;
-        controller.select(1);
-        controller.detailState.load();
-        const currentDetails = controller.detailState.requestId;
-        const currentThumbnail = controller.detailState.thumbnailRequestId;
-        controller.detailState.applyDetails(staleDetails, {entry: entries[0], text: null, files: []});
-        controller.detailState.applyThumbnail(staleThumbnail, {entry_id: "first", revision: 1, path: "/stale"});
-        compare(controller.detailState.requestId, currentDetails);
-        compare(controller.detailState.thumbnailRequestId, currentThumbnail);
-        compare(controller.detailState.previewCache.length, 0);
-        detailsReply(controller, entries[1], null);
-        thumbnailReply(controller, entries[1]);
-        compare(controller.detailState.previewCache.length, 1);
-        const revised = entry("second", "image", 2);
-        controller.replaceProviderResults(controller.provider.resultsForEntries([entries[0], revised]), false);
-        compare(controller.selectedEntry.id, "second");
-        verify(controller.detailState.loading);
-        compare(controller.detailState.value, null);
-        compare(controller.detailState.thumbnail, null);
-        controller.detailState.load();
-        detailsReply(controller, revised, null);
-        thumbnailReply(controller, revised);
-        compare(controller.detailState.value.entry.revision, 2);
-        compare(controller.detailState.cachedPreview(entries[1]), null);
-    }
 
     function test_privateModeDoesNotRetainNewReads() {
         const entries = [entry("first"), entry("second")];

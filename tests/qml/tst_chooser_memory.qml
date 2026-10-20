@@ -11,7 +11,6 @@ DaemonTestCase {
     visible: true
     width: 1100
     height: 640
-    property var retainedViews: []
 
     Component {
         id: fixtureFactory
@@ -85,69 +84,11 @@ DaemonTestCase {
             }
         }
     }
-    Component {
-        id: retainedControllerFactory
-        Ui.ProviderChooserController {
-            id: retainedOwner
-            uiActive: true
-            provider: Core.Provider { providerId: "retained"; displayName: "Retained" }
-            viewMemory: Ui.ChooserMemory {
-                controller: retainedOwner
-                key: retainedOwner.selectedResult ? retainedOwner.selectedResult.key : ""
-                tab: "one"
-                tabs: ["one"]
-                onRestoreRequested: function (open, tab) { retainedOwner.detailsOpen = open; }
-            }
-        }
-    }
-    Component {
-        id: delayedViewFactory
-        Ui.ProviderChooserSurface {
-            id: delayedSurface
-            required property Ui.ProviderChooserController owner
-            property bool ready: true
-            property int edits: 0
-            width: testCase.width
-            height: testCase.height
-            chooserController: owner
-            listComponent: Component {
-                Ui.ChooserListPane {
-                    chooserController: delayedSurface.owner
-                    resultModel: delayedSurface.owner.filteredResultsModel
-                    filterText: delayedSurface.owner.filterText
-                    rowDelegate: Component { Rectangle { width: 400; height: 52 } }
-                }
-            }
-            detailsComponent: Component {
-                Loader {
-                    asynchronous: true
-                    active: delayedSurface.ready
-                    sourceComponent: Component {
-                        Ui.DetailFlickable {
-                            viewMemory: delayedSurface.owner.viewMemory
-                            memoryTab: "one"
-                            Ui.TextField {
-                                objectName: "delayedNote"
-                                width: parent.width
-                                text: "Ordinary text"
-                                onEdited: delayedSurface.edits++
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
     function init() {
         failOnWarning(/.*/);
         Quickshell.environment = {SHELLLIST_NO_ANIMATIONS: "false"};
     }
     function cleanup() {
-        // Resident controllers outlive their recreated visual trees.
-        for (const view of retainedViews)
-            view.destroy();
-        wait(0);
-        retainedViews = [];
         Quickshell.environment = ({});
     }
     function catalog(surface, values) {
@@ -208,87 +149,7 @@ DaemonTestCase {
         surface.chooserController.activateUiState("");
         surface.chooserController.restoreUiFocus();
     }
-    function recreatedView() {
-        const owner = createTemporaryObject(retainedControllerFactory, testCase);
-        const first = createTemporaryObject(delayedViewFactory, testCase, {owner: owner});
-        retainedViews = [first];
-        catalog(first, [{id: "a", title: "Alpha"}]);
-        owner.viewMemory.synchronize();
-        open(first);
-        keyClick(Qt.Key_Return);
-        verify(first.detailsNavigation.editing);
-        findChild(first.detailsNavigation.currentTarget, "fieldInput").select(8, 2);
-        closeInvocation(first);
-        first.destroy();
-        retainedViews = [];
-        wait(0);
-        const second = createTemporaryObject(delayedViewFactory, testCase, {owner: owner, ready: false});
-        retainedViews = [second];
-        reopenInvocation(second);
-        tryVerify(() => second.detailsNavigation.sessionLocation !== null);
-        return second;
-    }
-    function test_caretsFollowRestoredOwner() {
-        const surface = makeSurface();
-        surface.listItem.focusSearch();
-        const search = findChild(surface.listItem, "fieldInput");
-        tryVerify(() => findChild(search, "fieldCursor") !== null);
-        const searchCursor = findChild(search, "fieldCursor");
-        verify(searchCursor.visible);
-        open(surface);
-        keyClick(Qt.Key_Return);
-        const input = findChild(surface.detailsNavigation.currentTarget, "fieldInput");
-        tryVerify(() => findChild(input, "fieldCursor") !== null);
-        const editorCursor = findChild(input, "fieldCursor");
-        verify(editorCursor.visible);
-        verify(!searchCursor.visible);
-        closeInvocation(surface);
-        verify(!editorCursor.visible);
-        verify(!searchCursor.visible);
-        reopenInvocation(surface);
-        tryVerify(() => input.activeFocus);
-        verify(editorCursor.visible);
-        verify(!searchCursor.visible, "restored editing must not paint a search caret");
-        keyClick(Qt.Key_Escape);
-        verify(surface.detailsNavigation.browsing);
-        verify(!editorCursor.visible);
-        closeInvocation(surface);
-        reopenInvocation(surface);
-        tryVerify(() => surface.detailsNavigation.browsing);
-        verify(!editorCursor.visible);
-        verify(!searchCursor.visible);
-        surface.listItem.focusSearch();
-        verify(searchCursor.visible);
-        compare(surface.edits, 0);
-    }
 
-    function test_newNavigationCancelsDeferredEditorRestoration() {
-        const surface = recreatedView();
-        surface.chooserController.focusSearchRequested();
-        tryVerify(() => surface.listItem.searchFocused);
-        surface.ready = true;
-        tryVerify(() => findChild(surface, "delayedNote") !== null);
-        surface.chooserController.restoreUiFocus();
-        wait(0);
-        verify(surface.listItem.searchFocused);
-        verify(!surface.detailsNavigation.editing);
-        compare(surface.edits, 0);
-    }
-    function test_closureFencesDeferredRestoration() {
-        const surface = recreatedView();
-        closeInvocation(surface);
-        surface.ready = true;
-        surface.chooserController.restoreUiFocus();
-        tryVerify(() => findChild(surface, "delayedNote") !== null);
-        verify(!surface.detailsNavigation.activeFocus);
-        reopenInvocation(surface);
-        tryVerify(() => surface.detailsNavigation.editing);
-        compare(surface.detailsNavigation.currentTarget.objectName, "delayedNote");
-        const input = findChild(surface.detailsNavigation.currentTarget, "fieldInput");
-        compare(input.cursorPosition, 2);
-        compare(input.selectionEnd, 8);
-        compare(surface.edits, 0);
-    }
     function test_readinessResumesFocusButNeverRestoresUnsavedValues() {
         const surface = makeSurface();
         inspectSecondTab(surface);

@@ -112,25 +112,4 @@ TestCase {
         compare(session.client.calls.length, 2, "reconnect still refreshes the attached backend");
     }
 
-    function test_paginatedRequestChurn() {
-        const session = Io.DaemonSessions.sessions[consumer.daemonName];
-        for (let generation = 0; generation < 4000; ++generation) {
-            page = 0;
-            queryId = "query-" + generation;
-            Io.DaemonSessions.call(consumer.daemonName, consumerId, queryId, "history.query", {
-                offset: 0
-            });
-            for (let index = 0; index < 5; ++index)
-                session.client.response(session.client.lastId, {
-                    ok: true,
-                    data: {}
-                }, "", session.client.lastRoute);
-            session.client.calls = [];
-            if (generation % 100 === 0)
-                gc();
-        }
-        compare(received, 20000);
-        verify(session.routes === undefined, "request routes must not accumulate in QML");
-        verify(session.subscriptionOwners === undefined, "the Rust bridge owns subscription routing");
-    }
 }

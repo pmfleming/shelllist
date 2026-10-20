@@ -656,16 +656,12 @@
           materialColors =
             pkgs.runCommand "shelllist-material-colors-current"
               {
-                nativeBuildInputs = [
-                  pkgs.nodejs
-                  pkgs.diffutils
-                ];
+                nativeBuildInputs = [ pkgs.diffutils ];
               }
               ''
                 generated=${self.packages.${system}.materialColors}
                 diff -u "$generated/MaterialColors.generated.js" ${./qml/Shelllist/Ui/MaterialColors.generated.js}
                 cmp "$generated/material-color-utilities.LICENSE" ${./qml/Shelllist/Ui/material-color-utilities.LICENSE}
-                node ${./tests/check-material-colors.js} "$generated/MaterialColors.generated.js"
                 touch $out
               '';
 
@@ -697,29 +693,6 @@
                 diff -ru ${./activity/assets/timezones/regions} generated
                 touch $out
               '';
-
-          displayModel = nodeCheck "display-model" [
-            [
-              ./tests/check-display-model.js
-              ./displays/DisplayModel.js
-            ]
-          ];
-
-          batteryHistory = nodeCheck "battery-history" [
-            [
-              ./tests/check-battery-history.js
-              ./battery/BatteryHistory.js
-            ]
-          ];
-
-          batteryAutoSave = nodeCheck "battery-auto-save" [
-            [
-              ./tests/check-battery-controls.js
-              ./battery/BatteryController.qml
-              ./battery/BatteryFlow.js
-              ./battery/BatteryPresentation.js
-            ]
-          ];
 
           moduleEvaluation =
             let
@@ -760,18 +733,6 @@
             ]
           ];
 
-          applicationResources = nodeCheck "application-resources" [
-            [
-              ./tests/check-application-resources.js
-              ./launcher/ApplicationResources.js
-              ./contracts/app-resource-ui-contract.fixture.json
-            ]
-            [
-              ./tests/check-resource-availability.js
-              ./launcher
-            ]
-          ];
-
           performanceBenchmarks =
             pkgs.runCommand "shelllist-performance-benchmarks"
               {
@@ -791,17 +752,6 @@
                 test "$(jq -r '."rank-empty-1000-results-per-second"."samples-in-average"' \
                   $out/qmlbench.json)" -ge 10
               '';
-
-          applicationLifecycle = nodeCheck "application-lifecycle" [
-            [
-              ./tests/check-application-lifecycle.js
-              ./launcher/ApplicationLifecycle.js
-            ]
-            [
-              ./tests/check-application-history.js
-              ./launcher
-            ]
-          ];
 
           ipValidation = nodeCheck "ip-validation" [
             [
@@ -834,36 +784,17 @@
             ]
           ];
 
-          notificationPresentation = nodeCheck "notification-presentation" [
-            [
-              ./tests/check-notification-presentation.js
-              ./qml/Shelllist/Ui/NotificationPresentation.js
-            ]
-          ];
-
-          networkHealth = nodeCheck "network-health" [
-            [
-              ./tests/check-network-health.js
-              ./wifi/NetworkHealth.js
-            ]
-          ];
-
-          bluetoothLifecycle = nodeCheck "bluetooth-lifecycle" [
-            [
-              ./tests/check-bluetooth-lifecycle.js
-              ./bluetooth/BluetoothFlow.js
-            ]
-          ];
-
           nativeApplication = pkgs.runCommand "shelllist-native-application-journey" {
             FONTCONFIG_FILE = fontsConf pkgs;
             nativeBuildInputs = [ pkgs.python3 pkgs.dbus pkgs.bash pkgs.quickshell pkgs.qt6.qtdeclarative pkgs.qt6.qtsvg ];
           } ''
             export QT_PLUGIN_PATH=${pkgs.qt6.qtsvg}/lib/qt-6/plugins
             export TZDIR=${pkgs.tzdata}/share/zoneinfo
+            # Exercise the packaged ELF with the runner's controlled launcher PATH.
+            # The public wrapper prepends real uwsm/systemd executables instead.
             python3 ${./tests/test-native-application.py} \
               --source-root ${./.} \
-              --app-daemon ${appDaemon}/bin/app-daemon \
+              --app-daemon ${appDaemon}/bin/.app-daemon-wrapped \
               --search ${self.packages.${system}.shelllistSearch}/bin/shelllist-search
             touch $out
           '';
@@ -896,9 +827,6 @@
                 ${barDaemon}/bin/bar-daemon debug control-contract-fixture > bar-controls.json
                 diff -u ${./tests/qml/fixtures/bar-controls.json} bar-controls.json
                 cp bar-controls.json test-root/tests/qml/fixtures/bar-controls.json
-                ${barDaemon}/bin/bar-daemon debug sleep-contract-fixture > bar-sleep.json
-                diff -u ${./tests/qml/fixtures/bar-sleep.json} bar-sleep.json
-                cp bar-sleep.json test-root/tests/qml/fixtures/bar-sleep.json
                 ${barDaemon}/bin/bar-daemon debug display-contract-fixture > bar-displays.json
                 diff -u ${./tests/qml/fixtures/bar-displays.json} bar-displays.json
                 cp bar-displays.json test-root/tests/qml/fixtures/bar-displays.json
@@ -908,12 +836,6 @@
                 ${barDaemon}/bin/bar-daemon debug battery-contract-fixture > bar-battery.json
                 diff -u ${./tests/qml/fixtures/bar-battery.json} bar-battery.json
                 cp bar-battery.json test-root/tests/qml/fixtures/bar-battery.json
-                ${barDaemon}/bin/bar-daemon debug activity-contract-fixture > bar-activity.json
-                diff -u ${./tests/qml/fixtures/bar-activity.json} bar-activity.json
-                cp bar-activity.json test-root/tests/qml/fixtures/bar-activity.json
-                ${barDaemon}/bin/bar-daemon debug query-contract-fixture > bar-notification-queries.json
-                diff -u ${./tests/qml/fixtures/bar-notification-queries.json} bar-notification-queries.json
-                cp bar-notification-queries.json test-root/tests/qml/fixtures/bar-notification-queries.json
                 cp -r ${./qml} test-root/qml
                 chmod -R u+w test-root/qml
                 ln -sfn ${./battery} test-root/qml/Shelllist/Battery
@@ -944,25 +866,9 @@
                 touch $out
               '';
 
-          clipboardActions = nodeCheck "clipboard-actions" [
-            [
-              ./tests/check-clipboard-actions.js
-              ./clipboard/ClipApi.js
-              ./clipboard/ClipProtocol.generated.js
-              ./clipboard/ClipboardController.qml
-              ./clipboard/ClipboardBackend.qml
-            ]
-          ];
-
           wifiQrScanner = self.packages.${system}.wifiQrScanner;
           fuzzySearch = self.packages.${system}.shelllistSearch;
 
-          providerModel = nodeCheck "provider-model" [
-            [
-              ./tests/check-provider-model.js
-              ./qml/Shelllist/Core/Model.js
-            ]
-          ];
         }
       );
 

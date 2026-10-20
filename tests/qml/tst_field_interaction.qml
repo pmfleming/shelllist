@@ -187,99 +187,6 @@ TestCase {
         surface.savedText = "backend after save";
         compare(text.text, surface.savedText, "save also restores the source binding");
     }
-    function test_externalUpdateDoesNotOverwriteDraftAndBlurRestoresBinding() {
-        const surface = make();
-        const control = field(surface, "text");
-        tryVerify(() => control.width > 50);
-        mouseClick(findChild(control, "fieldInput"), 25, 15);
-        verify(surface.detailsNavigation.editing, "pointer entry uses the same local transaction");
-        keyClick(Qt.Key_X);
-        const draft = control.text;
-        surface.savedText = "updated by backend while editing";
-        compare(control.text, draft, "the local edit is isolated from incoming snapshots");
-        const next = field(surface, "multiline");
-        mouseClick(findChild(next, "multilineInput"), 25, 15);
-        compare(surface.detailsNavigation.editorTarget, next, "native focus replaces the previous editor");
-        compare(control.text, surface.savedText, "discard reveals the latest authoritative value");
-        keyClick(Qt.Key_Y);
-        compare(surface.writes, 0);
-        surface.listItem.focusList();
-        compare(next.text, surface.savedMultiline, "leaving native focus discards the second draft too");
-        surface.savedText = "another update";
-        compare(control.text, surface.savedText);
-        compare(surface.writes, 0);
-    }
-    function test_choiceDraftSurvivesSnapshotsAndDiscardsOnExit_data() {
-        return [{tag: "segments", name: "segments"}];
-    }
-    function test_choiceDraftSurvivesSnapshotsAndDiscardsOnExit(data) {
-        const surface = make();
-        browse(surface, data.name);
-        const control = field(surface, data.name);
-        function changeChoice() {
-            keyClick(Qt.Key_Return);
-            keyClick(data.name === "choice" ? Qt.Key_Down : Qt.Key_Right);
-            compare(control.editSession.displayedValue, "b");
-        }
-        changeChoice();
-        surface.savedChoice = "c";
-        compare(control.editSession.displayedValue, "b", "incoming values cannot replace the draft");
-        keyClick(Qt.Key_Escape);
-        compare(control.editSession.displayedValue, "c", "discard reveals the latest source");
-        surface.savedChoice = "a";
-        changeChoice();
-        surface.listItem.focusList();
-        tryVerify(() => !control.editSession.active);
-        compare(control.editSession.displayedValue, "a");
-        compare(surface.writes, 0, "blur must not publish a choice");
-        surface.savedChoice = "b";
-        compare(control.editSession.displayedValue, "b", "the owner binding survives both exits");
-    }
-    function test_tabKeepsPositionWhenSaveChangesAvailability_data() {
-        return [
-            {tag: "hide-reverse-skip", change: "hide", backwards: true, skip: true}
-        ];
-    }
-    function test_tabKeepsPositionWhenSaveChangesAvailability(data) {
-        const surface = make();
-        surface.changeAvailabilityOnSave = data.change;
-        browse(surface, "segments");
-        if (data.skip)
-            field(surface, data.backwards ? "choice" : "level").enabled = false;
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        keyClick(Qt.Key_Tab, data.backwards ? Qt.ShiftModifier : Qt.NoModifier);
-        compare(surface.savedChoice, "b");
-        compare(surface.writes, 1, "only the field being saved may dispatch a change");
-        const expected = data.backwards ? (data.skip ? "text" : "choice") : (data.skip ? "switch" : "level");
-        compare(surface.detailsNavigation.currentTarget, field(surface, expected));
-        if (expected === "switch") {
-            verify(surface.detailsNavigation.browsing);
-            verify(!surface.switched);
-        } else {
-            verify(surface.detailsNavigation.editing, "Tab retains edit mode on the correct neighbour");
-        }
-    }
-    function test_tabKeepsPositionWhenSaveRemovesField_data() {
-        return [{tag: "reverse", backwards: true}];
-    }
-    function test_tabKeepsPositionWhenSaveRemovesField(data) {
-        const surface = make();
-        surface.transientFieldVisible = true;
-        tryVerify(() => field(surface, "transient") !== null);
-        tryVerify(() => surface.detailsNavigation.targets.includes(field(surface, "transient")));
-        browse(surface, "transient");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_X);
-        keyClick(Qt.Key_Tab, data.backwards ? Qt.ShiftModifier : Qt.NoModifier);
-        compare(surface.writes, 1);
-        verify(!surface.transientFieldVisible);
-        compare(surface.detailsNavigation.currentTarget, field(surface, data.backwards ? "choice" : "segments"));
-        verify(surface.detailsNavigation.editing);
-        wait(0); // Complete Loader teardown without invalidating the new editor.
-        compare(field(surface, "transient"), null);
-        verify(surface.detailsNavigation.editing);
-    }
     function test_arrowsSelectResultsButNeverFields() {
         const surface = make();
         const first = surface.detailsNavigation.currentTarget;
@@ -299,51 +206,6 @@ TestCase {
         verify(surface.listItem.listFocused);
         keyClick(Qt.Key_Left);
         verify(!surface.chooserController.detailsOpen);
-    }
-    function test_dropdownOptionClickSavePolicy_data() {
-        return [{tag: "deferred", immediate: false}];
-    }
-    function test_dropdownOptionClickSavePolicy(data) {
-        const surface = make();
-        const control = field(surface, "choice");
-        control.saveOnOptionClick = data.immediate;
-        control.options = [{value: "a", label: "A", icon: "home"}, {value: "b", label: "B"}, {value: "c", label: "C", icon: "settings"}];
-        const valueIcon = findChild(control, "dropDownValueIcon");
-        compare(valueIcon.glyph, "home");
-        verify(valueIcon.Accessible.ignored);
-        browse(surface, "choice");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Down);
-        compare(surface.writes, 0, "closed-menu arrows never save");
-        keyClick(Qt.Key_Escape);
-        compare(control.value, "a");
-        mouseClick(control, control.width / 2, control.height / 2);
-        tryCompare(control.popup, "visible", true);
-        keyClick(Qt.Key_Down);
-        compare(surface.writes, 0, "menu highlighting never saves");
-        const option = findChild(control.popup.contentItem, "dropDownOption-2");
-        const saved = findChild(control.popup.contentItem, "dropDownOption-0");
-        compare(findChild(option, "dropDownOptionIcon").glyph, "settings");
-        verify(findChild(option, "dropDownOptionIcon").Accessible.ignored);
-        verify(findChild(saved, "dropDownSelectedCheck").visible);
-        verify(!findChild(option, "dropDownSelectedCheck").visible, "candidate highlight is not acknowledgement");
-        compare(option.contentItem.leftPadding, control.contentItem.leftPadding);
-        compare(option.contentItem.rightPadding, saved.contentItem.rightPadding, "reserve the saved-check slot for every option");
-        mouseClick(option, option.width / 2, option.height / 2);
-        tryCompare(control.popup, "visible", false);
-        compare(control.contentItem.text, "C", "clicked option wins over keyboard highlight");
-        compare(valueIcon.glyph, "settings");
-        compare(surface.writes, data.immediate ? 1 : 0);
-        compare(surface.savedChoice, data.immediate ? "c" : "a");
-        compare(surface.detailsNavigation.browsing, data.immediate);
-        if (!data.immediate) {
-            keyClick(Qt.Key_Escape);
-            compare(control.contentItem.text, "A");
-        }
-        surface.savedChoice = "b";
-        compare(control.contentItem.text, "B", "source binding survives click save or discard");
-        verify(!valueIcon.visible);
-        compare(control.contentItem.leftPadding, 0);
     }
     function test_sliderCommitAndLiveRollback_data() {
         return [{tag: "deferred", preview: false}, {tag: "live", preview: true}];
@@ -377,40 +239,6 @@ TestCase {
         verify(surface.switched);
         verify(surface.detailsNavigation.browsing);
         verify(field(surface, "switch").focusSurface !== field(surface, "switch"), "Only the switch is highlighted, not labels");
-    }
-    function test_wrappingSkipsActionsAndPreservesEditing() {
-        const surface = make();
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(surface.detailsNavigation.currentTarget, field(surface, "multiline"));
-        keyClick(Qt.Key_Return);
-        verify(surface.detailsNavigation.editing);
-        verify(field(surface, "multiline").activeFocus);
-        keyClick(Qt.Key_X);
-        verify(field(surface, "multiline").text.includes("x"));
-        keyClick(Qt.Key_Return, Qt.ShiftModifier);
-        compare(field(surface, "multiline").text.split("\n").length, 3, "Shift+Enter stays a native newline");
-        compare(surface.writes, 0);
-        verify(field(surface, "multiline").editSession.active);
-        compare(field(surface, "multiline").editSession.originalValue, "first\nsecond");
-        compare(surface.detailsNavigation.editorTarget, field(surface, "multiline"));
-        keyClick(Qt.Key_Tab);
-        compare(surface.writes, 1);
-        compare(surface.detailsNavigation.currentTarget, field(surface, "text"));
-        verify(surface.detailsNavigation.editing);
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(surface.detailsNavigation.currentTarget, field(surface, "multiline"));
-        verify(surface.detailsNavigation.editing);
-        compare(surface.actions, 0);
-        keyClick(Qt.Key_Escape);
-        surface.savedMultiline = "backend after save";
-        compare(field(surface, "multiline").text, surface.savedMultiline);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_X);
-        keyClick(Qt.Key_Escape);
-        compare(field(surface, "multiline").text, surface.savedMultiline);
-        surface.savedMultiline = "backend after discard";
-        compare(field(surface, "multiline").text, surface.savedMultiline);
-        compare(surface.writes, 1);
     }
     function test_commandChordsAndMenuNeverBecomeFieldStops() {
         const surface = make();

@@ -218,7 +218,7 @@ Focused checks inside the development environment:
 
 ```sh
 tests/run-qmllint.sh
-node tests/check-provider-model.js qml/Shelllist/Core/Model.js
+node tests/check-generated-contracts.js .
 node tools/build-typescript.mjs --check
 tsc --project tsconfig.json
 tests/run-qml-tests.sh

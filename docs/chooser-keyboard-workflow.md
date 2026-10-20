@@ -142,10 +142,10 @@ controller's navigation guard; tab switching, refresh and underlying commands
 cannot run through it. Suspension closes it without saving, and dismissal restores
 the host's original guard binding. Modal acceptance submits an explicit exact-value
 command; it does not add a field Tab stop. Existing backend
-acknowledgement, retry and capability guards still own the outcome. Native tests
-in `tst_linked_sliders.qml` cover both routes, boundaries, snapshots, cancellation,
-RTL and retained off-scale values; Battery's consumer tests cover atomic timing
-translation, unavailable hibernation, separate profiles and recovery.
+acknowledgement, retry and capability guards still own the outcome. Shared field
+tests retain commit/rollback; Battery's consumer tests retain atomic timing
+translation and retry. Step-size, RTL and per-profile presentation matrices were
+retired in the [ownership review](../tests/test-reduction-owners.md).
 
 Pointer entry into a shared field uses the same transaction as keyboard entry.
 Moving native focus directly between editors discards the previous unsaved draft
@@ -226,8 +226,8 @@ or absent telemetry stays unknown, not a false zero/full value; daemon warning a
 critical flags remain authoritative. Only new known fill readings may interpolate
 for 160ms, respecting reduced motion. Clock/date form one numerical action opening
 Time & Weather, with full date/timezone in its accessible name. The bar adds no
-field Tab stops. `tst_balanced_dashboard.qml` covers actual routes, acknowledged
-workspace selection, overflow, fill pixels and battery state boundaries.
+field Tab stops. The standalone dashboard presentation matrix is retired; native
+daemon policy tests and shared command/transport owners remain.
 System tray application icons appear only in the Tray chooser, opened by the
 bar's ellipsis button; no bar density exposes inline tray application icons.
 Horizontal sliders place the marker above
@@ -506,8 +506,9 @@ commands belong only to the Application tab, including its shared Alt+J content
 menu. Switching to Resources or Settings removes those page-local commands without
 changing submitted operations, backend guards or the remaining header shortcuts.
 One asynchronous loader instantiates only the selected application detail page;
-page replacement still discards an unsaved field without submitting it. Native
-`tst_application_details.qml` covers cycling all three pages and that boundary.
+page replacement still discards an unsaved field without submitting it. The native
+application journey opens Settings through the real panel; the separate page-cycle
+and page-replacement matrix is retired.
 
 Application window and desktop-action groups use passive shared `DetailColumnCard`
 containers and remain information/commands only, not editable fields. Each
@@ -629,10 +630,9 @@ PageUp/PageDown retain shared page semantics and reveal short-page content. Ther
 panel, Measurement details command, Alt+H disclosure or new chart-inspection key
 model. Accessible summaries retain full metric identities and observation data;
 unavailable/error/loading states and attribution exceptions stay explicit. See
-[resource measurement semantics](application-resources.md). Native
-`tst_application_details.qml` retains page replacement/discard; the dedicated
-resource range/geometry suite was pruned. Shared field and pure history tests do
-not prove every resource-specific pointer/key route.
+[resource measurement semantics](application-resources.md). Dedicated resource
+and application-page matrices are retired. Shared field and native history tests
+do not prove every resource-specific pointer/key route.
 
 ## Missing and arriving content
 
@@ -683,10 +683,9 @@ history is passive, not an endless request. Agenda, Todos, forecast, battery and
 resource history use the same component inside missing-data sections, without
 hiding calendar/input/power controls or valid cached readings.
 
-`tests/qml/tst_content_state.qml` exercises semantic glyphs, actual key
-navigation and save/discard during arrival/refresh/removal, representative read-state
-adapters, radio-off versus absent hardware, failure copy and independent Tray readiness. Existing domain suites retain paging, reply drafts,
-acknowledgement, retry, modal and rollback coverage. See the
+The standalone ContentState presentation matrix is retired. Retained domain
+journeys cover representative paging, draft/retry, modal and rollback behavior,
+not every arrival/removal adapter permutation. See the
 [shared ContentState implementation](../qml/Shelllist/Ui/ContentState.qml) for the current presentation.
 
 ## Validation
@@ -1154,9 +1153,9 @@ Its passive list/detail subtitle describes
 IP/non-IP/unknown provenance and optional **reported** accuracy. This is an estimate,
 not a verified physical position or guaranteed radius. Metadata changes do not
 select another row, create editable stops, or publish settings. Shared label/header
-composition retains full accessible text when the subtitle elides. Native
-`tst_time_weather_estimates.qml` covers metadata arrival, identity retention,
-Tab fallback and result-arrow navigation at normal/minimum widths in both themes.
+composition retains full accessible text when the subtitle elides. Passive
+metadata/theme/navigation matrices are retired; retained location tests focus
+on acknowledged manual selection and protected removal.
 List and detail times share a single view-owned clock: activation refreshes it
 immediately, then it refreshes at minute boundaries while active. Clock updates
 are passive and local; they do not rebuild selection, add stops or issue reads.
@@ -1198,10 +1197,9 @@ Hover shows the nearest measurement;
 clicking either track enters the existing pointer-only inspection, with arrows
 and Escape inside that mode. Neither track joins Tab traversal or adds an entry
 command. The shared Range field retains deferred Enter/Tab save and Escape
-discard. Retained `tst_battery_history.qml` distinguishes unknown, zero and
-warning readings; pure history tests cover gaps and signed power. Dedicated
-Canvas/inspection and per-consumer range/traversal cases were pruned; shared
-field tests are not a claim of that removed consumer coverage.
+discard. Battery history presentation, signed-power and Canvas/inspection
+matrices are retired; shared field tests are not a claim of that removed consumer
+coverage. Native safety policy, authorization and restoration tests remain.
 
 Battery care combines charge notification with protection. The bell's numerical
 target follows acknowledged protection / one-time-full-charge state. Resume/stop

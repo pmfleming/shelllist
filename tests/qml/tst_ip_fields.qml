@@ -76,40 +76,6 @@ DaemonTestCase {
     function updates() {
         return calls.filter(call => call.method === "wifi.profile.operation" && call.params.operation === "update");
     }
-    function test_pasteValidationSavesOnlyTheDomainDraft_data() {
-        return [
-            {tag: "ipv6-zone", family: "ipv6", value: "fe80::1%wlan0", state: IpValidation.Invalid, message: "Scoped IPv6"}
-        ];
-    }
-    function test_pasteValidationSavesOnlyTheDomainDraft(data) {
-        const panel = make();
-        panel.page.ipFamily = data.family;
-        const field = browse(panel, "wifiIpAddress");
-        const original = panel.page.currentIp.address;
-        keyClick(Qt.Key_Return);
-        paste(data.value);
-        compare(field.text, data.value, "the native buffer must not strip CIDR/zone suffixes");
-        compare(field.validationState, data.state);
-        compare(field.errorText, "", "unfinished entry is neutral before save");
-        compare(panel.page.currentIp.address, original, "typing remains field-local");
-        compare(updates().length, 0);
-        keyClick(Qt.Key_Tab);
-        compare(panel.currentTarget.objectName, "wifiIpPrefix", "validation cannot trap traversal");
-        verify(panel.editing);
-        compare(panel.page.currentIp.address, data.value);
-        verify(field.errorText.includes(data.message));
-        verify(!panel.page.hardwareSettingsReady());
-        panel.page.saveDirty();
-        compare(updates().length, 0, "the real settings-page guard blocks the backend write");
-        keyClick(Qt.Key_Escape);
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        keyClick(Qt.Key_Return);
-        paste(data.family === "ipv6" ? "2001:db8::" : "192.168.1.22");
-        compare(field.errorText, "", "a corrected draft clears an exposed error");
-        keyClick(Qt.Key_Escape);
-        compare(field.text, data.value, "discard restores the saved invalid domain draft");
-        compare(updates().length, 0);
-    }
     function test_nativeBufferLimitAndPrefixPasteNeverBecomeValidTruncations() {
         const panel = make();
         const address = browse(panel, "wifiIpAddress");

@@ -107,7 +107,7 @@ python3 ../daemon-framework/tools/local-build.py build --attr materialColors . \
   --no-link --print-out-paths
 # Copy MaterialColors.generated.js and material-color-utilities.LICENSE from
 # the printed store directory into qml/Shelllist/Ui/ (make local copies writable).
-node tests/check-material-colors.js qml/Shelllist/Ui/MaterialColors.generated.js
+nix build .#checks.x86_64-linux.materialColors # generated-source freshness, not a palette matrix
 ```
 
 ## Desktop theme integration

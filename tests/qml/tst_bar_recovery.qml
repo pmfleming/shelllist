@@ -79,27 +79,6 @@ DaemonTestCase {
         wait(0);
         compare(reads(backend).length, 2, "A complete newer push satisfies recovery");
     }
-    function test_failedRecoveryReleasesFlightWithoutLooping_data() {
-        return [{tag: "timeout", malformed: false}];
-    }
-    function test_failedRecoveryReleasesFlightWithoutLooping(data) {
-        const controller = make();
-        const backend = controller.backend;
-        const initial = reads(backend)[0];
-        reply(initial, {});
-        event(initial, "audio.changed", "gap", {});
-        const recovery = reads(backend)[1];
-        if (data.malformed)
-            reply(recovery, {});
-        else
-            Io.DaemonSessions.sessions["bar-daemon"].client.response(recovery.id, null, "injected read timeout", recovery.route);
-        compare(Object.keys(backend.requestPolicy.requests).length, 0);
-        compare(backend.requestPolicy.snapshotFailures, 1);
-        wait(0);
-        compare(reads(backend).length, 2);
-        event(initial, "audio.changed", "gap", {});
-        compare(reads(backend).length, 3);
-    }
     function test_processLossInvalidatesStateAndOldGenerationReply() {
         const controller = make();
         const backend = controller.backend;

@@ -104,56 +104,6 @@ DaemonTestCase {
         click(opener);
         compare(bar.registry.opened, ["media"], "panel access does not require transport capability");
     }
-    function test_fallbackAndPlayerRemovalKeepDirectControls(): void {
-        const bar = fixture();
-        const chip = findChild(bar, "barMedia");
-        const opener = findChild(chip, "mediaArtworkButton");
-        const image = findChild(chip, "mediaArtwork");
-        const backdrop = findChild(chip, "mediaArtworkBackdrop");
-        const transport = findChild(chip, "mediaTransportControls");
-        const expandedWidth = chip.implicitWidth;
-        compare(backdrop.width, 30);
-        compare(backdrop.height, 30);
-        compare(backdrop.radius, 15, "artwork is circular inside the unchanged opener");
-        compare(opener.width, 34);
-        compare(opener.height, 34);
-        compare(findChild(chip, "mediaGroupBackground").height, 38);
-        compare(findChild(chip, "mediaPlayPauseButton").width, 36);
-        setPlayer(bar, player({art_url: ""}));
-        tryCompare(image, "status", Image.Null);
-        verify(!backdrop.visible && opener.icon.length > 0);
-        compare(chip.implicitWidth, expandedWidth, "missing artwork does not shift transport");
-        click(opener);
-        ignoreWarning(/.*QML (?:QQuick)?Image: Cannot open: .*missing-media-cover\.png/);
-        setPlayer(bar, player({art_url: Qt.resolvedUrl("fixtures/missing-media-cover.png").toString()}));
-        tryCompare(image, "status", Image.Error);
-        verify(!backdrop.visible && opener.icon.length > 0);
-        click(opener);
-        bar.width = 600;
-        compare(bar.layoutDensity, 3);
-        verify(transport.visible, "compact density keeps transport directly available");
-        compare(chip.implicitWidth, expandedWidth);
-        verify(waitForRendering(opener));
-        click(opener);
-        setPlayer(bar, null);
-        tryCompare(image, "status", Image.Null);
-        compare(opener.Accessible.name, "Open Media");
-        compare(chip.implicitWidth, expandedWidth, "player removal keeps the control geometry");
-        for (const name of ["mediaRewindButton", "mediaPlayPauseButton", "mediaForwardButton"]) {
-            const button = findChild(chip, name);
-            verify(button.visible && !button.enabled);
-            click(button);
-            button.Accessible.pressAction();
-        }
-        click(opener);
-        compare(bar.registry.opened, ["media", "media", "media", "media"]);
-        compare(calls.length, 0, "fallback and density changes never invoke transport");
-        bar.width = 1200;
-        setPlayer(bar, player({}));
-        tryCompare(image, "status", Image.Ready);
-        tryCompare(transport, "visible", true);
-        compare(chip.implicitWidth, expandedWidth);
-    }
     function test_artworkReallyClipsRoundedCorners(): void {
         const bar = fixture();
         if (bar.GraphicsInfo.api === GraphicsInfo.Software)

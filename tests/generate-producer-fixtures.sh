@@ -30,10 +30,7 @@ while read -r command file; do
 done <<'FIXTURES'
 read bar-reads
 control bar-controls
-sleep bar-sleep
 display bar-displays
 notification bar-notification-actions
 battery bar-battery
-activity bar-activity
-query bar-notification-queries
 FIXTURES

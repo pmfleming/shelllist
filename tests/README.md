@@ -4,11 +4,12 @@ Prefer end-to-end user journeys and public-boundary integration tests. Keep loca
 tests for unique failure modes that those flows cannot reasonably exercise; do
 not mirror implementation tables or freeze visual choices unnecessarily.
 
-The [native-journey pass](test-reduction-vertical.md) records the latest fresh
-baseline, real Qt→JSONL→daemon replacement coverage and partial pruning. **The
-requested 33% reduction is not met** (994 → 988 measured cases/suites). The earlier
-[ecosystem review](test-reduction-ecosystem.md) and checkpoints below must not be
-reused as the current baseline.
+The [ownership reduction](test-reduction-owners.md) reaches the strict target:
+**988 → 661 registered cases/suites, 327 removed (33.10%)**. The counter and
+discovery rules are unchanged. That review records primary owners, deliberately
+retired coverage and exact before/after accounting. The [native-journey pass](test-reduction-vertical.md),
+[ecosystem review](test-reduction-ecosystem.md) and checkpoints below are historical;
+do not reuse their totals as the current baseline.
 
 ## Panel standardization acceptance
 
@@ -39,53 +40,42 @@ Run `tests/run-qml-tests.sh` from `nix develop`. The development shell and Nix
 `qmlTests` check provide matching Qt SVG plugins, timezone data and the same
 Fontconfig configuration as the application. Both QML runner scripts use the same
 offscreen/software, UTC setup. Refresh an existing development shell after changing
-`flake.nix`. Without Material Symbols, literal icon names can overflow adjacent
-cards and produce misleading chart-pixel failures; the resource pixel test checks
-that prerequisite rather than skipping or weakening its paint assertions.
+`flake.nix`; missing application fonts can invalidate layout observations.
 
-- `tst_field_interaction.qml`: local drafts, binding survival, backend updates
-  during editing, native arrows, forward/reverse Tab after availability changes
-  and reverse Tab after removal, editable-only traversal, switch safety,
-  pointer transactions, continuous-preview rollback and command menus.
-- `tst_chooser_keyboard.qml`, `tst_chooser_memory.qml` and
-  `tst_domain_workflows.qml`: search/result navigation, asynchronous restoration,
-  newer-navigation/closure fences, per-result memory, value-free restoration,
-  missing/sensitive editor targets and modal containment. Application suites own
-  acknowledgement; notification/model suites retain keyed viewport coverage.
-- `tst_displays.qml`: representative keyboard/drag placement, cancellation,
-  unsafe layout guards, opaque modes, local drafts, trial ownership, late/hidden
-  Preview reversion, docking acknowledgement/retry and focus-policy safety gates.
-  JavaScript covers all placement directions and rotated fractional layouts.
-- Shared controls retain keyboard, pointer and assistive activation, busy/disabled
-  guards, native masking/reveal, read-only editing, dropdown acknowledgement and
-  cancellation, command availability, passive labels and close-time reordering.
-  Palette contrast remains in JavaScript; dedicated field/scanner paint and
-  per-wrapper geometry checks are no longer retained.
-- Bluetooth, Clipboard, Battery, Notifications and Wi-Fi retain domain
-  acknowledgement, failed-save drafts, retries, stale identities/replies, leases,
-  secret clearing, uncertain outcomes and destructive-operation guards. System
-  choosers retain explicit media targets, capability checks, acknowledged settings
-  and native tray-menu lifetime. Media artwork clearing, plain-text metadata and
-  passive enrichment remain.
-- `tst_balanced_dashboard.qml` retains acknowledged workspace activation and
-  unknown battery readings. Monitor-local reveal, known-zero bar-fill paint and
-  whole-bar presentation matrices have less direct evidence.
-  `tst_media_chip.qml` samples narrow seek transport, circular artwork geometry,
-  and keeps missing-player controls visible but disabled; system choosers exercise
-  panel transport. Its RHI-only artwork pixel check remains an explicit existing
-  skip under the software runner.
-- Daemon/session and model suites retain protocol/generation boundaries,
-  request churn, stable identities, queued-update cancellation and
-  progressive/native list updates. Wi-Fi retains cancellation acknowledgement.
-  Notifications retain atomic center refresh, obsolete-read rejection, queued
-  revisions and reply ownership across reconnects; pixel-offset restoration is
-  no longer separately checked.
-- JavaScript retains unsafe-layout/numeric validation, unavailable versus measured
-  zero, chart gaps, history/cursor failures, request identity, no-replay rules and
-  battery safety. Material contrast covers 150 seed/mode combinations. Native
-  QML checks actual field pixels and SVG decoding. Runtime smoke exercises native
-  offscreen windows and chooser geometry; `tst_work_area.qml` covers authoritative
-  geometry and failure recovery.
+- Shared field/chooser owners retain text save/discard/Tab, native arrows,
+  deferred/live slider transactions, command navigation, modal containment and
+  readiness-based restoration without unsaved values. Sensitive targets remain
+  non-restorable. Availability/removal and caret-paint permutations are retired.
+- Application tests retain close observation, old-operation panel fencing,
+  owned status recovery and target-scoped settings feedback, alongside the real
+  native journey. Resource/parser/presentation permutations are reduced.
+- Display journeys retain last-output protection, draft/daemon-token ownership,
+  mirror staging and explicit-close reversion without replay. Native daemon tests
+  retain docking, hardware identity, persistence, rollback and confirmation safety.
+- Bluetooth retains close-time secret clearing, pairing identity and partial
+  adapter acknowledgement/retry. Clipboard retains private reads, pin-versus-paste,
+  failed edit leases/drafts and publication/reopened-session paste handshakes.
+- Wi-Fi retains saved activation, cancellation, credential timeout, foreign secret
+  replies, QR privacy, explicit storage choices, portal claims/no-replay, sharing
+  fences and native DNS/buffer validation. Native SecretAgent/security tests remain.
+- Battery retains independent critical protection, sleep-pair save/retry, intent-only
+  cancellation, no replay and degraded-telemetry release. Native safety tests own
+  authorization, lock confirmation, unsafe settings and restoration.
+- Notifications retain confirmed deletion, atomic timeline publication, stale pages
+  and request/draft ownership. Native API/history tests own query and persistence
+  behavior. Time/Weather retains acknowledged manual selection, protected removal
+  and live clock offsets; Activity retains native day membership/navigation.
+- Audio and tray retain representative acknowledged/identity-guarded commands.
+  Media retains compact transport/capability guards and the existing RHI artwork
+  check (still skipped under the software renderer). Layout/theme/fallback matrices
+  are intentionally reduced.
+- Shared daemon bridge/session and Bar recovery tests retain drain/exit behavior,
+  ready-session attachment, isolation and stale-generation fencing. Native framework
+  tests own transport deadlines, quotas, cancellation, routing and owner loss.
+- JavaScript retains generated producer/consumer contracts, daemon boundaries and
+  independent IP-validation vectors. All five daemon contract checks, generated
+  source freshness, QML lint and runtime smoke remain. Direct model, telemetry,
+  history, color and per-controller JavaScript suites are retired.
 
 Expected negative-test application error logs are distinct from QML engine
 warnings and remain allowed. Offscreen tests do not replace live compositor,

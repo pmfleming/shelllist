@@ -130,13 +130,13 @@ shared UI maintainer owns the deliberate slider geometry (16px track, 24px peer
 marker, 6px hatch pitch), matching the existing slider track family rather than
 new font/spacing/radius roles. Passive axis labels use the shared metadata role.
 
-`tst_linked_sliders.qml` exercises actual pointer/keyboard edits, both step-size
-transitions, fixed bounds, exact/Never entry, cancellation, stale peers and
-capability loss. `tst_battery_presentation.qml` additionally checks derived pair
-wire payloads, no early writes, retry, separate profiles, lid-only delays and
-unavailable hibernation. `check-battery-controls.js` tests invalid timeline inputs
-and bounds without hardware writes. Human screen-reader/touch acceptance and
-physical suspend/hibernate/firmware validation remain separate acceptance gates.
+Shared `tst_field_interaction.qml` owns slider commit/rollback. Battery's
+`tst_battery_presentation.qml` retains independent critical protection and the
+derived sleep-pair save/retry journey. Native battery/sleep tests own authorization,
+readback, restoration and unsafe-setting rejection. The slider geometry and
+step-size matrices are retired, not replaced by equivalent per-value assertions;
+see [current coverage](../tests/test-reduction-owners.md). Human screen-reader/touch
+acceptance and physical suspend/hibernate/firmware validation remain separate gates.
 
 Linked-slider implementation checkpoint: strict QML lint passes; the full Qt
 suite passes **346 / 0 failed / 1 existing renderer skip**, with

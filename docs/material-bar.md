@@ -123,20 +123,13 @@ layer-shell focus behavior changes in this revision.
 
 ## Validation
 
-- `tst_balanced_dashboard.qml`: real workspace pointer/key routes and snapshot
-  acknowledgement, stable category identity, numeric fallback, workspace reveal,
-  urgency, chromatic state/contrast and actual glyph-weight rendering in light
-  and dark themes, center/collision bounds at 3440/1200/760/600/300px, section
-  spacing, actual overflow and combined-clock activation, battery state/unknown
-  boundaries, geometry, preserved fill colours and external-mark pointer/
-  accessibility activation.
-- `tst_media_chip.qml`: direct artwork and tracks/seek routes at comfortable and
-  compact widths, unchanged geometry on artwork/player loss, disabled actions,
-  circular artwork geometry and rendering. The last pixel
-  check additionally needs an RHI renderer.
-- `tst_bar_material.qml`: no panel browsing caret or new Tab traversal, tray
-  inventory isolation and native action routes. Applications' settings tests
-  continue checking the shared category mapping, save/discard and acknowledgement.
+- `tst_media_chip.qml`: representative compact seek/transport, separate panel
+  activation and disabled-action guards; the artwork pixel check requires RHI.
+- `tst_bar_material.qml`: unknown routes cannot invoke Object prototype methods.
+- `tst_bar_recovery.qml`: domain-local recovery, generation and snapshot fencing.
+- The former workspace, density, fallback-artwork and palette matrices are retired,
+  not implicitly covered by these tests. See the
+  [current ownership review](../tests/test-reduction-owners.md).
 
 Run `tests/run-qml-tests.sh`, `tests/run-qmllint.sh`, generated-source freshness and
 TypeScript checks in the development environment. Native offscreen tests do not

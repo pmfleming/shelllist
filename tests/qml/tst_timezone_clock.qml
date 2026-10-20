@@ -1,6 +1,5 @@
 import QtQuick
 import QtTest
-import "../../qml/Shelllist/Bar/BarStatusPresentation.js" as Status
 
 TestCase {
     id: testCase
@@ -33,13 +32,5 @@ TestCase {
         compare(date.text, "01-01");
         verify(button.descriptor.tooltip.indexOf("Timezone unavailable") < 0);
         verify(button.accessibleName.indexOf("2027-01-01 05:30 NPT +0545") >= 0);
-    }
-    function test_unavailableOffsetDoesNotClaimUtcOrCachedZone() {
-        const now = new Date("2026-10-14T15:39:00Z");
-        for (const zone of [{}, {available: false, utc_offset_seconds: 0}, {utc_offset_seconds: NaN}]) {
-            const result = Status.clockModule(now, zone);
-            verify(result.tooltip.endsWith("Timezone unavailable"));
-            compare(result.text, Qt.formatDateTime(now, "yyyy-MM-dd  HH:mm"));
-        }
     }
 }

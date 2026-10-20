@@ -76,20 +76,12 @@ lifecycle are unchanged; no optimistic removal or fictional undo is introduced.
 
 ## Validation
 
-`tests/qml/tst_application_details.qml` exercises actual Qt pointer/key delivery:
-zero/many windows and desktop actions, launch-only and stale-runtime states,
-long labels, page scrolling, editable-only traversal, direct Focus/Close commands,
-modal shortcut blocking, Escape focus restoration, arbitrary Alt+J commands,
-stable-ID/revision routing, removal while a menu is open and busy guards.
-It also checks compact row geometry, aligned titles, passive status clicks,
-workspace accessibility, unknown/named workspaces, narrow long-title wrapping and
-the shared spacing/size/disabled-omission sequence, including enabled restoration.
-`tests/qml/tst_application_actions.qml` covers direct Close acknowledgement,
-snapshot-owned removal, busy guards, failure/retry and removed-command focus
-restoration, plus acknowledged versus pending focus, window-scoped success,
-localized messages, failure/cancellation, superseding requests and independence
-from compositor focus through actual commands/replies.
-Shared control and chooser tests cover the reused focus/menu foundations.
+The real `tests/test-native-application.py` journey owns search, settings storage
+failure/retry and launch outcomes. `tests/qml/tst_application_actions.qml` retains
+Close observation/focus restoration, reopened-panel fencing and owned read-only
+status recovery, including malformed replies. Shared controls own input semantics.
+Per-page geometry, label and command permutations are retired; see the
+[current ownership and coverage tradeoffs](../tests/test-reduction-owners.md).
 
 The HTML is an offline design study, not a replacement for native tests or a
 catalog of installed applications. Hardware compositor, screen-reader and

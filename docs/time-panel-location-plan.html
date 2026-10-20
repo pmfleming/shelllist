@@ -66,7 +66,7 @@
 <tr><td><strong>Identity mostly ready</strong></td><td><a href="../activity/TimeWeatherController.qml"><code>TimeWeatherController.qml:37–69</code></a> sorts Home first and retains selection by native ID. Current location uses <code>current-location</code>. Clock-only records currently merge by timezone in <a href="../../bar-daemon/src/activity/locations.rs"><code>locations.rs</code></a>.</td><td>Preserve stable IDs, but stop using timezone as the identity of newly saved cities. Two different cities may share one timezone.</td></tr>
 <tr><td><strong>Cache coupling needs care</strong></td><td><a href="../../bar-daemon/src/activity/service.rs"><code>activity/service.rs:171–172</code></a> clears weather records when the configured location list changes. Current location has no weather lookup in the existing projection.</td><td>Adding/removing one city must preserve other forecasts. Keep Current-location weather outside this first implementation.</td></tr>
 </tbody></table></div>
-<p class="small">Existing <a href="../tests/qml/tst_time_weather_estimates.qml">Time/Weather tests</a> exercise passive provenance, identity and navigation; <a href="../tests/qml/tst_timezone_clock.qml">clock tests</a> cover offsets and unavailable states. Neither proves these new mutation flows. Some prose in <code>docs/activity.md</code> is historical; the current keyboard contract and AGENTS.md take precedence.</p>
+<p class="small">This design checkpoint is historical. The passive estimate matrix has since been retired; see the <a href="../tests/test-reduction-owners.md">current test ownership review</a> and retained <a href="../tests/qml/tst_time_weather_locations.qml">location journeys</a>. The current keyboard contract and AGENTS.md take precedence.</p>
 </section>
 
 <section id="model">
@@ -207,7 +207,7 @@
 <tr><td>Clock/weather regressions</td><td>Amsterdam DST transition, fractional offsets, real UTC vs unavailable, top-bar readback update, current-place/map consistency, existing forecasts retained during city changes, late weather response cannot resurrect a removed city.</td></tr>
 <tr><td>Presentation / capability</td><td>Normal/minimum light/dark runtime layouts (this plan is dark), long names, no search matches, authority missing, old backend, unavailable geocoder and operation failures. Compare before/after: same sorting and row composition, with the required role icons and at-home Current suppression; unchanged Time/Weather content and tabs. Add search plus and the standard single-primary/two-secondary header identically for every city; hide the inert power switch. No new toolbar, cards, fields or row gutters. Retain unavailable command geometry, shared sizing and readable passive provenance.</td></tr>
 </tbody></table></div>
-<p>Add <code>tests/qml/tst_time_weather_locations.qml</code> for actual consumer commands and mutations; extend <code>tst_time_weather_estimates.qml</code> and <code>tst_timezone_clock.qml</code> for new provenance and clock outcomes. Reuse shared editor/modal tests, but do not substitute them for the real panel flows.</p>
+<p>The retained <code>tests/qml/tst_time_weather_locations.qml</code> and <code>tst_timezone_clock.qml</code> now cover representative acknowledged location and clock flows. Passive estimate permutations are retired. Reuse shared editor/modal tests, but do not substitute them for native authorization and persistence boundaries.</p>
 <pre>tests/run-qmllint.sh
 tests/run-qml-tests.sh
 python3 tests/review-panel-ui.py --base &lt;implementation-base&gt;

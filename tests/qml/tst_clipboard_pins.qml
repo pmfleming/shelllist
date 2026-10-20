@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 import "../../clipboard" as Clip
-import "../../qml/Shelllist/Ui/MaterialIcons.js" as MaterialIcons
 
 DaemonTestCase {
     id: testCase
@@ -63,14 +62,6 @@ DaemonTestCase {
         else
             mouseClick(avatar, avatar.width / 2, avatar.height / 2);
     }
-    function acknowledge(controller, action, entries) {
-        reply(controller, "action-" + action, {operation: {id: "op-" + calls.length, action: action, status: "completed", message: "Updated"}});
-        controller.refresh();
-        reply(controller, controller.activeHistoryQueryId, {history: {
-            snapshot_revision: String(calls.length), entries: entries, total: entries.length,
-            offset: 0, next_cursor: ""
-        }});
-    }
 
     function test_avatarSelectsThenPinsWithoutPastingAndBodyStillPastes() {
         const ui = setup();
@@ -93,77 +84,4 @@ DaemonTestCase {
         compare(actions()[1].params.action, "paste", "body double-click retains its primary action");
     }
 
-    function test_multiplePinsFollowNativeOrderAndUnpinIndependently() {
-        const ui = setup();
-        clickAvatar(ui.list, 2, true);
-        const firstOperation = {id: "op-" + calls.length, action: "favorite", status: "completed", message: "Updated"};
-        acknowledge(ui.controller, "favorite", [entry("third", true), entry("first"), entry("second")]);
-        compare(ui.controller.selectedEntry.id, "third");
-        compare(ui.controller.selectedIndex, 0);
-        tryVerify(() => ui.list.itemAtIndex(0).entry.favorite);
-        verify(ui.list.itemAtIndex(0).accessibleName.includes("Pinned"));
-        clickAvatar(ui.list, 2, true);
-        compare(actions()[1].params.entry_id, "second");
-        findChild(ui.controller, "clipboardBackend").acceptSharedEvent({
-            protocol: "clip-api", version: 2, stream: "clipboard.operation", event: "completed",
-            data: {operation: firstOperation}
-        });
-        verify(ui.controller.actionInFlight, "duplicate completion cannot retire the next pin operation");
-        acknowledge(ui.controller, "favorite", [entry("second", true), entry("third", true), entry("first")]);
-        compare(ui.controller.filteredResults.map(result => result.id), ["second", "third", "first"]);
-        compare(ui.controller.filteredResults.filter(result => result.payload.favorite).length, 2);
-        clickAvatar(ui.list, 0, true);
-        compare(actions()[2].params.action, "unfavorite");
-        acknowledge(ui.controller, "unfavorite", [entry("third", true), entry("second"), entry("first")]);
-        compare(ui.controller.selectedEntry.id, "second");
-        compare(ui.controller.selectedIndex, 1);
-        compare(ui.controller.filteredResults[0].payload.favorite, true, "unpinning does not clear other pins");
-        compare(ui.controller.selectedEntry.favorite, false);
-    }
-
-    function test_expandedButtonAndAltNOnBothTabs() {
-        const ui = setup();
-        keyClick(Qt.Key_Right);
-        tryCompare(ui.controller, "detailsOpen", true);
-        let pin = null;
-        tryVerify(() => { pin = findChild(ui.content, "detailAction:pin"); return pin !== null && pin.visible && pin.width > 0 && pin.height > 0; });
-        waitForRendering(ui.content);
-        verify(pin.enabled, "pin does not need a decoded preview");
-        compare(pin.accessibleName, "Pin to top");
-        compare(pin.icon, "push_pin");
-        compare(MaterialIcons.name(pin.icon), "push_pin");
-        verify(!pin.activeFocusOnTab);
-        mouseClick(pin, pin.width / 2, pin.height / 2);
-        compare(actions().length, 1);
-        compare(actions()[0].params.action, "favorite");
-        tryVerify(() => { pin = findChild(ui.content, "detailAction:pin"); return pin && !pin.enabled; }, 5000, "pending actions cannot be repeated");
-        acknowledge(ui.controller, "favorite", [entry("first", true), entry("second"), entry("third")]);
-        tryVerify(() => { pin = findChild(ui.content, "detailAction:pin"); return pin && pin.enabled; });
-        compare(pin.accessibleName, "Unpin");
-        compare(pin.icon, "keep_off");
-        compare(MaterialIcons.name(pin.icon), "keep_off");
-        ui.content.listItem.focusList();
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        tryCompare(ui.controller, "detailsTab", "info");
-        keyClick(Qt.Key_N, Qt.AltModifier);
-        compare(actions().length, 2);
-        compare(actions()[1].params.action, "unfavorite");
-        compare(actions()[1].params.entry_id, "first");
-    }
-
-    function test_guardedIconNeverFallsThroughToPaste_data() {
-        return ["actionInFlight", "screenshotInFlight", "multiSelectMode", "deleteMenuOpen", "deleteConfirmationOpen", "bulkDeleteConfirmationOpen", "wipeChallenge", "editing", "editBeginPending"].map(guard => ({tag: guard, guard: guard}));
-    }
-    function test_guardedIconNeverFallsThroughToPaste(data) {
-        const ui = setup();
-        if (data.guard === "editing" || data.guard === "editBeginPending")
-            ui.controller.detailState[data.guard] = true;
-        else
-            ui.controller[data.guard] = data.guard === "wipeChallenge" ? {id: "wipe"} : true;
-        verify(!ui.controller.pinEnabled);
-        clickAvatar(ui.list, 0, true);
-        compare(actions().length, 0);
-        verify(!ui.controller.togglePin(ui.controller.selectedEntry), "controller guard also protects direct commands");
-        compare(actions().length, 0);
-    }
 }

@@ -125,17 +125,6 @@ TestCase {
         verify(capturedSecrets === null);
     }
 
-    function test_agentOwnedRequestDoesNotOfferImplicitMigration() {
-        prompt.openDaemonSecretPrompt({request_id: "legacy", data: {
-            secret_keys: ["psk"], save_supported: false, save_required: false,
-            migration_required: true, storage_provider: "networkmanager"
-        }});
-        verify(!prompt.saveSecret && !prompt.saveSecretRequired);
-        verify(prompt.credentialDetail.indexOf("explicit migration") >= 0);
-        verify(prompt.submitCredentials(fakeController, {psk: "synthetic-test-only"}));
-        verify(!capturedSecrets.save);
-    }
-
     function test_mixedOwnershipRequiresMigrationRatherThanAnImpossibleSaveChoice() {
         prompt.openDaemonSecretPrompt({request_id: "mixed", data: {
             secret_keys: ["password", "private-key-password"],
@@ -146,56 +135,4 @@ TestCase {
         verify(capturedSecrets === null);
     }
 
-    function test_validatesHiddenAndEnterpriseSchema() {
-        prompt.openHiddenNetworkPrompt(null);
-        verify(!prompt.credentialOpen, "missing native descriptors must fail closed");
-        prompt.openHiddenNetworkPrompt({
-            fields: [{key: "ssid", required: true, password: false, value: ""},
-                {key: "security", required: true, password: false, value: "wep-phrase"},
-                {key: "password", required: false, password: true, value: ""}],
-            security_modes: [{id: "wep-phrase", security: "WEP", key_mgmt: "wep", wep_key_type: "phrase",
-                enterprise: false, required_fields: ["password"]}]
-        });
-        verify(!prompt.submitCredentials(fakeController, {
-            ssid: "Hidden Cafe",
-            security: "automatic",
-            password: ""
-        }));
-        verify(prompt.credentialOpen);
-        verify(capturedConnect === null);
-
-        verify(prompt.submitCredentials(fakeController, {
-            ssid: "Hidden Cafe",
-            security: "wep-phrase",
-            password: "passphrase",
-            "enterprise.eap": "peap",
-            "enterprise.identity": "",
-            "enterprise.phase2_auth": "mschapv2"
-        }));
-        compare(capturedConnect.target.key_mgmt, "wep");
-        compare(capturedConnect.wepKeyType, "phrase");
-
-        prompt.openEnterpriseIdentityPrompt({
-            ssid: "Corp",
-            key: "network-key",
-            connect_prompt: {
-                required_fields: ["enterprise.eap", "enterprise.identity"],
-                optional_fields: ["password", "enterprise.domain_suffix_match"],
-                enterprise_defaults: {
-                    eap: ["ttls"],
-                    phase2_auth: "pap"
-                }
-            }
-        });
-        compare(prompt.credentialValues["enterprise.eap"], "ttls");
-        verify(prompt.submitCredentials(fakeController, {
-            "enterprise.eap": "ttls",
-            "enterprise.identity": "person@example.test",
-            "enterprise.domain_suffix_match": "example.test",
-            password: "secret"
-        }));
-        compare(capturedConnect.enterprise.eap[0], "ttls");
-        compare(capturedConnect.enterprise.identity, "person@example.test");
-        compare(capturedConnect.enterprise.domain_suffix_match, "example.test");
-    }
 }

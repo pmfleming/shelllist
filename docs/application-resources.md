@@ -135,14 +135,12 @@ glyphs, bars, scales and statistics are passive and add no navigation commands.
 Page keys retain shared semantics and scroll short panes. There is no chart
 inspection mode, cleanup action or info disclosure.
 
-The dedicated native resource range/geometry suite was removed in the
-[current pruning review](../tests/test-pruning-current.md). Shared field tests
-retain transaction behavior, and `tst_application_details.qml` instantiates the
-Resources page while checking page-replacement discard. Neither proves every
-resource-specific range/pointer or chart-paint path. JavaScript tests retain
-availability versus measured zero, native observed totals, stale-window and
-coverage validation, per-series gaps and clipped interval geometry. The earlier
-normal/minimum and light/dark captures below remain historical manual evidence.
+Resource presentation and parser permutations were retired in the
+[ownership reduction](../tests/test-reduction-owners.md). Native daemon tests retain
+resource aggregation, ownership, bounded work, clipped available totals, history
+persistence and shutdown. Shared fields retain input transactions; they do not
+prove resource-specific chart paint or GPU/network telemetry permutations. The
+earlier normal/minimum and light/dark captures remain historical manual evidence.
 
 Implementation review evidence is local under `target/resource-history-list/`:
 Qt-rendered dark/light active histories, normal/minimum full detail captures,
@@ -151,8 +149,6 @@ they do not claim a human screen-reader or hardware accessibility review.
 
 ```sh
 node tools/build-typescript.mjs --check
-node tests/check-application-resources.js launcher/ApplicationResources.js contracts/app-resource-ui-contract.fixture.json
-node tests/check-resource-availability.js launcher
-tests/run-qmlquality-tests.sh -input tests/qml/tst_application_details.qml
+tests/run-qml-tests.sh
 tests/run-qmllint.sh
 ```

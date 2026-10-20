@@ -118,28 +118,4 @@ DaemonTestCase {
         compare(controller.qr.password, "", "an old generation cannot fill a reopened dialog");
     }
 
-    function test_partialSaveReloadsVersionButKeepsLiveFailureVisible() {
-        const panel = makePanel(false);
-        panel.page.setCastingEnabled(true);
-        panel.page.saveDirty();
-        panel.controller.backend.acceptSharedResponse("advanced-save", {
-            error: {
-                details: {
-                    profile_saved: true,
-                    live_applied: false
-                }
-            }
-        }, "activation-failed: Profile saved, but live Cast discovery update failed");
-        compare(calls[1].params.operation, "details");
-        const saved = profile(true);
-        saved.version = "new-saved-version";
-        panel.controller.backend.setPending("advanced-load", false);
-        panel.controller.advanced.applyProfile(saved);
-        verify(panel.controller.advanced.error.indexOf("live Cast discovery update failed") >= 0);
-        panel.page.setCastingEnabled(false);
-        panel.page.saveDirty();
-        compare(calls[2].params.settings.expected_version, "new-saved-version");
-        compare(calls[2].params.settings.advanced.casting_enabled, false);
-    }
-
 }

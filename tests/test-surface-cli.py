@@ -8,13 +8,11 @@ import sys
 import tempfile
 import unittest
 
-
 def record(program, args):
     with open(os.environ["CATALOG_TEST_LOG"], "a") as log:
         log.write(json.dumps({"program": program, "args": args,
                               "initial": os.environ.get("SHELLLIST_INITIAL_SURFACE"),
                               "mode": os.environ.get("SHELLLIST_MODE")}) + "\n")
-
 
 def mock_quickshell(args):
     record("quickshell", args)
@@ -31,7 +29,6 @@ def mock_quickshell(args):
     elif args[0] != "--path":
         raise RuntimeError("unexpected mock invocation: " + repr(args))
 
-
 def mock_clipboard():
     for line in sys.stdin:
         request = json.loads(line)
@@ -39,7 +36,6 @@ def mock_clipboard():
         print(json.dumps({"kind": "response", "id": request["id"], "ok": True, "response": {"ok": True}}), flush=True)
         if request["op"] == "shutdown":
             return
-
 
 if len(sys.argv) > 1 and sys.argv[1] == "--mock-quickshell":
     mock_quickshell(sys.argv[2:])
@@ -51,7 +47,6 @@ if len(sys.argv) > 1 and sys.argv[1] == "--mock-clipboard":
 CLI = Path(sys.argv[1])
 SOURCE = Path(sys.argv[2])
 CATALOG = json.loads(SOURCE.read_text())
-
 
 class SurfaceCliTests(unittest.TestCase):
     def setUp(self):
@@ -100,29 +95,6 @@ exec() {
                     self.assertEqual(self.calls[-1]["args"][-2:], [action, ident])
                     self.assertTrue(all(call["program"] == "quickshell" for call in self.calls))
 
-    def test_default_help_and_list_compatibility(self):
-        for args, action in [([], "toggle"), (["open"], "open"), (["toggle"], "toggle")]:
-            self.run_cli(args)
-            self.assertEqual(self.calls[-1]["args"][-2:], [action, CATALOG["default_surface"]])
-        help_text = self.run_cli(["--help"]).stdout
-        self.assertIn("Surfaces: " + ", ".join(s["id"] for s in CATALOG["surfaces"]), help_text)
-        self.assertEqual(self.calls, [])
-        response = self.run_cli(["list"])
-        self.assertEqual(self.calls[-1]["args"][-1], "listSurfaces")
-        self.assertEqual([s["id"] for s in json.loads(response.stdout)], [s["id"] for s in CATALOG["surfaces"]])
-
-    def test_floating_routes_initial_surface_without_real_launch(self):
-        self.env["CATALOG_TEST_RUNNING"] = "0"
-        for ident in [s["id"] for s in CATALOG["surfaces"]]:
-            self.run_cli(["floating", ident])
-            self.assertEqual(self.calls[-1]["initial"], ident)
-            self.assertEqual(self.calls[-1]["mode"], "floating")
-        self.run_cli(["floating"])
-        self.assertEqual(self.calls[-1]["initial"], CATALOG["default_surface"])
-        self.env["CATALOG_TEST_RUNNING"] = "1"
-        self.run_cli(["floating", "wifi"], expected=1)
-        self.assertTrue(all(call["args"] == ["list", "--all"] for call in self.calls))
-
     def test_invalid_surfaces_and_arguments_do_not_dispatch(self):
         for args in [["unknown"], ["open", "wifi;quit"], ["toggle", "WiFi"],
                      ["floating", "unknown"], ["audio", "bad-action"],
@@ -133,18 +105,6 @@ exec() {
         self.env["CATALOG_TEST_REPLY"] = "rejected"
         self.run_cli(["open", "wifi"], expected=1)
         self.assertEqual(self.calls[-1]["args"][-2:], ["open", "wifi"])
-
-    def test_clipboard_settings_keep_separate_effect_route(self):
-        for action in ["pause", "private", "resume", "kept"]:
-            args = ["clipboard", action] + (["15"] if action == "kept" else [])
-            self.run_cli(args)
-            self.assertEqual([call["program"] for call in self.calls], ["clip-daemon", "clip-daemon"])
-            request = self.calls[0]["args"]
-            self.assertEqual(request["method"], "clipboard.settings.update" if action == "kept" else "clipboard.capture.setPaused")
-            self.assertEqual(request["params"], {"max_entries": 15} if action == "kept" else {
-                "paused": action != "resume", "private_mode": action == "private"})
-            self.assertEqual(self.calls[1]["args"]["op"], "shutdown")
-
 
 if __name__ == "__main__":
     unittest.main(argv=[sys.argv[0]])

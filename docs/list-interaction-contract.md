@@ -24,8 +24,8 @@ selection and refresh behavior override `ResultRow.pick()` and
 `ChooserListPane.requestRefresh()` rather than assigning callback properties.
 
 Runtime smoke validates that the exported component loads with the shared UI
-module. `tst_keyed_list_model.qml` retains stable-key reorders, progressive rebuilds
-and stale-work cancellation. The dedicated reactivation/selection-reveal suite was
-pruned; those model tests do not prove every viewport or reopening path.
-Shared-list use and wheel ownership remain review requirements rather than
-source-token assertions. See the [current pruning review](../tests/test-pruning-current.md).
+module. Notification journeys retain atomic list publication and stale-page
+rejection. Direct keyed-model, progressive-rebuild and selection-reveal matrices
+are retired; not every viewport or reopening path is directly tested. Shared-list
+use and wheel ownership remain review requirements rather than source-token
+assertions. See the [current ownership review](../tests/test-reduction-owners.md).

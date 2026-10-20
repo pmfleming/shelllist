@@ -258,7 +258,7 @@ Useful focused commands:
 shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml activity/*.qml \
   bar/*.qml battery/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml \
   wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
-node tests/check-provider-model.js qml/Shelllist/Core/Model.js
+node tests/check-generated-contracts.js .
 tests/run-qml-tests.sh
 tests/run-runtime-smoke.sh
 tests/run-performance-benchmarks.sh
