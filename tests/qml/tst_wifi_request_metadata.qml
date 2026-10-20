@@ -24,8 +24,6 @@ DaemonTestCase {
             {tag:"mutation-with-read-id", id:"networks", method:"wifi.profile.operation", params:{operation:"forget",path:"profile"}, exclusive:true, handler:"profile", execution:"effect"},
             {tag:"read-with-mutation-id", id:"disconnect", method:"wifi.profile.operation", params:{operation:"details",path:"profile"}, exclusive:false, handler:"advanced-load", execution:"read"},
             {tag:"unknown-with-portal-id", id:"portal-fake", method:"new.mutation", params:{}, exclusive:true, handler:"", execution:"effect"},
-            {tag:"cache-refresh-is-not-a-read", id:"networks", method:"wifi.networks", params:{cached:true,refresh_cache:true}, exclusive:false, handler:"networks", execution:"operation"},
-            {tag:"portal-is-independent-effect", id:"arbitrary", method:"network.portalClaim", params:{}, exclusive:false, handler:"portal", execution:"effect"},
             {tag:"inherited-variant", id:"arbitrary", method:"wifi.profile.operation", params:{operation:"__proto__"}, exclusive:true, handler:"profile", execution:"effect"}
         ];
     }

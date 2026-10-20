@@ -855,6 +855,19 @@
             ]
           ];
 
+          nativeApplication = pkgs.runCommand "shelllist-native-application-journey" {
+            FONTCONFIG_FILE = fontsConf pkgs;
+            nativeBuildInputs = [ pkgs.python3 pkgs.dbus pkgs.bash pkgs.quickshell pkgs.qt6.qtdeclarative pkgs.qt6.qtsvg ];
+          } ''
+            export QT_PLUGIN_PATH=${pkgs.qt6.qtsvg}/lib/qt-6/plugins
+            export TZDIR=${pkgs.tzdata}/share/zoneinfo
+            python3 ${./tests/test-native-application.py} \
+              --source-root ${./.} \
+              --app-daemon ${appDaemon}/bin/app-daemon \
+              --search ${self.packages.${system}.shelllistSearch}/bin/shelllist-search
+            touch $out
+          '';
+
           qmlTests =
             pkgs.runCommand "shelllist-qml-tests"
               {
@@ -892,9 +905,6 @@
                 ${barDaemon}/bin/bar-daemon debug notification-contract-fixture > bar-notification-actions.json
                 diff -u ${./tests/qml/fixtures/bar-notification-actions.json} bar-notification-actions.json
                 cp bar-notification-actions.json test-root/tests/qml/fixtures/bar-notification-actions.json
-                ${barDaemon}/bin/bar-daemon debug session-control-contract-fixture > bar-session-controls.json
-                diff -u ${./tests/qml/fixtures/bar-session-controls.json} bar-session-controls.json
-                cp bar-session-controls.json test-root/tests/qml/fixtures/bar-session-controls.json
                 ${barDaemon}/bin/bar-daemon debug battery-contract-fixture > bar-battery.json
                 diff -u ${./tests/qml/fixtures/bar-battery.json} bar-battery.json
                 cp bar-battery.json test-root/tests/qml/fixtures/bar-battery.json

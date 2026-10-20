@@ -21,8 +21,7 @@ DaemonTestCase {
             location_source: source, accuracy_meters: accuracy};
     }
     function test_estimateMetadataIsPassiveAndRetainsIdentity_data() {
-        return [{tag: "normal-dark", scheme: Qt.Dark, panelWidth: 1200},
-            {tag: "minimum-light", scheme: Qt.Light, panelWidth: 976}];
+        return [{tag: "minimum-light", scheme: Qt.Light, panelWidth: 976}];
     }
     function test_estimateMetadataIsPassiveAndRetainsIdentity(data) {
         const oldScheme = Ui.Theme.previewColorScheme;

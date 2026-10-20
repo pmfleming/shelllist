@@ -33,7 +33,6 @@ control bar-controls
 sleep bar-sleep
 display bar-displays
 notification bar-notification-actions
-session-control bar-session-controls
 battery bar-battery
 activity bar-activity
 query bar-notification-queries

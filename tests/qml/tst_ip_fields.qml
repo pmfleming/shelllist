@@ -51,7 +51,8 @@ DaemonTestCase {
         panel.controller.advanced.applyProfile({
             path: panel.controller.advanced.profilePath, version: "test-version",
             security_type: "WPA2 Personal", mac_address_policy: "default",
-            ipv4: {method: "manual", addresses: [{address: "192.168.1.20", prefix: 24}], ignore_auto_dns: true, dns: []},
+            ipv4: {method: "manual", addresses: [{address: "192.168.1.20", prefix: 24}], ignore_auto_dns: true, dns: [],
+                dns_search: ["example.test"], routes: [{destination: "10.0.0.0/8"}], route_metric: 50},
             ipv6: {method: "manual", addresses: [{address: "2001:db8::20", prefix: 64}], ignore_auto_dns: true, dns: []}
         });
         tryVerify(() => findChild(panel, "wifiIpAddress") !== null);
@@ -153,7 +154,13 @@ DaemonTestCase {
         compare(panel.page.currentIp.dns, field.text);
         panel.page.saveDirty();
         compare(updates().length, 1);
-        compare(updates()[0].params.settings.ipv4.dns, ["1.1.1.1", "8.8.8.8"]);
+        const saved = updates()[0].params.settings.ipv4;
+        compare(saved.dns, ["1.1.1.1", "8.8.8.8"]);
+        compare(saved.addresses, [{address: "192.168.1.20", prefix: 24}]);
+        compare(saved.dns_search, ["example.test"]);
+        compare(saved.routes, [{destination: "10.0.0.0/8"}]);
+        compare(saved.route_metric, 50, "editing DNS cannot overwrite unrelated routing settings");
+        verify(saved.ignore_auto_dns);
         verify(panel.controller.advanced.saving, "submitting is not acknowledgement");
     }
 }

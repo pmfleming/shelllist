@@ -4,9 +4,11 @@ Prefer end-to-end user journeys and public-boundary integration tests. Keep loca
 tests for unique failure modes that those flows cannot reasonably exercise; do
 not mirror implementation tables or freeze visual choices unnecessarily.
 
-The [ecosystem review](test-reduction-ecosystem.md) records the
-latest partial pruning and validation. **The requested 33% reduction is not met**;
-older checkpoints below must not be reused as the current baseline.
+The [native-journey pass](test-reduction-vertical.md) records the latest fresh
+baseline, real Qt→JSONL→daemon replacement coverage and partial pruning. **The
+requested 33% reduction is not met** (994 → 988 measured cases/suites). The earlier
+[ecosystem review](test-reduction-ecosystem.md) and checkpoints below must not be
+reused as the current baseline.
 
 ## Panel standardization acceptance
 
@@ -25,6 +27,13 @@ use `tests/review-panel-ui.py --base <ref>` as an advisory PR drift review, not 
 blanket ban on numeric domain geometry. Neither freezes screenshots as goldens.
 
 ## Retained coverage
+
+`tests/test-native-application.py` is the primary application search/settings/
+launch journey: real Quickshell input, search and JSONL processes, a private bus,
+actual daemon persistence, storage failure and explicit launch retry. It runs in
+`checks.nativeApplication`; see the [runner command and limits](test-reduction-vertical.md).
+Adversarial frontend ownership/reply tests remain separate; they deliberately use
+recording transports and are not daemon implementation coverage.
 
 Run `tests/run-qml-tests.sh` from `nix develop`. The development shell and Nix
 `qmlTests` check provide matching Qt SVG plugins, timezone data and the same
