@@ -68,9 +68,25 @@ DaemonTestCase {
         tryVerify(() => findChild(panel, "detailAction:noise-control") !== null);
         tryVerify(() => findChild(panel, "detailAction:noise-control").surfaceShortcut === "Alt+C");
         panel.surface.listItem.focusList();
-        verify(waitForRendering(panel), "settle the asynchronous detail page and Audio delegates");
+        waitForDetailLayout(panel);
         calls = [];
         return panel;
+    }
+    function waitForDetailLayout(panel) {
+        // Rendering the outer surface does not imply that its asynchronous
+        // Device loader and Column have positioned their children yet. In the
+        // Nix sandbox Audio can still have y=0 on that first rendered frame.
+        tryVerify(() => panel.surface.detailsNavigation.contentReady);
+        const page = findChild(panel, "bluetoothDevicePage");
+        const row = findChild(panel, "bluetoothBatteryRow");
+        const audio = findChild(panel, "deviceAudio");
+        tryVerify(() => page && row && audio && row.width > 0 && row.height > 0
+            && audio.visible && audio.height > 0 && audio.width === page.width
+            && audio.y === row.y + row.height + page.cardSpacing
+            && page.contentHeight >= audio.y + audio.height,
+            5000, "wait for the real Audio card to be laid out below the battery row");
+        // A settled scene need not schedule another frame. Do not wait for an
+        // unrelated repaint as a proxy for layout readiness.
     }
     function requests() {
         return calls.filter(call => call.method === "bluetooth.device.operation");
@@ -144,7 +160,7 @@ DaemonTestCase {
         compare(audio.y, before.y);
         compare(page.contentHeight, before.contentHeight);
         panel.width = 820;
-        verify(waitForRendering(panel));
+        waitForDetailLayout(panel);
         const narrowAudioY = audio.y;
         openKeyboard(panel);
         keyClick(Qt.Key_Right);
