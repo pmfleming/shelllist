@@ -20,6 +20,7 @@ Rectangle {
     property url leadingIconSource: ""
     property color leadingIconColor: Theme.mutedText
     property Component avatarContent: null
+    property string avatarBadgeIcon: ""
     property bool avatarDoubleClickAction: false
     readonly property int detailSlotWidth: detailsActionVisible ? scaled(30) + 6 : 0
     readonly property bool selected: index === selectedIndex
@@ -101,6 +102,29 @@ Rectangle {
         Loader {
             anchors.fill: parent
             sourceComponent: row.avatarContent
+        }
+        Rectangle {
+            id: avatarBadge
+            objectName: "resultAvatarBadge"
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            // Shared UI owns this quarter-avatar geometry. A neutral backing
+            // keeps the small, desaturated mark readable over selected avatars.
+            width: avatar.width / 4
+            height: width
+            radius: width / 2
+            visible: row.avatarBadgeIcon.length > 0
+            color: Theme.surfaceRaised
+            Accessible.ignored: true
+
+            GlyphLabel {
+                objectName: "resultAvatarBadgeGlyph"
+                anchors.fill: parent
+                glyph: row.avatarBadgeIcon
+                color: Theme.mutedText
+                font.pixelSize: avatarBadge.width
+                Accessible.ignored: true
+            }
         }
     }
 

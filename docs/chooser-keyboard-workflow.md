@@ -971,7 +971,10 @@ its body retains the primary action. Expanded details expose the same Pin to top
 Unpin secondary command with **Alt+N**, outside editable Tab traversal and on both
 tabs. Multiple entries may be pinned. The daemon persists favorites and returns
 them before ordinary history; QML retains that order, including during paging,
-and displays the acknowledged Pinned marker. No optimistic reorder or automatic
+and displays an acknowledged, desaturated pin badge at the avatar's bottom-right
+corner, not a Pinned text column. Shared `ResultRow` owns its quarter-avatar sizing
+and neutral backing; the mark is passive and adds no hit target or Tab stop.
+The result's accessible name retains “Pinned”. No optimistic reorder or automatic
 mutation retry is introduced. Busy, modal, multi-selection and active edit-lease
 guards apply to both routes; failure preserves the existing pin state. Native
 `tst_clipboard_pins.qml` covers pointer/key routes, guards and acknowledged ordering.

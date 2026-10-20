@@ -21,6 +21,7 @@ Ui.ResultRow {
     leadingIcon: resultData.icon || "󰅍"
     leadingIconColor: entry.current ? Ui.Theme.active : Ui.Theme.accent
     accessibleName: resultData.title + (entry.favorite ? qsTr(" · Pinned") : "")
+    avatarBadgeIcon: entry.favorite ? "push_pin" : ""
     avatarDoubleClickAction: true
     onAvatarDoubleClicked: controller.togglePin(entry)
 
@@ -28,18 +29,6 @@ Ui.ResultRow {
         title: row.resultData.title
         subtitle: row.resultData.subtitle || ""
         uiScale: row.uiScale
-    }
-
-    Ui.ThemeText {
-        visible: row.entry.favorite
-        Layout.preferredWidth: row.scaled(62)
-        Layout.fillHeight: true
-        verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignRight
-        text: "Pinned"
-        color: Ui.Theme.accent
-        font.pixelSize: Ui.Theme.metadataSize
-        font.weight: Ui.Theme.fontWeightDemiBold
     }
 
     Rectangle {
