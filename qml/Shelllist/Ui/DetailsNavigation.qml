@@ -389,7 +389,9 @@ FocusScope {
         const page = currentPage;
         if (!page)
             return false;
-        const origin = (page as DetailListView)?.originY || 0;
+        const list = page as DetailListView;
+        if (list) list.cancelAnchor();
+        const origin = list?.originY || 0;
         const next = Math.max(origin, Math.min(origin + Math.max(0, page.contentHeight - page.height), page.contentY + distance));
         if (next === page.contentY)
             return false;

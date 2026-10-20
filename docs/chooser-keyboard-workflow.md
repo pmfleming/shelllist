@@ -413,7 +413,11 @@ individual Delete are commands (also in Alt+J), never field Tab stops or row-wid
 sender actions. Notification cards have no Read/right-arrow navigation; their
 Delete and stack-expansion buttons are borderless. `DetailListView` shares
 `DetailFlickable`'s non-highlighted Tab fallback and PageUp/PageDown scrolling;
-Up/Down still select application results.
+Up/Down still select application results. `DetailListView` owns keyed viewport
+capture and bounded offset restoration beside its scroll memory. Notification
+publication brackets that shared operation; it does not keep a second viewport
+state. Pointer movement, PageUp/PageDown and hiding cancel queued anchoring so
+late layout work cannot undo newer navigation. Missing anchors retire safely.
 
 Delete prepares a native snapshot and opens a shared confirmation modal with its
 actual count. App/global deletion includes retained records outside search and

@@ -143,6 +143,50 @@ DaemonTestCase {
         return {view: "timeline", epoch: "epoch", revision: "1", query: "", app_key: "named:Chat", date: "older", period_day: "2026-10-08", recent: [1000,999,998].map(id => preview(id, "named:Chat")), dates: ["today", "week", "month", "older"].map(key => ({key: key, count: key === "older" ? 40 : 0})), count: 40, total_rows: 40, offset: offset, next_offset: next, anchor_reached: true,
             entries: ids.map(id => ({key: id + ":" + id * 1000, preview: preview(id, "named:Chat"), members: [{id: id, created: id * 1000}]}))};
     }
+    function test_timelineRefreshRetainsKeyAndOffsetButNavigationCancelsRestore() {
+        const {state, controller, content} = make();
+        controller.openDetails();
+        const timeline = controller.timeline;
+        timeline.active = false; // recording fixture publishes windows explicitly
+        timeline.requestedDate = "older"; timeline.collapsed = false;
+        function publish(first) {
+            const value = timelinePage(0, Array.from({length: 16}, (_, i) => first - i), null);
+            value.count = 16; value.total_rows = 16; value.dates[3].count = 16;
+            timeline.receive({view: "timeline", generation: timeline.generation, appKey: timeline.appKey,
+                query: "", date: "older", grouping: timeline.grouping, offset: 0,
+                replacing: true, revision: state.observedHistoryRevision}, value, "", "");
+            compare(timeline.error, "");
+        }
+        publish(100);
+        tryVerify(() => findChild(content, "notificationTimelineList") !== null);
+        const list = findChild(content, "notificationTimelineList");
+        tryCompare(list, "count", 20);
+        tryCompare(controller, "detailsExpansionProgress", 1);
+        showRow(list, 8, ListView.Beginning);
+        list.contentY += 13;
+        const index = list.firstVisibleIndex(), key = list.model.get(index).resultKey;
+        const offset = list.itemAtIndex(index).y - list.contentY;
+        publish(101);
+        tryVerify(() => !list.scrollSuspended);
+        tryVerify(() => {
+            const row = list.itemAtIndex(list.model.currentKeys().indexOf(key));
+            return row && Math.abs(row.y - list.contentY - offset) < 1;
+        });
+        content.detailsNavigation.focusContent(true);
+        timeline.viewAboutToChange();
+        verify(list.scrollSuspended);
+        keyClick(Qt.Key_PageDown);
+        verify(!list.scrollSuspended, "actual page navigation cancels queued anchoring");
+        const scrolled = list.contentY;
+        timeline.viewChanged(); wait(80);
+        compare(list.contentY, scrolled, "late restoration cannot undo newer navigation");
+        publish(300); // the previously anchored row no longer exists
+        tryVerify(() => !list.scrollSuspended);
+        verify(!list.model.currentKeys().includes(key));
+        timeline.viewAboutToChange(); list.visible = false;
+        verify(!list.scrollSuspended, "hidden lists cancel pending restoration");
+        content.destroy();
+    }
     function test_malformedTimelineKeepsPublishedWindow_data() {
         return [
             {tag: "foreign-preview", patch: {recent: [preview(1000, "named:Mail")]}}

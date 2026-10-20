@@ -80,3 +80,29 @@ rows reject duplicate batch fields, another adapter, absent status, a foreign
 stream and a nonterminal event advertised as completion. Existing actual field
 save/discard, partial retry, late/duplicate reply, bounded read recovery and
 cancellation acknowledgement tests remain. No backend/keyboard contract changes.
+
+## 4 — List-owned notification viewport restoration
+
+Move capture, incubation retries, cancellation and final scroll-memory publication
+into the existing `DetailListView`, not a new wrapper. One nullable bookmark owns
+key/offset/retry state; the model reference is typed. `NotificationIndex` retains
+only domain publication/navigation connections. List hiding and pointer movement
+cancel locally. The new actual PageDown test exposed that keyboard scrolling did
+not cancel the old queued anchor; shared `DetailsNavigation.scrollPage` now does
+so before scrolling. No panel-local key variant or mutation route is introduced.
+
+NotificationIndex ID references **104 → 78**, and component effort **320 → 224**;
+`restoreAnchor` cognitive complexity **17 → 13**. Counting the shared implementation,
+production source **41538 → 41543**, cyclomatic **8538 → 8541**, cognitive
+**5965 → 5963**, weighted function effort **42030 → 42035**. Mean locality slightly
+falls **75.3631 → 75.3477** (the original index score was already floored at zero);
+leverage is unchanged. The ownership/cross-object-reference improvement is real,
+but not a claimed improvement in every aggregate heuristic.
+
+Validation: full native Qt **402/0/1**, notification center **12/0/0**, chooser
+keyboard **7/0/0**, strict lint, UI drift review and notification-presentation JS
+pass. The native consumer test checks key plus pixel-offset preservation across
+an inserted row, PageDown cancellation of late restore, missing-key retirement
+and hidden-list cancellation. The standalone chooser run retains an existing
+engine-teardown incubation warning. The interaction contract documents the shared
+scroll cancellation boundary; daemon timeline identities/publication stay intact.

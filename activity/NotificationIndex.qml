@@ -8,57 +8,14 @@ Item {
     id: page
     required property NotificationController controller
     readonly property NotificationTimeline timeline: controller.timeline
-    property string anchorKey: ""
-    property real anchorOffset: 0
-    property bool restoring: false
-    property int restoreAttempts: 0
-    property int stablePasses: 0
-    property bool tearingDown: false
-    Component.onDestruction: tearingDown = true
-    Timer { id: restoreRetry; interval: 16; onTriggered: page.restoreAnchor() }
-    function captureAnchor(): void {
-        if (restoring) return;
-        restoreAttempts = 0; stablePasses = 0;
-        const index = history.firstVisibleIndex();
-        const row = index >= 0 ? history.itemAtIndex(index) : null;
-        anchorKey = index >= 0 ? history.model.get(index).resultKey : "";
-        anchorOffset = row ? row.y - history.contentY : 0;
-        restoring = true;
-    }
-    function restoreAnchor(): void {
-        restoreRetry.stop();
-        if (!restoring) return;
-        if (tearingDown || !history || !page.visible) { restoring = false; return; }
-        // A bounds/flick animation must not undo the restored row offset.
-        history.cancelFlick();
-        history.forceLayout();
-        const index = history.model.currentKeys().indexOf(anchorKey);
-        if (index >= 0) {
-            let item = history.itemAtIndex(index);
-            if (!item || item.height <= 0) {
-                history.positionViewAtIndex(index, ListView.Beginning);
-                history.forceLayout();
-                item = history.itemAtIndex(index);
-            }
-            // Incubation and variable-height layout can settle over successive
-            // frames. Hold the same key/offset until two passes agree; never
-            // replace that anchor with an intermediate gap or first-row offset.
-            const ready = item && item.height > 0;
-            stablePasses = ready && Math.abs(item.y - history.contentY - anchorOffset) < 1 ? stablePasses + 1 : 0;
-            if (ready) history.contentY = Math.max(history.originY, Math.min(history.originY + Math.max(0, history.contentHeight - history.height), item.y - anchorOffset));
-            if (stablePasses < 2 && restoreAttempts++ < 32) { restoreRetry.restart(); return; }
-        }
-        restoring = false;
-        history.rememberScroll();
-    }
     Connections {
         target: page.controller
-        function onNavigationInteracted(): void { restoreRetry.stop(); page.restoring = false; }
+        function onNavigationInteracted(): void { history.cancelAnchor(); }
     }
     Connections {
         target: page.timeline
-        function onViewAboutToChange(): void { page.captureAnchor(); }
-        function onViewChanged(): void { Qt.callLater(page.restoreAnchor); }
+        function onViewAboutToChange(): void { history.captureAnchor(); }
+        function onViewChanged(): void { Qt.callLater(history.restoreAnchor); }
     }
     function dateLabel(key: string): string {
         return ({today: qsTr("Today"), week: qsTr("This week"), month: qsTr("This month"), older: qsTr("Older")})[key] || key;
@@ -83,8 +40,6 @@ Item {
         anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
         viewMemory: page.controller.viewMemory
         memoryTab: "notifications"
-        scrollSuspended: page.restoring
-        onMovementStarted: { restoreRetry.stop(); page.restoring = false; }
         spacing: Ui.Theme.spacingSm
         cacheBuffer: 200
         readonly property var rows: Ui.NotificationPresentation.timelineRows(page.timeline.snapshot,
