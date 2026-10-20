@@ -51,9 +51,9 @@ module imports, independent schemas and shared local-reference validation. An
 initial test used an unmodeled sleep method; it was corrected to the existing
 generated `audio.adjust` contract, not by weakening validation.
 
-The attempted current-source Nix protocol-binding check is **blocked**, not
-passed: `clip-daemon/docs/quality-refactor-followup.md` is unrelated and untracked.
-It was not modified or staged. Regeneration used the explicit installed
+The current-source Nix protocol-binding check at this step was **blocked**, not
+passed: `clip-daemon/docs/quality-refactor-followup.md` was then untracked and
+unrelated. It was not modified or staged. Regeneration used the explicit installed
 `SHELLLIST_NM_DAEMON` override for the read-only registry command because the
 sibling debug binary was absent; all five outputs compare exactly.
 
@@ -106,3 +106,55 @@ an inserted row, PageDown cancellation of late restore, missing-key retirement
 and hidden-list cancellation. The standalone chooser run retains an existing
 engine-teardown incubation warning. The interaction contract documents the shared
 scroll cancellation boundary; daemon timeline identities/publication stay intact.
+
+## 5 — Bounded, streaming native profiling
+
+The adapter resolves source URLs once per event definition instead of once per
+range, removes parsed XML nodes from their parents, and streams duration records
+into staged JSON. No events are sampled away. Source hashes are checked after
+normalization; malformed/truncated/over-limit input cannot publish partial reports.
+Old reports are removed at invocation start. TERM/INT unwind subprocess cleanup,
+which also kills descendants that ignore TERM or outlive the profiler parent.
+
+The adapter records its actual offscreen/software/UTC environment; both it and
+the common native runner supply trusted fixture-read permission. A direct
+GeneratedContracts run with the inherited permission removed passes **4/0/0**. Recording is bounded to 180 seconds, normalization
+to 60 seconds, input to 512 MiB and ranges to five million. Lens's 300-second tool
+budget covers both phases and cleanup (not a relaxed test assertion or evidence
+policy). Unsupported scenegraph events are no longer collected; frames and
+cross-engine standalone JS attribution remain explicitly unmeasured.
+
+Validation: eight Python tests cover units/categories, one-resolution repeated
+ranges, lossless streaming, bounds, source changes, truncated input, old-report
+retirement, fixture environment and timeout/outer-signal descendant cleanup.
+The same suite is registered as the Nix `profilerAdapter` check. Local Python
+execution passes; its current-source Nix invocation is **blocked**, not passed:
+the earlier clipboard blocker is gone, but `app-daemon` now has unrelated untracked
+quality-regression scripts/configuration. Those files were left untouched.
+On the same saved 284-MiB trace, normalization of **3,756,343** duration events takes
+**9.45 seconds / 30,548 KiB peak RSS** with the streaming sink; the old normalizer
+exceeds a 30-second limit. This is an adapter benchmark, not application speedup.
+
+Both the standalone full profiler and the actual configured Lens `measure all`
+now finish. The Lens adapter takes **98.2 seconds**, reports **402 passes, zero
+failures, one existing renderer skip**, and publishes **3,834,004** duration events.
+Runtime-performance evidence is **complete**. Coverage correctly remains partial
+(**359/396 QML files**); the JUnit skip also keeps execution scope incomplete.
+The overall Lens verdict is still **incomplete**, with zero verified/semantic
+failures: existing semantic abstentions and formatter limitations are not hidden.
+
+## Combined result
+
+Against `3b2d9cd`, production source **41584 → 41543**, cyclomatic sum
+**8603 → 8541**, cognitive sum **6078 → 5963**, weighted function effort
+**42386 → 42035**, clone-covered lines **1614 → 1484**. Mean leverage is unchanged;
+mean locality dips slightly as noted in step 4. Component effort is effectively
+unchanged (**47538 → 47539**). One new `var` is a nullable viewport bookmark, not
+an untyped QObject boundary; it replaces six disconnected state properties.
+
+Regression tests add code: full configured QML/JS physical lines grow
+**57456 → 57483**. Python robustness/tests and the sibling generator also grow.
+No blanket total-repository LOC or runtime-performance gain is claimed. Complete
+expanded clone scans omit zero windows/groups. Full sibling release/hardware,
+live compositor, IME and human accessibility acceptance remain unverified; the
+unrelated sibling worktree blocker remains untouched.

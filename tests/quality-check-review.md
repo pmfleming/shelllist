@@ -1,5 +1,22 @@
 # Review of previously skipped quality checks
 
+## Current profiler checkpoint — five-target follow-up
+
+The [five-target review](../docs/qml-quality-five-targets.md) supersedes the
+historical execution counts below. `tests/profile-qml.py` now caches definition
+resolution, frees parsed XML children and streams duration records to staged JSON.
+It supplies the fixture-read/offscreen environment, rejects stale/partial evidence,
+and cleans up descendant processes on timeout or outer cancellation. Limits are
+180 seconds recording, 60 seconds normalization, 512 MiB input and five million
+ranges; Lens allows 300 seconds for the complete adapter. No sampling or new skips.
+
+Eight Python tests pass. The configured full Lens run completes with **402 Qt
+passes / 0 failures / 1 existing renderer skip**; adapter duration is 98.2 seconds.
+Runtime evidence is complete; execution scope and coverage remain honestly partial
+(the existing skip and 359/396 observed QML files). The overall verdict remains
+**incomplete**, not a clean quality gate. Semantic/formatter limitations and
+hardware acceptance remain open. Earlier tool-enablement results follow as history.
+
 ## Parser oracle — valuable, enabled
 
 Both Qt `qmldom` and tree-sitter now inspect every analyzed QML file. The initial

@@ -8,6 +8,8 @@ qt_root=$(cd "$(dirname "$runner")/.." && pwd)
 # The Nix dev/check environment supplies matching SVG plugins and TZDIR.
 export QT_QPA_PLATFORM=offscreen
 export QT_QUICK_BACKEND=software
+# Trusted test fixtures use XMLHttpRequest for local JSON, never remote input.
+export QML_XHR_ALLOW_FILE_READ=1
 export TZ=UTC
 
 exec qmltestrunner \

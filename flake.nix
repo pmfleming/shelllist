@@ -461,6 +461,15 @@
                 python3 ${./tests/test-build-inputs.py} ${./tools/check-build-inputs.py}
                 touch $out
               '';
+          profilerAdapter = pkgs.runCommand "shelllist-profiler-adapter-tests" {
+            nativeBuildInputs = [ pkgs.python3 ];
+          } ''
+            mkdir tests
+            cp ${./tests/profile-qml.py} tests/profile-qml.py
+            cp ${./tests/test_profile_qml.py} tests/test_profile_qml.py
+            python3 tests/test_profile_qml.py
+            touch $out
+          '';
           surfaceCatalog = pkgs.runCommand "shelllist-surface-catalog" {
             nativeBuildInputs = [ pkgs.python3 ];
           } ''

@@ -4,8 +4,14 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
-The [five-target follow-up](qml-quality-five-targets.md) starts from `3b2d9cd`
-and records each requested implementation and its validation in a separate commit.
+The [five-target follow-up](qml-quality-five-targets.md) starts from `3b2d9cd`.
+All five are implemented and committed separately: battery translation,
+generator-owned shared validation, Bluetooth/Wi-Fi completion boundaries,
+list-owned viewport restoration and bounded streaming profiling. Full Qt is
+**402/0/1**; the actual full Lens run now completes with runtime evidence, while
+its verdict remains incomplete for documented coverage/semantic/formatter limits.
+Production complexity, effort, clones and LOC fall; locality/leverage and total
+code-size trade-offs are recorded explicitly.
 
 The [2026-10-20 maintenance review](qml-maintenance-2026-10-20.md) starts from
 clean `fba5e8a`: location completion ownership and complexity, shared Activity
