@@ -1124,8 +1124,12 @@ results clear an old highlight instead of silently choosing a different city.
 The modal has the Add/Manual identity glyph and Cancel immediately left of Confirm
 in the shared inline header; there is no repeated action-summary footer.
 `ChoicePopup` and `DropDownOptionDelegate` share the ordinary dropdown composition.
-Submission captures identity/revision and awaits native acknowledgement. Escape cancels the
-unsubmitted choice; closing a submitted dialog does not undo or replay its command.
+Submission captures identity/revision and awaits native acknowledgement. Only a
+nonempty owned reply ID may retire a search, status read or mutation; empty,
+unowned and duplicate replies cannot change the current picker or its diagnostics.
+Invalid city acknowledgements retain the published catalog and the open picker.
+Escape cancels the unsubmitted choice; closing a submitted dialog does not undo or
+replay its command.
 Remove uses shared compact confirmation, initially focused on Cancel. Modals block
 underlying commands/refresh/tabs. Native safety/authorization remains authoritative;
 old or absent authority support leaves controls unavailable without shell fallbacks.

@@ -75,9 +75,6 @@ Ui.ProviderChooserController {
     readonly property var selectedDraft: draft.find(function (o) {
         return o.name === selectedName;
     }) || null
-    readonly property int selectedNumber: outputs.findIndex(function (o) {
-        return o.name === selectedName;
-    }) + 1
     readonly property int activeCount: outputs.filter(function (o) {
         return !o.disabled;
     }).length

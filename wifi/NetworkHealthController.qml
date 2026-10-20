@@ -6,24 +6,16 @@ import "NetworkHealth.js" as Health
 Item {
     required property WifiController controller
 
-    // Most recent transition, whether or not it was worth surfacing.
-    property var lastEvent: null
-    // Most recent transition the daemon recommended surfacing.
-    property var lastFailure: null
     property string lastNotificationKey: ""
     property double lastNotificationAtMs: 0
     readonly property int notificationDeduplicationMs: 3000
 
-    readonly property string lastFailureMessage: lastFailure ? Health.message(lastFailure) : ""
-
     function handleEvent(event) {
         if (event.event === "subscribed")
             return;
-        lastEvent = event;
         console.info("shelllist nm health " + Health.logLine(event));
         if (!Health.isFailure(event))
             return;
-        lastFailure = event;
         // A connect attempt reports its own failure with more context, so a
         // health event about the same attempt would only duplicate it.
         if (controller.connection.running)

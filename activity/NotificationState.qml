@@ -35,8 +35,6 @@ Item {
     readonly property alias drafts: replyDrafts.drafts
     property var replies: ({})
     property var operations: ({})
-    readonly property var activeNotifications: activeRecords
-    readonly property int draftCount: Object.keys(drafts).filter(key => String(drafts[key] || "").length > 0).length
     property NotificationBackend backend: notificationBackend
     signal centerResponse(var context, var value, string error, string code)
     signal collectionChanged

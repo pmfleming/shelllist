@@ -90,47 +90,34 @@ Core.Provider {
             })];
     }
 
-    function trustAction(device: var, caps: var): var {
-        return Core.Model.settingToggle("trusted", "Trusted", !!device.trusted, {
-            enabled: actionEnabled(caps.can_trust, device),
-            metadata: {
-                disabledReason: unsupported(caps, "trust")
-            }
-        });
-    }
-    function wakeAction(device: var, caps: var): var {
-        const supported = device.wake_allowed !== null && device.wake_allowed !== undefined;
-        return Core.Model.settingToggle("wake", "Allow device to wake computer", !!device.wake_allowed, {
-            visible: supported,
-            enabled: actionEnabled(caps.can_wake, device),
-            metadata: {
-                disabledReason: unsupported(caps, "wake")
-            }
-        });
-    }
-    function multipointAction(device: var, caps: var): var {
-        const multipoint = (device.fast_pair && device.fast_pair.multipoint) || ({});
-        return Core.Model.settingToggle("multipoint", "Multipoint", !!multipoint.enabled, {
-            visible: !!multipoint.supported,
-            enabled: actionEnabled(caps.can_set_multipoint, device),
-            metadata: {
-                disabledReason: unsupported(caps, "set_multipoint")
-            }
-        });
-    }
-    function blockAction(device: var, caps: var): var {
-        return Core.Model.settingToggle("blocked", "Blocked", !!device.blocked, {
-            enabled: actionEnabled(caps.can_block, device),
-            presentation: {
-                tone: "danger"
-            },
-            metadata: {
-                disabledReason: unsupported(caps, "block")
-            }
-        });
-    }
     function settingActions(device: var, caps: var): var {
-        return [trustAction(device, caps), wakeAction(device, caps), multipointAction(device, caps), blockAction(device, caps)];
+        const multipoint = (device.fast_pair && device.fast_pair.multipoint) || ({});
+        return [Core.Model.settingToggle("trusted", "Trusted", !!device.trusted, {
+                enabled: actionEnabled(caps.can_trust, device),
+                metadata: {
+                    disabledReason: unsupported(caps, "trust")
+                }
+            }), Core.Model.settingToggle("wake", "Allow device to wake computer", !!device.wake_allowed, {
+                visible: device.wake_allowed !== null && device.wake_allowed !== undefined,
+                enabled: actionEnabled(caps.can_wake, device),
+                metadata: {
+                    disabledReason: unsupported(caps, "wake")
+                }
+            }), Core.Model.settingToggle("multipoint", "Multipoint", !!multipoint.enabled, {
+                visible: !!multipoint.supported,
+                enabled: actionEnabled(caps.can_set_multipoint, device),
+                metadata: {
+                    disabledReason: unsupported(caps, "set_multipoint")
+                }
+            }), Core.Model.settingToggle("blocked", "Blocked", !!device.blocked, {
+                enabled: actionEnabled(caps.can_block, device),
+                presentation: {
+                    tone: "danger"
+                },
+                metadata: {
+                    disabledReason: unsupported(caps, "block")
+                }
+            })];
     }
     function actionsForDevice(device: var): var {
         const caps = device.capabilities || ({});

@@ -6,7 +6,6 @@ import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "imports/Quickshell/Services/SystemTray" as TrayFixture
 import "../../qml/Shelllist/Bar/BarApi.js" as BarApi
-import "../../qml/Shelllist/Bar/SystemEntries.js" as Entries
 
 DaemonTestCase {
     id: testCase

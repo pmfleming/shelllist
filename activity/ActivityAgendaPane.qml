@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 
-Rectangle {
+Ui.DetailCard {
     id: pane
 
     required property ActivityController controller
@@ -15,19 +15,12 @@ Rectangle {
     }
 
     height: parent.height
-    radius: Ui.Theme.cardRadius
-    color: Ui.Theme.surface
-    border.width: 0
+    title: qsTr("Agenda")
+    headingSpacing: Ui.Theme.spacingSm
 
     Column {
         anchors.fill: parent
-        anchors.margins: Ui.Theme.spacingMd
         spacing: Ui.Theme.spacingSm
-        Ui.ThemeText {
-            text: qsTr("Agenda")
-            font.pixelSize: Ui.Theme.groupHeadingSize
-            font.weight: Ui.Theme.groupHeadingWeight
-        }
         Ui.ContentState {
             objectName: "agendaContentState"
             width: parent.width

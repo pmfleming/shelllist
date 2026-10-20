@@ -53,12 +53,6 @@ Item {
         return !!pending[id];
     }
 
-    function hasPendingOtherThan(ids: var): bool {
-        return Object.keys(pending).some(function (id) {
-            return !ids.includes(id) && !isTransportControl(id);
-        });
-    }
-
     /// The `prefix` a `callSequenced` id was built from.
     function requestKind(id: string): string {
         return id.replace(/-\d+$/, "");

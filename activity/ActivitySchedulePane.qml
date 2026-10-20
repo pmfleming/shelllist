@@ -77,17 +77,13 @@ Column {
             controller: pane.controller
         }
 
-        Rectangle {
+        Ui.DetailCard {
             width: parent.width - x
             height: parent.height
-            radius: Ui.Theme.cardRadius
-            color: Ui.Theme.surface
-            border.width: 0
 
             ActivityTodoSection {
                 id: todos
                 anchors.fill: parent
-                anchors.margins: Ui.Theme.spacingMd
                 controller: pane.controller
                 uiScale: pane.uiScale
             }

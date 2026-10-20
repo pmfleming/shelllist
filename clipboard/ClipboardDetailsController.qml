@@ -39,7 +39,6 @@ Item {
     property var previewCache: []
     property int cacheGeneration: 0
     property int requestCacheGeneration: -1
-    readonly property int previewCacheBytes: previewCache.reduce((total, cached) => total + cached.bytes, 0)
     readonly property var selectedEntry: controller.selectedEntry
     readonly property string selectedEntryId: selectedEntry ? selectedEntry.id : ""
     readonly property bool directTextEdit: !!selectedEntry && selectedEntry.kind === "text"

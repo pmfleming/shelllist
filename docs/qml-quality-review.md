@@ -4,6 +4,15 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
+The [2026-10-20 maintenance review](qml-maintenance-2026-10-20.md) starts from
+clean `fba5e8a`: location completion ownership and complexity, shared Activity
+cards, local Bluetooth descriptors, a typed recovery backend and unused-code
+removal. Production cognitive complexity, effort, cloning and locality improve
+modestly; leverage score stays unchanged and new safety tests absorb the 35 saved
+production lines. Full Qt **395/0/1**, strict lint, JavaScript and smoke pass.
+The full Lens/profiling run remains incomplete; see the review for matched scopes,
+regression evidence and acceptance limits.
+
 The subsequent [test pruning](../tests/test-pruning-current.md) measures from
 clean `c4bd285`: inventory **441 → 295**, native Qt **315/0/1**. Production is
 unchanged; this is not another production-metric improvement. Native lint,

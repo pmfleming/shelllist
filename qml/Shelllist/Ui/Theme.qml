@@ -183,7 +183,6 @@ Item {
     readonly property int focusRingInset: 2
 
     readonly property real disabledOpacity: 0.45
-    readonly property real readOnlyOpacity: 0.72
     readonly property int animationFast: 170
     readonly property int animationInteractive: 170
     readonly property int animationNormal: 220

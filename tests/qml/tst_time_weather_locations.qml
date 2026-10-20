@@ -313,6 +313,42 @@ DaemonTestCase {
         reply(s,status,{location_control:Object.assign(control(true,2),{operation_id:operation,operation_status:"applied"})});
         compare(s.locations.error,"");verify(!s.locations.modalOpen);compare(mutations().length,1);
     }
+    function test_emptyUnownedAndDuplicateRepliesCannotChangeThePicker() {
+        const s=start(true);
+        if (s.locations.statusId) reply(s,s.locations.statusId,{location_control:control(true,1)});
+        s.locations.openPicker("manual");s.locations.editQuery("Amsterdam");s.locations.search();
+        reply(s,s.locations.searchId,{places:[place("Amsterdam","Europe/Amsterdam")]});
+        s.locations.selectChoice("0");s.locations.submitPicker();
+        const id=s.locations.mutationId, operation=s.locations.operationKey;
+        s.locations.error="Retained diagnostic";
+        for (const unowned of ["", "another-request"]) {
+            s.locations.finish(unowned,null,"Unowned failure");
+            compare(s.locations.mutationId,id);compare(s.locations.error,"Retained diagnostic");
+            compare(s.locations.pickerMode,"manual");
+        }
+        reply(s,id,{location_control:Object.assign(control(true,2),{operation_id:operation,operation_status:"applied"})});
+        s.locations.openPicker("add");
+        s.locations.finish(id,null,"Duplicate failure");
+        compare(s.locations.pickerMode,"add");compare(s.locations.error,"");
+        compare(mutations().length,1);
+    }
+    function test_invalidCityAcknowledgementDoesNotPublish_data() {
+        return [{tag:"missing-catalog",patch:{location_catalog:null}},
+            {tag:"stale-revision",patch:{location_catalog:{revision:0,writable:true}}},
+            {tag:"wrong-place",patch:{locations:rows(true)}}];
+    }
+    function test_invalidCityAcknowledgementDoesNotPublish(data) {
+        const s=start(true), original=s.owner.activity;
+        s.locations.openPicker("add");
+        s.locations.candidates=[place("Dublin","Europe/Dublin")];s.locations.selectChoice("0");
+        s.locations.submitPicker();
+        const added=city("city:2","Dublin",false,false);
+        const returned=Object.assign({},original,{location_catalog:{revision:2,writable:true},locations:rows(true).concat([added])},data.patch);
+        reply(s,s.locations.mutationId,{id:added.id,activity:returned});
+        compare(s.owner.activity,original);verify(!s.locations.busy);
+        compare(s.locations.pickerMode,"add");verify(s.locations.error.includes("unconfirmed"));
+        compare(mutations().length,1);
+    }
     function test_staleRevisionFailuresAndTransportNeverReplay() {
         const s=start(true);openDetails(s);mouseClick(findChild(s.view,"detailAction:manual"));
         tryCompare(s.locations,"pickerMode","manual");

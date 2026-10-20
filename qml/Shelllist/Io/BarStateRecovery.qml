@@ -3,7 +3,7 @@ import QtQuick
 // One in-flight read per domain/consumer, including startup/manual snapshots.
 // Local event epochs fence v1 replies without changing the v1 event envelope.
 QtObject {
-    required property var backend
+    required property BarDaemonBackend backend
     property int generation: 0
     property var requests: ({})
     property var responseEpochs: ({})
