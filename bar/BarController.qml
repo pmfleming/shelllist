@@ -270,7 +270,8 @@ Item {
             battery: battery,
             notifications: notifications,
             notificationActive: notificationActive,
-            timezone: timezone
+            timezone: timezone,
+            updates: updates
         }, now);
     }
     function triggerModuleAction(action: string): bool {
@@ -284,7 +285,7 @@ Item {
                         wifiController.portal.launchManual("", true);
                 },
                 updates: function () {
-                    Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "journalctl -u 'nixos-update-*.service' -u 'nixos-ai-tools-*.service' -n 150 --no-pager; read -r -p 'Press enter to close'"]);
+                    Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "update-worker status; printf '\\nFor full logs: journalctl -u nixos-ai-tools-update -u nixos-update-delayed\\n'; read -r -p 'Press enter to close'"]);
                 },
                 "audio-mixer": function () {
                     Quickshell.execDetached(["pavucontrol"]);

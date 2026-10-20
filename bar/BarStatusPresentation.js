@@ -145,6 +145,20 @@ function clockModule(now, timezone) {
         compactText: parts.shortDate + " " + parts.time, primary: "time-weather"
     });
 }
+function updatesModule(updates) {
+    const jobs = updates?.jobs || [];
+    const failed = jobs.filter(job => ["failed", "interrupted"].includes(job.status || "") || ["blocked", "stale"].includes(job.phase || ""));
+    const running = jobs.some(job => job.status === "running");
+    const problem = !!updates?.error || failed.length > 0;
+    const details = failed.map(job => (job.name || "Update") + ": " + (job.error || job.phase || job.status));
+    if (updates?.error)
+        details.unshift(updates.error);
+    const label = problem ? "Updates need attention" : running ? "Update check running" : updates?.ready ? "Checked update ready" : "Updates current";
+    return statusModule("updates", problem ? "󰅚" : running ? "󰔟" : "󰚰", [label, ...details].join("\n").slice(0, 2000), {
+        primary: "updates", tone: problem ? "danger" : "accent",
+        visible: problem || running || !!updates?.ready, maxDensity: 3
+    });
+}
 function statusModules(state, now) {
     return [
         statusModule("network", networkIcon(state.network), networkTooltip(state.network), {
@@ -156,6 +170,6 @@ function statusModules(state, now) {
         statusModule("battery", "battery_full", batteryTooltip(state.battery), {
             primary: "battery", tone: batteryTone(state.battery)
         }),
-        notificationsModule(state), clockModule(now, state.timezone)
+        updatesModule(state.updates), notificationsModule(state), clockModule(now, state.timezone)
     ];
 }
