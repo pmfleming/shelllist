@@ -861,6 +861,25 @@ shared choice draft, not a panel-local binding. These controls retain ordinary
 Enter/Tab save, Escape discard, and no-write-on-blur behavior. See `tst_displays.qml`
 for actual keyboard/pointer, state-arrival, retry and capability-boundary tests.
 
+## Bluetooth battery connection and readiness
+
+Component artwork and its connected badge follow the device's acknowledged
+connection, independently of battery availability. An unknown percentage never
+fills a battery ring or implies a low battery. While connected and explicitly
+`services_resolved: false`, missing reading slots show a passive refresh cue:
+“Waiting for battery details: Bluetooth services unresolved.” This describes a
+readiness wait, not an active Fast Pair retry or guaranteed component support.
+Each reported reading replaces its own cue; existing aggregate/component readings
+remain visible. Resolved-but-unreported values, missing readiness metadata and
+disconnected unknowns show a dash, not endless progress. Remembered disconnected
+values retain their existing presentation.
+
+The cue stops animating on inactive/hidden pages and respects reduced motion
+with a static symbol. It adds no focus stops, commands or backend requests;
+connection badges refer to the whole device, not independent case/earbud links.
+`tst_bluetooth_recovery.qml` covers two/three-component snapshot transitions,
+partial/zero readings, unknowns, hidden/inactive pages and transport loss.
+
 ## Bluetooth signal telemetry
 
 Signal readings are passive row/detail information, never fields or commands.

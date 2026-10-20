@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import Shelllist.Ui as Ui
 import "../../bluetooth" as Bt
 
@@ -10,6 +11,13 @@ DaemonTestCase {
     visible: true
     width: 720
     height: 1000
+    property var originalEnvironment
+    function init() {
+        originalEnvironment = Quickshell.environment;
+    }
+    function cleanup() {
+        Quickshell.environment = originalEnvironment;
+    }
     Component {
         id: panelComponent
         Item {
@@ -101,6 +109,97 @@ DaemonTestCase {
         calls = [];
         verify(panel.controller.hasSelection);
         return panel;
+    }
+    function test_connectedBatteryArtworkWaitsForServicesWithoutInventingReadings_data() {
+        return [
+            {tag: "two-components", components: ["left", "right"], reduced: false},
+            {tag: "three-components", components: ["left", "case", "right"], reduced: false},
+            {tag: "reduced-motion", components: ["left", "case", "right"], reduced: true}
+        ];
+    }
+    function test_connectedBatteryArtworkWaitsForServicesWithoutInventingReadings(data) {
+        Quickshell.environment = Object.assign({}, originalEnvironment, {
+            SHELLLIST_NO_ANIMATIONS: data.reduced ? "1" : "0"
+        });
+        compare(Ui.Theme.noAnimations, data.reduced);
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.uiActive = true;
+        wait(0);
+        calls = [];
+        function publish(patch) {
+            controller.applySnapshot({
+                radio: controller.radio, adapters: controller.adapters,
+                devices: [Object.assign({}, controller.selectedDevice, patch)]
+            });
+            wait(0);
+        }
+        function part(prefix, component) {
+            const item = findChild(panel.page, prefix + "-" + component);
+            verify(item !== null);
+            return item;
+        }
+        publish({device_type: "Earbuds", components: data.components,
+            connected: true, services_resolved: false, battery_live: true,
+            battery_last_known: false, battery: [{component: "main", percentage: 100}]});
+        const batteryStatus = findChild(panel.page, "bluetoothBatteryStatus");
+        const height = batteryStatus.height;
+        for (const component of data.components) {
+            compare(part("batteryArtwork", component).opacity, 1);
+            verify(part("batteryBadge", component).visible);
+            compare(part("batteryBadge", component).opacity, 1);
+            compare(part("batteryBadge", component).color, Ui.Theme.active);
+            verify(!part("batteryPercentage", component).visible);
+            const pending = part("batteryPending", component);
+            verify(pending.visible);
+            compare(pending.spinning, !Ui.Theme.noAnimations);
+            verify(pending.parent.Accessible.name.includes("Bluetooth services unresolved"));
+            verify(!pending.activeFocus && !pending.activeFocusOnTab);
+        }
+        compare(findChild(panel.page, "overallBatteryPercentage").text, "100%");
+        const pending = part("batteryPending", "left");
+        if (!Ui.Theme.noAnimations)
+            tryVerify(() => pending.rotation > 0);
+        controller.uiActive = false;
+        verify(!pending.spinning);
+        compare(pending.rotation, 0);
+        controller.uiActive = true;
+        controller.detailsTab = "settings";
+        verify(!pending.visible && !pending.spinning);
+        controller.detailsTab = "device";
+        compare(pending.spinning, !Ui.Theme.noAnimations);
+        compare(batteryStatus.height, height, "waiting keeps the reading slots stable");
+
+        // Each real reading replaces only its own animation, including zero.
+        publish({battery: [{component: "left", percentage: 73}]});
+        verify(!part("batteryPending", "left").visible);
+        compare(part("batteryPercentage", "left").text, "73%");
+        verify(part("batteryPending", "right").visible);
+        publish({battery: [{component: "left", percentage: 73}, {component: "right", percentage: 0}]});
+        verify(!part("batteryPending", "right").visible);
+        compare(part("batteryPercentage", "right").text, "0%");
+
+        // No invented progress for resolved-but-unknown/unsupported readings,
+        // or old daemons that do not supply readiness.
+        for (const resolved of [true, undefined]) {
+            publish({services_resolved: resolved, battery: []});
+            for (const component of data.components) {
+                verify(!part("batteryPending", component).visible);
+                compare(part("batteryPercentage", component).text, "—");
+                verify(part("batteryBadge", component).visible, "connection is independent of battery support");
+            }
+        }
+        publish({connected: false, services_resolved: false, battery_live: false});
+        for (const component of data.components) {
+            verify(!part("batteryPending", component).spinning);
+            verify(!part("batteryBadge", component).visible);
+            compare(part("batteryArtwork", component).opacity, 0.78);
+        }
+        publish({connected: true, services_resolved: false});
+        controller.invalidateBluetooth("Daemon unavailable");
+        wait(0);
+        verify(!part("batteryPending", "main").visible, "transport loss cannot retain a waiting animation");
+        compare(calls.length, 0, "passive battery presentation must not request or replay operations");
     }
     Component {
         id: adapterPageComponent

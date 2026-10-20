@@ -22,6 +22,7 @@ Ui.DetailFlickable {
             width: parent.width - (noiseControl.visible ? noiseControl.iconExtent + Ui.Theme.spacingMd : 0)
             height: implicitHeight
             device: page.controller.selectedDevice
+            active: page.controller.uiActive
         }
 
         BluetoothNoiseControl {

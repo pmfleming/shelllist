@@ -7,8 +7,14 @@ import "BluetoothGlyphs.js" as BluetoothGlyphs
 
 Item {
     id: root
+    objectName: "bluetoothBatteryStatus"
 
     required property var device
+    property bool active: true
+    readonly property bool connected: !!device.connected
+    // This is a service-readiness wait, not evidence of an active retry or
+    // support for every component. Resolved-but-unreported stays unknown.
+    readonly property bool waitingForServices: connected && device.services_resolved === false
     readonly property var displayReports: BluetoothBattery.displayReports(device)
     readonly property var overallReport: displayReports.some(function (report) {
         return report.component === "main";
@@ -73,10 +79,12 @@ Item {
 
                 required property var modelData
                 readonly property bool batteryAvailable: BluetoothBattery.isValid(modelData)
+                readonly property bool batteryPending: !batteryAvailable && root.waitingForServices
                 readonly property real percentage: batteryAvailable ? modelData.percentage : 0
                 readonly property bool charging: !!root.device.battery_live && modelData.charging === true
-                Accessible.name: (BluetoothBattery.compactLabel(modelData) || "Battery") + " " + (batteryAvailable ? percentage + "%" : "unavailable") + (charging ? " charging" : "")
-                readonly property color statusColor: root.ringColor(percentage)
+                Accessible.role: Accessible.StaticText
+                Accessible.name: (root.connected ? qsTr("Device connected. ") : "") + (BluetoothBattery.compactLabel(modelData) || qsTr("Battery")) + " " + (batteryAvailable ? percentage + "%" : batteryPending ? qsTr("Waiting for battery details: Bluetooth services unresolved") : qsTr("unavailable")) + (charging ? qsTr(" charging") : "")
+                readonly property color statusColor: batteryAvailable ? root.ringColor(percentage) : Ui.Theme.active
                 readonly property string imageSource: BluetoothBattery.imageFor(root.device, modelData)
                 readonly property int ringSize: root.ringSize
 
@@ -91,7 +99,7 @@ Item {
                     width: indicator.ringSize
                     height: indicator.ringSize
                     antialiasing: true
-                    opacity: root.batteryLive ? 1.0 : Ui.Theme.disabledOpacity
+                    opacity: root.connected ? 1.0 : Ui.Theme.disabledOpacity
 
                     onWidthChanged: requestPaint()
                     onHeightChanged: requestPaint()
@@ -103,6 +111,12 @@ Item {
                             ring.requestPaint();
                         }
                         function onStatusColorChanged() {
+                            ring.requestPaint();
+                        }
+                    }
+                    Connections {
+                        target: root
+                        function onConnectedChanged() {
                             ring.requestPaint();
                         }
                     }
@@ -118,7 +132,7 @@ Item {
                         context.clearRect(0, 0, width, height);
                         context.lineWidth = lineWidth;
                         context.lineCap = "round";
-                        context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.22);
+                        context.strokeStyle = Ui.Theme.withAlpha(root.connected ? Ui.Theme.active : Ui.Theme.mutedText, 0.22);
                         context.beginPath();
                         context.arc(center, center, radius, 0, Math.PI * 2);
                         context.stroke();
@@ -158,8 +172,9 @@ Item {
                 }
 
                 Rectangle {
-                    visible: indicator.batteryAvailable
-                    opacity: root.batteryLive ? 1.0 : Ui.Theme.disabledOpacity
+                    objectName: "batteryBadge-" + indicator.modelData.component
+                    visible: root.connected || indicator.batteryAvailable
+                    opacity: root.connected ? 1.0 : Ui.Theme.disabledOpacity
                     x: ring.x + Math.round((ring.width - width) / 2)
                     y: 0
                     width: 34
@@ -171,15 +186,43 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: indicator.charging ? "󰂄" : "󰁹"
+                        text: indicator.batteryAvailable ? (indicator.charging ? "󰂄" : "󰁹") : "󰂯"
+                        Accessible.ignored: true
                         color: Ui.Theme.readableOn(indicator.statusColor)
                         font.family: Ui.Theme.iconFontFamily
                         font.pixelSize: 17
                     }
                 }
 
+                Ui.GlyphLabel {
+                    id: pending
+                    objectName: "batteryPending-" + indicator.modelData.component
+                    readonly property bool spinning: visible && root.active && !Ui.Theme.noAnimations
+                    visible: indicator.batteryPending
+                    x: Math.round((parent.width - width) / 2)
+                    y: root.percentageY
+                    width: height
+                    height: Math.ceil(percentageMetrics.height)
+                    glyph: "refresh"
+                    color: Ui.Theme.active
+                    font.pixelSize: Ui.Theme.fontSizeHeading
+                    Accessible.ignored: true
+
+                    RotationAnimation on rotation {
+                        from: 0
+                        to: 360
+                        duration: Ui.Theme.spinnerDuration
+                        loops: Animation.Infinite
+                        running: pending.spinning
+                    }
+                    onSpinningChanged: if (!spinning)
+                        rotation = 0
+                }
+
                 Ui.ThemeText {
                     objectName: "batteryPercentage-" + indicator.modelData.component
+                    visible: !indicator.batteryPending
+                    Accessible.ignored: true
                     opacity: root.batteryLive ? 1.0 : Ui.Theme.disabledOpacity
                     x: Math.round(Ui.Theme.spacingSm / 2)
                     y: root.percentageY
