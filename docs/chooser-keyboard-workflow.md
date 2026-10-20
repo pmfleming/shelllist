@@ -976,7 +976,8 @@ Double-clicking a clipboard result's leading icon toggles Pin/Unpin, never
 Paste/Copy. Single-click still selects the result; double-clicking the rest of
 its body retains the primary action. Expanded details expose the same Pin to top /
 Unpin secondary command with **Alt+N**, outside editable Tab traversal and on both
-tabs. Multiple entries may be pinned. The daemon persists favorites and returns
+tabs. The command uses a pin icon to pin and a crossed-out pin to unpin.
+Multiple entries may be pinned. The daemon persists favorites and returns
 them before ordinary history; QML retains that order, including during paging,
 and displays an acknowledged, desaturated pin badge at the avatar's bottom-right
 corner, not a Pinned text column. Shared `ResultRow` owns its quarter-avatar sizing

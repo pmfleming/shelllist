@@ -34,7 +34,7 @@ Ui.ActionDetailsPane {
             id: "pin",
             accessKey: "N",
             label: entry.favorite ? qsTr("Unpin") : qsTr("Pin to top"),
-            icon: entry.favorite ? "󰐳" : "󰐱",
+            icon: entry.favorite ? "keep_off" : "push_pin",
             enabled: !!entry.id && controller.pinEnabled,
             presentation: {
                 group: "toolbar",

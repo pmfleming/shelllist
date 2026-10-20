@@ -24,7 +24,7 @@ const symbols = {
 // Explicit semantic names used by shared command/header controls. Never treat
 // arbitrary application-provided text as a Material ligature.
 const commandSymbols = [
-    "add", "home", "my_location", "location_on", "explore", "push_pin",
+    "add", "home", "my_location", "location_on", "explore", "push_pin", "keep_off",
     "search", "history", "calendar_month", "checklist", "notifications_none", "wifi_off",
     "wifi", "today", "refresh", "arrow_back", "arrow_forward", "arrow_upward",
     "arrow_downward", "chevron_left", "more_horiz", "play_arrow", "pause",

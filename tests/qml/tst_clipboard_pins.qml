@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 import "../../clipboard" as Clip
+import "../../qml/Shelllist/Ui/MaterialIcons.js" as MaterialIcons
 
 DaemonTestCase {
     id: testCase
@@ -162,6 +163,8 @@ DaemonTestCase {
         waitForRendering(ui.content);
         verify(pin.enabled, "pin does not need a decoded preview");
         compare(pin.accessibleName, "Pin to top");
+        compare(pin.icon, "push_pin");
+        compare(MaterialIcons.name(pin.icon), "push_pin");
         verify(!pin.activeFocusOnTab);
         mouseClick(pin, pin.width / 2, pin.height / 2);
         compare(actions().length, 1);
@@ -170,6 +173,8 @@ DaemonTestCase {
         acknowledge(ui.controller, "favorite", [entry("first", true), entry("second"), entry("third")]);
         tryVerify(() => { pin = findChild(ui.content, "detailAction:pin"); return pin && pin.enabled; });
         compare(pin.accessibleName, "Unpin");
+        compare(pin.icon, "keep_off");
+        compare(MaterialIcons.name(pin.icon), "keep_off");
         ui.content.listItem.focusList();
         keyClick(Qt.Key_Tab, Qt.ControlModifier);
         tryCompare(ui.controller, "detailsTab", "info");
