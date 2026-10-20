@@ -76,13 +76,15 @@ and store paths (`/tmp/p6-devshell.log`), confirming developer/build agreement.
 ## Dependencies and exceptions
 
 All shared direct requirements are checked, including dev/build and
-target-conditional dependencies. Exact resolutions for 43 shared dependencies
+target-conditional dependencies. Exact resolutions for shared dependencies
 and key serializer/runtime/derive companions are checked in every owning lock
 that contains them. In particular all five daemons and the framework resolve
 zbus **5.18.0**, zvariant **5.13.1**, Tokio **1.53.1**, serde **1.0.229** and
 serde_json **1.0.151**. The zbus/zvariant requirements now describe those supported
 API lines; features remain domain-specific (including NM's blocking API and
-private-bus test features). No automatic dependency updates run in CI.
+private-bus test features). Chrono **0.4.45** is shared by the bar's clock and
+the worker's UTC status formatter; their `clock` and `std` features remain
+independent. No automatic dependency updates run in CI.
 
 Exceptions have exact paths/versions and reasons in the policy:
 
