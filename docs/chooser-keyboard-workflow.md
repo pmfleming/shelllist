@@ -963,6 +963,19 @@ light/dark layout, Bluetooth pairing/Forget and Wi-Fi challenge/credential route
 `tst_displays` retain actual consumer cancel/confirm, native IDs/tokens, modal
 blocking, policy guards, draft-only discard and display rollback coverage.
 
+## Clipboard pins
+
+Double-clicking a clipboard result's leading icon toggles Pin/Unpin, never
+Paste/Copy. Single-click still selects the result; double-clicking the rest of
+its body retains the primary action. Expanded details expose the same Pin to top /
+Unpin secondary command with **Alt+N**, outside editable Tab traversal and on both
+tabs. Multiple entries may be pinned. The daemon persists favorites and returns
+them before ordinary history; QML retains that order, including during paging,
+and displays the acknowledged Pinned marker. No optimistic reorder or automatic
+mutation retry is introduced. Busy, modal, multi-selection and active edit-lease
+guards apply to both routes; failure preserves the existing pin state. Native
+`tst_clipboard_pins.qml` covers pointer/key routes, guards and acknowledged ordering.
+
 ## Clipboard text saves and recovery
 
 Clipboard has no Retry save / Discard draft button row or recovery shortcuts.

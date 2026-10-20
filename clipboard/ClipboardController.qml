@@ -77,6 +77,7 @@ Ui.ProviderChooserController {
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) {
         return key.indexOf("query-") === 0;
     })
+    readonly property bool pinEnabled: uiActive && !actionInFlight && !screenshotInFlight && !multiSelectMode && !wipeChallenge && !deleteMenuOpen && !deleteConfirmationOpen && !bulkDeleteConfirmationOpen && !detailState.editing && !detailState.editBeginPending
     readonly property bool backgroundOperationInFlight: activeAction === "annotate" && activeOperationId.length > 0
     signal hideRequested
 
@@ -300,6 +301,14 @@ Ui.ProviderChooserController {
         status = "Capturing clipboard window…";
         backend.captureScreenshot(x, y, width, height);
         return true;
+    }
+    function togglePin(entry: var): bool {
+        const target = entry || selectedEntry;
+        if (!pinEnabled || !target || !target.id)
+            return false;
+        // Keep the row's acknowledged identity/revision; pinning never publishes
+        // clipboard content or optimistically changes the native history order.
+        return runAction(target.favorite ? "unfavorite" : "favorite", undefined, target);
     }
     function copySelected() {
         runAction("copy");

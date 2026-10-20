@@ -20,12 +20,14 @@ Rectangle {
     property url leadingIconSource: ""
     property color leadingIconColor: Theme.mutedText
     property Component avatarContent: null
+    property bool avatarDoubleClickAction: false
     readonly property int detailSlotWidth: detailsActionVisible ? scaled(30) + 6 : 0
     readonly property bool selected: index === selectedIndex
     default property alias content: rowContent.data
 
     signal picked(int rowIndex)
     signal primaryRequested
+    signal avatarDoubleClicked
     signal detailsToggled(int rowIndex)
 
     function pick(rowIndex: int): void {
@@ -140,6 +142,12 @@ Rectangle {
         onHoveredChanged: row.pointerHovered = hovered
         onPressedChanged: row.pointerPressed = pressed
         onClicked: row.picked(row.index)
-        onDoubleClicked: row.primaryRequested()
+        onDoubleClicked: function (mouse) {
+            const point = mapToItem(avatar, mouse.x, mouse.y);
+            if (row.avatarDoubleClickAction && avatar.contains(point))
+                row.avatarDoubleClicked();
+            else
+                row.primaryRequested();
+        }
     }
 }

@@ -20,7 +20,9 @@ Ui.ResultRow {
 
     leadingIcon: resultData.icon || "󰅍"
     leadingIconColor: entry.current ? Ui.Theme.active : Ui.Theme.accent
-    accessibleName: resultData.title
+    accessibleName: resultData.title + (entry.favorite ? qsTr(" · Pinned") : "")
+    avatarDoubleClickAction: true
+    onAvatarDoubleClicked: controller.togglePin(entry)
 
     Ui.ResultLabel {
         title: row.resultData.title

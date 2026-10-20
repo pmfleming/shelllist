@@ -31,6 +31,17 @@ Ui.ActionDetailsPane {
     ]
     readonly property var secondaryActions: [
         {
+            id: "pin",
+            accessKey: "N",
+            label: entry.favorite ? qsTr("Unpin") : qsTr("Pin to top"),
+            icon: entry.favorite ? "󰐳" : "󰐱",
+            enabled: !!entry.id && controller.pinEnabled,
+            presentation: {
+                group: "toolbar",
+                tone: "normal"
+            }
+        },
+        {
             id: "copy",
             accessKey: "C",
             label: "Copy",
@@ -76,6 +87,9 @@ Ui.ActionDetailsPane {
 
     function triggerAction(actionId: string): void {
         switch (actionId) {
+        case "pin":
+            controller.togglePin(entry);
+            break;
         case "paste":
             controller.pasteSelected();
             break;
