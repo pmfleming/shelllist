@@ -101,7 +101,7 @@ Ui.ProviderChooserController {
     Timer {
         id: historyDeadline
         interval: 15000
-        onTriggered: { controller.retireHistory(); controller.errorText = qsTr("History read timed out; previous results retained"); }
+        onTriggered: controller.failHistory(qsTr("History read timed out; previous results retained"))
     }
     Timer {
         interval: controller.selectedRun && Presentation.isRunning(controller.selectedRun) && controller.detailsOpen ? 1000 : 30000
@@ -165,7 +165,7 @@ Ui.ProviderChooserController {
         ownedRequest = backend.nextRequestId("update-history");
         const sent = backend.call(ownedRequest, "updates.queryHistory", {query: runId ? "" : filterText, cursor: historyWindow.cursor || null,
             run_id: runId || null, limit: 50, lane: runId ? null : laneFilter || null, outcome: runId ? null : outcomeFilter || null, anchor_ids: historyWindow.anchors});
-        if (!sent && ownedRequest) { retireHistory(); errorText = qsTr("Update history read could not be sent"); }
+        if (!sent && ownedRequest) failHistory(qsTr("Update history read could not be sent"));
     }
     function restartHistoryWindow(): bool {
         if (!historyWindow || historyWindow.retried) return false;
@@ -198,44 +198,58 @@ Ui.ProviderChooserController {
                 && (part.incident === undefined || part.incident === null || (typeof part.incident === "string" && part.incident.trim().length > 0 && part.incident.length <= 2048 && !/[\u0000-\u001f\u007f]/.test(part.incident))));
     }
     function finish(id: string, envelope: var, transportError: string): void {
-        if (!uiActive) return;
-        if (id === overviewRequest && overviewRequest) {
-            overviewRequest = "";
-            overviewLoading = false;
-            if (overviewRefreshPending) { overviewRefreshPending = false; Qt.callLater(requestOverview); }
-            overviewError = backend.responseError(envelope, transportError, qsTr("Update overview unavailable"));
-            if (overviewError) return;
-            const value = envelope.data ? envelope.data.overview : null;
-            if (!OverviewValidation.valid(value)) { overviewError = qsTr("Invalid update overview reply"); return; }
-            overview = value;
-            return;
+        // Dispatch only nonempty, owned identities; each reader retires itself.
+        if (!uiActive || !id) return;
+        switch (id) {
+        case overviewRequest: finishOverview(envelope, transportError); break;
+        case logRequest: finishLog(envelope, transportError); break;
+        case ownedRequest: finishHistory(envelope, transportError); break;
         }
-        if (id === logRequest && logRequest) {
-            logRequest = "";
-            const failure = backend.responseError(envelope, transportError, qsTr("Update log unavailable"));
-            if (failure) { cacheLog("", failure, false); return; }
-            const log = envelope.data ? envelope.data.log : null;
-            if (!log || log.run_id !== logRun || typeof log.text !== "string" || log.text.length > 32768 || typeof log.truncated !== "boolean") {
-                cacheLog("", qsTr("Invalid update log reply"), false); return;
-            }
-            cacheLog(log.text, "", log.truncated);
-            return;
+    }
+    function finishOverview(envelope: var, transportError: string): void {
+        overviewRequest = "";
+        overviewLoading = false;
+        if (overviewRefreshPending) { overviewRefreshPending = false; Qt.callLater(requestOverview); }
+        overviewError = backend.responseError(envelope, transportError, qsTr("Update overview unavailable"));
+        if (overviewError) return;
+        const value = envelope.data ? envelope.data.overview : null;
+        if (!OverviewValidation.valid(value)) { overviewError = qsTr("Invalid update overview reply"); return; }
+        overview = value;
+    }
+    function finishLog(envelope: var, transportError: string): void {
+        logRequest = "";
+        const failure = backend.responseError(envelope, transportError, qsTr("Update log unavailable"));
+        if (failure) { cacheLog("", failure, false); return; }
+        const log = envelope.data ? envelope.data.log : null;
+        if (!log || log.run_id !== logRun || typeof log.text !== "string" || log.text.length > 32768 || typeof log.truncated !== "boolean") {
+            cacheLog("", qsTr("Invalid update log reply"), false); return;
         }
-        if (!ownedRequest || id !== ownedRequest || !historyWindow || historyWindow.key !== queryKey) return;
+        cacheLog(log.text, "", log.truncated);
+    }
+    function failHistory(message: string): void {
+        retireHistory();
+        errorText = message;
+    }
+    function validHistoryPage(page: var): bool {
+        return !!page && Array.isArray(page.entries) && page.entries.length <= 100
+            && typeof page.available === "boolean" && typeof page.revision === "string"
+            && (page.cursor === null || typeof page.cursor === "string")
+            && Number.isSafeInteger(page.total) && page.total >= page.entries.length && page.total <= 4096
+            && (page.error === null || typeof page.error === "string") && typeof page.coverage === "string"
+            && (page.retain_through === undefined || (Number.isSafeInteger(page.retain_through) && page.retain_through >= 0 && page.retain_through <= page.total))
+            && page.entries.every(entry => validEntry(entry));
+    }
+    function finishHistory(envelope: var, transportError: string): void {
+        if (!historyWindow || historyWindow.key !== queryKey) return;
         ownedRequest = "";
         const failure = backend.responseError(envelope, transportError, qsTr("Update history unavailable"));
         if (failure) {
             if (envelope && envelope.error && envelope.error.code === "update-history-cursor-stale" && restartHistoryWindow()) return;
-            retireHistory(); errorText = failure; return;
+            failHistory(failure); return;
         }
         const page = envelope.data ? envelope.data.history : null;
-        if (!page || !Array.isArray(page.entries) || page.entries.length > 100 || typeof page.available !== "boolean" || typeof page.revision !== "string"
-                || !(page.cursor === null || typeof page.cursor === "string")
-                || !Number.isSafeInteger(page.total) || page.total < page.entries.length
-                || !(page.error === null || typeof page.error === "string") || typeof page.coverage !== "string"
-                || page.total > 4096 || (page.retain_through !== undefined && (!Number.isSafeInteger(page.retain_through) || page.retain_through < 0 || page.retain_through > page.total))
-                || page.entries.some(entry => !validEntry(entry))) {
-            retireHistory(); errorText = qsTr("Invalid update history reply"); return;
+        if (!validHistoryPage(page)) {
+            failHistory(qsTr("Invalid update history reply")); return;
         }
         if (!page.available) {
             retireHistory();
@@ -251,7 +265,7 @@ Ui.ProviderChooserController {
             warningBrief = qsTr("Requested run could not be read");
             return;
         }
-        if (runId && !page.entries.length && page.available && !page.error) {
+        if (runId && !page.entries.length) {
             retireHistory();
             runId = "";
             missingRun = true;
@@ -259,22 +273,25 @@ Ui.ProviderChooserController {
             return;
         }
         if (runId && (page.entries.length !== 1 || page.entries[0].job.id !== runId)) {
-            retireHistory(); errorText = qsTr("Update history reply targets another run"); return;
+            failHistory(qsTr("Update history reply targets another run")); return;
         }
+        stageHistoryPage(page);
+    }
+    function stageHistoryPage(page: var): void {
         const window = historyWindow;
         if (window.revision && window.revision !== page.revision) {
             if (restartHistoryWindow()) return;
-            retireHistory(); errorText = qsTr("Update history kept changing; refresh again"); return;
+            failHistory(qsTr("Update history kept changing; refresh again")); return;
         }
         const next = window.entries.concat(page.entries);
         if (new Set(next.map(entry => entry.job.id)).size !== next.length) {
-            retireHistory(); errorText = qsTr("Duplicate update history identities"); return;
+            failHistory(qsTr("Duplicate update history identities")); return;
         }
         if (page.total < next.length || (window.total >= 0 && window.total !== page.total)
                 || (window.retainThrough >= 0 && window.retainThrough !== (page.retain_through || 0))
                 || (page.cursor && (!page.entries.length || page.cursor === window.cursor || next.length >= page.total))
                 || (!page.cursor && next.length !== page.total) || ++window.pages > 128) {
-            retireHistory(); errorText = qsTr("Invalid update history continuation"); return;
+            failHistory(qsTr("Invalid update history continuation")); return;
         }
         window.entries = next;
         window.revision = page.revision;

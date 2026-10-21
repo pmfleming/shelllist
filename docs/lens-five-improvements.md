@@ -52,3 +52,25 @@ a panel-specific forwarding layer; mean locality nevertheless falls **74.2553 �
 Validation: actual Wi-Fi IP suite **8 passes**, strict QML lint, **106** parser and
 **436** editor checks, generated TypeScript freshness, source-tree relative-import
 check and diff whitespace check. Installed-package/Nix build was not run.
+
+## 3. Separate owned Updates read completions
+
+`UpdateController.finish` mixed overview, log, wire validation, pagination and
+publication in one **87 cyclomatic / 96 cognitive / 395 effort** function. It now
+dispatches nonempty owned IDs to reader-specific completions; history has explicit
+page validation and staging boundaries. A shared failure path retires the history
+request, deadline and unpublished window together. No generic request router or
+new mutable owner is introduced. Stale-cursor restart bounds, identity/revision
+checks, cached failures, exact-run targeting and atomic publication are retained.
+
+The dispatcher measures **6 / 5 / 25**; the largest extracted function is history
+staging at **30 / 30 / 134**. Production cognitive sum **6649 → 6638** and effort
+**45190 → 45183** improve. Cyclomatic sum rises **9253 → 9255** (new function entry
+points), and source lines rise **43536 → 43552**; this is a readability/ownership
+tradeoff, not a LOC reduction. Locality/leverage means are unchanged.
+
+Validation: strict lint and Updates Qt suite **25 passes**. The added regression
+uses native inspect/log/refresh keys, then verifies empty, foreign and duplicate
+completion IDs cannot retire another reader or overwrite its error. Existing
+pagination, malformed reply, close/reopen, overview and log-cache tests pass.
+Keyboard and mutation boundaries are unchanged: Updates still issues only reads.

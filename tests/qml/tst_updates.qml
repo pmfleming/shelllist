@@ -734,6 +734,40 @@ DaemonTestCase {
         tryCompare(root.controller, "runId", "failed-overview");
         compare(latest().params.run_id, "failed-overview");
     }
+    function test_completionDispatchRetiresOnlyTheOwnedReader(): void {
+        const root = fixture();
+        reply(latest(), [entry("retained", "staged")]);
+        focusFirstRun(root);
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        keyClick(Qt.Key_V, Qt.AltModifier);
+        keyClick(Qt.Key_F5);
+        const history = root.controller.ownedRequest;
+        const overview = root.controller.overviewRequest;
+        const log = root.controller.logRequest;
+        verify(!!history && !!overview && !!log);
+        root.controller.finish("", null, "Unowned error");
+        root.controller.finish("foreign", null, "Unowned error");
+        compare(root.controller.ownedRequest, history);
+        compare(root.controller.overviewRequest, overview);
+        compare(root.controller.logRequest, log);
+        root.controller.finish(log, null, "Log unavailable");
+        compare(root.controller.logRequest, "");
+        compare(root.controller.selectedLogError, "Log unavailable");
+        compare(root.controller.ownedRequest, history);
+        compare(root.controller.overviewRequest, overview);
+        root.controller.finish(log, null, "Duplicate error");
+        compare(root.controller.selectedLogError, "Log unavailable");
+        reply(latest(), [entry("replacement", "staged")]);
+        compare(root.controller.loading, false);
+        compare(root.controller.entries[0].job.id, "replacement");
+        overviewReply(latestOverview(), overviewValue());
+        tryVerify(() => !!root.controller.overviewRequest && root.controller.overviewRequest !== overview); // queued F5 read
+        const pending = root.controller.overviewRequest;
+        root.controller.finish(overview, null, "Duplicate overview error");
+        compare(root.controller.overviewRequest, pending);
+        compare(root.controller.overviewError, "");
+    }
     function test_overviewRefreshDuringAReadGetsOneFollowup(): void {
         const root = fixture();
         const first = latestOverview();
