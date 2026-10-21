@@ -24,6 +24,44 @@ runs. F5 refreshes history and overview reads only. Pages
 append on scroll; Load more is also available. No Apply, Retry, Reboot, Approve,
 Rollback or updater shutdown action is exposed.
 
+## History browsing
+
+**Alt+T** opens the lane filter; **Alt+F** opens the outcome filter, including
+**Problems** (failed, partial, blocked and interrupted). These shared command
+menus work with details closed; arrows only browse choices, Enter/click selects,
+and Escape cancels. They are not editable Tab stops. Filters apply in the native
+catalog before pagination/counting, together with text search. Now stays pinned;
+exact-run links bypass filters. Alt+A on a run clears search and filters.
+
+Search accepts `today`, `yesterday`, `YYYY-MM-DD`, `on:YYYY-MM-DD`,
+`since:YYYY-MM-DD` (inclusive), and `before:YYYY-MM-DD` (exclusive), combined
+with ordinary words, for example `partial since:2026-10-01 before:2026-11-01`.
+Dates describe the run's start in the backend's local timezone, not a fixed
+24-hour UTC window. Invalid dates report an error without discarding cached rows.
+Relative-day searches refresh across local midnight while open; the native
+resolved date fences continuation cursors too.
+
+Routine no-change checks are initially folded into selectable summaries for
+consecutive same-day, same-lane/operation runs **within loaded history only**.
+Enter or Alt+E on a summary expands/collapses its original runs; Right inspects
+its scope. **Alt+N** toggles folding globally without a backend request. Failed,
+changed, held, incident-bearing, running and manual rebuild records never fold.
+An inspected run remains visible during refresh. Counts distinguish loaded runs
+from folded runs; summaries are not fabricated history records and cannot read
+logs. Expanded children retain their original log/copy identities.
+
+Same-query refresh stages a replacement prefix through the previous loaded
+range and surviving selected/tail anchors, then publishes it atomically using
+the shared keyed selection/viewport machinery. New arrivals do not throw away
+older loaded pages or jump the scroll position to the top. Query/filter changes
+start a new window; previous rows remain explicitly cached until it succeeds.
+A stale cursor gets one read-only restart, never a cross-revision append or an
+unbounded retry. Failed/malformed/incomplete continuations keep the published
+window. Reads have a 15-second total frontend budget, at most 128 pages and 4,096
+staged records, in addition to native per-page admission/deadline limits. Closing
+fences all staged replies. An anchor removed from retained history cannot be
+restored; a vanished selected run closes its inspector safely.
+
 History rows retain catalog chronology and use distinct outcome icons with readable
 outcome/lane labels and component change/failure counts. Counts describe loaded
 versus matching retained runs, not the size of the first page alone. Passive
@@ -109,7 +147,8 @@ never prunes a live job. Pruning occurs on terminal publication. History writes
 are display projection writes: a failure cannot roll back, retry or relabel an
 already verified deployment. They are reported separately in the worker journal.
 
-`bar-daemon` provides `updates.queryHistory` (query/cursor/run_id/limit),
+`bar-daemon` provides `updates.queryHistory`
+(query/cursor/run_id/limit/lane/outcome/anchor_ids),
 `updates.readLog` (run_id), and `updates.getOverview` (no parameters). Search
 includes outcome codes such as `partial` and `blocked`. History pages are capped
 at 100 records/128 KiB, with
@@ -246,7 +285,9 @@ A blank tray inspector alone does not establish whether history exists.
   and the component's full-path pointer Copy route are also exercised. Native
   overview rendering, pointer/keyboard issue navigation, coalesced refreshes,
   structured deployment/recovery
-  summaries, malformed/late overview replies and resident-before-chooser tray
+  summaries, native filter-menu/date-search keys, conservative fold/expand routes,
+  multi-page atomic refresh with keyed viewport/focus preservation, bounded stale
+  cursor recovery, malformed continuations, malformed/late overview replies and resident-before-chooser tray
   inventory are covered. Home Manager evaluation verifies Super+U and disabling it.
   Replies use the generated protocol version, preventing a matching hardcoded
   test stub from concealing a production protocol mismatch.

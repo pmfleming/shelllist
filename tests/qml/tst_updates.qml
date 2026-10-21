@@ -6,6 +6,7 @@ import Shelllist.Ui as Ui
 import "../../clipboard/ClipApi.js" as ClipApi
 import "../../bar/BarProtocol.generated.js" as Contract
 import "../../bar/UpdatePresentation.js" as Presentation
+import "../../bar/UpdateHistory.js" as History
 import "../../qml/Shelllist/Ui/MaterialIcons.js" as Icons
 
 DaemonTestCase {
@@ -32,10 +33,17 @@ DaemonTestCase {
         return {schema_version: 1, lane: "system", title: outcome === "staged" ? "Staged for next boot" : "Update failed", outcome: outcome,
             job: {id: id, operation: "run-delayed", phase: outcome, status: "completed", started_at: 100, finished_at: 200, exit_code: 0, error: null}, components: []};
     }
-    function reply(call, entries, cursor, published, error, total): void {
-        Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id, {protocol: Contract.protocol, version: Contract.version, ok: true, data: {history: {
+    function reply(call, entries, cursor, published, error, total, extra): void {
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id, {protocol: Contract.protocol, version: Contract.version, ok: true, data: {history: Object.assign({
             available: published !== false, revision: "revision", entries: entries, cursor: cursor || null, total: total === undefined ? entries.length : total, coverage: "Worker-managed runs", error: error || null
-        }}}, "", call.route);
+        }, extra || {})}}, "", call.route);
+    }
+    function historyFailure(call, code): void {
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id, {protocol: Contract.protocol, version: Contract.version, ok: false,
+            error: {code: code, message: "History changed"}}, "", call.route);
+    }
+    function historyRuns(count): var {
+        return Array.from({length: count}, (_, index) => entry("history-" + index, "staged"));
     }
     function latest(): var { return calls.filter(call => call.method === "updates.queryHistory").slice(-1)[0]; }
     function fixture(): var {
@@ -48,6 +56,172 @@ DaemonTestCase {
     function focusFirstRun(root): void {
         root.controller.selectedIndex = 1;
         root.content.listItem.focusList();
+    }
+    function test_filtersUseSharedMenusAndDateSearchUsesNativeKeys(): void {
+        verify(["layers", "filter_alt", "unfold_less", "unfold_more"].every(icon => Icons.name(icon) === icon));
+        const root = fixture();
+        reply(latest(), historyRuns(50));
+        root.content.listItem.focusList();
+        const before = calls.length;
+        keyClick(Qt.Key_F, Qt.AltModifier);
+        const menu = findChild(root, "updateFilterMenu");
+        tryVerify(() => menu.opened);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_F5);
+        compare(calls.length, before);
+        compare(root.controller.outcomeFilter, "");
+        keyClick(Qt.Key_Escape);
+        tryVerify(() => !menu.visible);
+        compare(root.controller.outcomeFilter, "");
+        keyClick(Qt.Key_F, Qt.AltModifier);
+        tryVerify(() => menu.opened);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Return);
+        tryCompare(root.controller, "outcomeFilter", "problems");
+        compare(latest().params.outcome, "problems");
+        reply(latest(), [entry("problem", "failed")]);
+        mouseClick(findChild(root, "updateLaneFilter"));
+        tryVerify(() => menu.opened);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Return);
+        tryCompare(root.controller, "laneFilter", "system");
+        compare(latest().params.lane, "system");
+        const superseded = latest();
+        root.content.listItem.focusSearch();
+        for (const key of [Qt.Key_T, Qt.Key_O, Qt.Key_D, Qt.Key_A, Qt.Key_Y]) keyClick(key);
+        tryVerify(() => latest().params.query === "today");
+        reply(superseded, [entry("stale-filter", "failed")]);
+        compare(root.controller.entries[0].job.id, "problem");
+        reply(latest(), []);
+        compare(root.controller.filteredResults[0].id, "_now");
+        compare(root.content.listItem.emptyState, "filtered");
+        const beforeMidnight = latest().id;
+        root.controller.nowMs = new Date(2026, 9, 20, 23, 59).getTime();
+        root.controller.nowMs = new Date(2026, 9, 21, 0, 1).getTime();
+        tryVerify(() => latest().id !== beforeMidnight);
+        compare(latest().params.query, "today");
+        reply(latest(), []);
+        root.controller.openRun("exact");
+        compare(latest().params.lane, null);
+        compare(latest().params.outcome, null);
+        compare(latest().params.query, "");
+        reply(latest(), [entry("exact", "current")]);
+        compare(root.controller.selectedRun.job.id, "exact");
+        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot"].includes(call.method)));
+    }
+    function test_noChangeGroupsExpandWithoutHidingFailuresOrInventingRuns(): void {
+        const root = fixture();
+        const runs = Array.from({length: 8}, (_, index) => entry("quiet-" + index, "current"));
+        runs[3].outcome = "failed";
+        runs[6].job.operation = "manual-rebuild";
+        runs[7].components = [{name: "pi", phase: "held", changed: false, before: null, after: null, error: null}];
+        verify(!History.routine(runs[3]) && !History.routine(runs[6]) && !History.routine(runs[7]));
+        const changed = entry("changed-current", "current");
+        changed.components = [{name: "pi", phase: "activated", changed: true, error: null, incident: null}];
+        verify(!History.routine(changed));
+        changed.components[0].changed = false;
+        changed.components[0].incident = "pi:failure";
+        verify(!History.routine(changed));
+        reply(latest(), runs);
+        compare(root.controller.entries.length, 8);
+        compare(root.controller.foldedCount, 5);
+        compare(root.controller.filteredResults.length, 6);
+        focusFirstRun(root);
+        const requests = calls.length;
+        keyClick(Qt.Key_Return);
+        compare(root.controller.selectedQuietGroup.expanded, true);
+        compare(root.controller.foldedCount, 2);
+        compare(calls.length, requests);
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        verify(findChild(root, "updateQuietGroup").visible);
+        keyClick(Qt.Key_Down);
+        compare(root.controller.selectedRun.job.id, "quiet-0");
+        keyClick(Qt.Key_V, Qt.AltModifier);
+        compare(logCalls().slice(-1)[0].params.run_id, "quiet-0");
+        keyClick(Qt.Key_Up);
+        keyClick(Qt.Key_E, Qt.AltModifier);
+        compare(root.controller.foldedCount, 5);
+        const groupId = root.controller.selectedResult.id;
+        root.controller.refresh();
+        reply(latest(), [entry("new-quiet", "current")].concat(runs));
+        compare(root.controller.selectedResult.id, groupId);
+        keyClick(Qt.Key_Return);
+        compare(root.controller.selectedResult.id, groupId);
+        verify(root.controller.selectedQuietGroup.expanded);
+        keyClick(Qt.Key_N, Qt.AltModifier);
+        compare(root.controller.collapseRoutine, false);
+        compare(root.controller.foldedCount, 0);
+        compare(root.controller.filteredResults.length, 10);
+    }
+    function test_refreshStagesLoadedDepthAndPreservesSelectionViewportAndFocus(): void {
+        const root = fixture();
+        const old = historyRuns(120);
+        reply(latest(), old.slice(0, 50), "v1:50", true, null, 120, {revision: "v1"});
+        root.controller.loadMore();
+        reply(latest(), old.slice(50, 100), "v1:100", true, null, 120, {revision: "v1"});
+        root.controller.selectedIndex = 76;
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        const list = findChild(root, "resultListView");
+        wait(20);
+        list.positionViewAtIndex(65, ListView.Beginning);
+        const viewport = root.content.listItem.sessionState().viewport;
+        verify(viewport !== null);
+        const fresh = [entry("new-0", "staged"), entry("new-1", "staged"), entry("new-2", "staged")].concat(old);
+        keyClick(Qt.Key_F5);
+        compare(latest().params.anchor_ids.join(","), "history-75,history-99");
+        reply(latest(), fresh.slice(0, 50), "v2:50", true, null, 123, {revision: "v2", retain_through: 103});
+        compare(root.controller.entries.length, 100);
+        compare(root.controller.selectedRun.job.id, "history-75");
+        compare(latest().params.cursor, "v2:50");
+        reply(latest(), fresh.slice(50, 100), "v2:100", true, null, 123, {revision: "v2", retain_through: 103});
+        compare(root.controller.entries[0].job.id, "history-0");
+        reply(latest(), fresh.slice(100), null, true, null, 123, {revision: "v2", retain_through: 103});
+        tryCompare(root.controller, "selectedIndex", 79);
+        tryCompare(root.content.listItem, "resultCount", 124);
+        tryVerify(() => root.content.listItem.sessionState().viewport.key === viewport.key);
+        verify(Math.abs(root.content.listItem.sessionState().viewport.offset - viewport.offset) < 2);
+        compare(root.controller.selectedRun.job.id, "history-75");
+        verify(root.content.listItem.listFocused && root.controller.detailsOpen);
+        compare(root.controller.loading, false);
+    }
+    function test_staleCursorRetriesOnceAndFailedContinuationsNeverPublish(): void {
+        const root = fixture();
+        const runs = historyRuns(120);
+        reply(latest(), runs.slice(0, 50), "v1:50", true, null, 120, {revision: "v1"});
+        root.controller.loadMore();
+        historyFailure(latest(), "update-history-cursor-stale");
+        compare(latest().params.cursor, null);
+        reply(latest(), runs.slice(0, 50), "v2:50", true, null, 120, {revision: "v2", retain_through: 50});
+        compare(root.controller.entries.length, 50);
+        compare(latest().params.cursor, "v2:50");
+        const last = latest();
+        historyFailure(last, "update-history-cursor-stale");
+        compare(latest().id, last.id);
+        compare(root.controller.loading, false);
+        compare(root.controller.entries.length, 50);
+        verify(root.controller.errorText.length > 0);
+        root.controller.refresh();
+        const first = latest();
+        reply(first, runs.slice(0, 25), "v3:25", true, null, 120, {revision: "v3", retain_through: 50});
+        compare(root.controller.entries.length, 50);
+        reply(latest(), runs.slice(20, 50), "v3:55", true, null, 120, {revision: "v3", retain_through: 50});
+        verify(root.controller.errorText.includes("Duplicate"));
+        compare(root.controller.publishedRevision, "v1");
+        compare(root.controller.entries.length, 50);
+        root.controller.refresh();
+        reply(latest(), [], null, true, null, 120, {revision: "bad-end"});
+        verify(root.controller.errorText.includes("continuation"));
+        compare(root.controller.entries.length, 50);
+        root.controller.refresh();
+        reply(latest(), runs.slice(0, 25), "v4:25", true, null, 120, {revision: "v4", retain_through: 50});
+        const late = latest();
+        root.controller.deactivateUi();
+        reply(late, runs.slice(25, 50), "v4:50", true, null, 120, {revision: "v4", retain_through: 50});
+        compare(root.controller.publishedRevision, "v1");
+        compare(root.controller.historyWindow, null);
     }
     function test_browseInspectAndLogCommandNeverRunAnUpdate(): void {
         const root = fixture();
@@ -137,7 +311,7 @@ DaemonTestCase {
             {name: "B", before: "1", after: "2", changed: true, phase: "activated", error: null},
             {name: "C", before: "1", after: "1", changed: false, phase: "failed", error: "Build failed"}
         ];
-        reply(latest(), [run, entry("older", "staged")], null, true, null, 312);
+        reply(latest(), [run, entry("older", "staged")], "revision:2", true, null, 312);
         compare(root.controller.countLabel, "2 of 312 runs · read only");
         tryCompare(root.content.listItem, "resultCount", 3);
         const row = findChild(root, "updateRun:changed");

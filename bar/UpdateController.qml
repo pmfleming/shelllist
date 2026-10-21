@@ -5,6 +5,7 @@ import Shelllist.Ui as Ui
 import "BarProtocol.generated.js" as Contract
 import "UpdatePresentation.js" as Presentation
 import "UpdateOverviewValidation.js" as OverviewValidation
+import "UpdateHistory.js" as History
 
 Ui.ProviderChooserController {
     id: controller
@@ -15,8 +16,28 @@ Ui.ProviderChooserController {
     property string warningBrief: ""
     property int total: 0
     property double nowMs: Date.now()
-    readonly property string countLabel: filterText.trim() ? qsTr("%1 of %2 matching runs · read only").arg(entries.length).arg(total)
-        : qsTr("%1 of %2 runs · read only").arg(entries.length).arg(total)
+    property string calendarDay: ""
+    onNowMsChanged: {
+        const day = History.day(nowMs / 1000);
+        if (calendarDay && calendarDay !== day && uiActive && /(^|\s|:)(today|yesterday)(\s|$)/i.test(filterText)) scheduleRefresh();
+        calendarDay = day;
+    }
+    property string laneFilter: ""
+    property string outcomeFilter: ""
+    property bool collapseRoutine: true
+    property var expandedQuietIds: []
+    property int foldedCount: 0
+    readonly property bool historyFiltered: !!filterText.trim() || !!laneFilter || !!outcomeFilter
+    readonly property string queryKey: JSON.stringify([filterText, laneFilter, outcomeFilter, runId])
+    property string publishedQuery: ""
+    property string publishedRevision: ""
+    property var publishedAnchors: []
+    property var historyWindow: null
+    readonly property bool canLoadMore: !!cursor && !loading && publishedQuery === queryKey
+    readonly property var selectedQuietGroup: selectedResult ? selectedResult.metadata.quietGroup || null : null
+    readonly property string countLabel: publishedQuery !== queryKey && entries.length ? qsTr("Showing previous results")
+        : (historyFiltered ? qsTr("%1 of %2 matching runs").arg(entries.length).arg(total) : qsTr("%1 of %2 runs").arg(entries.length).arg(total))
+            + (foldedCount ? qsTr(" · %1 folded").arg(foldedCount) : "") + qsTr(" · read only")
     property string coverage: ""
     property var overview: null
     property string overviewRequest: ""
@@ -30,7 +51,6 @@ Ui.ProviderChooserController {
     property bool missingRun: false
     property var entries: []
     property string ownedRequest: ""
-    property bool appendRequest: false
     property string logRequest: ""
     property string logRun: ""
     property string logVersion: ""
@@ -71,12 +91,18 @@ Ui.ProviderChooserController {
         publishResults();
         refresh();
     }
-    onUiActiveChanged: if (!uiActive) { ownedRequest = ""; overviewRequest = ""; overviewLoading = false; overviewRefreshPending = false; logRequest = ""; loading = false; logCache = []; }
+    onUiActiveChanged: if (!uiActive) { retireHistory(); overviewRequest = ""; overviewLoading = false; overviewRefreshPending = false; logRequest = ""; loading = false; logCache = []; }
     onSelectedRunChanged: Qt.callLater(autoReadLog)
     onDetailsOpenChanged: Qt.callLater(autoReadLog)
     onLogRequestChanged: Qt.callLater(autoReadLog)
     onNavigationBlockedChanged: if (!navigationBlocked) Qt.callLater(autoReadLog)
-    onFilterTextChanged: { runId = ""; ownedRequest = ""; loading = false; }
+    onFilterTextChanged: { runId = ""; expandedQuietIds = []; retireHistory(); }
+    onCollapseRoutineChanged: publishResults()
+    Timer {
+        id: historyDeadline
+        interval: 15000
+        onTriggered: { controller.retireHistory(); controller.errorText = qsTr("History read timed out; previous results retained"); }
+    }
     Timer {
         interval: controller.selectedRun && Presentation.isRunning(controller.selectedRun) && controller.detailsOpen ? 1000 : 30000
         repeat: true
@@ -104,16 +130,52 @@ Ui.ProviderChooserController {
     function reviewIssue(id: string): void {
         if (uiActive && !navigationBlocked) openRun(id);
     }
-    function loadMore(): void { if (cursor && !loading) requestPage(true); }
+    function setHistoryFilter(kind: string, value: string): void {
+        if (!uiActive || navigationBlocked) return;
+        if (kind === "lane" && ["", "system", "ai-tools", "ai-tools-stale"].includes(value)) laneFilter = value;
+        else if (kind === "outcome" && ["", "problems", "running", "current", "activated", "staged", "ready", "queued", "failed", "partial", "blocked", "interrupted", "available", "skipped", "approved", "completed"].includes(value)) outcomeFilter = value;
+        else return;
+        runId = "";
+        missingRun = false;
+        expandedQuietIds = [];
+        selectFirst();
+        refresh();
+    }
+    function retireHistory(): void {
+        ownedRequest = "";
+        historyWindow = null;
+        loading = false;
+        historyDeadline.stop();
+    }
+    function loadMore(): void { if (canLoadMore) requestPage(true); }
     function requestPage(append: bool): void {
         if (!uiActive || !backend.ready) return;
-        ownedRequest = backend.nextRequestId("update-history");
-        appendRequest = append;
+        const retain = publishedQuery === queryKey && !runId;
+        const anchors = retain ? [selectedRun ? selectedRun.job.id : "", entries.length ? entries[entries.length - 1].job.id : ""].filter(Boolean) : [];
+        historyWindow = {key: queryKey, append: append, anchors: append ? publishedAnchors : [...new Set(anchors)],
+            entries: append ? entries.slice() : [], revision: append ? publishedRevision : "", total: append ? total : -1,
+            retainThrough: -1, target: retain ? entries.length : 0, pages: 0, retried: false, diagnostic: "", cursor: append ? cursor : ""};
         loading = true;
         errorText = "";
-        if (!backend.call(ownedRequest, "updates.queryHistory", {query: filterText, cursor: append ? cursor : null, run_id: runId || null, limit: 50})) {
-            loading = false;
-        }
+        historyDeadline.restart();
+        sendHistoryPage();
+    }
+    function sendHistoryPage(): void {
+        if (!historyWindow || !uiActive) return;
+        ownedRequest = backend.nextRequestId("update-history");
+        const sent = backend.call(ownedRequest, "updates.queryHistory", {query: runId ? "" : filterText, cursor: historyWindow.cursor || null,
+            run_id: runId || null, limit: 50, lane: runId ? null : laneFilter || null, outcome: runId ? null : outcomeFilter || null, anchor_ids: historyWindow.anchors});
+        if (!sent && ownedRequest) { retireHistory(); errorText = qsTr("Update history read could not be sent"); }
+    }
+    function restartHistoryWindow(): bool {
+        if (!historyWindow || historyWindow.retried) return false;
+        // One bounded restart from page one, never append across revisions.
+        historyWindow = Object.assign({}, historyWindow, {append: false, entries: [], revision: "", total: -1, retainThrough: -1,
+            target: Math.max(entries.length + (historyWindow.append ? 50 : 0), historyWindow.entries.length),
+            anchors: [...new Set([selectedRun ? selectedRun.job.id : "", entries.length ? entries[entries.length - 1].job.id : ""].filter(Boolean))],
+            retried: true, diagnostic: "", cursor: ""});
+        sendHistoryPage();
+        return true;
     }
     function validEntry(entry: var): bool {
         const optionalText = value => value === null || typeof value === "string";
@@ -159,20 +221,24 @@ Ui.ProviderChooserController {
             cacheLog(log.text, "", log.truncated);
             return;
         }
-        if (!ownedRequest || id !== ownedRequest) return;
+        if (!ownedRequest || id !== ownedRequest || !historyWindow || historyWindow.key !== queryKey) return;
         ownedRequest = "";
-        loading = false;
-        errorText = backend.responseError(envelope, transportError, qsTr("Update history unavailable"));
-        if (errorText) return;
+        const failure = backend.responseError(envelope, transportError, qsTr("Update history unavailable"));
+        if (failure) {
+            if (envelope && envelope.error && envelope.error.code === "update-history-cursor-stale" && restartHistoryWindow()) return;
+            retireHistory(); errorText = failure; return;
+        }
         const page = envelope.data ? envelope.data.history : null;
         if (!page || !Array.isArray(page.entries) || page.entries.length > 100 || typeof page.available !== "boolean" || typeof page.revision !== "string"
                 || !(page.cursor === null || typeof page.cursor === "string")
                 || !Number.isSafeInteger(page.total) || page.total < page.entries.length
                 || !(page.error === null || typeof page.error === "string") || typeof page.coverage !== "string"
+                || page.total > 4096 || (page.retain_through !== undefined && (!Number.isSafeInteger(page.retain_through) || page.retain_through < 0 || page.retain_through > page.total))
                 || page.entries.some(entry => !validEntry(entry))) {
-            errorText = qsTr("Invalid update history reply"); return;
+            retireHistory(); errorText = qsTr("Invalid update history reply"); return;
         }
         if (!page.available) {
+            retireHistory();
             available = page.available;
             cursor = "";
             errorText = (page.error || qsTr("Update history has not been published"))
@@ -180,24 +246,49 @@ Ui.ProviderChooserController {
             return;
         }
         if (runId && !page.entries.length && page.error) {
+            retireHistory();
             warningText = page.error;
             warningBrief = qsTr("Requested run could not be read");
             return;
         }
         if (runId && !page.entries.length && page.available && !page.error) {
+            retireHistory();
             runId = "";
             missingRun = true;
             refresh();
             return;
         }
         if (runId && (page.entries.length !== 1 || page.entries[0].job.id !== runId)) {
-            errorText = qsTr("Update history reply targets another run"); return;
+            retireHistory(); errorText = qsTr("Update history reply targets another run"); return;
         }
-        const next = appendRequest ? entries.concat(page.entries) : page.entries;
+        const window = historyWindow;
+        if (window.revision && window.revision !== page.revision) {
+            if (restartHistoryWindow()) return;
+            retireHistory(); errorText = qsTr("Update history kept changing; refresh again"); return;
+        }
+        const next = window.entries.concat(page.entries);
         if (new Set(next.map(entry => entry.job.id)).size !== next.length) {
-            errorText = qsTr("Duplicate update history identities"); return;
+            retireHistory(); errorText = qsTr("Duplicate update history identities"); return;
         }
-        if (page.total < next.length) { errorText = qsTr("Invalid update history total"); return; }
+        if (page.total < next.length || (window.total >= 0 && window.total !== page.total)
+                || (window.retainThrough >= 0 && window.retainThrough !== (page.retain_through || 0))
+                || (page.cursor && (!page.entries.length || page.cursor === window.cursor || next.length >= page.total))
+                || (!page.cursor && next.length !== page.total) || ++window.pages > 128) {
+            retireHistory(); errorText = qsTr("Invalid update history continuation"); return;
+        }
+        window.entries = next;
+        window.revision = page.revision;
+        window.total = page.total;
+        window.retainThrough = page.retain_through || 0;
+        window.cursor = page.cursor || "";
+        window.diagnostic = page.error || window.diagnostic;
+        if (!window.append && window.cursor && next.length < Math.max(window.target, window.retainThrough)) { sendHistoryPage(); return; }
+        const preserve = publishedQuery === queryKey;
+        publishedQuery = queryKey;
+        publishedRevision = page.revision;
+        publishedAnchors = window.anchors;
+        const diagnostic = window.diagnostic;
+        retireHistory();
         entries = next;
         total = page.total;
         available = page.available;
@@ -205,16 +296,30 @@ Ui.ProviderChooserController {
         coverage = page.coverage;
         // The wire diagnostics are capped and may contain multi-line/source errors,
         // so do not invent an unreadable-record count by splitting the string.
-        warningText = page.error || (missingRun ? qsTr("The requested run is no longer retained. Showing recent updates.") : "");
-        warningBrief = page.error ? qsTr("Some update history could not be read") : warningText;
-        publishResults();
+        warningText = diagnostic || (missingRun ? qsTr("The requested run is no longer retained. Showing recent updates.") : "");
+        warningBrief = diagnostic ? qsTr("Some update history could not be read") : warningText;
+        publishResults(preserve);
         if (runId && entries.length) { selectedIndex = filteredResults.findIndex(result => result.id === runId); openDetails(); }
     }
-    function publishResults(): void {
+    function publishResults(preserve: var): void {
+        const selectedId = selectedResult ? selectedResult.id : "";
+        const retainedIds = new Set(entries.map(entry => entry.job.id));
+        expandedQuietIds = expandedQuietIds.filter(id => retainedIds.has(id));
+        const rows = History.project(entries, collapseRoutine && !runId, expandedQuietIds, selectedId);
+        foldedCount = rows.reduce((count, row) => count + (row.quietGroup && !row.quietGroup.expanded ? row.quietGroup.ids.length : 0), 0);
+        resultsAboutToChange(preserve !== false);
         const overview = provider.makeResult({id: "_now", title: qsTr("Now"), subtitle: qsTr("Current worker status and deferred candidate"),
             score: 1, icon: "today", primaryActionId: "inspect", metadata: {overview: true},
             actions: [{id: "inspect", label: qsTr("Review current status"), closePolicy: "keep-open", presentation: {group: "primary"}}]});
-        replaceProviderResults([overview].concat(entries.map(function(entry, index) {
+        replaceProviderResults([overview].concat(rows.map(function(row, index) {
+            if (row.quietGroup) {
+                const group = row.quietGroup;
+                return provider.makeResult({id: group.id, title: qsTr("%1 no-change checks").arg(group.ids.length), score: -index,
+                    subtitle: Presentation.label(group.first.lane) + " · " + (group.expanded ? qsTr("Expanded") : qsTr("Collapsed · loaded runs only")),
+                    icon: group.expanded ? "expand_less" : "expand_more", primaryActionId: "toggle-quiet", metadata: {quietGroup: group},
+                    actions: [{id: "toggle-quiet", label: group.expanded ? qsTr("Collapse checks") : qsTr("Expand checks"), icon: "unfold_more", accessKey: "E", closePolicy: "keep-open", presentation: {group: "primary"}}]});
+            }
+            const entry = row.run;
             // The shared store uses score even for provider-ranked results.
             // Preserve the catalog's chronology, not alphabetical title order.
             return provider.makeResult({id: entry.job.id, title: entry.title, score: -index,
@@ -228,6 +333,16 @@ Ui.ProviderChooserController {
                     {id: "copy-log", label: qsTr("Copy run log"), icon: "content_copy", closePolicy: "keep-open", presentation: {group: "overflow"}},
                     {id: "all", label: qsTr("Show all recent updates"), icon: "history", accessKey: "A", closePolicy: "keep-open", presentation: {group: "toolbar"}}]});
         })), false);
+        if (selectedId && !filteredResults.some(result => result.id === selectedId)) { detailsOpen = false; selectFirst(); }
+        resultsChanged();
+    }
+    function toggleQuietGroup(): bool {
+        if (!selectedQuietGroup) return false;
+        const group = selectedQuietGroup;
+        expandedQuietIds = expandedQuietIds.filter(id => !group.ids.includes(id));
+        if (!group.expanded) expandedQuietIds = expandedQuietIds.concat(group.id.slice(7));
+        publishResults();
+        return true;
     }
     function runLogVersion(run: var): string {
         return JSON.stringify([run.outcome, run.job.status, run.job.phase, run.job.finished_at, run.job.exit_code, run.job.error]);
@@ -260,11 +375,12 @@ Ui.ProviderChooserController {
     function timeLabel(seconds: var): string {
         return Presentation.timeLabel(seconds, nowMs);
     }
-    function primarySelected(): bool { return executeSelected("inspect"); }
+    function primarySelected(): bool { return selectedQuietGroup ? perform("toggle-quiet") : executeSelected("inspect"); }
     function triggerDetailAction(actionId: string): bool { return perform(actionId); }
     function perform(actionId: string): bool {
         if (!uiActive || navigationBlocked) return false;
-        if (actionId === "all") { runId = ""; missingRun = false; filterText = ""; refresh(); return true; }
+        if (actionId === "all") { runId = ""; missingRun = false; laneFilter = ""; outcomeFilter = ""; filterText = ""; refresh(); return true; }
+        if (actionId === "toggle-quiet") return toggleQuietGroup();
         if (actionId === "inspect" && hasSelection) { openDetails(); return true; }
         if (!selectedRun) return false;
         if (actionId === "logs") return readLog(selectedRun);
@@ -297,9 +413,8 @@ Ui.ProviderChooserController {
             controller.overviewRequest = "";
             controller.overviewLoading = false;
             controller.overviewRefreshPending = false;
-            controller.ownedRequest = "";
+            controller.retireHistory();
             controller.logRequest = "";
-            controller.loading = false;
         }
         onEventReceived: function(event) { if (event.event === "changed") controller.scheduleRefresh(); }
     }

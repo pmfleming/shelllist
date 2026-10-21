@@ -641,6 +641,18 @@ and live duration update without requests, selection changes or focus movement.
 Partial-history warnings preserve readable rows; log loading/errors stay inside
 the selected run's log card and never replace the history empty-state reason.
 History coverage appears once in the list footer, not as a detail field.
+Updates lane/outcome filters use shared command menus (Alt+T / Alt+F), including
+while details are closed. Arrows browse options without querying, Enter/click
+selects, Escape cancels; passive filter labels add no field stops. Native search
+supports local-calendar today/yesterday, ISO dates, inclusive since: and exclusive
+before: bounds. Now and exact-run links remain independent of history filters.
+Consecutive same-day routine no-change checks fold into summary results over
+loaded runs only. Enter/Alt+E expands their original identities; Right inspects
+scope. Alt+N toggles folding without reads. Failures, changes, holds, manual runs
+and an inspected run remain individually available. Same-query refresh stages
+all required pages before a single shared keyed selection/viewport publication;
+partial failures retain the old window. Stale cursors restart once, without
+mixing revisions or replaying effects. See Updates for bounds and coverage.
 The generic Tray chooser keeps its inspect-first behavior and explicit Activate
 application command. No inline tray icon or privileged update control is added.
 See [Updates](updates.md) and `tst_updates.qml`.
