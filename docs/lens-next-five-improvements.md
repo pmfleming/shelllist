@@ -34,3 +34,30 @@ Clipboard transport-boundary test checks append, stable selection and stale read
 No interaction change: Up/Down browse results, search entry and field transactions
 retain the chooser keyboard contract. Notification selection side effects and
 Time/Weather's native identity restoration remain owned by those controllers.
+
+## 2. Give DNS validation one shared editor owner
+
+Move `AddressListField` to `Shelllist.Ui` and co-locate its saved-validation state
+and messages. `FieldValidation` had only this remaining caller after retirement
+of the legacy address/prefix editors. Remove its unused single-address mode,
+forwarding properties and the obsolete NetworkInput module. Wi-Fi and the manual
+form fixture use the shared editor; Nix lint already discovers its new location.
+Preserve the old diagnostic translation context with `qsTranslate`.
+
+Production source/physical lines decrease **22**, cyclomatic **2**, cognitive **3**
+and weighted effort **8**. The editor's locality rises **92 → 100** and mean
+leverage **36.3964 → 36.4608**. Removing the fully local wrapper lowers mean
+locality **74.2613 → 74.2078**. Normalized clone coverage rises **1542 → 1554**;
+this is a simplification of live ownership, not an all-metric improvement.
+
+Validation: strict lint, actual Wi-Fi IP suite **8 passes**, **106** parser checks,
+source-tree import check and whitespace check. Native DNS assertions verify no
+pre-save feedback, retained full-buffer rejection, family-change reset and no
+backend writes. Shared TextEditor still owns Enter/Tab/Escape and multiline keys;
+DNS remains one field in FieldRow, with domain readiness and acknowledgement intact.
+
+Rejected candidate: extracting all Updates schema predicates into one new module
+passed 2223 frozen-input comparisons and native tests, but increased production
+source lines by 9, cyclomatic by 35, cognitive by 21 and effort by 101. The schema
+checks were already explicit and had insufficient reuse to justify that split.
+The experiment was reverted before this commit; its ignored patch remains evidence.

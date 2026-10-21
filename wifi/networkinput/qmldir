@@ -1,3 +1,0 @@
-module Shelllist.NetworkInput
-AddressListField 1.0 AddressListField.qml
-internal FieldValidation FieldValidation.qml

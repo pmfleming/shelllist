@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import Quickshell
 import Shelllist.Ui as Ui
 import "../../wifi" as Wifi
-import "../../wifi/networkinput" as NetworkInput
 import "../qml" as Tests
 
 // Explicitly invoked capture fixture. Synthetic values, recording daemon only.
@@ -96,7 +95,7 @@ Tests.DaemonTestCase {
                     Ui.FormField {
                         Layout.fillWidth: true
                         label: "DNS servers"
-                        NetworkInput.AddressListField { Layout.fillWidth: true; text: "2001:4860:4860::8888\n2606:4700:4700::1111"; family: "ipv6" }
+                        Ui.AddressListField { Layout.fillWidth: true; text: "2001:4860:4860::8888\n2606:4700:4700::1111"; family: "ipv6" }
                     }
                     Ui.FormField {
                         Layout.fillWidth: true

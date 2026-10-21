@@ -155,10 +155,17 @@ DaemonTestCase {
         panel.page.saveDirty();
         compare(updates().length, 0);
         compare(panel.currentTarget.objectName, "wifiDnsServers");
+        const dns = panel.currentTarget;
         paste("1.1.1.1".padEnd(IpValidation.MaximumEditingLength) + "/24");
+        compare(dns.errorText, "", "diagnostics wait for explicit save");
         keyClick(Qt.Key_Return);
+        verify(dns.validationAttempted && dns.errorText.length > 0);
         verify(!panel.page.hardwareSettingsReady(), "DNS retains its independent full-buffer guard");
         panel.page.saveDirty();
+        compare(updates().length, 0);
+        panel.page.ipFamily = "ipv6";
+        compare(dns.validationAttempted, false);
+        compare(dns.errorText, "");
         compare(updates().length, 0);
     }
     function test_dnsMultilineTransactionAndAcknowledgementBoundary() {

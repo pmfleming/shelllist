@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import "."
-import "networkinput" as NetworkInput
 import Shelllist.Ui
 
 AdvancedSettingsFlickable {
@@ -143,7 +142,7 @@ AdvancedSettingsFlickable {
                     readOnlyReason: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : dnsServers.readOnly ? qsTr("Assigned automatically") : ""
                     copyAvailable: dnsServers.readOnly && dnsServers.enabled && dnsServers.text.length > 0
                     onCopyRequested: hardwareFlick.settings.controller.copyText(dnsServers.text, qsTr("DNS servers copied"))
-                    NetworkInput.AddressListField {
+                    AddressListField {
                         id: dnsServers
                         Layout.fillWidth: true
                         enabled: hardwareFlick.settings.currentFamilyEnabled

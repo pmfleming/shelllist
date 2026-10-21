@@ -632,7 +632,6 @@
                   ${./.}/displays/*.qml
                   ${./.}/activity/*.qml
                   ${./.}/wifi/*.qml
-                  ${./.}/wifi/networkinput/*.qml
                   ${./.}/wifi/process/*.qml
                   ${./.}/tests/qml/*.qml
                   ${./.}/dev/*.qml
