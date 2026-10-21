@@ -81,3 +81,23 @@ Wi-Fi IP suite **8 passes**, strict lint and TypeScript typecheck. New vectors c
 both directions across empty slots and IPv6 slashes, including no adjacent digit.
 **143104** frozen old/new edit-operation comparisons pass. No interaction or backend
 boundary changes; native arrows, deferred saves and rollback retain their contract.
+
+## 4. Separate routine-run boundaries from group projection
+
+Updates grouping now names its contiguous-span and group-anchor computations.
+The span calculates the first local date once; group membership uses one Set and
+one remembered-anchor search instead of repeated linear membership tests and a
+second expansion scan. Remembered ID order still wins over chronological order,
+and the selected group/individual run keeps its prior precedence. No requests,
+inferred history outside the loaded window, or selection side effects are added.
+
+`project` improves **15/24/87 → 6/8/38**; the new span/group helpers are **6/5/25**
+and **5/4/23**. Production cognitive sum falls **7** and weighted effort **1**;
+cyclomatic sum rises **2** for the added functions, and source/physical lines rise
+**11/13**. This is a bounded algorithm/readability tradeoff, not a runtime benchmark
+or LOC win. Locality/leverage scores are unchanged.
+
+Validation: strict lint, Updates native suite **26 passes**, and **12000** frozen
+projections comparing complete old/new row structures. New native-JS vectors cover
+local-day and lane boundaries, remembered-anchor order and selected-run expansion;
+the existing native key/menu/refresh test covers real consumer fold/unfold behavior.

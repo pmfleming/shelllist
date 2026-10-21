@@ -154,6 +154,18 @@ DaemonTestCase {
         compare(root.controller.foldedCount, 0);
         compare(root.controller.filteredResults.length, 10);
     }
+    function test_routineGroupingRespectsBoundariesAndRememberedAnchorOrder(): void {
+        const runs = ["a", "b", "c", "d", "e", "f"].map(id => entry(id, "current"));
+        runs.forEach((run, index) => run.job.started_at = new Date(2026, 9, index < 2 ? 20 : 21, 12).getTime() / 1000);
+        runs[4].lane = runs[5].lane = "ai-tools";
+        const rows = History.project(runs, true, ["b", "a"], "d");
+        const groups = rows.filter(row => row.quietGroup).map(row => row.quietGroup);
+        compare(groups.map(group => group.id), ["_quiet-b", "_quiet-c", "_quiet-e"]);
+        compare(groups.map(group => group.expanded), [true, true, false]);
+        compare(rows.filter(row => row.run).map(row => row.run.job.id), ["a", "b", "c", "d"]);
+        compare(History.project(runs, true, ["b"], "_quiet-a")[0].quietGroup.id, "_quiet-a");
+        compare(History.project(runs, false, ["b"], "d").map(row => row.run.job.id), runs.map(run => run.job.id));
+    }
     function test_refreshStagesLoadedDepthAndPreservesSelectionViewportAndFocus(): void {
         const root = fixture();
         const old = historyRuns(120);
