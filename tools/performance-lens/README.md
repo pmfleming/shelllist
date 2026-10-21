@@ -266,3 +266,10 @@ of tests and have not been run
 as part of implementation. Run them yourself in an explicitly consenting session.
 No application panel or production key behavior was changed, so existing Qt
 interaction tests are untouched.
+
+The [five-item performance review](../../docs/performance-review.md) records
+application findings and the lens collector optimization. The opt-in
+`profile_light_process_collection` Rust test measures 1,000 real light procfs
+samples. Field tables are parsed once per sample and the initial identity stat
+is reused; pre/post process identity guards remain. This does not eliminate
+PSS/kernel walk costs or justify silently increasing collection rates.

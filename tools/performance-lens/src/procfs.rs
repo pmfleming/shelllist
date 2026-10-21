@@ -77,6 +77,10 @@ pub fn identity(pid: u32) -> Result<Identity> {
 }
 
 pub fn verify(id: &Identity) -> Result<()> {
+    verified_stat(id).map(|_| ())
+}
+
+fn verified_stat(id: &Identity) -> Result<Stat> {
     let base = format!("/proc/{}", id.pid);
     let stat = parse_stat(&fs::read_to_string(format!("{base}/stat"))?)?;
     ensure!(stat.start_ticks == id.start_ticks, "PID identity changed");
@@ -85,7 +89,7 @@ pub fn verify(id: &Identity) -> Result<()> {
         fs::read_link(format!("{base}/exe"))?.to_string_lossy() == id.executable,
         "target executable changed"
     );
-    Ok(())
+    Ok(stat)
 }
 
 pub fn ticks_per_second() -> Result<u64> {
@@ -122,16 +126,23 @@ fn insert_fields(
     source: &str,
     keys: &[(&str, &str, &str)],
 ) {
+    // Each proc file is parsed once, not once per requested counter.
+    let parsed_fields = text
+        .as_ref()
+        .map(|s| fields(s))
+        .map_err(|e| format!("{e:#}"));
     for &(name, key, unit) in keys {
-        let parsed = text.as_ref().map_err(|e| format!("{e:#}")).and_then(|s| {
-            let fields = fields(s);
-            let value = fields.get(key).ok_or_else(|| format!("missing {key}"))?;
-            if unit == "bytes" {
-                bytes(value).map_err(|e| e.to_string())
-            } else {
-                value.parse::<u64>().map_err(|e| e.to_string())
-            }
-        });
+        let parsed = parsed_fields
+            .as_ref()
+            .map_err(Clone::clone)
+            .and_then(|fields| {
+                let value = fields.get(key).ok_or_else(|| format!("missing {key}"))?;
+                if unit == "bytes" {
+                    bytes(value).map_err(|e| e.to_string())
+                } else {
+                    value.parse::<u64>().map_err(|e| e.to_string())
+                }
+            });
         let counter = match parsed {
             Ok(n) => Counter::new(n, unit, source),
             Err(e) => Counter::missing(unit, source, e),
@@ -141,9 +152,10 @@ fn insert_fields(
 }
 
 pub fn counters(id: &Identity, heavy: bool) -> Result<BTreeMap<String, Counter>> {
-    verify(id)?;
+    // Reuse the stat snapshot that established the pre-read identity. The
+    // independent post-read verification below still rejects exits/PID reuse.
+    let stat = verified_stat(id)?;
     let root = format!("/proc/{}", id.pid);
-    let stat = parse_stat(&fs::read_to_string(format!("{root}/stat"))?)?;
     let mut out = BTreeMap::new();
     for (name, n, unit) in [
         ("cpu_ticks", stat.cpu_ticks, "ticks"),
@@ -164,18 +176,21 @@ pub fn counters(id: &Identity, heavy: bool) -> Result<BTreeMap<String, Counter>>
     );
     let io = fs::read_to_string(format!("{root}/io")).map_err(Into::into);
     // io's byte counters are unitless; parse numerically, then annotate bytes.
-    for key in [
-        "read_bytes",
-        "write_bytes",
-        "rchar",
-        "wchar",
-        "syscr",
-        "syscw",
-    ] {
-        insert_fields(&mut out, &io, "proc/io", &[(key, key, "count")]);
-        if !key.starts_with("sys") {
-            out.get_mut(key).unwrap().unit = "bytes".into();
-        }
+    insert_fields(
+        &mut out,
+        &io,
+        "proc/io",
+        &[
+            ("read_bytes", "read_bytes", "count"),
+            ("write_bytes", "write_bytes", "count"),
+            ("rchar", "rchar", "count"),
+            ("wchar", "wchar", "count"),
+            ("syscr", "syscr", "count"),
+            ("syscw", "syscw", "count"),
+        ],
+    );
+    for key in ["read_bytes", "write_bytes", "rchar", "wchar"] {
+        out.get_mut(key).unwrap().unit = "bytes".into();
     }
     let pss = if heavy {
         fs::read_to_string(format!("{root}/smaps_rollup")).map_err(Into::into)
@@ -219,6 +234,32 @@ mod tests {
         assert!(bytes("12").is_err());
         assert!(bytes("18446744073709551615 KiB").is_err());
     }
+    #[test]
+    fn shared_field_parse_keeps_missing_invalid_and_denied_counters_distinct() {
+        let mut out = BTreeMap::new();
+        insert_fields(
+            &mut out,
+            &Ok("VmRSS: 12 kB\nVmHWM: bad\n".into()),
+            "fixture",
+            &[
+                ("rss", "VmRSS", "bytes"),
+                ("peak", "VmHWM", "bytes"),
+                ("threads", "Threads", "count"),
+            ],
+        );
+        assert_eq!(out["rss"].value, Some(12288));
+        assert!(out["peak"].value.is_none());
+        assert_eq!(out["threads"].reason.as_deref(), Some("missing Threads"));
+        insert_fields(
+            &mut out,
+            &Err(anyhow::anyhow!("permission denied")),
+            "fixture",
+            &[("rss", "VmRSS", "bytes"), ("peak", "VmHWM", "bytes")],
+        );
+        assert_eq!(out["rss"].reason.as_deref(), Some("permission denied"));
+        assert_eq!(out["peak"].reason, out["rss"].reason);
+    }
+
     #[test]
     fn detects_reuse() {
         let mut id = identity(std::process::id()).unwrap();

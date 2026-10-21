@@ -109,10 +109,14 @@ pub fn collect(
             } else {
                 sample.gpu_reason = Some("not sampled at this cadence".into());
             }
-            if let Err(e) = procfs::verify(&target.identity) {
-                sample.counters.clear();
-                sample.gpu.clear();
-                sample.error = Some(format!("identity lost during sample: {e:#}"));
+            // counters() already fenced the procfs reads. Only DRM collection
+            // introduces more process reads that need an additional identity check.
+            if heavy {
+                if let Err(e) = procfs::verify(&target.identity) {
+                    sample.counters.clear();
+                    sample.gpu.clear();
+                    sample.error = Some(format!("identity lost during sample: {e:#}"));
+                }
             }
         }
         Err(e) => {
@@ -209,6 +213,32 @@ pub fn run(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    #[ignore = "manual procfs collector performance probe; setup excluded"]
+    fn profile_light_process_collection() {
+        let target = Target {
+            label: "probe".into(),
+            identity: procfs::identity(std::process::id()).unwrap(),
+        };
+        let start = Instant::now();
+        for sequence in 0..1000 {
+            let sample = collect(
+                &target,
+                sequence,
+                start,
+                "probe",
+                false,
+                &mut BTreeSet::new(),
+            );
+            assert!(sample.error.is_none());
+            std::hint::black_box(sample);
+        }
+        println!(
+            "1000 light procfs collections: {:.3} ms",
+            start.elapsed().as_secs_f64() * 1000.0
+        );
+    }
+
     #[test]
     fn actual_intervals_resets_and_phases() {
         let target = Target {
