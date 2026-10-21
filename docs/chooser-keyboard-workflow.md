@@ -84,14 +84,14 @@ label column; fixed-size switches stay right-aligned while their labels and
 subtitles use all remaining width. Labels wrap only within that available space;
 panels must not introduce stacked labels or private breakpoints.
 Inline icons/names, separators, state badges and disclosed help are passive: the contained shared editor keeps its stable focus identity and
-transaction. A single-line or expanded scrolling `TextEditor` is still one field. IP/DNS errors become visible on explicit save, without
-trapping Tab: saving retains the domain draft, while the existing whole-group
-readiness guard blocks invalid/incomplete backend writes. CIDR, unsupported zone
-suffixes and full native editing buffers are rejected without accepting a
-silently shortened value. Error diagnostics use that same raw-buffer state,
-including full buffers whose visible suffix is whitespace; trimming must not
-turn a rejected value into an error-free one. No per-keystroke normalization or
-cross-field paste write is allowed.
+transaction. A single-line or expanded scrolling `TextEditor` is still one field.
+DNS/legacy IP diagnostics become visible on explicit save without trapping Tab;
+their raw full-buffer and CIDR/zone rejection guards remain intact. The shared
+`IpField` exception below supports combined address/subnet input and red-only
+validation. Saving retains invalid domain drafts, while whole-group readiness
+blocks invalid/incomplete backend writes. Neither path may accept a silently
+shortened native buffer, including one whose clipped suffix is whitespace.
+There is no cross-field paste write or per-keystroke semantic normalization.
 
 Changes remain **field-local until Enter/Tab**, or an explicit option click on a
 shared dropdown with `saveOnOptionClick` enabled (currently Workspace category).
@@ -159,6 +159,80 @@ remain drafts. On/off switches and explicit action buttons remain immediately ac
 A dropdown's open menu belongs to its field: Enter/Tab saves the highlighted
 choice; Escape closes it and discards that edit. It does not add an extra
 Escape-to-stop-editing step.
+
+## Structured IP fields
+
+`IpField` is the shared IPv4/IPv6 editor, composed through `FormField`/`FieldRow`
+and dispatched by `DetailsNavigation` with one `FieldEditSession`. Configure
+`family: "ipv4" | "ipv6"`, `mode: "address" | "addressWithSubnet"`,
+`subnetNotation: "prefix" | "netmask"` (netmask is IPv4-only), and domain-owned
+`allowEmpty`. Unsupported combinations fail closed. An address-only field has
+no subnet component and rejects suffixed paste as a whole. Combined input saves
+one address/subnet draft, never two independently discoverable fields. Wi-Fi
+uses combined prefix notation for both families and address-only gateways;
+DNS lists/search domains retain their existing editors and parsers.
+
+IPv4 has four decimal slots with fixed dots. Three newly entered digits advance
+only when filling an empty slot or replacing a selected whole slot. Short octets
+use Right at the slot end, a typed dot, or a click. Mid-value corrections do not
+spill into neighbouring slots. A combined value continues into its prefix or
+four dotted-mask slots; address-only entry ends at the last octet. No automatic
+save, guessed short-octet boundaries or range clamping. IPv6 uses native address
+text, including hex letters, editable colons, one `::` compression and embedded
+IPv4 tails. Colons are never inserted automatically. A combined field has a fixed
+slash and decimal prefix; typing slash, Right at the address end or a click enters
+that component. Arrows remain internal native editing, not field traversal.
+Backspace/Delete preserve fixed IPv4 separators and the structural slash, reaching
+the previous/next digit when deleting only a separator. Selection, Home/End,
+copy/cut, and bounded field-local undo/redo cover the entire composite. Internal
+caret/pointer movement never ends the field transaction.
+
+Enter saves and returns to browsing; Escape discards; Tab/Shift+Tab save and
+continue editing with normal wrapping. Even an invalid save returns/continues
+without trapping focus. Typing, auto-advance, clipboard/drop insertion, blur and
+page closure do not write settings. Configuration or availability changes discard
+an active unsubmitted field edit. Incoming snapshots cannot replace it; discard
+reveals the latest bound source. Automatic/read-only values stay readable with
+the shared lock/Copy composition and never enter editable traversal.
+
+Out-of-range values and malformed allowed-character drafts turn the entire value
+red immediately. Otherwise incomplete input stays neutral until explicit save.
+There is no visible validation message, error icon or duplicate `FeedbackSource`
+contribution for this control. Public validation state and native accessible
+invalid descriptions preserve non-colour diagnostics; labels, Help and telemetry
+remain passive. This changes presentation, not domain readiness, operational
+feedback, capability, acknowledgement, retry or safety ownership.
+
+Full-value paste is atomic: accept configured-family addresses, and in combined
+mode accept address/prefix or IPv4 address/dotted-mask. Spaces immediately around
+the slash are allowed; other whitespace, scopes, brackets/ports, extra components
+and oversized payloads are rejected without replacing the previous draft. A bare
+full-address paste clears a previous subnet. Plain numeric/hex substring insertion
+is local, never a guessed concatenated IP. Disallowed committed characters cannot
+delete the selection. The native buffer does not truncate to an IP-sized limit;
+the complete operation is checked before accepting a bounded draft. The parser
+also rejects over-limit bound source values. Unrecognized source suffixes cannot
+vanish as a side effect of local correction.
+
+Keep raw pasted subnet notation until valid explicit save, including an invalid
+non-contiguous mask. Valid save serializes IPv4 octets as decimal, lowercases IPv6
+hex without expanding/compressing it, and converts contiguous dotted masks to an
+exact prefix (0–32 for IPv4, 0–128 for IPv6). The configured notation is rendered
+on save; IPv6 dotted-mask notation is unsupported. Never clear host bits, invent
+zeroes/default subnets, strip scopes or convert address families. Optional empty
+means the complete field is empty; a half-empty pair is incomplete. `IpCodec`
+shares the parser with domain adapters. Wi-Fi retains the whole raw pair in
+`IpSettingsState.addressWithSubnet`, so invalid saves continue blocking readiness,
+and valid saves cannot publish an intermediate half-updated address/prefix pair.
+
+`tests/qml/tst_ip_control.qml` owns native selection, keyboard/pointer transactions,
+clipboard rejection, undo/redo, narrow caret visibility and all five configurations.
+`tst_ip_fields.qml` exercises real Wi-Fi saves, both families, gateway rejection,
+read-only/family transitions and independent DNS truncation guards. Parser/edit
+operations and all IPv4 mask conversions are covered by `check-ip-control.js`;
+legacy parser checks remain in `check-ip-validation.js`. Hardware IME, primary
+selection/external drag-and-drop, live compositor and human screen-reader checks
+remain separate acceptance gates; synthetic/native key tests do not prove them.
 
 ## Highlighting
 
@@ -543,7 +617,7 @@ contract and Qt interaction coverage.
 1. Use `ProviderChooserSurface` or `PanelSurface`; their shared keyboard
    workflow is mandatory, not an optional migration mode. Do not add local
    Up/Down field traversal or Right-to-edit.
-2. Use shared `TextField`, `TextEditor`, `DropDownList`, `SegmentedControl`,
+2. Use shared `TextField`, `TextEditor`, `IpField`, `DropDownList`, `SegmentedControl`,
    `ValueSlider`/`LabeledValueSlider`/`LinkedValueSlider`, `ToggleRow` and `ToggleSwitch` controls.
    Assign stable `objectName`/`focusKey` identities for ordinary restoration.
 3. For deferred settings, consume **`edited` / `selected` / `editingFinished`**,

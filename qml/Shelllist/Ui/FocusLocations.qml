@@ -6,17 +6,18 @@ import QtQuick
 QtObject {
     function key(item: Item): string {
         const field = item as TextField;
-        return field ? (field.sensitive ? "" : field.focusKey) : (item ? item.objectName : "");
+        return field ? (field.sensitive ? "" : field.focusKey) : (item as IpField)?.focusKey || (item ? item.objectName : "");
     }
     function selection(item: Item): var {
-        return (item as TextField)?.selectionState() || (item as TextEditor)?.selectionState() || null;
+        return (item as TextField)?.selectionState() || (item as IpField)?.selectionState() || (item as TextEditor)?.selectionState() || null;
     }
     function restoreSelection(item: Item, state: var): void {
         (item as TextField)?.restoreSelection(state);
+        (item as IpField)?.restoreSelection(state);
         (item as TextEditor)?.restoreSelection(state);
     }
     function registered(item: Item): bool {
-        return item instanceof ActionControl || item instanceof TextField || item instanceof IconTile;
+        return item instanceof ActionControl || item instanceof TextField || item instanceof IpField || item instanceof IconTile;
     }
     function uniqueTarget(items: var, name: string): Item {
         if (!name)
@@ -51,12 +52,16 @@ QtObject {
             return false;
         const action = target as ActionControl;
         const field = target as TextField;
+        const ip = target as IpField;
         const tile = target as IconTile;
-        if ((action && !action.interactive) || (tile && !tile.clickable) || (field && (field.sensitive || field.readOnly)))
+        if ((action && !action.interactive) || (tile && !tile.clickable) || (field && (field.sensitive || field.readOnly)) || (ip && !ip.editSession.available))
             return false;
         if (field) {
             field.focusInput(false);
             restoreSelection(field, state.selection);
+        } else if (ip) {
+            ip.focusInput(false);
+            restoreSelection(ip, state.selection);
         } else {
             target.forceActiveFocus(Qt.OtherFocusReason);
         }

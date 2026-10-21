@@ -1,4 +1,6 @@
 module Shelllist.Ui
+IpField 1.0 IpField.qml
+singleton IpCodec 1.0 IpCodec.qml
 SectionHeading 1.0 SectionHeading.qml
 InlineStatus 1.0 InlineStatus.qml
 singleton Theme 1.0 Theme.qml

@@ -20,7 +20,7 @@ QtObject {
         case "prefix":
             return qsTr("Enter a prefix length from 0 to %1").arg(issue.maximum);
         case "cidr":
-            return qsTr("Use the separate Prefix length field for CIDR notation");
+            return qsTr("Enter addresses without CIDR prefixes or subnet masks");
         case "zone":
             return qsTr("Scoped IPv6 addresses are not supported here");
         case "brackets":

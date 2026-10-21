@@ -76,28 +76,88 @@ DaemonTestCase {
     function updates() {
         return calls.filter(call => call.method === "wifi.profile.operation" && call.params.operation === "update");
     }
-    function test_nativeBufferLimitAndPrefixPasteNeverBecomeValidTruncations() {
+    function test_nativeBufferLimitAndInvalidPairNeverDispatch() {
+        const panel = make();
+        const address = browse(panel, "wifiIpAddress");
+        verify(address instanceof Ui.IpField);
+        compare(findChild(panel, "wifiIpPrefix"), null, "subnet is not another Tab stop");
+        keyClick(Qt.Key_Return);
+        paste("192.168.1.20" + " ".repeat(IpValidation.MaximumEditingLength) + "/24");
+        compare(address.text, "192.168.1.20/24", "oversized paste is rejected, not clipped");
+        paste("192.168.1.20/" + "24".padEnd(IpValidation.MaximumEditingLength));
+        compare(address.text, "192.168.1.20/24");
+        paste("192.168.1.20/33");
+        compare(address.validationState, IpValidation.Invalid);
+        keyClick(Qt.Key_Tab);
+        compare(panel.currentTarget.objectName, "wifiIpGateway");
+        verify(panel.editing);
+        compare(panel.page.currentIp.addressWithSubnet, "192.168.1.20/33");
+        verify(!panel.page.hardwareSettingsReady());
+        panel.page.saveDirty();
+        compare(updates().length, 0);
+        keyClick(Qt.Key_Escape);
+        browse(panel, "wifiIpAddress");
+        keyClick(Qt.Key_Return);
+        paste("192.168.1.20");
+        keyClick(Qt.Key_Return);
+        verify(!panel.page.hardwareSettingsReady(), "bare paste cannot reuse the old subnet");
+        panel.page.saveDirty();
+        compare(updates().length, 0);
+    }
+    function test_combinedSaveIsAtomic_data() {
+        return [
+            {tag: "ipv4", family: "ipv4", value: "192.0.2.119/255.255.254.0", address: "192.0.2.119", prefix: 23},
+            {tag: "ipv6", family: "ipv6", value: "2001:db8::119/96", address: "2001:db8::119", prefix: 96}
+        ];
+    }
+    function test_combinedSaveIsAtomic(data) {
+        const panel = make();
+        panel.page.ipFamily = data.family;
+        const address = browse(panel, "wifiIpAddress");
+        const original = panel.page.currentIp.addressWithSubnet;
+        keyClick(Qt.Key_Return);
+        paste(data.value);
+        compare(panel.page.currentIp.addressWithSubnet, original);
+        compare(updates().length, 0);
+        keyClick(Qt.Key_Return);
+        panel.page.saveDirty();
+        compare(updates().length, 1);
+        const saved = updates()[0].params.settings[data.family];
+        compare(saved.addresses, [{address: data.address, prefix: data.prefix}]);
+        verify(panel.controller.advanced.saving, "the field cannot acknowledge the operation");
+    }
+    function test_familyChangeAndAutomaticValuesCannotSaveDrafts() {
         const panel = make();
         const address = browse(panel, "wifiIpAddress");
         keyClick(Qt.Key_Return);
-        paste("192.168.1.20" + " ".repeat(IpValidation.MaximumEditingLength) + "/24");
-        compare(address.text.length, IpValidation.MaximumEditingLength);
-        compare(address.validationState, IpValidation.Invalid);
-        keyClick(Qt.Key_Escape);
+        paste("192.0.2.1/32");
+        panel.page.ipFamily = "ipv6";
+        compare(panel.page.currentIp.addressWithSubnet, "2001:db8::20/64");
+        compare(address.text, "2001:db8::20/64");
+        verify(!panel.editing);
+        compare(updates().length, 0);
+        panel.page.currentIp.method = "auto";
+        verify(address.readOnly);
+        verify(!panel.availableFields().includes(address));
+        panel.page.ipFamily = "ipv4";
+        compare(address.text, "192.168.1.20/24");
+        compare(updates().length, 0);
+    }
+    function test_gatewayAddressOnlyAndDnsTruncationGuard() {
+        const panel = make();
+        const gateway = browse(panel, "wifiIpGateway");
+        keyClick(Qt.Key_Return);
+        paste("192.168.1.1/24");
+        compare(gateway.text, "", "gateway must reject a subnet rather than discard its suffix");
+        paste("192.168.999.1");
         keyClick(Qt.Key_Tab);
-        const prefix = panel.currentTarget;
-        compare(prefix.objectName, "wifiIpPrefix");
+        compare(panel.page.currentIp.gateway, "192.168.999.1");
+        panel.page.saveDirty();
+        compare(updates().length, 0);
+        compare(panel.currentTarget.objectName, "wifiDnsServers");
+        paste("1.1.1.1".padEnd(IpValidation.MaximumEditingLength) + "/24");
         keyClick(Qt.Key_Return);
-        paste("24".padEnd(IpValidation.MaximumEditingLength));
-        compare(prefix.validationState, IpValidation.Invalid);
-        compare(prefix.errorText, "");
-        keyClick(Qt.Key_Return);
-        verify(prefix.errorText.includes("too long"));
-        keyClick(Qt.Key_Return);
-        paste("3200");
-        compare(prefix.text, "3200");
-        keyClick(Qt.Key_Return);
-        verify(prefix.errorText.includes("0 to 32"));
+        verify(!panel.page.hardwareSettingsReady(), "DNS retains its independent full-buffer guard");
         panel.page.saveDirty();
         compare(updates().length, 0);
     }

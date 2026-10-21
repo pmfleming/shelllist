@@ -35,8 +35,9 @@ Item {
     readonly property var bandStatus: controller.bandStatus || ({})
     readonly property var dhcpLease: controller.isActive(ap) ? (((status.ip4 || {}).dhcp_lease) || ({})) : ({})
     readonly property var currentActiveIp: controller.isActive(ap) ? (status[ipFamily === "ipv4" ? "ip4" : "ip6"] || ({})) : ({})
-    readonly property string displayedAddress: currentMethod === "auto" && currentActiveIp.address ? String(currentActiveIp.address) : currentIp.address
-    readonly property string displayedPrefix: currentMethod === "auto" && currentActiveIp.prefix !== undefined && currentActiveIp.prefix !== null ? String(currentActiveIp.prefix) : currentIp.prefix
+    readonly property string displayedAddressWithSubnet: currentMethod === "auto" && currentActiveIp.address
+        ? String(currentActiveIp.address) + (currentActiveIp.prefix !== undefined && currentActiveIp.prefix !== null ? "/" + String(currentActiveIp.prefix) : "")
+        : currentIp.addressWithSubnet
     readonly property string displayedGateway: currentMethod === "auto" && currentActiveIp.gateway ? String(currentActiveIp.gateway) : currentIp.gateway
     readonly property string displayedDns: currentAutoDns && currentActiveIp.dns && currentActiveIp.dns.length > 0 ? currentActiveIp.dns.join(", ") : currentIp.dns
 
@@ -188,12 +189,10 @@ Item {
     IpSettingsState {
         id: ipv4State
         family: "ipv4"
-        fallbackPrefix: 24
     }
     IpSettingsState {
         id: ipv6State
         family: "ipv6"
-        fallbackPrefix: 64
     }
 
     Component.onCompleted: syncProfile()

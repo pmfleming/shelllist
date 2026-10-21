@@ -118,10 +118,24 @@ export FONTCONFIG_FILE=/path/to/packaged-fonts.conf
 tests/run-qmlquality-tests.sh -input tests/manual/tst_form_review.qml -o -,txt
 ```
 
-Ten PNGs cover light/dark shared fields, IPv4, IPv6, narrow network forms and long errors.
+Ten PNGs cover light/dark shared fields, IPv4, long IPv6, narrow network forms and long errors.
+The family capture includes the shared `IpField`'s combined prefix and dotted-mask
+notations, red-only invalid IPv4/IPv6 and locked automatic values. The actual Wi-Fi
+pane uses one combined address/subnet field and address-only gateways. Native
+transactions and narrow caret revelation are covered by `tst_ip_control.qml` and
+`tst_ip_fields.qml`; captures alone do not prove editing behavior.
 Captures are ignored build artifacts, not golden tests. The fixture checks that
 no backend mutation is emitted. Hardware IME, pointer-selection paste, compositor
 scaling and screen-reader acceptance remain live checks.
+
+IP-control delivery checkpoint: the isolated staged change set (without unrelated
+working-tree updates) passed strict QML lint, TypeScript generation/type checking,
+106 legacy-parser checks, 436 structured-IP checks and the full Qt suite: **178
+passed, 0 failed, 1 existing RHI-only artwork skip**. The offscreen form fixture
+produced all ten images; invalid/dotted-mask, IPv4 and narrow long-IPv6 captures
+were inspected. Shared runtime smoke passed separately (the offscreen platform
+reports its existing window-mask limitation). No real Wi-Fi mutation, hardware
+IME, external drag/drop or human screen-reader acceptance was attempted.
 
 # Display visual review
 

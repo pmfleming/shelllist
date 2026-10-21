@@ -1,13 +1,15 @@
 import QtQuick
 import "networkinput" as NetworkInput
+import Shelllist.Ui as Ui
 
 QtObject {
     required property string family
-    required property int fallbackPrefix
 
     property string method: "auto"
-    property string address: ""
-    property string prefix: String(fallbackPrefix)
+    // Atomic domain draft: invalid address/mask text survives field saves and
+    // continues blocking the whole group, including after page recreation.
+    property string addressWithSubnet: ""
+    readonly property var addressInput: Ui.IpCodec.inspect(addressWithSubnet, family, "addressWithSubnet", "prefix", false)
     property string gateway: ""
     property bool autoDns: true
     property string dns: ""
@@ -28,16 +30,13 @@ QtObject {
         const addresses = list(settings.addresses);
         return addresses.length > 0 ? addresses[0] : ({});
     }
-    function prefixValue(value) {
-        return value === undefined ? fallbackPrefix : value;
-    }
-
     function sync(settings) {
         const value = valueOr(settings, ({}));
         const first = firstAddress(value);
         method = valueOr(value.method, "auto");
-        address = valueOr(first.address, "");
-        prefix = String(prefixValue(first.prefix));
+        const address = valueOr(first.address, "");
+        const prefix = first.prefix === undefined || first.prefix === null ? "" : String(first.prefix);
+        addressWithSubnet = address || prefix ? address + "/" + prefix : "";
         gateway = valueOr(value.gateway, "");
         autoDns = !value.ignore_auto_dns;
         dns = list(value.dns).join(", ");
@@ -49,15 +48,9 @@ QtObject {
     }
 
     function manualAddresses() {
-        if (method !== "manual")
+        if (method !== "manual" || !addressInput.valid)
             return [];
-        const value = address.trim();
-        return value.length > 0 ? [
-            {
-                address: value,
-                prefix: Math.max(0, parseInt(prefix, 10) || 0)
-            }
-        ] : [];
+        return [{address: addressInput.address, prefix: addressInput.prefixLength}];
     }
     function optionalGateway() {
         const value = gateway.trim();
@@ -83,7 +76,7 @@ QtObject {
     function manualReady() {
         if (method !== "manual")
             return true;
-        return NetworkInput.IpValidator.isAddressInput(address, family, false, false) && NetworkInput.IpValidator.isPrefix(prefix, family, false);
+        return addressInput.valid;
     }
     function dnsReady() {
         return autoDns || NetworkInput.IpValidator.isAddressInput(dns, family, true, true);

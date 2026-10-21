@@ -42,6 +42,15 @@ Browsing uses a marker only; editing adds an editor-local background and lower l
 
 ## Intentional exceptions
 
+- Shared `IpField` renders invalid address/subnet values in theme error colour,
+  with native accessible diagnostics but no validation badge, expanding message
+  or duplicate surface feedback. Incomplete drafts turn red on explicit save;
+  domain readiness and operational feedback remain independent. IPv4 fixed
+  separators and IPv6 native notation share one field/session. `FormField` keeps
+  labels left; long values use native horizontal scrolling, not smaller fonts.
+  Shared UI owns the existing 2px native caret (same geometry as `TextField`);
+  there are no new panel-local spacing/font/radius overrides. See the
+  [structured IP contract](chooser-keyboard-workflow.md#structured-ip-fields).
 - Weather/time/media heroes retain expressive artwork and larger named reading
   sizes. Hero frames may retain 20px corners; ordinary surrounding cards use 16px.
 - Application resources use five passive history rows on one detail surface,
@@ -227,7 +236,7 @@ per-state test coverage.
 | Panel | Representative captures / states | Native regression owners (`tests/qml/`) |
 | --- | --- | --- |
 | Applications | Application, Settings, measured Resources, missing network data, minimum viewport | `tests/test-native-application.py`, `tst_application_settings`, `tst_application_actions`; resource permutations retired |
-| Wi-Fi | IPv4/IPv6, long errors, narrow/required/read-only/invalid fields | `tst_ip_fields`, `tst_wifi_operations`, `tst_wifi_prompt`, `tst_wifi_portal` |
+| Wi-Fi | IPv4/IPv6, long errors, narrow/required/read-only/invalid fields | `tst_ip_control`, `tst_ip_fields`, `tst_wifi_operations`, `tst_wifi_prompt`, `tst_wifi_portal` |
 | Bluetooth | Device, Settings, Information, adapter General/Pairing, unavailable controls | `tst_bluetooth_recovery` |
 | Clipboard | Data/Information, long text, loading with retained content | `tst_clipboard_preview`, `tst_clipboard_recovery` |
 | Displays | Layout/Information, Focus subpages, draft/trial, drag, mirror/disabled, narrow/short | `tst_displays` |

@@ -84,61 +84,31 @@ AdvancedSettingsFlickable {
                     font.pixelSize: Theme.formSupportSize
                     color: Theme.mutedText
                 }
-                GridLayout {
-                    id: addressGroup
+                FormField {
                     Layout.fillWidth: true
-                    columns: width >= 640 ? 2 : 1
-                    columnSpacing: Theme.spacingMd
-                    rowSpacing: Theme.spacingSm
-                    FormField {
+                    label: hardwareFlick.settings.ipFamily === "ipv6" ? "IPv6" : "IPv4"
+                    icon: "lan"
+                    accessibleName: hardwareFlick.settings.ipFamily === "ipv6" ? qsTr("IPv6 address and subnet") : qsTr("IPv4 address and subnet")
+                    requiredInput: hardwareFlick.settings.currentMethod === "manual"
+                    readOnlyReason: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : ipAddress.readOnly ? qsTr("Assigned automatically") : ""
+                    copyAvailable: ipAddress.readOnly && ipAddress.enabled && ipAddress.text.length > 0
+                    onCopyRequested: hardwareFlick.settings.controller.copyText(ipAddress.text, qsTr("IP address copied"))
+                    IpField {
+                        id: ipAddress
                         Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        Layout.alignment: Qt.AlignTop
-                        label: hardwareFlick.settings.ipFamily === "ipv6" ? "IPv6" : "IPv4"
-                        icon: "lan"
-                        accessibleName: hardwareFlick.settings.ipFamily === "ipv6" ? qsTr("IPv6 address") : qsTr("IPv4 address")
-                        requiredInput: hardwareFlick.settings.currentMethod === "manual"
-                        readOnlyReason: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : ipAddress.readOnly ? qsTr("Assigned automatically") : ""
-                        copyAvailable: ipAddress.readOnly && ipAddress.enabled && ipAddress.text.length > 0
-                        onCopyRequested: hardwareFlick.settings.controller.copyText(ipAddress.text, qsTr("IP address copied"))
-                        NetworkInput.IpAddressField {
-                            id: ipAddress
-                            Layout.fillWidth: true
-                            enabled: hardwareFlick.settings.currentFamilyEnabled
-                            family: hardwareFlick.settings.ipFamily
-                            allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
-                            readOnly: hardwareFlick.settings.currentMethod !== "manual"
-                            objectName: "wifiIpAddress"
-                            text: hardwareFlick.settings.displayedAddress
-                            onEdited: function (value) {
-                                hardwareFlick.settings.currentIp.address = value;
-                            }
-                            onEditingFinished: hardwareFlick.settings.queueHardwareSave()
+                        enabled: hardwareFlick.settings.currentFamilyEnabled
+                        family: hardwareFlick.settings.ipFamily
+                        mode: "addressWithSubnet"
+                        allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
+                        readOnly: hardwareFlick.settings.currentMethod !== "manual"
+                        objectName: "wifiIpAddress"
+                        text: hardwareFlick.settings.displayedAddressWithSubnet
+                        onEdited: function (value) {
+                            // One assignment stages both parts, including invalid
+                            // raw drafts; readiness cannot see a half-updated pair.
+                            hardwareFlick.settings.currentIp.addressWithSubnet = value;
                         }
-                    }
-                    FormField {
-                        Layout.fillWidth: addressGroup.columns === 1
-                        Layout.preferredWidth: 168
-                        Layout.alignment: Qt.AlignTop
-                        // The slash is the visible identity; the full name and
-                        // range remain in accessibility and the named Help command.
-                        label: ""
-                        icon: ""
-                        requiredInput: hardwareFlick.settings.currentMethod === "manual"
-                        accessibleName: hardwareFlick.settings.ipFamily === "ipv6" ? qsTr("IPv6 prefix length") : qsTr("IPv4 prefix length")
-                        NetworkInput.PrefixLengthField {
-                            Layout.fillWidth: true
-                            enabled: hardwareFlick.settings.currentFamilyEnabled
-                            family: hardwareFlick.settings.ipFamily
-                            allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
-                            readOnly: hardwareFlick.settings.currentMethod !== "manual"
-                            objectName: "wifiIpPrefix"
-                            text: hardwareFlick.settings.displayedPrefix
-                            onEdited: function (value) {
-                                hardwareFlick.settings.currentIp.prefix = value;
-                            }
-                            onEditingFinished: hardwareFlick.settings.queueHardwareSave()
-                        }
+                        onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
                 }
                 FormField {
@@ -149,11 +119,12 @@ AdvancedSettingsFlickable {
                     readOnlyReason: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : gateway.readOnly ? qsTr("Assigned automatically") : ""
                     copyAvailable: gateway.readOnly && gateway.enabled && gateway.text.length > 0
                     onCopyRequested: hardwareFlick.settings.controller.copyText(gateway.text, qsTr("Gateway copied"))
-                    NetworkInput.IpAddressField {
+                    IpField {
                         id: gateway
                         Layout.fillWidth: true
                         enabled: hardwareFlick.settings.currentFamilyEnabled
                         placeholder: qsTr("Optional")
+                        allowEmpty: true
                         family: hardwareFlick.settings.ipFamily
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
                         objectName: "wifiIpGateway"

@@ -60,7 +60,7 @@ Tests.DaemonTestCase {
                     Ui.FormField {
                         Layout.fillWidth: true
                         label: "IPv4 address"
-                        NetworkInput.IpAddressField { Layout.fillWidth: true; text: "192.168.300.20"; validationAttempted: true }
+                        Ui.IpField { Layout.fillWidth: true; text: "192.168.300.20/33"; mode: "addressWithSubnet"; validationAttempted: true }
                     }
                     Ui.FormField {
                         Layout.fillWidth: true
@@ -81,7 +81,17 @@ Tests.DaemonTestCase {
                     Ui.FormField {
                         Layout.fillWidth: true
                         label: "Automatic address · read-only"
-                        NetworkInput.IpAddressField { Layout.fillWidth: true; text: "2001:db8::20"; family: "ipv6"; readOnly: true }
+                        Ui.IpField { Layout.fillWidth: true; text: "2001:db8::20/64"; mode: "addressWithSubnet"; family: "ipv6"; readOnly: true }
+                    }
+                    Ui.FormField {
+                        Layout.fillWidth: true
+                        label: "Subnet mask"
+                        Ui.IpField { Layout.fillWidth: true; text: "192.0.2.1/255.255.254.0"; mode: "addressWithSubnet"; subnetNotation: "netmask"; browseFocused: true }
+                    }
+                    Ui.FormField {
+                        Layout.fillWidth: true
+                        label: "IPv6 invalid"
+                        Ui.IpField { Layout.fillWidth: true; text: "2001:db8::1/129"; mode: "addressWithSubnet"; family: "ipv6"; validationAttempted: true }
                     }
                     Ui.FormField {
                         Layout.fillWidth: true
@@ -152,7 +162,7 @@ Tests.DaemonTestCase {
         panel.controller.advanced.profilePath = "/org/freedesktop/NetworkManager/Settings/1";
         panel.controller.advanced.applyProfile({path: panel.controller.advanced.profilePath, version: "capture",
             ipv4: {method: "manual", addresses: [{address: "192.168.1.20", prefix: 24}], gateway: "192.168.1.1", ignore_auto_dns: true, dns: ["1.1.1.1", "8.8.8.8"]},
-            ipv6: {method: "manual", addresses: [{address: "2001:db8::20", prefix: 64}], ignore_auto_dns: true, dns: ["2001:4860:4860::8888", "2606:4700:4700::1111"]}});
+            ipv6: {method: "manual", addresses: [{address: "2001:0db8:1234:5678:9abc:def0:1234:5678", prefix: 64}], ignore_auto_dns: true, dns: ["2001:4860:4860::8888", "2606:4700:4700::1111"]}});
         save(panel, "ipv4-" + data.tag);
         panel.page.ipFamily = "ipv6";
         save(panel, "ipv6-" + data.tag);

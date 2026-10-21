@@ -758,6 +758,11 @@
               ./tests/check-ip-validation.js
               ./wifi/networkinput/IpValidation.js
             ]
+            [
+              ./tests/check-ip-control.js
+              ./qml/Shelllist/Ui/IpValidation.js
+              ./qml/Shelllist/Ui/IpEdit.js
+            ]
           ];
 
           protocolBindings = pkgs.runCommand "shelllist-protocol-bindings-current" { } ''

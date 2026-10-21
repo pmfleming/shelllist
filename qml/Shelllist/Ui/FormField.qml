@@ -21,7 +21,7 @@ Item {
     property bool copyAvailable: false
     property bool copyEnabled: true
     signal copyRequested
-    readonly property bool editorAvailable: ((editor as TextField)?.editSession || (editor as TextEditor)?.editSession || (editor as DropDownList)?.editSession || (editor as SegmentedControl)?.editSession || (editor as ValueSlider)?.editSession || (editor as LabeledValueSlider)?.editSession)?.available ?? false
+    readonly property bool editorAvailable: ((editor as TextField)?.editSession || (editor as IpField)?.editSession || (editor as TextEditor)?.editSession || (editor as DropDownList)?.editSession || (editor as SegmentedControl)?.editSession || (editor as ValueSlider)?.editSession || (editor as LabeledValueSlider)?.editSession)?.available ?? false
     readonly property string helpText: [readOnlyReason, supportingText].filter(Boolean).join(". ")
     readonly property string message: errorText || statusText
     implicitWidth: 320
@@ -90,7 +90,7 @@ Item {
         target: field.editor
         property: "rowEmbedded"
         value: true
-        when: field.editor instanceof TextField || field.editor instanceof TextEditor || field.editor instanceof DropDownList
+        when: field.editor instanceof TextField || field.editor instanceof IpField || field.editor instanceof TextEditor || field.editor instanceof DropDownList
         restoreMode: Binding.RestoreBindingOrValue
     }
     Binding {

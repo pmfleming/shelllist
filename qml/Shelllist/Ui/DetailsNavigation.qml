@@ -77,6 +77,10 @@ FocusScope {
         function onSelectionChanged(): void { navigation.rememberLocation(); }
     }
     Connections {
+        target: navigation.editorTarget as IpField
+        function onSelectionChanged(): void { navigation.rememberLocation(); }
+    }
+    Connections {
         target: navigation.editorTarget as TextEditor
         function onSelectionChanged(): void { navigation.rememberLocation(); }
     }
@@ -254,7 +258,7 @@ FocusScope {
         return item instanceof ToggleRow || item instanceof ToggleSwitch;
     }
     function sessionFor(item: Item): FieldEditSession {
-        return (item as TextField)?.editSession || (item as TextEditor)?.editSession
+        return (item as TextField)?.editSession || (item as IpField)?.editSession || (item as TextEditor)?.editSession
             || (item as DropDownList)?.editSession || (item as SegmentedControl)?.editSession
             || (item as ValueSlider)?.editSession || (item as LabeledValueSlider)?.editSession || null;
     }
@@ -439,12 +443,15 @@ FocusScope {
             return;
         }
         const field = item as TextField;
+        const ip = item as IpField;
         const labeled = item as LabeledValueSlider;
         editorTarget = item;
         const session = sessionFor(item);
         if (session) session.begin();
         if (field)
             field.focusInput(false);
+        else if (ip)
+            ip.focusInput(false);
         else if (labeled)
             labeled.focusInput();
         else

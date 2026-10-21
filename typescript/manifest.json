@@ -4,8 +4,17 @@
     "output": "activity/WeatherVisuals.js"
   },
   {
-    "source": "typescript/wifi/networkinput/IpValidation.ts",
+    "source": "typescript/ui/IpValidation.ts",
     "output": "wifi/networkinput/IpValidation.js"
+  },
+  {
+    "source": "typescript/ui/IpValidation.ts",
+    "output": "qml/Shelllist/Ui/IpValidation.js"
+  },
+  {
+    "source": "typescript/ui/IpEdit.ts",
+    "output": "qml/Shelllist/Ui/IpEdit.js",
+    "imports": [".import \"IpValidation.js\" as Validation"]
   },
   {
     "source": "typescript/wifi/WifiPromptPolicy.ts",
