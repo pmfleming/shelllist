@@ -20,6 +20,7 @@
 
 <section id="decision">
 <h2>1. Recommended direction</h2>
+<div class="note"><strong>Implementation update:</strong> the standalone Rust CLI now provides passive resource capture, supported DRM counters, consent-gated warm-open trials, offline reports and descriptive comparisons. See <a href="README.md">README.md</a> for commands, validation and remaining scope. This document preserves the original broader plan; cold-session automation, richer visual latency and automatic regression gates are not implemented.</div>
 <div class="grid">
 <div class="card"><strong>Observe, do not embed</strong>A standalone Rust binary attaches to an explicitly identified Quickshell instance and samples Linux counters. Existing IPC supplies narrowly scoped timing observations.</div>
 <div class="card"><strong>Start with useful baselines</strong>Measure popover-hidden idle, one visible surface, and repeated warm opens. Separate the UI host, bridge clients and independently managed daemons.</div>

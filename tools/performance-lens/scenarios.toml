@@ -1,0 +1,9 @@
+# Protocol defaults, not performance budgets. Override with --config or CLI flags.
+interval_ms = 250
+detail_interval_ms = 1000
+capture_seconds = 60.0
+settle_seconds = 10.0
+trials = 30
+timeout_ms = 3000
+poll_ms = 25
+between_trials_ms = 250
