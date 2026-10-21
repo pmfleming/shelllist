@@ -50,6 +50,14 @@ state("::1/128", v6, 0);
 state("/", {...v6p, allowEmpty: true}, 2);
 state("::/", {...v6p, allowEmpty: true}, 1);
 state(".../...", {...v4m, allowEmpty: true}, 2);
+// Invalid beats incomplete in either half; optional permits only a wholly empty pair.
+for (const [value, expected] of [
+    ["999..0.1/", 0], ["10..0.1/33", 0], ["10..0.1/255.0.255.0", 0],
+    ["10.0.0.1/255.255.", 1], [".../24", 1], [".../.../", 0]
+]) state(value, {...v4m, allowEmpty: true}, expected);
+const invalidMask = edit.inspect("10.0.0.1/255.0.255.0", v4m);
+equal(invalidMask.prefixLength, -1);
+equal(invalidMask.text, "10.0.0.1/255.0.255.0", "invalid source notation is retained");
 for (const value of ["::", "::1", "2001:DB8::1", "1:2:3:4:5:6:7:8", "::ffff:192.0.2.1", "1:2:3:4:5:6:192.0.2.1"]) {
     state(value, v6, 2);
     for (const prefix of [0, 64, 128]) state(value + "/" + prefix, v6p, 2);

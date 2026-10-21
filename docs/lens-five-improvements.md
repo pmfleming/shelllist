@@ -92,3 +92,62 @@ Validation: strict lint and Updates Qt suite **25 passes**. The actual Now page
 now exercises running/failure/interruption/blocking/readiness/staging precedence
 as snapshots arrive, with no reads or selection/focus changes. Existing unavailable,
 missing-job and readiness-error cases remain covered. No interaction changes.
+
+## 5. Simplify structured IP inspection
+
+Extract subnet inspection beside the existing pure parser and combine address /
+subnet validity using the native validator ordering (Invalid < Intermediate <
+Acceptable). This removes nested mask/prefix handling from `inspect`, retains
+invalid raw notation and the -1 noncontiguous-mask result, and preserves the whole-
+value length/configuration/suffix gates and optional-wholly-empty exception.
+Change the TypeScript source and regenerate the QML JavaScript; do not hand-edit
+or weaken the generated parser to improve metrics.
+
+`inspect` improves from **35 cyclomatic / 62 cognitive / 202 effort** to **25 / 33 /
+120**, with `inspectSubnet` at **7 / 7 / 33**. Its individual token Halstead effort
+falls **74776.40 → 40554.65**; the new helper is **6862.65** (not an aggregate
+Halstead calculation). Production sums improve **9252 → 9249** cyclomatic,
+**6613 → 6591** cognitive and **45131 → 45082** weighted effort. Source lines fall
+by three; physical lines by one.
+
+Validation: **444** editor and **106** parser checks; native structured control
+suite **16 passes**, actual Wi-Fi fields **8 passes**; strict lint, TypeScript
+`--noEmit` and generated freshness. Added independent vectors cover invalid-versus-
+incomplete precedence and optional empty-pair boundaries. A separate deterministic
+frozen-input comparison of old/new complete inspection records passes **115614**
+cases, including unsupported configurations and malformed inputs. It remains
+ignored local evidence, not a substitute for native editor tests.
+
+## Combined result and remaining limits
+
+| Metric | Production before → after | All analyzed sources before → after |
+| --- | ---: | ---: |
+| Source lines | 43831 → 43552 | 50492 → 50263 |
+| Physical lines | 48702 → 48411 | 55572 → 55331 |
+| Cyclomatic sum | 9395 → 9249 | 10044 → 9903 |
+| Cognitive sum | 6766 → 6591 | 7022 → 6851 |
+| Weighted function effort | 45813 → 45082 | 50703 → 50022 |
+| Mean leverage | 36.0268 → 36.2801 | 32.4422 → 32.6234 |
+| Mean locality | 74.4613 → 74.1777 | 75.7866 → 75.5558 |
+| Normalized clone groups | 119 → 111 | 160 → 152 |
+| Clone-covered lines | 1984 → 1542 | 2537 → 2095 |
+
+Both complete clone inventories omit zero windows/groups. Tracked code across
+QML/JS/TS/scripts/Nix/Rust, including tests, falls **64326 → 64096** physical lines.
+Cleanup reviews fall **4 → 1**; the retained enum stub is not dead-code proof.
+No new escape hatches: production `property var` **523**, unknown-signal escapes
+**0**, lint disables **15** are unchanged. **Escape-hatch counts and measured
+locality did not improve.** Smaller live functions and one parser owner improve
+review locality conceptually, but that is not a measured locality-score gain.
+Protocol payloads, heterogeneous models and editor snapshots remain intentional
+dynamic boundaries; blindly narrowing them would not be a safe quality improvement.
+
+Final validation: complete native Qt suite **204 passed, 0 failed, 1 existing
+software-renderer skip**; strict lint; both offscreen Quickshell runtime smokes;
+TypeScript freshness/typecheck; relative-import check; UI review **0 prompts**;
+whitespace check. The original five modified files' diff is byte-for-byte unchanged.
+No test removal, new skip, numeric style override or interaction change was used.
+The smoke retains the offscreen window-mask warning. No hardware/compositor/IME,
+human accessibility, installed-package build, full sibling-daemon contract campaign,
+coverage/performance or formatting acceptance is claimed. Lens semantic coverage
+remains partial; these structural improvements are not a complete audit pass.

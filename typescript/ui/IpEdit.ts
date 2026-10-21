@@ -55,6 +55,16 @@ function octetSlotsState(value: string): number {
         return Validation.Invalid;
     return slots.length === 4 && slots.every(slot => slot.length > 0) ? Validation.Acceptable : Validation.Intermediate;
 }
+function inspectSubnet(value: string, config: IpConfiguration): {state: number; prefix: number | null} {
+    if (!combined(config)) return {state: Validation.Acceptable, prefix: null};
+    const mask = value.includes(".");
+    const state = mask
+        ? config.family === "ipv4" ? octetSlotsState(value) : Validation.Invalid
+        : Validation.prefixState(value, config.family, false);
+    if (state !== Validation.Acceptable) return {state, prefix: null};
+    const prefix = mask ? maskPrefix(value) : Number(value);
+    return {state: prefix < 0 ? Validation.Invalid : Validation.Acceptable, prefix};
+}
 function inspect(value: string, config: IpConfiguration) {
     const pair = parts(value);
     const emptyAddress = pair.address === "" || (config.family === "ipv4" && pair.address === "...");
@@ -65,21 +75,11 @@ function inspect(value: string, config: IpConfiguration) {
     if (supported(config) && value.length < MaximumDraftLength && !/\s/.test(value)
             && value.split("/").length <= (combined(config) ? 2 : 1)) {
         const addressState = config.family === "ipv4" ? octetSlotsState(pair.address) : Validation.ipv6State(pair.address);
-        let subnetState = Validation.Acceptable;
-        if (combined(config)) {
-            if (pair.subnet.includes(".")) {
-                subnetState = config.family === "ipv4" ? octetSlotsState(pair.subnet) : Validation.Invalid;
-                if (subnetState === Validation.Acceptable) {
-                    prefix = maskPrefix(pair.subnet);
-                    if (prefix < 0) subnetState = Validation.Invalid;
-                }
-            } else {
-                subnetState = Validation.prefixState(pair.subnet, config.family, false);
-                if (subnetState === Validation.Acceptable) prefix = Number(pair.subnet);
-            }
-        }
-        state = addressState === Validation.Invalid || subnetState === Validation.Invalid ? Validation.Invalid
-            : addressState === Validation.Intermediate || subnetState === Validation.Intermediate ? Validation.Intermediate : Validation.Acceptable;
+        const subnet = inspectSubnet(pair.subnet, config);
+        prefix = subnet.prefix;
+        // Native validator ordering: Invalid < Intermediate < Acceptable.
+        // Either invalid half wins; both halves must be complete to save.
+        state = Math.min(addressState, subnet.state);
         if (empty) state = config.allowEmpty ? Validation.Acceptable : Validation.Intermediate;
     }
     const valid = state === Validation.Acceptable;
