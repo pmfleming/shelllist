@@ -419,9 +419,9 @@ The shared inline option falls back to those tiers when commands cannot fit. See
 [shared action row](../qml/Shelllist/Ui/SurfaceActionRow.qml).
 
 - Action buttons normally use **Alt+letter**, not Tab. `ActionControl.accessKey`
-  defines a command; explicitly approved Ctrl commands (currently Bluetooth
-  **Ctrl+N**) use `accessModifier: "Ctrl"` in the same registry, never a parallel
-  panel-local shortcut. `commandScope` can limit a repeated command to the current
+  defines a command; explicitly approved Ctrl commands use
+  `accessModifier: "Ctrl"` in the same registry, never a parallel panel-local
+  shortcut. Bluetooth noise control uses the ordinary **Alt+N** command. `commandScope` can limit a repeated command to the current
   field/row (e.g. Alt+H for its help). Duplicate active chords fail closed.
 - Selected-result commands can use `ProviderChooserSurface.additionalCommandItem`
   with `commandsWithoutDetails`. They share `DetailsNavigation`'s access keys,
@@ -1011,7 +1011,7 @@ partial/zero readings, unknowns, hidden/inactive pages and transport loss.
 ## Bluetooth noise-control tray
 
 Clicking the existing noise-control artwork or invoking the secondary **Noise
-control (Ctrl+N)** command opens the same image tray across the battery row. The
+control (Alt+N)** command opens the same image tray across the battery row. The
 tray slides in from right to left and back out to the right on dismissal, clipped
 to that row's existing bounds. It adds no card, height change or movement of Audio
 or the footer; reduced motion skips the slide. On a narrow inspector its choices
@@ -1032,8 +1032,9 @@ refresh and detail-tab shortcuts are blocked through the entire closing animatio
 Repeated activation during a transition cannot submit twice.
 
 Alt+O remains **Use as output** in Audio; it does not open noise control. Alt+C
-remains **Connect** for disconnected devices. Noise control's Ctrl+N command is
-only visible for connected devices advertising ANC.
+remains **Connect** for disconnected devices. Noise control's Alt+N command is
+only visible for connected devices advertising ANC. Its N badge appears while
+holding Alt, not Ctrl; Ctrl+N does not open the tray.
 
 Only reported modes are listed; modes not currently settable stay visible but
 are disabled. A selection closes the tray and submits one capability-guarded
@@ -1044,7 +1045,7 @@ use the existing Bluetooth operation/status feedback; there is no automatic retr
 Version-1 unsigned ANC needs neither account-key setup nor an authenticated-control
 flag in the UI. Disconnect, selection/tab changes, modal prompts, lost capabilities
 and UI suspension discard an unsubmitted chooser without retargeting its action.
-`tst_bluetooth_noise_control.qml` exercises real pointer/Ctrl+N input, modifier
+`tst_bluetooth_noise_control.qml` exercises real pointer/Alt+N input, Ctrl+N rejection, modifier
 badges, animated and reduced-motion dismissal, stable Audio geometry, modal
 shortcut blocking, focus return, disabled choices, request versus snapshot
 acknowledgement, failure and stale-context guards.

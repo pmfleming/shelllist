@@ -1813,12 +1813,20 @@
       {
         "name": "updates.queryHistory",
         "params": {
+          "anchor_ids": [],
           "cursor": null,
+          "lane": null,
           "limit": 50,
+          "outcome": null,
           "query": "",
           "run_id": null
         },
         "result": "history"
+      },
+      {
+        "name": "updates.getOverview",
+        "params": {},
+        "result": "overview"
       },
       {
         "name": "updates.readLog",

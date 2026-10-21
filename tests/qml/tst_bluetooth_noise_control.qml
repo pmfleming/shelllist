@@ -82,7 +82,7 @@ DaemonTestCase {
         panel.controller.detailsOpen = true;
         tryVerify(() => findChild(panel, "bluetoothBatteryRow") !== null);
         tryVerify(() => findChild(panel, "detailAction:noise-control") !== null);
-        tryVerify(() => findChild(panel, "detailAction:noise-control").surfaceShortcut === "Ctrl+N");
+        tryVerify(() => findChild(panel, "detailAction:noise-control").surfaceShortcut === "Alt+N");
         panel.surface.listItem.focusList();
         waitForDetailLayout(panel);
         calls = [];
@@ -117,7 +117,7 @@ DaemonTestCase {
     }
     function openKeyboard(panel) {
         tryCompare(panel.controller, "noiseControlPresented", false);
-        keyClick(Qt.Key_N, Qt.ControlModifier);
+        keyClick(Qt.Key_N, Qt.AltModifier);
         tryCompare(panel.controller, "noiseControlOpen", true);
         tryVerify(() => findChild(panel, "noiseControlTray") !== null);
         const tray = findChild(panel, "noiseControlTray");
@@ -146,12 +146,15 @@ DaemonTestCase {
         verify(!panel.surface.detailsNavigation.targets.includes(icon.parent));
         const badge = findChild(noiseButton, "headerShortcutBadge");
         keyPress(Qt.Key_Control);
-        tryCompare(badge, "visible", true);
-        compare(badge.text, "Ctrl+N");
+        tryCompare(findChild(panel.surface, "shortcutHints"), "showControlActions", true);
+        verify(!badge.visible, "noise control must not be advertised as a Ctrl command");
         keyRelease(Qt.Key_Control);
+        keyClick(Qt.Key_N, Qt.ControlModifier);
+        verify(!controller.noiseControlOpen, "Ctrl+N must not open noise control");
+        compare(requests().length, 0);
         keyPress(Qt.Key_Alt);
-        tryCompare(findChild(panel.surface, "shortcutHints"), "showActions", true);
-        verify(!badge.visible, "Ctrl+N must not be advertised as an Alt command");
+        tryCompare(badge, "visible", true);
+        compare(badge.text, "N");
         keyRelease(Qt.Key_Alt);
         keyClick(Qt.Key_C, Qt.AltModifier);
         verify(!controller.noiseControlOpen, "Alt+C is no longer the noise-control shortcut");

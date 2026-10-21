@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shelllist — External Rust Performance Lens Plan</title>
+<style>
+:root{color-scheme:light;--ink:#1d303d;--muted:#526674;--bg:#f1f5f7;--line:#d9e3e8;--accent:#086c70;--soft:#e8f5f2}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,sans-serif}main{max-width:1160px;margin:auto;padding:40px 24px 72px}header{background:#183944;color:#fff;padding:34px;border-radius:14px}header p{color:#d9e9ed;max-width:850px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:700;color:#a8ded5}h1{font-size:clamp(30px,5vw,46px);line-height:1.15;margin:12px 0 20px}h2{font-size:25px;line-height:1.25;margin:0 0 18px}h3{font-size:18px;margin:24px 0 8px}section{background:#fff;border:1px solid var(--line);border-radius:10px;padding:28px;margin:22px 0;scroll-margin-top:20px}p{margin:10px 0 16px}nav{display:flex;flex-wrap:wrap;gap:8px 20px;margin:24px 0}a{color:var(--accent)}nav a{font-size:14px;font-weight:650;text-decoration:none}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{border:1px solid var(--line);border-radius:8px;padding:18px}.card strong{display:block;margin-bottom:8px}.note{background:var(--soft);border-left:4px solid var(--accent);padding:16px 20px;margin:20px 0}.warning{background:#fff3df;border-color:#b27a1e}.small,footer{font-size:13px;color:var(--muted)}.table{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:12px}th{background:var(--bg);font-size:12px;text-transform:uppercase;letter-spacing:.04em}td:first-child{font-weight:650}code{font:.88em ui-monospace,monospace;overflow-wrap:anywhere}pre{background:#15313d;color:#e3f1f4;border-radius:8px;padding:20px;overflow:auto;font-size:13px;line-height:1.6}pre code{font:inherit;overflow-wrap:normal}li{margin:7px 0}ul,ol{padding-left:24px}@media(max-width:760px){main{padding:20px 12px 40px}section,header{padding:21px}.grid{grid-template-columns:1fr}}@media print{body{background:#fff;font-size:11pt}main{padding:0;max-width:none}header{background:#fff;color:var(--ink);border:1px solid var(--line)}header p,.eyebrow{color:var(--muted)}nav{display:none}tr,.card,.note{break-inside:avoid}pre{white-space:pre-wrap;background:var(--bg);color:var(--ink)}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="eyebrow">Local review + implementation plan · Planning only</div>
+<h1>A small performance lens.<br>Rust, outside the application.</h1>
+<p>Establish repeatable responsiveness, CPU, GPU, memory and I/O baselines for the real Shelllist session. Keep the tool in this repository without linking it into Shelllist, adding production instrumentation, or introducing JavaScript.</p>
+<p>Linux / Wayland first · Standalone CLI · Local JSON and offline HTML · No dashboard service</p>
+</header>
+<nav aria-label="Contents"><a href="#decision">Direction</a><a href="#review">Local review</a><a href="#boundary">Separation</a><a href="#metrics">Resources</a><a href="#response">Responsiveness</a><a href="#scenarios">Scenarios</a><a href="#evidence">Evidence</a><a href="#delivery">Delivery</a><a href="#acceptance">Acceptance</a></nav>
+
+<section id="decision">
+<h2>1. Recommended direction</h2>
+<div class="grid">
+<div class="card"><strong>Observe, do not embed</strong>A standalone Rust binary attaches to an explicitly identified Quickshell instance and samples Linux counters. Existing IPC supplies narrowly scoped timing observations.</div>
+<div class="card"><strong>Start with useful baselines</strong>Measure popover-hidden idle, one visible surface, and repeated warm opens. Separate the UI host, bridge clients and independently managed daemons.</div>
+<div class="card"><strong>Keep evidence honest</strong>Missing GPU support stays unavailable. Qt frame swap is not input-to-photon. Cold QML loading is not cold storage or backend readiness.</div>
+</div>
+<p><strong>Build a new, small tool at <code>shelllist/tools/performance-lens/</code>.</strong> Borrow the sibling Scratchpad lens’s evidence discipline, not its editor-specific producer catalog. Implement collection, orchestration, statistics, comparison and HTML generation in Rust. Reports use static HTML/CSS and inline SVG: no JavaScript, Node, browser automation framework, server or CDN.</p>
+<div class="note"><strong>First deliverable:</strong> one passive 60-second capture of the running Shelllist instance, with CPU/RSS/I/O timelines, explicit process scope, optional PSS and supported GPU counters, plus a self-contained report. Then add consent-gated warm-open timing and controlled baseline comparisons.</div>
+</section>
+
+<section id="review">
+<h2>2. What the local review establishes</h2>
+<p class="small">Reviewed <code>../scratchpad-performance-lens</code> at <code>dcc8b2e</code>, the newer <code>../scratchpad/tools/performance-lens/plan.html</code>, and Shelllist at <code>7e739dc</code> with existing local modifications. This is a focused source/document review, not a benchmark run or complete audit. Existing working-tree edits are outside this plan.</p>
+<div class="table"><table>
+<thead><tr><th>Finding</th><th>Evidence</th><th>Shelllist decision</th></tr></thead><tbody>
+<tr><td>The existing Scratchpad lens is already Rust</td><td>Its README describes Rust JSON producers, typed artifact contracts, optional probe execution, and a separately owned dashboard.</td><td>Use Rust directly. No need to port a JavaScript lens or adopt its dashboard.</td></tr>
+<tr><td>Strong measurement-integrity model</td><td><code>src/provenance.rs</code> binds artifacts to source/tool/host context; the integrity contract preserves partial failures, unknown counters, scope and statistical limitations.</td><td>Keep typed records, raw observations, provenance, explicit unknown states and failure retention. Avoid the full capacity/promise scoring system.</td></tr>
+<tr><td>Its resource measurements depend on editor probes</td><td><code>src/producers/resources.rs</code> builds Scratchpad’s <code>resource_probe</code>; frame producers build <code>frame_metrics</code> and optional <code>realistic_frame_metrics</code>.</td><td>Do not copy these integrations. Sample real Linux processes externally; do not link Shelllist libraries or add probe binaries to the application.</td></tr>
+<tr><td>Frame preparation is not presentation</td><td>Scratchpad’s frame producer labels CPU preparation and omitted compositor/presentation work. Its integrity document explicitly excludes physical input-to-photon claims.</td><td>Preserve the same distinction for Shelllist’s existing Qt callback timings. Resource polling cannot produce FPS.</td></tr>
+<tr><td>The newer Scratchpad external plan is a useful design reference</td><td><code>scratchpad/tools/performance-lens/plan.html</code> proposes live OS counters, optional DRM GPU sampling, isolated state and offline reports—but chooses Python.</td><td>Reuse the narrow external-harness approach, not that language choice or editor-specific launch/fixture assumptions. This lens is Rust-only.</td></tr>
+<tr><td>Shelllist already has native-session starting points</td><td><code>tests/benchmark-resident.py</code> measures hidden CPU/PSS/faults/bridge threads. <code>tests/benchmark-responsiveness.py</code> reads existing IPC for open acknowledgement, frame callback and content loading.</td><td>Reimplement the required external measurements in Rust; keep existing scripts unchanged and optional as independent cross-checks.</td></tr>
+<tr><td>Existing checks are not a complete baseline system</td><td>The resident script selects the first matching command line and uses two snapshots; missing PSS falls back to zero. The responsiveness script performs one first and one warm open per surface, uses negative sentinels, and exits on a timeout.</td><td>Require unambiguous identity, time series, null-with-reason, repeated trials and failure-preserving artifacts. Do not inherit the existing sample counts as tail evidence.</td></tr>
+<tr><td>The Node policy benchmark is a different metric</td><td><code>tests/generate-performance-benchmarks.js</code> runs model normalization/ranking in a Node VM, not Qt’s real UI/render loop.</td><td>No Node dependency in the new lens. Leave that benchmark alone; it cannot establish visible latency or GPU usage.</td></tr>
+</tbody></table></div>
+<p><strong>Key adaptation:</strong> Scratchpad is one editor process; Shelllist is a resident Quickshell host with bar rendering, bridge clients and five independent domain daemons. A single PID or process-tree total is not the whole system, and a whole-desktop GPU total is not Shelllist attribution.</p>
+</section>
+
+<section id="boundary">
+<h2>3. Storage, architecture and safety boundary</h2>
+<pre><code>shelllist/
+  qml/, shell/, bar/, rust/, flake.nix   # production code/build unchanged
+  tools/performance-lens/
+    plan.html                          # this document
+    Cargo.toml / Cargo.lock             # independent Rust package
+    README.md / scenarios.toml
+    src/
+      main.rs / cli.rs / config.rs
+      target.rs                        # identity, services, scope
+      collectors/{procfs,drm}.rs
+      ipc.rs / scenarios.rs
+      artifacts.rs / stats.rs / report.rs
+    tests/                             # fixtures and Rust integration tests
+    .gitignore                         # target/, runs/
+    target/                            # ignored lens build products
+    runs/&lt;run-id&gt;/                     # ignored, immutable local evidence
+      manifest.json / samples.jsonl / events.jsonl
+      summary.json / samples.csv / report.html
+      diagnostics/</code></pre>
+<p>Use one binary, provisionally <code>shelllist-perf</code>, with <code>doctor</code>, <code>capture</code>, <code>run</code>, <code>report</code> and <code>compare</code> commands. A small synchronous sampling loop plus bounded subprocess workers is sufficient; no async runtime or plugin framework initially. Start with <code>clap</code>, <code>serde</code>/<code>serde_json</code>, <code>toml</code>, an error crate, a hashing crate, and a small Linux API dependency for clock ticks/process handling. Use <code>tempfile</code> for tests. Lock dependencies; keep procfs/DRM parsing behind fixture-tested modules.</p>
+<ul>
+<li><strong>No production dependency:</strong> no Shelllist workspace membership, runtime imports, QML hooks, daemon changes, root flake integration or application packaging changes. Use the existing Rust toolchain and <code>cargo --manifest-path</code>; build the lens and application before collecting. Removing the directory must leave Shelllist behavior/build unchanged.</li>
+<li><strong>Passive default:</strong> <code>capture</code> reads OS counters only. It neither launches Shelllist nor opens/hides a panel. <code>doctor</code> reports discovery and permissions without activating services. Target-session IPC checks are explicit.</li>
+<li><strong>Resolve identity, not a name substring:</strong> accept an explicit PID or resolve the exact user-service cgroup and Quickshell config path/instance. Record boot ID, PID, start ticks, UID and executable. Refuse ambiguous instances; detect PID reuse and restarts. Do not assume the service MainPID is always the renderer.</li>
+<li><strong>Prefer instance-targeted IPC:</strong> capability-check the installed Quickshell CLI and route to the verified instance. Do not rely blindly on <code>--newest</code>. Record exact executable/config paths. Keep public-wrapper command timing separate from direct IPC timing.</li>
+<li><strong>Beware automatic host replacement:</strong> the packaged wrapper’s <code>ensure_daemon()</code> can call <code>stop_stale_hosts()</code>. The lens must not invoke launch-capable wrapper commands against an absent/mismatched host. Abort on target loss; never turn a benchmark into an implicit restart or deployment.</li>
+<li><strong>Active tests require consent:</strong> <code>--allow-ui-control</code> is required to open/hide surfaces. Begin with no visible popover; abort rather than closing someone’s unsaved draft. Hide only the surface opened by the run, and stop if the user changes it. Restore focus only when safe; do not kill/restart user services for cleanup.</li>
+<li><strong>Cold tests are a separate session:</strong> a nested compositor or dedicated test login must first prove safe service/config routing. Separate XDG directories alone do not isolate shared D-Bus daemons or global shortcuts. Do not start a duplicate bar in the normal desktop or reset caches/settings to manufacture a cold run.</li>
+<li><strong>Read-only domain behavior:</strong> no Wi-Fi connection, Bluetooth pairing, volume changes, notification dismissal, updates, power actions or display preview. Opening a surface may naturally request data or discovery; record that workload. Default reports omit clipboard text, notifications, device identifiers and window titles.</li>
+</ul>
+<div class="note warning"><strong>No panel work is proposed.</strong> Existing navigation, draft/commit behavior, acknowledgements and safety guards remain untouched. If later requirements truly demand instrumentation or panel changes, treat that as separate scope with the project’s panel contracts and actual Qt interaction tests—not a hidden prerequisite of this lens.</div>
+</section>
+
+<section id="metrics">
+<h2>4. Resource measurements and attribution</h2>
+<p>Sample lightweight process counters every <strong>250 ms</strong>; PSS and GPU discovery/counters every <strong>1 second</strong> initially. Use actual monotonic intervals and report collection duration, missed deadlines and gaps. Allow slower rates for low-overhead idle runs.</p>
+<div class="table"><table>
+<thead><tr><th>Metric</th><th>Source / calculation</th><th>Meaning and limits</th></tr></thead><tbody>
+<tr><td>CPU</td><td><code>/proc/PID/stat</code> user + system ticks: <code>100 × Δticks / CLK_TCK / Δseconds</code>.</td><td>CPU seconds, time-weighted phase average and sampled peak. 100% = one logical core; values can exceed 100%. Threads are already included. Never add child accounting fields to independently sampled child processes.</td></tr>
+<tr><td>Memory</td><td><code>status</code>: VmRSS, VmHWM, threads; <code>smaps_rollup</code>: PSS/private memory when permitted.</td><td>Baseline/end RSS, sampled peak, PSS and post-cycle retained growth. VmHWM is process-lifetime, not phase peak. RSS is not heap allocation traffic; sum-of-RSS is not unique physical memory. Sampled peaks can miss short bursts.</td></tr>
+<tr><td>I/O</td><td><code>/proc/PID/io</code>: read_bytes/write_bytes, rchar/wchar, syscall counts; <code>stat</code>: minor/major faults.</td><td>Phase deltas and rates. Storage-accounted bytes stay separate from syscall character traffic, which can include IPC. Cached/mapped access may not appear as disk reads. Buffered writes are not fsync durability or storage latency; these are not network byte counters.</td></tr>
+<tr><td>GPU engines</td><td>Capability-detected <code>/proc/PID/fdinfo/*</code> DRM engine counters; identify device, client ID and engine/capacity metadata.</td><td>Per-engine busy-time deltas; utilization only with known units/capacity semantics. Deduplicate shared/duplicated DRM clients by device + client ID across descriptors and processes. Keep non-additive engines separate; no fabricated universal GPU percentage.</td></tr>
+<tr><td>GPU memory</td><td>Supported DRM region memory/resident/shared counters.</td><td>Preserve driver-defined field meaning and units; distinguish allocation from residency. Shared/integrated memory may overlap RSS. Do not add CPU and GPU memory into a misleading total.</td></tr>
+<tr><td>Host context</td><td>CPU/GPU model, kernel/driver, Qt/Quickshell/compositor versions, outputs/scale/Hz, power mode, host load; observed render backend if available.</td><td>Comparison context, not attribution. Any optional device-wide GPU counter is labelled system-wide, including compositor and other apps. Missing per-process GPU support remains unavailable, never zero.</td></tr>
+<tr><td>Lens overhead</td><td>Lens CPU/RSS, helper-process usage where available, sample duration, IPC command count and polling cadence.</td><td>Show observer cost separately. Responsiveness polling produces real work in the target; do not subtract an assumed correction. Separate quiet resource captures from polling-heavy timing runs.</td></tr>
+</tbody></table></div>
+<h3>Three explicit process scopes</h3>
+<ol>
+<li><strong>UI host:</strong> the verified Quickshell process, including bar, popover and its threads. “Hidden” means the popover is hidden; the bar still exists and may animate/update.</li>
+<li><strong>UI service scope:</strong> exact cgroup membership, including bridge clients; preserve per-process rows and identify restarts. Optional cgroup-v2 CPU/memory/I/O counters offer a separate service-scope view, not values to add on top of procfs totals. Cgroup memory includes accounting beyond process RSS.</li>
+<li><strong>Related daemons:</strong> explicitly configured/resolved <code>app-daemon</code>, <code>nm-daemon</code>, <code>bt-daemon</code>, <code>clip-daemon</code> and <code>bar-daemon</code>, each in its own scope. They may serve other clients. Call their measurements “related daemon activity,” not exclusively Shelllist-caused cost. Never activate an absent daemon just to monitor it.</li>
+</ol>
+<p>Discover service membership periodically, without scanning all of procfs on every tick. First observations have no delta. Permission loss, process exit, negative/reset counters, disappeared GPU clients and unsupported fields yield <code>null</code> with a reason. Short-lived processes can escape polling: disclose coverage gaps, and prefer service cgroup accounting when available. Do not extend a last-known value across missing intervals.</p>
+</section>
+
+<section id="response">
+<h2>5. Responsiveness: use what exists, label it precisely</h2>
+<p>Shelllist exposes <code>status</code>, <code>listSurfaces</code> and <code>responsiveness</code> through its existing IPC. These are sufficient for an initial open-path lens without adding code to the UI, but not for end-to-end input latency.</p>
+<div class="table"><table>
+<thead><tr><th>Metric</th><th>Start → stop</th><th>Allowed interpretation</th></tr></thead><tbody>
+<tr><td>Command acknowledgement</td><td>Rust monotonic time immediately before spawning the selected command → successful process exit and valid reply.</td><td>Public wrapper round trip includes shell/Quickshell discovery, IPC and scheduling. Direct targeted IPC is a different series. Neither is time to usable content.</td></tr>
+<tr><td>Open → Qt frame-swap callback</td><td><code>PopupWindowHost.showPopover()</code> sets <code>Date.now()</code> → <code>onFrameSwapped</code> records the first callback.</td><td>UI-side open-to-first-callback proxy. Starts after earlier command/selection work; callback delivery and wall-clock resolution affect it. Not compositor presentation, complete content, FPS or physical input-to-photon.</td></tr>
+<tr><td>First-open QML loading</td><td><code>selectSurface()</code> timestamp → asynchronous content <code>Loader.onLoaded</code> in <code>ShellContent.qml</code>.</td><td>QML construction/loading proxy, not backend result readiness. Warm selection explicitly records zero: label that “already loaded,” exclude it from load-latency distributions.</td></tr>
+<tr><td>Search rank / catalog-to-model</td><td>Existing controller’s latest optional fields.</td><td>Diagnostic snapshots only in the MVP: the IPC payload lacks a query/action identity establishing freshness. Do not attribute stale values to the current open or claim keystroke-to-result timing.</td></tr>
+<tr><td>Visible-response extension</td><td>Explicit input command → validated expected content change in a compositor capture.</td><td>Deferred and capability-gated. Includes injection/capture delay; reports observation bounds/cadence. Not physical input-to-photon. No screenshots or synthetic input needed for the first release.</td></tr>
+</tbody></table></div>
+<h3>Trial protocol</h3>
+<ol>
+<li>Verify target identity and hidden state; snapshot <code>opened</code>/<code>loaded</code> and the latest timing record. Resolve supported surfaces from the exact target’s catalog.</li>
+<li>Issue one open; measure the chosen command path. Reject invalid replies, wrong surfaces and host replacement. Poll existing timing IPC at a documented bounded rate, initially 25 ms, with a 3-second configurable timeout.</li>
+<li>Require a new open timestamp, matching surface, valid first-frame timestamp and, for first-open loading, a fresh matching content record. Archive before/after records and poll observations. The API has no unique request ID: serialize actions, enforce spacing, and invalidate ambiguous/concurrent trials.</li>
+<li>Only hidden-to-visible opens refresh the frame timing. Already-visible surface switches must not reuse that value. Keep frame and content endpoints separate; either may arrive first.</li>
+<li>Record failures/timeouts before cleanup. Hide only if the run still owns that UI interaction, allow 250 ms settling, and repeat. Abort on unexpected user activity or service restart.</li>
+</ol>
+<p>Rust durations use <code>Instant</code>. Existing QML values use millisecond wall time; preserve that source and precision, do not subtract them from Rust timestamps. Detect wall-clock discontinuities against monotonic elapsed time where possible and invalidate affected trials. A native zero can be quantization, while a warm-content zero is a programmed sentinel; neither establishes instantaneous rendering.</p>
+<div class="note">True backend-result readiness, typing latency, animation jank, dropped presented frames and GPU frame time are <strong>not covered by the initial IPC contract</strong>. Add a separately validated external observation method later, or explicitly leave them unmeasured. Low CPU does not prove a responsive event loop.</div>
+</section>
+
+<section id="scenarios">
+<h2>6. Small initial scenario set</h2>
+<div class="table"><table>
+<thead><tr><th>Scenario</th><th>Protocol</th><th>Primary outputs</th></tr></thead><tbody>
+<tr><td>A · Passive idle</td><td>Existing host; 10-second settle and 60-second capture. Operator selects hidden popover or a stable visible surface; lens does not alter UI. Record visibility context and incidental desktop activity.</td><td>UI/service/daemon CPU, RSS/PSS, I/O and supported GPU activity. Hidden means bar-only, not no rendering.</td></tr>
+<tr><td>B · Warm open/hide</td><td>Explicit consent. Start with Applications, then optional Wi-Fi and Bluetooth. One untimed warmup; 30 opens per surface across three blocks of 10, with bounded waits and settling.</td><td>Acknowledgement and Qt frame-callback distributions, timeouts, phase resource traces and related daemon deltas. Record that polling affects load.</td></tr>
+<tr><td>C · First-open loading</td><td>Dedicated test session with a fresh host. Three independent host launches initially; inspect actual opened/loaded flags. Repeat one selected surface per fresh host to avoid order effects.</td><td>Host-cold first-open QML loading plus frame/ack proxies. Daemons and filesystem caches may remain warm; record their state. No “cold disk” claim.</td></tr>
+<tr><td>D · Retention cycle</td><td>After warming approved surfaces, take a settled baseline, perform 20 open/hide cycles, then settle for 30 seconds. Repeat blocks where useful.</td><td>Retained RSS/PSS, CPU return-to-idle, bridge/process/thread changes and I/O. Warm surface retention is intentional; growth is a signal to investigate, not automatic proof of a leak.</td></tr>
+<tr><td>E · Search/browse, later</td><td>Dedicated synthetic session and verified focus; deterministic queries/results, controlled input and validated visual expectations. Avoid private clipboard/notification data.</td><td>Resource cost and, only if validated, command-to-observed-result timing. Otherwise expose the responsiveness coverage gap rather than timing unrelated latest fields.</td></tr>
+</tbody></table></div>
+<p>Keep default scenarios read-only at the domain level. Displays, Activity, Clipboard, battery and other panels are opt-in extensions, not a requirement to sweep every panel immediately. Record result counts where safely observable, surface order, theme/motion settings, display geometry and external service state. Do not alter the user’s refresh rate, power policy, compositor settings or caches to normalize a run.</p>
+</section>
+
+<section id="evidence">
+<h2>7. Baselines, evidence and reports</h2>
+<h3>Statistics and comparison rules</h3>
+<ul>
+<li>Collect three independent resource runs per condition. For response actions show all raw trials, count, median, maximum and failures. At 30 trials, nearest-rank p95 is descriptive and noisy; suppress p99 initially. Repeated actions in one host are not independent process launches.</li>
+<li>Report successful-trial latency separately from timeout/error counts and censoring limits. A fast median never hides a failed trial. Use time-weighted CPU/rate averages; resource samples are not independent latency trials.</li>
+<li>First measure variability, then set human-approved budgets in TOML. Existing scripts’ defaults—2% of one core, 300 MiB PSS, 50 ms acknowledgement, 100 ms warm frame and 300 ms cold content—are historical reference points, not automatically adopted gates.</li>
+<li>Compare the same host, scope, scenario/workload, display/backend, sampling method, command path and versions of metric definitions. Record all mismatches; block automatic regression verdicts for incompatible contexts. Candidate application identity may differ by design; daemon/framework revisions must be matched or the comparison labelled whole-stack.</li>
+<li>Use alternating A/B runs when comparing builds, with no builds during capture. Require an absolute noise floor as well as a relative change threshold. Near-zero baselines use absolute deltas only. Initial reports are descriptive, not statistical-significance claims.</li>
+<li>Keep historical baselines instead of copying the sibling lens’s automatic 24-hour expiration. Show age/context clearly; an old baseline describes the old build, not certification of the current executable.</li>
+</ul>
+<h3>Typed artifact contract</h3>
+<p>Every metric carries <code>id</code>, <code>unit</code>, <code>scope</code>, <code>source</code>, nullable value and availability reason. Separate run completeness (<code>complete / partial / failed</code>) from optional budget assessment (<code>within / above / uncertain / unmeasured</code>). Unsupported GPU data need not fail a resource capture, but cannot pass a GPU budget.</p>
+<p>The manifest records schema version, run ID, UTC time, monotonic origin, lens binary hash/version, target PID/start time/boot ID, resolved Quickshell binary and QML config identity, packaged store paths or source hashes, wrapper path/hash, relevant daemon identities, source revision/dirty fingerprint when available, allowlisted environment, host/display context, scenario hash, collector capabilities, command/poll cadence, exit status and interruptions. A Git checkout revision alone does not identify the deployed QML or daemon binaries.</p>
+<p>Write samples/events incrementally as JSONL, preserving raw counters and action endpoints. Finalize summaries/reports atomically and bind them to raw-file hashes. Validate schema, finite values and unit consistency; truncated files remain explicitly partial, never silently successful. Cap diagnostic log size, use unique run directories and do not overwrite selected baselines.</p>
+<h3>One offline report</h3>
+<p>Generate five clear sections: responsiveness, CPU, GPU, memory and I/O. Show scope selectors as separate static sections/tables, phase-aligned SVG timelines, per-process breakdowns, baseline deltas and failure counts. Put capability gaps and measurement boundaries near the affected metric. Include a source/provenance appendix and links to raw files. HTML-escape labels/logs; no scripts or network assets. The report must work directly through <code>file://</code>.</p>
+</section>
+
+<section id="delivery">
+<h2>8. Delivery sequence and exit gates</h2>
+<div class="table"><table>
+<thead><tr><th>Milestone</th><th>Work</th><th>Exit gate</th></tr></thead><tbody>
+<tr><td>0 · Capability / targeting spike</td><td>Create the independent Rust crate and <code>doctor</code>. Verify exact instance routing, service/cgroup discovery, procfs access and available DRM fields. Read the existing IPC without changing the UI when explicitly requested.</td><td>Documented support matrix and safe target selection on the actual machine. No implicit service starts or stale-host replacement. Decide early which GPU counters can be delivered.</td></tr>
+<tr><td>1 · Passive sampler</td><td>Implement procfs sampling, identity tracking, optional service/daemon scopes, typed JSONL and interruption handling. Add parser fixtures and a Rust synthetic load helper.</td><td>A 60-second capture produces credible CPU/RSS/I/O data, explicit gaps and separate observer cost. Nothing in the desktop changes.</td></tr>
+<tr><td>2 · Baseline report + GPU</td><td>Implement static HTML/SVG/CSV summaries, PSS, supported DRM fields, client deduplication and three-run idle baseline collection.</td><td>First useful release: offline report covers all requested resource categories or explicitly explains unsupported GPU/PSS. No invented zeros or app-attributed device totals.</td></tr>
+<tr><td>3 · Open responsiveness</td><td>Add opt-in warm-open trials using existing IPC, cold/warm classification, freshness validation and failure-preserving summaries.</td><td>30 valid attempted trials per selected surface, all outcomes retained, accurate endpoint labels; wrong/stale records cannot pass. No production changes.</td></tr>
+<tr><td>4 · Comparison and retention</td><td>Add baseline selection, context matching, controlled A/B output, optional budgets and retained-memory cycles. Document dedicated-session cold runs.</td><td>Reject incompatible baselines; show noise and failures honestly. Reproduce three resource runs and a repeatable warm-open baseline.</td></tr>
+<tr><td>Later · Richer latency / diagnosis</td><td>Only if needed: external capture/input adapter, verified search workloads, vendor GPU support, optional perf diagnostics in separate runs.</td><td>Known delayed/no-change/focus-loss tests validate the observation method before publishing latency. No requirement for screenshots, root, eBPF or application instrumentation in the MVP.</td></tr>
+</tbody></table></div>
+<h3>Proposed commands — not implemented by this plan</h3>
+<pre><code># Build separately, using the project's available Rust environment.
+cargo build --release --locked \
+  --manifest-path tools/performance-lens/Cargo.toml
+
+LENS=tools/performance-lens/target/release/shelllist-perf
+# Cargo's configured target directory may differ; use its emitted binary path.
+"$LENS" doctor --pid &lt;verified-quickshell-pid&gt;
+"$LENS" capture --pid &lt;pid&gt; --duration 60s --include-related-daemons
+"$LENS" run warm-open --pid &lt;pid&gt; --surface applications \
+  --trials 30 --allow-ui-control
+"$LENS" report --run tools/performance-lens/runs/&lt;run-id&gt;
+"$LENS" compare --baseline &lt;baseline-run-dir&gt; --candidate &lt;candidate-run-dir&gt;</code></pre>
+<p>Resolve default config/output locations relative to the lens directory, not an accidental working directory. Core requirements are Linux procfs and permissions for the target user. Active tests additionally require the installed Quickshell IPC and a live supported session. A separate lens-local Nix definition can be added if needed; neither the application’s flake nor a sibling repository should be required to build or run the lens.</p>
+<p><strong>Not in scope:</strong> a live dashboard, system service, continuous telemetry, automatic service deployment, panel redesign, internal allocator instrumentation, cross-platform support, application capacity certification or hard CI performance gates on shared runners.</p>
+</section>
+
+<section id="acceptance">
+<h2>9. Acceptance checklist</h2>
+<ul>
+<li><strong>Separation:</strong> production QML/Rust/TypeScript, daemon code, manifests and packaging remain unchanged. Lens runtime and report generation require no JavaScript or Python.</li>
+<li><strong>Targeting/safety:</strong> Rust integration tests cover multiple Quickshell instances, PID reuse, absent service, host restart, ambiguous config, already-visible draft, user interruption and Ctrl-C. No unrelated process is stopped; active runs fail closed if routing cannot be verified.</li>
+<li><strong>Correct counters:</strong> fixtures cover proc names containing spaces/parentheses, tick/KiB units, missing fields, permission errors, counter resets, process churn, duplicate DRM clients, unsupported engine capacities and device changes. Cross-check scoped CPU/memory/I/O with known workloads and an independent tool.</li>
+<li><strong>Honest timing:</strong> fake IPC fixtures cover stale timestamps, warm-content zero, first-frame-before-content, content-before-frame, wrong surface, timeouts, malformed JSON, clock discontinuities and visible-to-visible switches. Every attempted trial is represented.</li>
+<li><strong>Live validation:</strong> run passive captures before active scenarios; compare selected raw existing IPC values with Rust artifacts in a consenting session. No Qt interaction tests are needed for unchanged application code; any later application behavior changes require them separately.</li>
+<li><strong>Low overhead:</strong> measure lens plus helper cost and compare slow/default sampling rates. Initial engineering target: sampler below 1% of one core in settled passive capture. This is a target to verify, not a result. Flag late samples; reduce cadence if overhead is material.</li>
+<li><strong>Artifacts:</strong> tests reject corrupted/truncated evidence as complete, preserve partial failures, check incompatible baselines and HTML escaping, and verify reports contain no scripts or external dependencies. Keep output bounded and selected baselines safe from pruning.</li>
+<li><strong>Baseline usefulness:</strong> three idle captures and 30 warm-open attempts per selected surface establish the first descriptive baseline. GPU support, UI versus daemon scope, QML-load semantics and unmeasured responsiveness categories remain visible.</li>
+</ul>
+<div class="note"><strong>Definition of done:</strong> one Rust command captures an explicitly identified Shelllist session and produces a trustworthy local resource report; a second opt-in scenario adds open-path responsiveness. The tool lives with Shelllist, but Shelllist does not depend on it.</div>
+</section>
+
+<section id="sources">
+<h2>10. Local review references</h2>
+<ul>
+<li><a href="../../../scratchpad-performance-lens/README.md">Scratchpad lens README</a> · <a href="../../../scratchpad-performance-lens/docs/measurement-integrity.md">Measurement-integrity contract</a> · <a href="../../../scratchpad-performance-lens/src/provenance.rs">Provenance implementation</a></li>
+<li><a href="../../../scratchpad-performance-lens/src/producers/resources.rs">Scratchpad resource producer</a> · <a href="../../../scratchpad-performance-lens/src/producers/frame_metrics.rs">Frame producer</a> · <a href="../../../scratchpad/tools/performance-lens/plan.html">New external Scratchpad lens plan</a></li>
+<li><a href="../../README.md">Shelllist architecture and commands</a> · <a href="../../flake.nix">Packaged wrapper, IPC routing and startup behavior</a> · <a href="../../contracts/surface-catalog.md">Surface catalog</a></li>
+<li><a href="../../tests/benchmark-resident.py">Existing resident benchmark</a> · <a href="../../tests/benchmark-responsiveness.py">Existing responsiveness benchmark</a> · <a href="../../tests/generate-performance-benchmarks.js">Separate Node policy benchmark</a></li>
+<li><a href="../../shell/shell.qml">Existing timing IPC and warm-content semantics</a> · <a href="../../shell/ShellContent.qml">Content Loader endpoint</a> · <a href="../../qml/Shelllist/Ui/PopupWindowHost.qml">First frame-swap callback endpoint</a></li>
+</ul>
+</section>
+<footer>Planning artifact only. No performance measurements, desktop automation or application changes were performed for this review. Numbers above are proposed protocol settings or existing-script defaults, not measured results.</footer>
+</main>
+</body>
+</html>

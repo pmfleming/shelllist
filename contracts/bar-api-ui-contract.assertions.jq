@@ -109,6 +109,9 @@
 (.snapshot.notification_active.notifications[0].source_monitor | type == "string") and
 (.snapshot.updates.ready | type == "boolean") and
 (.snapshot.updates.jobs | type == "array") and
+(any(.registry.methods[]; .name == "updates.getOverview" and .params == {} and .result == "overview")) and
+(any(.registry.methods[]; .name == "updates.queryHistory" and .result == "history" and
+  .params == {query: "", cursor: null, run_id: null, limit: 50, lane: null, outcome: null, anchor_ids: []})) and
 (.snapshot.activity.weather.timezone_region_ids | type == "array") and
 (.snapshot.activity.world_clocks[0].timezone_region_ids | type == "array") and
 (.snapshot.timezone.utc_offset_seconds | type == "number") and

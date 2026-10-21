@@ -65,7 +65,6 @@ Core.Provider {
                 presentation: primaryPresentation("danger")
             }), Core.Model.keepOpenAction("noise-control", "Noise control", {
                 accessKey: "N",
-                accessModifier: "Ctrl",
                 icon: "noise_control_off",
                 visible: !!device.connected && NoiseControl.isAdvertised(NoiseControl.state(device)),
                 enabled: actionEnabled(NoiseControl.canSet(device), device),
