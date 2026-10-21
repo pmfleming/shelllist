@@ -96,6 +96,13 @@ changed = edit.replace(position("10.0.0.1/24", 3), v4p, 2, 3, "", false, true);
 equal(changed.text, "1.0.0.1/24", "backspace crosses a fixed dot");
 changed = edit.replace(position("10.0.0.1/24", 2), v4p, 2, 3, "", false, false);
 equal(changed.text, "10..0.1/24", "delete crosses a fixed dot");
+for (const [text, config, start, end, backwards, expected] of [
+    ["10.../24", v4p, 5, 6, true, "1.../24"],
+    ["10.../24", v4p, 2, 3, false, "10.../4"],
+    ["::1/64", v6p, 3, 4, true, "::/64"],
+    ["::1/64", v6p, 3, 4, false, "::1/4"]
+]) equal(edit.replace(position(text, start, end), config, start, end, "", false, backwards).text, expected, "separator deletion skips empty slots");
+for (const backwards of [true, false]) equal(edit.replace(position("...", 0, 1), v4, 0, 1, "", false, backwards), null);
 changed = edit.replace(position("10.0.0.1/24", 0, 11), v4p, 0, 11, "", false, true);
 equal(changed.text, ".../", "cut/delete preserves structural separators");
 equal(edit.replace(position("192.0.2.1", 0, 9), v4, 0, 9, "g", false, true), null);

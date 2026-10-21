@@ -173,16 +173,13 @@ function replace(state: IpPosition, config: IpConfiguration, start: number, end:
     if (index < 0) return null;
     // Deleting only a fixed separator reaches the preceding/following digit.
     if (!insertion && end > start && !slots.some(slot => start < slot.end && end > slot.start)) {
-        if (backwards) {
-            const previous = slots.filter(slot => slot.end <= start && slot.value.length > 0).pop();
-            if (!previous) return null;
-            start = previous.end - 1; end = previous.end;
-        } else {
-            const next = slots.find(slot => slot.start >= end && slot.value.length > 0);
-            if (!next) return null;
-            start = next.start; end = next.start + 1;
-        }
-        index = slots.findIndex(slot => start >= slot.start && start < slot.end);
+        const adjacent = backwards
+            ? slots.filter(slot => slot.end <= start && slot.value.length > 0).pop()
+            : slots.find(slot => slot.start >= end && slot.value.length > 0);
+        if (!adjacent) return null;
+        start = backwards ? adjacent.end - 1 : adjacent.start;
+        end = start + 1;
+        index = slots.indexOf(adjacent);
     }
     const slot = slots[index];
     if (!(slot.kind === "ipv6" ? /^[0-9a-fA-F:.]*$/ : /^\d*$/).test(insertion)) return null;
@@ -200,7 +197,7 @@ function replace(state: IpPosition, config: IpConfiguration, start: number, end:
     let autoSlot = state.autoSlot;
     const fresh = !slot.value || (start <= slot.start && end >= slot.end);
     if (fresh && insertion) autoSlot = index;
-    if (!insertion || insertion.length > 1 || paste || slot.kind !== "octet") autoSlot = -1;
+    if (insertion.length !== 1 || paste || slot.kind !== "octet") autoSlot = -1;
     if (autoSlot === index && values[index].length === 3 && index + 1 < slots.length) {
         cursor++; autoSlot = -1;
     }

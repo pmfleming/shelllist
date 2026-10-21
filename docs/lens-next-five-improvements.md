@@ -61,3 +61,23 @@ passed 2223 frozen-input comparisons and native tests, but increased production
 source lines by 9, cyclomatic by 35, cognitive by 21 and effort by 101. The schema
 checks were already explicit and had insufficient reuse to justify that split.
 The experiment was reverted before this commit; its ignored patch remains evidence.
+
+## 3. Unify structured-IP separator deletion
+
+The largest handwritten function, `IpEdit.replace`, duplicated the backward and
+forward fixed-separator deletion paths. Select the adjacent nonempty slot once,
+then share range/index calculation and rejection. Reuse the chosen slot identity
+instead of scanning the list again. Express the auto-advance single-character guard
+as one length comparison. TypeScript remains the source of truth; regenerate JS.
+
+This deliberately small change preserves whole-value paste rejection, malformed
+source recovery, local selection/undo and per-slot limits rather than inventing a
+new edit dispatcher. The function improves **36/44/192 → 35/41/179** (cyclomatic /
+cognitive / effort). Production source and physical lines each fall **7**; the
+remaining high complexity still merits review, not a claim that the hotspot is solved.
+
+Validation: **450** independent editor checks, native structured editor **16 passes**,
+Wi-Fi IP suite **8 passes**, strict lint and TypeScript typecheck. New vectors cover
+both directions across empty slots and IPv6 slashes, including no adjacent digit.
+**143104** frozen old/new edit-operation comparisons pass. No interaction or backend
+boundary changes; native arrows, deferred saves and rollback retain their contract.
