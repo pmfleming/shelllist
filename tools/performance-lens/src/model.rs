@@ -90,6 +90,24 @@ impl GpuClient {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ThreadSample {
+    pub tid: u32,
+    pub start_ticks: u64,
+    pub name: String,
+    pub elapsed_s: f64,
+    pub cpu_ticks: u64,
+    pub interval_s: Option<f64>,
+    pub cpu_percent: Metric,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct ThreadSnapshot {
+    pub tasks: Vec<ThreadSample>,
+    pub unavailable_tasks: usize,
+    pub error: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Sample {
     pub sequence: u64,
     pub elapsed_s: f64,
@@ -104,6 +122,9 @@ pub struct Sample {
     pub rates: BTreeMap<String, Metric>,
     pub gpu: Vec<GpuClient>,
     pub gpu_reason: Option<String>,
+    /// Optional task diagnostic; absent in older artifacts.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub threads: Option<ThreadSnapshot>,
     pub error: Option<String>,
     pub collection_ms: f64,
     pub late_by_ms: f64,
@@ -165,12 +186,29 @@ pub struct Distribution {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ThreadSummary {
+    pub label: String,
+    pub phase: String,
+    pub tid: u32,
+    pub start_ticks: u64,
+    pub last_name: String,
+    pub observations: usize,
+    pub max_observed_cpu_ticks: u64,
+    pub covered_s: f64,
+    pub cpu_percent_one_core: Option<f64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Summary {
     pub schema_version: u32,
     pub run_id: String,
     pub raw_sha256: BTreeMap<String, String>,
     pub status: String,
     pub resources: Vec<ResourceSummary>,
+    #[serde(default)]
+    pub threads: Vec<ThreadSummary>,
+    #[serde(default)]
+    pub evidence_limits: Vec<String>,
     pub attempted_trials: usize,
     pub successful_trials: usize,
     pub failed_trials: usize,

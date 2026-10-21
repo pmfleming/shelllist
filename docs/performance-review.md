@@ -178,3 +178,11 @@ repeat three passive captures and consent-gated warm-open runs on matching deskt
 conditions. Do not restart the live bar/notification/power service just to validate
 a microbenchmark. The native watcher and scoring regression tests are the evidence
 for these source changes until that controlled deployment acceptance is completed.
+
+## Lens effectiveness follow-up
+
+The [lens review](../tools/performance-lens/review.md) evaluates its contribution to
+each improvement. Follow-ups add optional task CPU/churn diagnostics, intentional
+daemon/observer build comparisons with provenance guards, and explicit evidence
+limits. It also records live validation identifying the busy watcher threads;
+this remains diagnosis of the old deployment, not acceptance of the source fixes.

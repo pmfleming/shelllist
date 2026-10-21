@@ -2,7 +2,7 @@ use crate::{
     command::INTERRUPTED,
     drm,
     model::{Metric, Sample, Target},
-    procfs,
+    procfs, threads,
 };
 use anyhow::{Result, bail};
 use std::{
@@ -81,6 +81,7 @@ pub fn collect(
     start: Instant,
     phase: &str,
     heavy: bool,
+    include_threads: bool,
     seen_gpu: &mut BTreeSet<String>,
 ) -> Sample {
     let begin = Instant::now();
@@ -97,6 +98,7 @@ pub fn collect(
         rates: BTreeMap::new(),
         gpu: vec![],
         gpu_reason: None,
+        threads: None,
         error: None,
         collection_ms: 0.0,
         late_by_ms: 0.0,
@@ -109,12 +111,15 @@ pub fn collect(
             } else {
                 sample.gpu_reason = Some("not sampled at this cadence".into());
             }
-            // counters() already fenced the procfs reads. Only DRM collection
-            // introduces more process reads that need an additional identity check.
-            if heavy {
+            if include_threads {
+                sample.threads = Some(threads::collect(target.identity.pid, start));
+            }
+            // Fence the extra DRM/task reads as well as counters().
+            if heavy || include_threads {
                 if let Err(e) = procfs::verify(&target.identity) {
                     sample.counters.clear();
                     sample.gpu.clear();
+                    sample.threads = None;
                     sample.error = Some(format!("identity lost during sample: {e:#}"));
                 }
             }
@@ -128,21 +133,55 @@ pub fn collect(
     sample
 }
 
+// Buffer one complete row before checking the budget. Task snapshots can be
+// much larger than process-only rows; a per-batch reserve is no longer enough.
+fn write_sample(
+    file: &mut impl Write,
+    sample: &Sample,
+    encoded: &mut Vec<u8>,
+    written: &mut u64,
+    limit: u64,
+) -> Result<()> {
+    encoded.clear();
+    serde_json::to_writer(&mut *encoded, sample)?;
+    encoded.push(b'\n');
+    if encoded.len() as u64 > limit.saturating_sub(*written) {
+        file.flush()?;
+        bail!("raw sample budget reached; capture stopped before writing a partial row");
+    }
+    file.write_all(encoded)?;
+    *written += encoded.len() as u64;
+    Ok(())
+}
+
+pub struct Options {
+    pub interval: Duration,
+    pub detail_interval: Duration,
+    pub ticks: u64,
+    pub include_threads: bool,
+}
+
 pub fn run(
     file: File,
     targets: Vec<Target>,
     start: Instant,
-    interval: Duration,
-    detail_interval: Duration,
-    ticks: u64,
+    options: Options,
     control: Control,
 ) -> Result<()> {
+    let Options {
+        interval,
+        detail_interval,
+        ticks,
+        include_threads,
+    } = options;
     let mut file = BufWriter::new(file);
     let mut prior = BTreeMap::<u32, Sample>::new();
     let mut heavy_prior = BTreeMap::<u32, Sample>::new();
     let mut due = start;
     let mut heavy_due = start;
     let mut seq = 0;
+    let mut written = 0;
+    let mut encoded = Vec::new();
     loop {
         if control.stop.load(Ordering::Relaxed) || INTERRUPTED.load(Ordering::Relaxed) {
             break;
@@ -159,7 +198,15 @@ pub fn run(
         let mut seen_gpu = BTreeSet::new();
         for target in &targets {
             let (phase, generation) = control.phase.lock().unwrap().clone();
-            let mut sample = collect(target, seq, start, &phase, heavy, &mut seen_gpu);
+            let mut sample = collect(
+                target,
+                seq,
+                start,
+                &phase,
+                heavy,
+                include_threads,
+                &mut seen_gpu,
+            );
             sample.phase_sequence = generation;
             sample.late_by_ms = now.saturating_duration_since(due).as_secs_f64() * 1000.0;
             let previous = prior.get(&target.identity.pid).filter(|p| {
@@ -170,6 +217,9 @@ pub fn run(
             });
             sample.interval_s = previous.map(|p| sample.elapsed_s - p.elapsed_s);
             sample.rates = rates(&sample, previous, ticks);
+            if let Some(snapshot) = &mut sample.threads {
+                threads::derive(snapshot, previous.and_then(|p| p.threads.as_ref()), ticks);
+            }
             if heavy {
                 let previous = heavy_prior.get(&target.identity.pid).filter(|p| {
                     p.phase_sequence == sample.phase_sequence
@@ -186,8 +236,13 @@ pub fn run(
                 }
                 heavy_prior.insert(target.identity.pid, sample.clone());
             }
-            serde_json::to_writer(&mut file, &sample)?;
-            file.write_all(b"\n")?;
+            write_sample(
+                &mut file,
+                &sample,
+                &mut encoded,
+                &mut written,
+                crate::artifacts::MAX_RAW_BYTES,
+            )?;
             seq += 1;
             if target.label == "ui-host" {
                 if let Some(error) = &sample.error {
@@ -198,9 +253,6 @@ pub fn run(
             prior.insert(target.identity.pid, sample);
         }
         file.flush()?;
-        if file.get_ref().metadata()?.len() > crate::artifacts::MAX_RAW_BYTES - 1024 * 1024 {
-            bail!("raw sample budget reached (128 MiB); capture stopped");
-        }
         due += interval;
         if due < Instant::now() {
             due = Instant::now() + interval;
@@ -213,6 +265,35 @@ pub fn run(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn sample_budget_rejects_whole_rows_before_writing() {
+        let target = Target {
+            label: "fixture".into(),
+            identity: procfs::identity(std::process::id()).unwrap(),
+        };
+        let sample = collect(
+            &target,
+            0,
+            Instant::now(),
+            "capture",
+            false,
+            true,
+            &mut BTreeSet::new(),
+        );
+        let mut output = Vec::new();
+        let mut buffer = Vec::new();
+        let mut written = 0;
+        let size = serde_json::to_vec(&sample).unwrap().len() as u64 + 1;
+        write_sample(&mut output, &sample, &mut buffer, &mut written, size + 1).unwrap();
+        assert_eq!(written, size);
+        assert!(write_sample(&mut output, &sample, &mut buffer, &mut written, size + 1).is_err());
+        assert_eq!(output.len() as u64, size);
+        assert_eq!(written, size);
+        assert_eq!(output.last(), Some(&b'\n'));
+        let parsed: Sample = serde_json::from_slice(&output).unwrap();
+        assert!(parsed.threads.is_some());
+    }
+
     #[test]
     #[ignore = "manual procfs collector performance probe; setup excluded"]
     fn profile_light_process_collection() {
@@ -227,6 +308,7 @@ mod tests {
                 sequence,
                 start,
                 "probe",
+                false,
                 false,
                 &mut BTreeSet::new(),
             );
@@ -250,6 +332,7 @@ mod tests {
             0,
             Instant::now(),
             "idle",
+            false,
             false,
             &mut BTreeSet::new(),
         );

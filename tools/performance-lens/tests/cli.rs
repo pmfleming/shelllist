@@ -9,6 +9,9 @@ use std::{
 };
 use tempfile::TempDir;
 
+#[path = "review_cases/mod.rs"]
+mod review_cases;
+
 const BIN: &str = env!("CARGO_BIN_EXE_shelllist-perf");
 fn json(path: &Path) -> Value {
     serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
@@ -20,10 +23,14 @@ struct Load {
 }
 impl Load {
     fn start() -> Self {
+        Self::with_churn(false)
+    }
+    fn with_churn(churn: bool) -> Self {
         let dir = tempfile::tempdir().unwrap();
         let child = Command::new(std::env::current_exe().unwrap())
             .args(["--exact", "synthetic_load", "--ignored", "--nocapture"])
             .env("PERF_TEST_DIR", dir.path())
+            .env("PERF_TEST_CHURN", if churn { "1" } else { "0" })
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()
@@ -48,27 +55,63 @@ impl Drop for Load {
 #[ignore = "only launched as a bounded synthetic child by CLI tests"]
 fn synthetic_load() {
     let dir = PathBuf::from(std::env::var_os("PERF_TEST_DIR").expect("child-only test"));
-    let mut memory = vec![0_u8; 16 * 1024 * 1024];
-    for i in (0..memory.len()).step_by(4096) {
-        memory[i] = 1;
-    }
-    fs::write(dir.join("ready"), b"ready").unwrap();
-    let end = Instant::now() + Duration::from_secs(20);
-    while Instant::now() < end {
-        let begin = Instant::now();
-        let mut value = 0_u64;
-        while begin.elapsed() < Duration::from_millis(15) {
-            value = std::hint::black_box(value.wrapping_add(1));
+    if std::env::var("PERF_TEST_CHURN").as_deref() == Ok("1") {
+        fs::write(dir.join("ready"), b"ready").unwrap();
+        let until = Instant::now() + Duration::from_secs(20);
+        while Instant::now() < until {
+            std::thread::Builder::new()
+                .name("perf-churn".into())
+                .spawn(|| {
+                    let begin = Instant::now();
+                    let mut value = 0_u64;
+                    while begin.elapsed() < Duration::from_millis(200) {
+                        value = std::hint::black_box(value.wrapping_add(1));
+                    }
+                })
+                .unwrap()
+                .join()
+                .unwrap();
         }
-        let mut file = fs::File::create(dir.join("io")).unwrap();
-        file.write_all(&memory[..65536]).unwrap();
-        file.sync_all().unwrap();
-        std::hint::black_box(&memory);
-        std::thread::sleep(Duration::from_millis(25));
+        return;
     }
+    std::thread::Builder::new()
+        .name("perf-hot".into())
+        .spawn(move || {
+            let mut memory = vec![0_u8; 16 * 1024 * 1024];
+            for i in (0..memory.len()).step_by(4096) {
+                memory[i] = 1;
+            }
+            fs::write(dir.join("ready"), b"ready").unwrap();
+            let end = Instant::now() + Duration::from_secs(20);
+            while Instant::now() < end {
+                let begin = Instant::now();
+                let mut value = 0_u64;
+                while begin.elapsed() < Duration::from_millis(15) {
+                    value = std::hint::black_box(value.wrapping_add(1));
+                }
+                let mut file = fs::File::create(dir.join("io")).unwrap();
+                file.write_all(&memory[..65536]).unwrap();
+                file.sync_all().unwrap();
+                std::hint::black_box(&memory);
+                std::thread::sleep(Duration::from_millis(25));
+            }
+        })
+        .unwrap()
+        .join()
+        .unwrap();
 }
 
 fn capture(load: &Load, root: &Path, context: &str) -> PathBuf {
+    capture_with(load, root, context, "350ms", &[])
+}
+
+fn capture_with(
+    load: &Load,
+    root: &Path,
+    context: &str,
+    duration: &str,
+    extra: &[&str],
+) -> PathBuf {
     let config = root.join("fixture.qml");
     fs::create_dir_all(root).unwrap();
     fs::write(&config, b"// external synthetic fixture\n").unwrap();
@@ -79,7 +122,7 @@ fn capture(load: &Load, root: &Path, context: &str) -> PathBuf {
             "--pid",
             &load.child.id().to_string(),
             "--duration",
-            "350ms",
+            duration,
             "--settle",
             "0s",
             "--interval-ms",
@@ -89,6 +132,7 @@ fn capture(load: &Load, root: &Path, context: &str) -> PathBuf {
             "--config-path",
         ])
         .arg(config)
+        .args(extra)
         .arg("--output-dir")
         .arg(&runs)
         .output()
@@ -128,6 +172,19 @@ fn capture_report_hashes_and_unknowns() {
     assert!(html.contains("GPU utilization unavailable"));
     assert!(!html.contains("<script"));
     assert!(!html.contains("https://"));
+    assert!(html.contains("No responsiveness trials measured"));
+    assert!(summary["threads"].as_array().unwrap().is_empty());
+    // Older schema-1 captures have neither task snapshots nor this protocol key.
+    let mut legacy = manifest.clone();
+    legacy["settings"]
+        .as_object_mut()
+        .unwrap()
+        .remove("include_threads");
+    fs::write(
+        run.join("manifest.json"),
+        serde_json::to_vec(&legacy).unwrap(),
+    )
+    .unwrap();
     let report = Command::new(BIN)
         .arg("report")
         .arg("--run")

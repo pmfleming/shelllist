@@ -2,6 +2,9 @@ mod artifacts;
 mod command;
 #[cfg(test)]
 mod command_tests;
+mod comparison;
+#[cfg(test)]
+mod comparison_tests;
 mod drm;
 mod ipc;
 mod model;
@@ -12,6 +15,7 @@ mod sampler;
 mod scenario_tests;
 mod scenarios;
 mod target;
+mod threads;
 
 use anyhow::{Result, ensure};
 use clap::{Args, Parser, Subcommand, ValueEnum};
@@ -90,6 +94,10 @@ enum Commands {
         candidate: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        /// Permit a deliberate executable change in this role (repeatable); no other checks bypassed.
+        /// lens-observer permits an observer change, yielding only a conditional comparison.
+        #[arg(long)]
+        changed_scope: Vec<String>,
     },
 }
 #[derive(Clone, Copy, ValueEnum)]
@@ -105,6 +113,9 @@ struct Common {
     /// PSS/GPU sampling interval; increase to reduce expensive procfs sampling cost.
     #[arg(long)]
     detail_ms: Option<u64>,
+    /// Opt-in per-thread CPU localization at main cadence (extra procfs cost; no stack profiling).
+    #[arg(long)]
+    include_threads: bool,
     /// Parent for unique run directories; defaults to this tool's runs/ directory.
     #[arg(long)]
     output_dir: Option<PathBuf>,
@@ -223,6 +234,7 @@ fn execute() -> Result<()> {
                 Instant::now(),
                 "doctor",
                 true,
+                false,
                 &mut BTreeSet::new(),
             );
             let ipc = if ipc_check {
@@ -295,8 +307,9 @@ fn execute() -> Result<()> {
             baseline,
             candidate,
             output,
+            changed_scope,
         } => {
-            let compatible = report::compare(&baseline, &candidate, &output)?;
+            let compatible = report::compare(&baseline, &candidate, &output, &changed_scope)?;
             println!("{}", output.join("report.html").display());
             ensure!(compatible, "runs are incomparable; see comparison report");
         }
@@ -373,7 +386,7 @@ fn capture(
         ticks_per_second: ticks,
         targets: targets.clone(),
         scenario: scenario.into(),
-        settings: json!({"interval_ms":interval,"heavy_interval_ms":detail_interval,"duration_s":duration.as_secs_f64(),"initial_settle_s":settle.as_secs_f64(),"surface":active.as_ref().map(|(_,s,_)|s),"trials":active.as_ref().map(|(_,_,n)|n),"timeout_ms":defaults.timeout_ms,"poll_ms":defaults.poll_ms,"between_trials_ms":defaults.between_trials_ms,"config_identity":config,"quickshell_path":active.as_ref().map(|(ipc,_,_)|&ipc.program),"command_path":if active.is_some(){"direct_pid_ipc"}else{"none"}}),
+        settings: json!({"interval_ms":interval,"heavy_interval_ms":detail_interval,"include_threads":common.include_threads,"thread_cadence":common.include_threads.then_some("base"),"duration_s":duration.as_secs_f64(),"initial_settle_s":settle.as_secs_f64(),"surface":active.as_ref().map(|(_,s,_)|s),"trials":active.as_ref().map(|(_,_,n)|n),"timeout_ms":defaults.timeout_ms,"poll_ms":defaults.poll_ms,"between_trials_ms":defaults.between_trials_ms,"config_identity":config,"quickshell_path":active.as_ref().map(|(ipc,_,_)|&ipc.program),"command_path":if active.is_some(){"direct_pid_ipc"}else{"none"}}),
         context: target::context(&common.context),
         warnings,
         hashes: BTreeMap::new(),
@@ -390,9 +403,12 @@ fn capture(
             samples,
             targets,
             start,
-            Duration::from_millis(interval),
-            Duration::from_millis(detail_interval),
-            ticks,
+            sampler::Options {
+                interval: Duration::from_millis(interval),
+                detail_interval: Duration::from_millis(detail_interval),
+                ticks,
+                include_threads: common.include_threads,
+            },
             thread_control,
         );
         stopped.store(true, Ordering::Relaxed);

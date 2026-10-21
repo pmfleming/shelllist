@@ -141,6 +141,35 @@ pub fn raw(path: &Path, manifest: &Manifest) -> Result<(Vec<Sample>, Vec<Event>)
             s.interval_s.is_none_or(|s| s > 0.0 && s.is_finite()),
             "invalid sample interval"
         );
+        if let Some(snapshot) = &s.threads {
+            ensure!(
+                s.error.is_none(),
+                "thread observations on lost process identity"
+            );
+            ensure!(
+                snapshot.tasks.len() <= crate::threads::MAX_TASKS,
+                "too many task observations"
+            );
+            let mut tids = std::collections::BTreeSet::new();
+            for t in &snapshot.tasks {
+                ensure!(
+                    t.tid > 0 && tids.insert(t.tid),
+                    "invalid or duplicate task ID"
+                );
+                ensure!(
+                    t.elapsed_s.is_finite() && t.elapsed_s >= s.elapsed_s,
+                    "invalid task timestamp"
+                );
+                ensure!(
+                    t.interval_s.is_none_or(|dt| dt.is_finite() && dt > 0.0),
+                    "invalid task interval"
+                );
+                ensure!(
+                    t.cpu_percent.value.is_some() == t.interval_s.is_some(),
+                    "task CPU missing interval"
+                );
+            }
+        }
         for c in s.counters.values() {
             ensure!(
                 c.value.is_some() != c.reason.is_some(),
@@ -151,6 +180,11 @@ pub fn raw(path: &Path, manifest: &Manifest) -> Result<(Vec<Sample>, Vec<Event>)
             .rates
             .values()
             .chain(s.gpu.iter().flat_map(|g| g.utilization.values()))
+            .chain(
+                s.threads
+                    .iter()
+                    .flat_map(|snapshot| snapshot.tasks.iter().map(|t| &t.cpu_percent)),
+            )
         {
             ensure!(
                 m.value.is_some() != m.reason.is_some(),
@@ -268,15 +302,48 @@ pub fn load(path: &Path) -> Result<(Manifest, Vec<Sample>, Vec<Event>)> {
     Ok((manifest, samples, events))
 }
 
-pub fn comparison_context(manifest: &Manifest) -> BTreeMap<String, String> {
+/// Only auto-discovered labels carry an ephemeral PID suffix. User labels such
+/// as "worker:2" are stable roles and must not be collapsed together.
+pub fn scope_role(label: &str) -> &str {
+    if label.starts_with("related:") || label.starts_with("ui-service-member:") {
+        label
+            .rsplit_once(':')
+            .filter(|(_, tail)| tail.parse::<u32>().is_ok())
+            .map_or(label, |(head, _)| head)
+    } else {
+        label
+    }
+}
+
+pub fn comparison_context(
+    manifest: &Manifest,
+    changed_scopes: &[String],
+) -> BTreeMap<String, String> {
     let mut result = manifest.context.clone();
     result.insert("scenario".into(), manifest.scenario.clone());
     result.insert("schema".into(), manifest.schema_version.to_string());
-    result.insert("lens_sha256".into(), manifest.lens_sha256.clone());
+    result.insert(
+        "ticks_per_second".into(),
+        manifest.ticks_per_second.to_string(),
+    );
+    result.insert("lens_version".into(), manifest.lens_version.clone());
+    if !changed_scopes.iter().any(|r| r == "lens-observer") {
+        result.insert("lens_sha256".into(), manifest.lens_sha256.clone());
+    }
     let mut settings = manifest.settings.clone();
     if let Some(object) = settings.as_object_mut() {
         object.remove("config_identity");
         object.remove("quickshell_path");
+        // Additive optional diagnostic: old captures did not collect tasks.
+        object
+            .entry("include_threads")
+            .or_insert(serde_json::json!(false));
+        let cadence = if object["include_threads"] == true {
+            serde_json::json!("detail")
+        } else {
+            serde_json::Value::Null
+        };
+        object.entry("thread_cadence").or_insert(cadence);
     }
     result.insert("protocol".into(), settings.to_string());
     // Related identities must match by executable and role, not ephemeral PID.
@@ -284,12 +351,8 @@ pub fn comparison_context(manifest: &Manifest) -> BTreeMap<String, String> {
         .targets
         .iter()
         .map(|t| {
-            let role = t
-                .label
-                .rsplit_once(':')
-                .filter(|(_, tail)| tail.parse::<u32>().is_ok())
-                .map_or(t.label.as_str(), |(head, _)| head);
-            let hash = if t.label == "ui-host" || t.label == "lens-observer" {
+            let role = scope_role(&t.label);
+            let hash = if role == "ui-host" || changed_scopes.iter().any(|r| r == role) {
                 "candidate-allowed"
             } else {
                 &t.identity.executable_sha256

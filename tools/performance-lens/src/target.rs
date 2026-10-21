@@ -92,6 +92,13 @@ pub fn targets(
             !label.is_empty() && label.len() <= 80,
             "invalid process label"
         );
+        ensure!(
+            label != "ui-host"
+                && label != "lens-observer"
+                && !label.starts_with("related:")
+                && !label.starts_with("ui-service-member:"),
+            "reserved process label; choose a stable custom name such as bar"
+        );
         let pid = value.parse()?;
         ensure!(seen.insert(pid), "duplicate PID {pid}");
         ensure!(!targets.iter().any(|t| t.label == label), "duplicate label");

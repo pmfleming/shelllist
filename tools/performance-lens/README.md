@@ -10,13 +10,16 @@ root privileges, or sibling repository is required.
 - `doctor`: same-user process identity and procfs/DRM capabilities; optional
   **read-only**, PID-targeted Shelllist IPC check.
 - `capture`: passive CPU, memory, I/O, faults, thread counts, and supported DRM GPU
-  counters. Optional explicitly identified related processes/service members.
+  counters. Optional explicitly identified related processes/service members and
+  bounded per-thread CPU localization (`--include-threads`).
 - `run warm-open`: opt-in open/hide trials, direct IPC acknowledgement and existing
   Qt frame-swap callback timing; warmup separated from measured trials.
 - `report`: validate raw artifact hashes/contracts and regenerate static offline
   HTML, inline SVG timelines, CSV and JSON summaries.
-- `compare`: context-matched **descriptive** baseline deltas. Incompatible runs get
-  a report explaining why and a nonzero exit; no invented performance budgets.
+- `compare`: context-matched **descriptive** deltas for uniquely paired process
+  roles, including daemons and the observer. Explicit `--changed-scope` declarations
+  permit intended executable changes without bypassing protocol/context checks.
+  Incompatible runs get a report and nonzero exit; no invented performance budgets.
 
 This implements the usable first version of [the plan](plan.html), not every
 future scenario. Cold-session launching, automated retention scenarios,
@@ -106,6 +109,40 @@ No command-line substring search, `--newest`, `pkill`, or application/service ki
 is used. The only processes forcibly terminated are lens-owned helper groups on
 helper timeout/output-limit failures.
 
+### Optional thread localization
+
+The [effectiveness review](review.md) found that process CPU localized the busy
+bar-daemon but could not identify its watcher thread. Use a **separate diagnostic**
+capture, not an unannounced change to your baseline protocol:
+
+```sh
+"$LENS" capture --pid "$PID" --related-pid bar=34567 --include-threads \
+  --duration 15s --settle 1s --interval-ms 500 --detail-ms 5000 \
+  --context 'actual diagnostic conditions; thread sampling enabled'
+```
+
+Tasks are sampled at the **main** interval, independently of costly PSS/GPU detail
+sampling. This matters for churning watcher threads that may disappear between
+slow detail samples. `--include-threads` is off by default; no task directories are
+read by ordinary captures. Limit diagnostics to relevant processes and inspect
+observer cost. The existing process identity fences remain, including a final
+check after task reads.
+
+Rates require the same TID **and start ticks**, consecutive observations and the
+same phase generation. Missing/exited/reset/reused tasks never receive invented
+zero rates. Reports show covered seconds, the last observed name, and tasks that
+lack a valid rate, retaining their maximum observed **lifetime CPU ticks**. Those
+lifetime counters are not capture CPU or latency. Names may repeat/change; task
+percentages can cover different times and must not be summed or added to process
+CPU. This is not stack profiling, complete scheduler accounting or causal proof.
+
+Enumeration is bounded to 1024 tasks per process per sample. Exceeding that limit
+produces an explicit unavailable snapshot rather than a biased partial ranking;
+individual task read/exit errors are recorded with the unavailable-task count.
+Tasks born and gone between samples remain invisible. Thread data and cadence
+are recorded in raw JSON/manifest; full thread summaries stay in JSON, while HTML
+shows the top 20 valid and top 20 unpaired entries outside initial settling.
+
 ## Responsiveness: explicit consent
 
 Close any open panel and deal with unsaved drafts **yourself** first. Use a
@@ -171,7 +208,8 @@ quiet resource baselines.
 ```
 
 Open `report.html` directly in a browser. It contains no scripts or external
-assets. Reports have responsiveness, CPU, memory, I/O, GPU and coverage sections;
+assets. Reports lead with CPU triage and explicit evidence limits, then cover
+responsiveness, CPU, optional thread localization, memory, I/O, GPU and coverage;
 all process scopes and phases stay separate. Plots show sampled points (at most
 roughly 1,000 per series), not interpolated missing intervals. Hover/interactive
 charts and GPU timelines are not part of this version; GPU engine summaries and
@@ -182,12 +220,13 @@ Artifacts:
 - `manifest.json`: schema, run status/times, lens and executable hashes, target
   identities, context, protocol, warnings and SHA-256 hashes of raw files.
 - `samples.jsonl`: monotonic elapsed time, phase label/generation, process identity, raw integer
-  counters, derived rates, GPU clients, intervals, collection cost and lateness.
+  counters, derived rates, GPU clients, optional task snapshots, intervals,
+  collection cost and lateness. Task rates use each task's own monotonic timestamps.
 - `events.jsonl`: run/trial lifecycle and exact timing evidence.
 - `summary.json`: first/last available and sampled-peak memory, time-weighted CPU,
   observed I/O totals **with covered seconds**, successful-trial latency and all
-  failure counts; bound to run ID and raw hashes.
-- `samples.csv`: long-form procfs counters/rates (GPU detail stays in JSONL).
+  failure counts, task summaries and evidence limits; bound to run ID and raw hashes.
+- `samples.csv`: long-form process procfs counters/rates (GPU/task detail stays in JSONL).
 - `report.html`: Rust-generated, HTML-escaped static report. Spreadsheet formula
   prefixes in CSV labels are escaped too.
 
@@ -196,15 +235,17 @@ Invalid/truncated JSONL, missing hashes, identity/schema errors and modified dat
 are rejected by `report`/`compare`. An unfinalized run is diagnostic raw evidence,
 not a passing result. Disk/write failure or SIGKILL may prevent finalization;
 there is no automatic recovery that converts such a run into complete evidence.
-Raw samples are capped at approximately 128 MiB; duration (1 hour), process count
+Raw samples are capped at 128 MiB, checking each complete encoded row before
+writing so task-heavy batches cannot overrun the limit. Duration (1 hour), process count
 (64), trial count (1,000), helper output (1 MiB each), and helper deadlines are
 bounded. Disk usage across runs remains the operator's responsibility.
 
 Comparisons require:
 
-- Complete runs, the same lens hash/schema/protocol, process scopes, machine/kernel
-  and recorded environment/context. Candidate UI builds may differ; related
-  process executable hashes must match.
+- Complete runs, the same lens hash/version/schema/protocol, clock tick frequency,
+  process roles/member counts, machine/kernel and recorded environment/context.
+  Candidate UI builds may differ; other executable hashes must match unless their
+  exact role is explicitly declared with `--changed-scope` (see below).
 - An explicit nonempty matching `--context` declaration covering real
   display/scale/refresh, renderer/backend, power mode, motion/theme, visibility,
   workload size and external service state. These are **not automatically verified**.
@@ -215,7 +256,45 @@ Comparisons require:
   builds for meaningful A/B comparisons. Checkout HEAD is never substituted for the
   deployed build.
 
-Comparison reports provide deltas only when these checks match. No universal
+### Comparing intentional daemon or observer changes
+
+```sh
+# For auto-discovered bar-daemon members (PID suffix deliberately omitted):
+"$LENS" compare --baseline BASELINE --candidate CANDIDATE --output COMPARISON \
+  --changed-scope related:bar-daemon
+# With explicit --related-pid bar=PID capture labels, use --changed-scope bar instead.
+
+# Only for deliberately reviewing a different lens executable:
+"$LENS" compare --baseline BASELINE --candidate CANDIDATE --output COMPARISON \
+  --changed-scope lens-observer
+```
+
+Repeat the flag for multiple changed roles. Unknown/absent roles fail closed; no
+wildcard exists. This only relaxes the named executable fingerprint check (and
+lens hash for `lens-observer`), never completeness, cadence, membership, version,
+config-identity availability, machine or operator-context requirements. An actual
+observer hash change produces **`conditional_descriptive_only`**, a prominent
+confound warning and observer deltas. Collector equivalence is **not verified**;
+such a comparison cannot isolate an application improvement. Exit success means
+compatible descriptive evidence, not a performance pass.
+
+Deltas now include all uniquely paired roles, with CPU/I/O covered seconds and
+full resource coverage/provenance. Auto-discovered PID suffixes are ignored for
+role matching, but ambiguous multiple-member roles are explicitly **unpaired**:
+no arbitrary PID pairing, hidden aggregation or memory total. Use stable, distinct
+`--related-pid LABEL=PID` labels when individual members must be compared. Custom
+labels are preserved literally; `ui-host`, `lens-observer`, `related:` and
+`ui-service-member:` namespaces are reserved. Thread identities/names are not
+matched across runs.
+
+Reports show deployed executable/config fingerprints and warn when no target
+build change is observed. A source commit or microbenchmark improvement is not a
+production deployment. Passive runs explicitly report that they contain no
+responsiveness trials or operation-level benchmark evidence. Search/history
+probes remain separate evidence, not imported UI latency measurements. Existing
+schema-1 artifacts still load; absent task settings mean task sampling was disabled.
+
+Comparison reports provide deltas only when the applicable checks match. No universal
 regression/pass thresholds, p99, significance claims or 24-hour baseline expiration
 are invented. Median/max and descriptive nearest-rank p95 (at least 20 successes)
 are shown; failed/unfinished attempts are never hidden by successful medians.
@@ -270,6 +349,9 @@ interaction tests are untouched.
 The [five-item performance review](../../docs/performance-review.md) records
 application findings and the lens collector optimization. The opt-in
 `profile_light_process_collection` Rust test measures 1,000 real light procfs
-samples. Field tables are parsed once per sample and the initial identity stat
+samples with task diagnostics disabled. Field tables are parsed once per sample and the initial identity stat
 is reused; pre/post process identity guards remain. This does not eliminate
 PSS/kernel walk costs or justify silently increasing collection rates.
+
+See [review.md](review.md) for the five-improvement effectiveness assessment,
+implemented follow-ups, live watcher-thread validation and remaining limitations.

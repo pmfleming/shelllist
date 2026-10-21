@@ -1,4 +1,9 @@
-use crate::{artifacts, model::*};
+use crate::{
+    artifacts,
+    comparison::{self, delta},
+    model::*,
+    threads,
+};
 use anyhow::{Result, ensure};
 use serde_json::json;
 use std::{collections::BTreeMap, fmt::Write as _, path::Path};
@@ -57,6 +62,20 @@ pub fn summarize(manifest: &Manifest, samples: &[Sample], events: &[Event]) -> S
             *gaps
                 .entry(format!("{} / GPU: {reason}", s.label))
                 .or_default() += 1;
+        }
+        if let Some(snapshot) = &s.threads {
+            if let Some(reason) = &snapshot.error {
+                *gaps
+                    .entry(format!("{} / tasks: {reason}", s.label))
+                    .or_default() += 1;
+            }
+            for task in &snapshot.tasks {
+                if let Some(reason) = &task.cpu_percent.reason {
+                    *gaps
+                        .entry(format!("{} / task CPU: {reason}", s.label))
+                        .or_default() += 1;
+                }
+            }
         }
         if let Some(reason) = &s.error {
             *gaps
@@ -118,12 +137,16 @@ pub fn summarize(manifest: &Manifest, samples: &[Sample], events: &[Event]) -> S
             e.kind == "trial_finished" && e.phase == "warm-open" && e.data["status"] == "ok"
         })
         .collect();
+    let threads = threads::summarize(samples);
+    let evidence_limits = evidence_limits(manifest, attempted, &threads);
     Summary {
         schema_version: SCHEMA,
         run_id: manifest.run_id.clone(),
         raw_sha256: manifest.hashes.clone(),
         status: manifest.status.clone(),
         resources,
+        threads,
+        evidence_limits,
         attempted_trials: attempted,
         successful_trials: successful.len(),
         failed_trials: attempted.saturating_sub(successful.len()),
@@ -141,6 +164,34 @@ pub fn summarize(manifest: &Manifest, samples: &[Sample], events: &[Event]) -> S
         ),
         gaps,
     }
+}
+
+fn evidence_limits(
+    manifest: &Manifest,
+    attempted: usize,
+    threads: &[ThreadSummary],
+) -> Vec<String> {
+    let mut limits = vec![
+        "Measurements describe deployed executables/config, not the current source checkout. A source commit is not proof of deployment.".into(),
+        "No operation-level benchmark evidence: search ranking, catalog preparation, history projection and watcher registration require separate controlled probes. Idle samples cannot establish their speedups.".into(),
+        "No stack profiling or causal attribution. Related daemons may serve other clients; threads are already included in process CPU.".into(),
+    ];
+    if attempted == 0 {
+        limits.push("No responsiveness trials measured. Resource capture is not evidence of input-to-visible latency or improved responsiveness.".into());
+    }
+    if manifest.settings["include_threads"] != true {
+        limits.push("Thread CPU localization was not requested. Use --include-threads at main sampling cadence for a separate diagnostic capture; this adds observer cost.".into());
+    } else {
+        limits.push("Thread localization is a bounded snapshot (1024 tasks/process). Short-lived tasks may be missed; names can change or repeat, and task CPU is not summed into process totals. At least two same-phase observations of the same task identity are needed. See the manifest for cadence.".into());
+        let unpaired = threads
+            .iter()
+            .filter(|t| t.phase != "initial-settle" && t.cpu_percent_one_core.is_none())
+            .count();
+        if unpaired > 0 {
+            limits.push(format!("{unpaired} task identity/phase entries lack a valid CPU interval. A quiet-looking thread rate table does not account for all process CPU. Inspect unpaired task lifetime counters; consider a shorter --interval-ms in a separate diagnostic run."));
+        }
+    }
+    limits
 }
 
 pub fn escape(s: &str) -> String {
@@ -227,6 +278,32 @@ pub fn write(
         escape(&manifest.status),
         escape(manifest.error.as_deref().unwrap_or(""))
     );
+    html.push_str("<section><h2>Triage and evidence limits</h2><ul>");
+    for limit in &summary.evidence_limits {
+        let _ = write!(html, "<li>{}</li>", escape(limit));
+    }
+    html.push_str("</ul><h3>Highest observed CPU by scope / phase</h3><p>Localization only, not proof of a bottleneck. Initial settling is excluded here; all phases remain below.</p><table><tr><th>Scope / phase</th><th>% one core</th><th>Covered seconds</th></tr>");
+    let mut hotspots: Vec<_> = summary
+        .resources
+        .iter()
+        .filter(|r| r.phase != "initial-settle" && r.cpu_percent_one_core.is_some())
+        .collect();
+    hotspots.sort_by(|a, b| {
+        b.cpu_percent_one_core
+            .unwrap()
+            .total_cmp(&a.cpu_percent_one_core.unwrap())
+    });
+    for r in hotspots.into_iter().take(10) {
+        let _ = write!(
+            html,
+            "<tr><td>{} / {}</td><td>{}</td><td>{:.3}</td></tr>",
+            escape(&r.label),
+            escape(&r.phase),
+            number(r.cpu_percent_one_core),
+            r.valid_cpu_seconds
+        );
+    }
+    html.push_str("</table></section>");
     if summary
         .resources
         .iter()
@@ -280,6 +357,59 @@ pub fn write(
     html.push_str("</table></div>");
     for t in &manifest.targets {
         html.push_str(&chart(samples, &t.label, "cpu_percent", 1.0));
+    }
+    html.push_str("</section><section><h2>Thread CPU localization</h2><p>% of one core at the manifest's task cadence, weighted by each task's valid intervals. TID + start ticks fence reuse; phase boundaries and missing observations break rates. Last observed names are diagnostic labels, not stable identities or function names. Do not add these to process CPU or sum task percentages covering different times. Showing the top 20 scope/phase/task entries outside initial settling; all observations and unknowns remain in JSON.</p>");
+    let mut tasks: Vec<_> = summary
+        .threads
+        .iter()
+        .filter(|t| t.phase != "initial-settle" && t.cpu_percent_one_core.is_some())
+        .collect();
+    tasks.sort_by(|a, b| {
+        b.cpu_percent_one_core
+            .unwrap()
+            .total_cmp(&a.cpu_percent_one_core.unwrap())
+    });
+    if tasks.is_empty() {
+        html.push_str("<p>No valid thread CPU intervals: collection was disabled, denied, interrupted or too short for two same-phase task samples. See raw task errors and evidence limits.</p>");
+    } else {
+        html.push_str("<table><tr><th>Scope / phase</th><th>TID / start ticks</th><th>Last name</th><th>% one core</th><th>Covered seconds</th></tr>");
+        for t in tasks.into_iter().take(20) {
+            let _ = write!(
+                html,
+                "<tr><td>{} / {}</td><td>{} / {}</td><td>{}</td><td>{}</td><td>{:.3}</td></tr>",
+                escape(&t.label),
+                escape(&t.phase),
+                t.tid,
+                t.start_ticks,
+                escape(&t.last_name),
+                number(t.cpu_percent_one_core),
+                t.covered_s
+            );
+        }
+        html.push_str("</table>");
+    }
+    let mut unpaired: Vec<_> = summary
+        .threads
+        .iter()
+        .filter(|t| t.phase != "initial-settle" && t.cpu_percent_one_core.is_none())
+        .collect();
+    if !unpaired.is_empty() {
+        unpaired.sort_by_key(|t| std::cmp::Reverse(t.max_observed_cpu_ticks));
+        html.push_str("<h3>Tasks without a valid CPU interval</h3><p>These tasks must not be mistaken for idle threads. Showing up to 20, ranked by maximum observed lifetime CPU ticks. This is CPU since task birth at the snapshot, NOT CPU spent during capture and NOT a rate. Churn, phase boundaries and missing observations can prevent paired samples. No names or distinct identities are merged.</p><table><tr><th>Scope / phase</th><th>TID / start ticks</th><th>Last name</th><th>Lifetime CPU ticks</th><th>Observations</th></tr>");
+        for t in unpaired.into_iter().take(20) {
+            let _ = write!(
+                html,
+                "<tr><td>{} / {}</td><td>{} / {}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
+                escape(&t.label),
+                escape(&t.phase),
+                t.tid,
+                t.start_ticks,
+                escape(&t.last_name),
+                t.max_observed_cpu_ticks,
+                t.observations
+            );
+        }
+        html.push_str("</table>");
     }
     html.push_str("</section><section><h2>Memory</h2><p>MiB. Peaks are sampled, not allocator peaks; VmHWM in raw data is process-lifetime. RSS sums are not unique physical memory. Start/end below are first/last available observations, not proof of coverage at the exact phase boundary.</p><div class=\"table\"><table><tr><th>Scope / phase</th><th>RSS first</th><th>RSS last</th><th>RSS peak</th><th>PSS peak</th></tr>");
     for r in &summary.resources {
@@ -423,12 +553,26 @@ fn csv_cell(value: &str) -> String {
     format!("\"{prefix}{}\"", value.replace('"', "\"\""))
 }
 
-pub fn compare(baseline: &Path, candidate: &Path, output: &Path) -> Result<bool> {
+pub fn compare(
+    baseline: &Path,
+    candidate: &Path,
+    output: &Path,
+    changed_scopes: &[String],
+) -> Result<bool> {
     let (a, sa, ea) = artifacts::load(baseline)?;
     let (b, sb, eb) = artifacts::load(candidate)?;
-    let left = artifacts::comparison_context(&a);
-    let right = artifacts::comparison_context(&b);
+    let left = artifacts::comparison_context(&a, changed_scopes);
+    let right = artifacts::comparison_context(&b, changed_scopes);
     let mut reasons = Vec::new();
+    let ar = comparison::targets(&a);
+    let br = comparison::targets(&b);
+    for scope in changed_scopes {
+        if !ar.contains_key(scope.as_str()) || !br.contains_key(scope.as_str()) {
+            reasons.push(format!(
+                "declared changed scope absent from one or both runs: {scope}"
+            ));
+        }
+    }
     for key in left
         .keys()
         .chain(right.keys())
@@ -475,48 +619,41 @@ pub fn compare(baseline: &Path, candidate: &Path, output: &Path) -> Result<bool>
     ] {
         rows.push(delta(key, av, bv));
     }
-    for ar in &a_summary.resources {
-        if ar.label != "ui-host" {
-            continue;
-        }
-        if let Some(br) = b_summary
-            .resources
+    let scopes = comparison::scopes(&a, &b, &a_summary, &b_summary);
+    rows.extend(scopes.deltas);
+    let observer_changed = a.lens_sha256 != b.lens_sha256;
+    let qml_changed = a.settings["config_identity"] != b.settings["config_identity"];
+    let mut warnings = vec!["Related daemon activity is not exclusively Shelllist-caused. No operation-level or deployment improvement follows from source changes alone.".to_string()];
+    if observer_changed {
+        warnings.push("Observer executable changed: conditional evidence only. Collector equivalence is not verified; observer CPU deltas and target deltas are not an isolated application A/B result.".into());
+    }
+    if !qml_changed
+        && scopes
+            .provenance
             .iter()
-            .find(|br| br.label == ar.label && br.phase == ar.phase)
-        {
-            for (name, av, bv) in [
-                (
-                    "cpu_percent",
-                    ar.cpu_percent_one_core,
-                    br.cpu_percent_one_core,
-                ),
-                (
-                    "rss_peak_bytes",
-                    ar.rss_sampled_peak_bytes.map(|v| v as f64),
-                    br.rss_sampled_peak_bytes.map(|v| v as f64),
-                ),
-                (
-                    "pss_peak_bytes",
-                    ar.pss_sampled_peak_bytes.map(|v| v as f64),
-                    br.pss_sampled_peak_bytes.map(|v| v as f64),
-                ),
-                (
-                    "read_observed_bytes",
-                    ar.io_read_observed_bytes,
-                    br.io_read_observed_bytes,
-                ),
-                (
-                    "write_observed_bytes",
-                    ar.io_write_observed_bytes,
-                    br.io_write_observed_bytes,
-                ),
-            ] {
-                rows.push(delta(&format!("{} / {name}", ar.phase), av, bv));
-            }
-        }
+            .filter(|p| p["scope"] != "lens-observer")
+            .all(|p| p["executable_hashes_changed"] == false)
+    {
+        warnings.push("No deployed target executable/config identity change observed. This comparison cannot demonstrate that checkout fixes were deployed; mutable config imports are not fully fingerprinted.".into());
     }
     let compatible = reasons.is_empty();
-    let payload = json!({"schema_version":SCHEMA,"status":if compatible {"comparable_descriptive_only"} else {"incomparable"},"reasons":reasons,"baseline":a.run_id,"candidate":b.run_id,"deltas":if compatible {json!(rows)} else {json!(null)},"note":"No significance or budget verdict. Review coverage intervals; compare repeated alternating A/B runs. Operator context is a declaration, not verified display state."});
+    let status = if !compatible {
+        "incomparable"
+    } else if observer_changed {
+        "conditional_descriptive_only"
+    } else {
+        "comparable_descriptive_only"
+    };
+    let payload = json!({
+        "schema_version":SCHEMA, "status":status, "reasons":reasons, "warnings":warnings,
+        "baseline":a.run_id, "candidate":b.run_id, "declared_changed_scopes":changed_scopes,
+        "observer_changed":observer_changed, "baseline_lens_sha256":a.lens_sha256, "candidate_lens_sha256":b.lens_sha256,
+        "deployed_qml_changed":qml_changed, "baseline_config":a.settings["config_identity"], "candidate_config":b.settings["config_identity"],
+        "scope_provenance":scopes.provenance, "unpaired_scopes":scopes.unpaired,
+        "resource_coverage":{"baseline":a_summary.resources,"candidate":b_summary.resources},
+        "deltas":if compatible {json!(rows)} else {json!(null)},
+        "note":"No significance or budget verdict. Review coverage intervals; compare repeated alternating A/B runs. Operator context is a declaration, not verified display state. Missing metrics are null, never zero. Thread names/TIDs are not paired across runs."
+    });
     ensure!(
         !output.exists(),
         "comparison output already exists; refusing overwrite"
@@ -524,16 +661,53 @@ pub fn compare(baseline: &Path, candidate: &Path, output: &Path) -> Result<bool>
     std::fs::create_dir_all(output)?;
     artifacts::atomic_json(&output.join("comparison.json"), &payload)?;
     let mut html = page("Shelllist baseline comparison");
-    html.push_str("<header><h1>Baseline comparison</h1><p>Descriptive evidence only; no automatic regression verdict.</p></header><section><pre>");
+    let _ = write!(
+        html,
+        "<header><h1>Baseline comparison</h1><p><strong>{}</strong></p><p>Descriptive evidence only; no automatic regression verdict.</p></header><section><h2>Compatibility and evidence limits</h2><ul>",
+        escape(status)
+    );
+    for message in payload["reasons"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .chain(payload["warnings"].as_array().unwrap())
+    {
+        let _ = write!(html, "<li>{}</li>", escape(message.as_str().unwrap()));
+    }
+    let _ = write!(
+        html,
+        "</ul><p>Unpaired scope roles: {}. Ambiguous members are not matched by PID or silently summed. See full provenance below; use unique explicit labels to compare them.</p></section>",
+        payload["unpaired_scopes"].as_array().unwrap().len()
+    );
+    if let Some(rows) = payload["deltas"].as_array() {
+        html.push_str("<section><h2>Scoped deltas</h2><p>Negative is not automatically better. CPU/I/O covered seconds must be reviewed; memory peaks are sampled, not exact phase coverage. Missing observations are unavailable, never zero.</p><div class=\"table\"><table><tr><th>Metric</th><th>Baseline</th><th>Candidate</th><th>Delta</th><th>Relative %</th><th>CPU/I/O covered s (baseline / candidate)</th></tr>");
+        for row in rows {
+            let coverage = |key: &str| {
+                row[key]
+                    .as_f64()
+                    .map(|v| format!("{v:.3}"))
+                    .unwrap_or_else(|| "n/a".into())
+            };
+            let _ = write!(
+                html,
+                "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{} / {}</td></tr>",
+                escape(row["metric"].as_str().unwrap()),
+                number(row["baseline"].as_f64()),
+                number(row["candidate"].as_f64()),
+                number(row["absolute_delta"].as_f64()),
+                number(row["relative_percent"].as_f64()),
+                coverage("baseline_covered_s"),
+                coverage("candidate_covered_s")
+            );
+        }
+        html.push_str("</table></div></section>");
+    }
+    html.push_str("<section><details><summary>Full comparison, coverage and deployed provenance</summary><pre>");
     html.push_str(&escape(&serde_json::to_string_pretty(&payload)?));
-    html.push_str("</pre></section></main></body></html>");
+    html.push_str("</pre></details></section></main></body></html>");
     artifacts::atomic_write(&output.join("report.html"), html.as_bytes())?;
     Ok(compatible)
 }
-fn delta(name: &str, a: Option<f64>, b: Option<f64>) -> serde_json::Value {
-    json!({"metric":name,"baseline":a,"candidate":b,"absolute_delta":a.zip(b).map(|(a,b)|b-a),"relative_percent":a.zip(b).filter(|(a,_)|a.abs()>1e-9).map(|(a,b)|(b-a)/a*100.0)})
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
