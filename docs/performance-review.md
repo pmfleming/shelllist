@@ -66,3 +66,31 @@ cargo test --release --locked --manifest-path rust/shelllist-search/Cargo.toml
 cargo test --release --locked --manifest-path rust/shelllist-search/Cargo.toml \
   profile_search_work -- --ignored --nocapture
 ```
+
+## 3. Prepare search catalogs once, not on every keystroke
+
+**Owner:** Shelllist search worker, synchronized into clip-daemon's vendored library.
+
+The worker previously stored raw fields and repeated Unicode normalization of every
+row's title/subtitle/keywords for every query. It also allocated identical query
+token vectors once per row. `PreparedCatalog` now retains only the search projection
+and normalizes fields on catalog replacement; queries tokenize once. The existing
+public `rank` API remains available for one-shot consumers. Owner/generation,
+coalescing, result keys and tie-break behavior are unchanged.
+
+After item 2, 25 ordinary raw-catalog rankings took 127.797 ms. The same repeated
+query workload now takes **79.354 ms** through the prepared worker path, with
+preparation excluded and amortized over catalog reuse. In the same serial probe,
+the one-shot compatibility API takes 121.867 ms. These are descriptive operation
+timings, not independent input latency trials. Six search tests pass in both copies,
+including reference scoring, Unicode, empty query and replacement isolation.
+
+An attempted reuse of fuzzy-matcher scratch matrices was **rejected**: the reference
+test found changed Unicode scores, and disabling its cache exposed a library panic.
+The implementation deliberately keeps fresh matcher instances; none of those unsafe
+experimental speedups is included in the measurements above.
+
+```sh
+cargo test --release --locked --manifest-path rust/shelllist-search/Cargo.toml \
+  profile_ -- --ignored --nocapture --test-threads=1
+```
