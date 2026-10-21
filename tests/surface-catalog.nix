@@ -49,7 +49,7 @@ let
   rejects = value: !(builtins.tryEval (builtins.deepSeq (import ../nix/surface-catalog.nix { inherit lib; catalog = value; }) true)).success;
   replaceFirst = patch: source // { surfaces = [ ((builtins.head source.surfaces) // patch) ] ++ builtins.tail source.surfaces; };
 in
-assert catalog.ids == [ "applications" "wifi" "bluetooth" "clipboard" "displays" "battery" "activity" "notifications" "time-weather" "audio" "media" "tray" ];
+assert catalog.ids == [ "applications" "wifi" "bluetooth" "clipboard" "displays" "battery" "activity" "notifications" "updates" "time-weather" "audio" "media" "tray" ];
 assert catalog.defaultId == "applications" && catalog.defaultName == "Applications";
 assert catalog.directIds == builtins.filter (id: id != "clipboard") catalog.ids;
 assert bindings defaults == expected;
