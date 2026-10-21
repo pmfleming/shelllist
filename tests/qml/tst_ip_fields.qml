@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 import "../../wifi" as Wifi
-import "../../wifi/networkinput/IpValidation.js" as IpValidation
+import "../../qml/Shelllist/Ui/IpValidation.js" as IpValidation
 
 DaemonTestCase {
     id: tests

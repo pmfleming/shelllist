@@ -1,5 +1,4 @@
 import QtQuick
-import "networkinput" as NetworkInput
 import Shelllist.Ui as Ui
 
 QtObject {
@@ -79,9 +78,9 @@ QtObject {
         return addressInput.valid;
     }
     function dnsReady() {
-        return autoDns || NetworkInput.IpValidator.isAddressInput(dns, family, true, true);
+        return autoDns || Ui.IpValidation.isAddressInput(dns, family, true, true);
     }
     function ready() {
-        return manualReady() && NetworkInput.IpValidator.isAddressInput(gateway, family, false, true) && dnsReady();
+        return manualReady() && Ui.IpValidation.isAddressInput(gateway, family, false, true) && dnsReady();
     }
 }

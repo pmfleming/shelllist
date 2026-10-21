@@ -776,7 +776,7 @@
           ipValidation = nodeCheck "ip-validation" [
             [
               ./tests/check-ip-validation.js
-              ./wifi/networkinput/IpValidation.js
+              ./qml/Shelllist/Ui/IpValidation.js
             ]
             [
               ./tests/check-ip-control.js

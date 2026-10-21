@@ -31,3 +31,24 @@ small dead components were highly local. This is not an all-metric improvement.
 Validation: strict QML lint; actual Wi-Fi IP field suite **8 passes**; parser
 validation **106 checks**; `git diff --check`. No key, save/discard, acknowledgement
 or safety behavior changes; the existing chooser keyboard contract still applies.
+
+## 2. Share one IP validation implementation
+
+Export the existing generated `IpValidation.js` through `Shelllist.Ui`, as already
+done for MaterialIcons. Wi-Fi DNS feedback and readiness now consume that module
+resource directly. Remove the second generated copy, its manifest entry, and the
+pass-through `IpValidator` singleton (including eight unused methods). Update the
+Nix check and native buffer-test import to the canonical parser. TypeScript remains
+the source of truth; no parser algorithm, accepted input or readiness guard changes.
+
+Production, relative to step 1: source lines **43783 → 43536**, physical lines
+**48649 → 48391**, cyclomatic **9391 → 9253**, cognitive **6764 → 6649**, effort
+**45800 → 45190**; normalized clone groups **118 → 111**, covered lines **1970 →
+1542**, with zero omitted windows/groups. These complexity gains are duplicate/dead
+code removal, not simplification of the surviving parser. Shared ownership removes
+a panel-specific forwarding layer; mean locality nevertheless falls **74.2553 →
+74.1777**, while mean leverage improves **36.2162 → 36.2801**.
+
+Validation: actual Wi-Fi IP suite **8 passes**, strict QML lint, **106** parser and
+**436** editor checks, generated TypeScript freshness, source-tree relative-import
+check and diff whitespace check. Installed-package/Nix build was not run.

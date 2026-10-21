@@ -5,10 +5,6 @@
   },
   {
     "source": "typescript/ui/IpValidation.ts",
-    "output": "wifi/networkinput/IpValidation.js"
-  },
-  {
-    "source": "typescript/ui/IpValidation.ts",
     "output": "qml/Shelllist/Ui/IpValidation.js"
   },
   {

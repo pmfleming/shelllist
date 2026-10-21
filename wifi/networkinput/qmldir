@@ -1,4 +1,3 @@
 module Shelllist.NetworkInput
-singleton IpValidator 1.0 IpValidator.qml
 AddressListField 1.0 AddressListField.qml
 internal FieldValidation FieldValidation.qml
