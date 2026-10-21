@@ -23,6 +23,12 @@ const modeDefinitions = [
     }
 ];
 
+// bt-daemon's vendor-neutral device field also covers non-Fast Pair channels
+// (e.g. Sony); older daemons only report the Fast Pair copy.
+function state(device) {
+    return (device && (device.noise_control || (device.fast_pair || {}).noise_control)) || null;
+}
+
 function isAdvertised(control) {
     return ((control && control.available_modes) || []).length > 0;
 }
@@ -40,7 +46,7 @@ function availableModes(control) {
 
 function canSet(device) {
     return !!device.connected && !!(device.capabilities || {}).can_set_noise_control
-        && availableModes((device.fast_pair || {}).noise_control).some(mode => mode.enabled);
+        && availableModes(state(device)).some(mode => mode.enabled);
 }
 
 function isActive(control, mode) {

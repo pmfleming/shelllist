@@ -55,6 +55,17 @@ DaemonTestCase {
             }]
         };
     }
+    function vendorSnapshot(mode) {
+        // Sony reports noise control only through bt-daemon's device-level field.
+        const vendor = snapshot();
+        const device = vendor.devices[0];
+        device.fast_pair = {controls_available: true, account_key_available: false,
+            authenticated_controls: false, multipoint: {supported: true, enabled: true}};
+        device.noise_control = {source: "sony-headphones-control", active_mode: mode,
+            available_modes: ["transparent", "off", "noise-cancelling"],
+            settable_modes: ["transparent", "off", "noise-cancelling"]};
+        return vendor;
+    }
     function makePanel() {
         const panel = createTemporaryObject(panelComponent, testCase);
         verify(panel !== null);
@@ -279,5 +290,27 @@ DaemonTestCase {
         controller.deactivateUi();
         tryCompare(controller, "noiseControlOpen", false);
         tryVerify(() => !controller.navigationBlocked, 1000, "closing restores the host navigation guard");
+    }
+    function test_deviceLevelNoiseControlFromVendorChannels() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.applySnapshot(vendorSnapshot("off"));
+        tryCompare(findChild(panel, "noiseControlLabel"), "text", "Off");
+        verify(findChild(panel, "detailAction:noise-control").visible);
+        const tray = openKeyboard(panel);
+        compare(tray.actions.map(mode => mode.value), ["transparent", "noise-cancelling", "off"]);
+        compare(tray.currentIndex, 2, "open at the vendor-reported mode");
+        keyClick(Qt.Key_Escape);
+        tryCompare(tray, "visible", false);
+        verify(controller.setNoiseControl("buds", "noise-cancelling"));
+        compare(requests().length, 1);
+        compare(requests()[0].params, {key: "buds", operation: "set-noise-control", mode: "noise-cancelling"});
+        verify(!controller.setNoiseControl("buds", "adaptive"), "Sony does not offer adaptive");
+
+        // The device-level field wins when an older Fast Pair copy is also present.
+        const both = snapshot("transparent");
+        both.devices[0].noise_control = vendorSnapshot("noise-cancelling").devices[0].noise_control;
+        controller.applySnapshot(both);
+        tryCompare(findChild(panel, "noiseControlLabel"), "text", "Noise\ncancellation");
     }
 }

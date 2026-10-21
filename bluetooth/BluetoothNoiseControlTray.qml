@@ -11,7 +11,7 @@ Ui.ActionMenu {
     id: tray
 
     required property BluetoothController controller
-    readonly property var noiseControl: (controller.selectedDevice.fast_pair || {}).noise_control || ({})
+    readonly property var noiseControl: NoiseControl.state(controller.selectedDevice) || ({})
     readonly property string deviceKey: controller.noiseControlDeviceKey
     readonly property bool contextAvailable: controller.canChooseNoiseControl
         && controller.detailsOpen && controller.detailsTab === "device"

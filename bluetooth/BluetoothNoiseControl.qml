@@ -9,8 +9,7 @@ Ui.PointerActionControl {
 
     required property BluetoothController controller
     property int referenceArtworkSize: 86
-    readonly property var fastPair: controller.selectedDevice.fast_pair || ({})
-    readonly property var noiseControl: fastPair.noise_control || ({})
+    readonly property var noiseControl: NoiseControl.state(controller.selectedDevice) || ({})
     readonly property var activeMode: NoiseControl.activeMode(noiseControl)
     readonly property bool advertised: NoiseControl.isAdvertised(noiseControl)
     readonly property int iconExtent: Math.max(92, Math.round(referenceArtworkSize * 1.15))

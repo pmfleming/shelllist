@@ -536,7 +536,7 @@ Ui.ProviderChooserController {
         // changed the selection, capability or settable modes in the meantime.
         if (!canChooseNoiseControl || deviceKey !== selectedDevice.key)
             return false;
-        const state = (selectedDevice.fast_pair || {}).noise_control;
+        const state = NoiseControl.state(selectedDevice);
         if (!NoiseControl.availableModes(state).some(option => option.value === mode && option.enabled))
             return false;
         if (state.active_mode === mode)

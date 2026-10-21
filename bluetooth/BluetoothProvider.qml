@@ -67,7 +67,7 @@ Core.Provider {
                 accessKey: "N",
                 accessModifier: "Ctrl",
                 icon: "noise_control_off",
-                visible: !!device.connected && NoiseControl.isAdvertised((device.fast_pair || {}).noise_control),
+                visible: !!device.connected && NoiseControl.isAdvertised(NoiseControl.state(device)),
                 enabled: actionEnabled(NoiseControl.canSet(device), device),
                 presentation: {
                     group: "toolbar",
