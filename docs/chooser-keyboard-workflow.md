@@ -616,7 +616,7 @@ contract and Qt interaction coverage.
 
 Updates uses the shared ProviderChooserSurface and a real native Tray entry.
 Up/Down browse recorded runs; Enter/Right inspect without executing an update.
-Alt+V reads the selected worker's bounded journal, Alt+C copies its recorded
+Alt+V reads the selected run's bounded worker journal or private rebuild log; Alt+C copies its recorded
 summary and Alt+A returns to all recent runs. Read-only details use the shared
 scrolling fallback, not editable field stops. F5 only refreshes reads. Incoming
 runs preserve stable selection; malformed, stale or closed-view replies cannot

@@ -109,7 +109,7 @@ Ui.ProviderChooserSurface {
                 }
                 Ui.DetailColumnCard {
                     property bool informationOnly: true
-                    title: qsTr("Worker journal")
+                    title: qsTr("Run log")
                     visible: !!content.controller.selectedLog
                     Ui.ThemeText {
                         Layout.fillWidth: true

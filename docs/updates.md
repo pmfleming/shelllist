@@ -11,8 +11,8 @@ shelllist updates run RUN_ID
 
 The existing `update-logs` global shortcut now opens this viewer. The application
 is lazy-loaded and shares Shelllist's chooser/navigation components. Enter/Right
-inspect a run; arrows browse without executing updates. Alt+V reads the worker
-journal, Alt+C copies its recorded summary through the clipboard daemon, and
+inspect a run; arrows browse without executing updates. Alt+V reads the run's
+log (worker journal or private rebuild log), Alt+C copies its recorded summary through the clipboard daemon, and
 Alt+A returns from a deep link to all recent runs. F5 refreshes reads only. Pages
 append on scroll; Load more is also available. No Apply, Retry, Reboot, Approve,
 Rollback or updater shutdown action is exposed.
@@ -27,9 +27,20 @@ phase: a subsequent no-change check is not another successful installation.
 System readiness, queuing, boot staging and activation remain distinct. A
 historical result never establishes the currently booted system.
 
-The first release covers **worker-managed system and AI-tool jobs**. Manual
-rebuilds, control-only rollback/resume commands and pre-installation runs do not
-have a fabricated history. Detailed system generation/baseline diagnostics remain
+History covers **worker-managed system/AI-tool jobs and the existing manual
+`rebuild` wrapper's reports**. The latter are read from
+`$XDG_STATE_HOME/nixos-rebuild` (default `~/.local/state/nixos-rebuild`), including
+`history.jsonl` and live `.run.json` markers. `BAR_DAEMON_REBUILD_STATE_DIR` can
+select another producer directory. Reports stay private; nothing is copied into
+root-owned update state. A rebuild that activated a system but failed during a
+follow-up step is a partial outcome, not a claim that activation failed.
+Terminal publication wins over a not-yet-removed running marker; abandoned markers
+remain completion-unknown until the producer supplies its final report.
+
+Direct `nixos-rebuild` calls outside this reporting wrapper, control-only
+rollback/resume commands and unrecorded operations do not acquire fabricated
+history. Existing recorded manual runs can be imported, but old successful runs
+never trigger a notification backlog. Detailed system generation/baseline diagnostics remain
 available through `update-worker status --json`. Missing, unreadable and invalid
 records are explicit, not an empty “everything current” result.
 
@@ -44,12 +55,18 @@ revision-fenced cursors. Reads are off the render thread and admission/deadline
 bounded. This implementation deliberately uses the bounded producer catalog
 rather than maintaining a duplicate SQL update index; notification persistence
 already uses SQLite. The filesystem watcher also reconciles missed events.
+Both sources invalidate open history views; ordinary rebuild log chatter does not
+trigger repeated catalog scans. The combined view retains up to 1,000 terminal
+runs over 90 days without deleting the manual producer's files.
 
-Journal reads use the recorded boot ID/PID/time window, at most 100 lines/32 KiB
-and a three-second deadline. They do not run a shell, follow a record-provided
-path, request sudo, or grant additional journal access. Child-build output can be
-recorded separately; missing entries are reported honestly. Copy and journal
-responses retain their original target when the selection changes.
+Worker journal reads use the recorded boot ID/PID/time window. Manual log reads
+use only validated rebuild filenames inside the user-owned ledger directory:
+no arbitrary path, symlink, non-regular file or group/world-writable source is
+accepted. No worker PID/boot identity is invented for completed manual records.
+Both paths return at most 100 lines/32 KiB with a three-second log-read deadline,
+without running a shell, requesting sudo or granting journal access. Child-build
+output can be recorded separately; missing entries are reported honestly. Copy
+and log responses retain their original target when selection changes.
 
 ## Outcomes and notifications
 
@@ -60,7 +77,9 @@ The tray item opens history even when everything is current. The launcher is the
 fallback if no tray host exists.
 
 - Meaningful activation/staging successes and new failures notify at normal
-  urgency, using one Shelllist Updates identity. No-change checks are silent.
+  urgency, using one Shelllist Updates identity. Automatic no-change checks are
+  silent; an explicit manual rebuild's completion notifies even if the system
+  stayed unchanged, with wording that makes that distinction clear.
 - Partial batches retain all component results. An unrelated successful tool
   cannot clear a different tool's incident. Identical failures do not notify on
   every retry; matching recovery permits a later recurrence to notify again.
@@ -117,6 +136,16 @@ installed absolute executable. Arguments are always separate; no command templat
 or record-provided executable is accepted. Journalctl is packaged in bar-daemon's
 runtime PATH.
 
+For read-only diagnosis, `bar-daemon debug update-history` queries the same
+bounded catalog without launching the UI, sending a notification or performing an
+update. The UI takes protocol/version from its generated backend contract rather
+than a panel-local constant.
+
+Selecting a tray row opens the generic tray inspector, **not** that application's
+window or history. Use its filled Activate application button (**Alt+A**) or the
+native Open update history menu. `shelllist updates open` bypasses that inspector.
+A blank tray inspector alone does not establish whether history exists.
+
 ## Evidence
 
 - Producer tests: distinct rapid runs, stage/current semantics, bounded decoder,
@@ -124,9 +153,14 @@ runtime PATH.
 - Native tests: bounded/partial history, cursor validation, notification persistence
   and restart dedupe under DND, per-tool recovery/recurrence, deliberate holds,
   real SNI registration/menu/activation and watcher restart on a private D-Bus.
-  The tray test uses a recording launcher, never the live updater.
+  The tray test uses a recording launcher, never the live updater. Manual-source
+  tests cover real report shapes, activation versus follow-up failure, private
+  log bounds/path rejection, running/final races, watcher filtering, silent import
+  and subsequent native failure/success delivery without restart replay.
 - Qt tests: actual browse/detail/log keys, exact-run routes, stale/malformed replies,
   retained rows, close fencing and absence of the standalone bar update item.
+  Replies use the generated protocol version, preventing a matching hardcoded
+  test stub from concealing a production protocol mismatch.
 
 Live compositor focus/placement, a human accessibility review, performance
 measurements, and real SwayNC integration are not certified by these fixtures.

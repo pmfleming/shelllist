@@ -83,11 +83,11 @@ Ui.ProviderChooserController {
         if (!uiActive) return;
         if (id === logRequest && logRequest) {
             logRequest = "";
-            const failure = backend.responseError(envelope, transportError, qsTr("Worker journal unavailable"));
+            const failure = backend.responseError(envelope, transportError, qsTr("Update log unavailable"));
             if (failure) { errorText = failure; return; }
             const log = envelope.data ? envelope.data.log : null;
-            if (!log || log.run_id !== logRun || typeof log.text !== "string") { errorText = qsTr("Invalid journal reply"); return; }
-            logText = log.text || qsTr("No readable journal entries for this worker. Child-build output may be recorded separately.");
+            if (!log || log.run_id !== logRun || typeof log.text !== "string") { errorText = qsTr("Invalid update log reply"); return; }
+            logText = log.text || qsTr("No readable log entries for this run. Child-build output may be recorded separately.");
             if (log.truncated) logText += "\n" + qsTr("Output truncated to 32 KiB.");
             return;
         }
@@ -133,7 +133,7 @@ Ui.ProviderChooserController {
                 icon: ["failed", "partial", "blocked", "interrupted"].includes(entry.outcome) ? "warning" : "history",
                 primaryActionId: "inspect", metadata: {run: entry},
                 actions: [{id: "inspect", label: qsTr("Review run"), closePolicy: "keep-open", presentation: {group: "primary"}},
-                    {id: "logs", label: qsTr("Read worker journal"), accessKey: "V", closePolicy: "keep-open", presentation: {group: "toolbar"}},
+                    {id: "logs", label: qsTr("Read run log"), accessKey: "V", closePolicy: "keep-open", presentation: {group: "toolbar"}},
                     {id: "copy", label: qsTr("Copy run summary"), accessKey: "C", closePolicy: "keep-open", presentation: {group: "toolbar"}},
                     {id: "all", label: qsTr("Show all recent updates"), accessKey: "A", closePolicy: "keep-open", presentation: {group: "toolbar"}}]});
         }), false);
@@ -166,8 +166,8 @@ Ui.ProviderChooserController {
     Io.BarDaemonBackend {
         id: backend
         daemonName: "bar-daemon"
-        expectedProtocol: "bar-api"
-        expectedVersion: 1
+        expectedProtocol: Contract.protocol
+        expectedVersion: Contract.version
         streams: ["updates.changed"]
         active: controller.uiActive || requestRunning
         validateRequest: Contract.requestError

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Bar as Bar
 import Shelllist.Io as Io
+import "../../bar/BarProtocol.generated.js" as Contract
 
 DaemonTestCase {
     id: testCase
@@ -26,7 +27,7 @@ DaemonTestCase {
             job: {id: id, operation: "run-delayed", phase: outcome, status: "completed", started_at: 100, finished_at: 200, exit_code: 0, error: null}, components: []};
     }
     function reply(call, entries, cursor, published): void {
-        Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id, {protocol: "bar-api", version: 1, ok: true, data: {history: {
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id, {protocol: Contract.protocol, version: Contract.version, ok: true, data: {history: {
             available: published !== false, revision: "revision", entries: entries, cursor: cursor || null, total: entries.length, coverage: "Worker-managed runs", error: null
         }}}, "", call.route);
     }
@@ -40,6 +41,8 @@ DaemonTestCase {
     }
     function test_browseInspectAndLogCommandNeverRunAnUpdate(): void {
         const root = fixture();
+        compare(root.controller.backend.expectedVersion, Contract.version);
+        compare(root.controller.backend.expectedProtocol, Contract.protocol);
         reply(latest(), [entry("run-1", "staged"), entry("run-2", "failed")]);
         tryCompare(root.controller, "hasSelection", true);
         root.content.listItem.focusList();
@@ -52,6 +55,27 @@ DaemonTestCase {
         const log = calls.filter(call => call.method === "updates.readLog").slice(-1)[0];
         compare(log.params.run_id, "run-2");
         verify(calls.every(call => ["updates.queryHistory", "updates.readLog", "bar.snapshot"].includes(call.method)));
+    }
+    function test_manualRebuildUsesTheSameReadOnlyHistoryAndLogRoute(): void {
+        const root = fixture();
+        const run = entry("manual-123-rebuild-test", "activated");
+        run.title = "System rebuilt successfully";
+        run.job.operation = "manual-rebuild";
+        run.components = [{name: "NixOS system", before: "/nix/store/old-system", after: "/nix/store/new-system", changed: true, phase: "activated", error: null}];
+        reply(latest(), [run]);
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.controller.detailsOpen && root.content.detailsNavigation.contentReady);
+        keyClick(Qt.Key_V, Qt.AltModifier);
+        const request = calls.filter(call => call.method === "updates.readLog").slice(-1)[0];
+        verify(request !== undefined);
+        compare(request.params.run_id, run.job.id);
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(request.id, {
+            protocol: Contract.protocol, version: Contract.version, ok: true,
+            data: {log: {run_id: run.job.id, text: "Rebuild completed", truncated: false}}
+        }, "", request.route);
+        compare(root.controller.selectedLog, "Rebuild completed");
+        compare(root.controller.errorText, "");
     }
     function test_staleRepliesMalformedPagesAndRefreshRetainThePublishedRows(): void {
         const root = fixture();
