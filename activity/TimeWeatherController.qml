@@ -1,5 +1,6 @@
 import QtQuick
 import Shelllist.Ui as Ui
+import Shelllist.Core as Core
 import "WeatherVisuals.js" as Visuals
 
 ActivityController {
@@ -132,20 +133,12 @@ ActivityController {
     onCitiesChanged: Qt.callLater(rebuildCityModel)
     Component.onCompleted: rebuildCityModel()
 
-    QtObject {
+    Core.SelectionModel {
         id: citySelection
-        property int selectedIndex: 0
-        property string queryText: ""
+        count: controller.filteredCities.length
         onSelectedIndexChanged: {
             if (!controller.rebuildingCities && selectedIndex >= 0 && selectedIndex < cityListModel.count)
                 controller.retainedCityId = cityListModel.get(selectedIndex).resultData.payload.id || "";
-        }
-
-        function move(delta: int): void {
-            selectedIndex = Math.max(0, Math.min(selectedIndex + delta, controller.filteredCities.length - 1));
-        }
-        function selectFirst(): void {
-            selectedIndex = 0;
         }
 
         onQueryTextChanged: {

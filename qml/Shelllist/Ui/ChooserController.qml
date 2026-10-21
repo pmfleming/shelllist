@@ -1,4 +1,5 @@
 import QtQuick
+import Shelllist.Core as Core
 
 Item {
     id: root
@@ -15,7 +16,7 @@ Item {
     property string currentWorkspaceId: ""
     property bool detailsOpen: false
     property bool hasSelection: false
-    property var selectionModel: null
+    property Core.SelectionModel selectionModel: null
     property var detailActions: []
     property bool navigationBlocked: false
     property bool actionInFlight: false

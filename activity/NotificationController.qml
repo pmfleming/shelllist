@@ -47,10 +47,10 @@ Ui.ChooserController {
         tabs: ["notifications", "controls", "settings"]
         onRestoreRequested: function (open, tab) { controller.detailsOpen = open && (controller.settingsOpen || controller.hasSelection); }
     }
-    QtObject {
+    Core.SelectionModel {
         id: appSelection
-        property string queryText: ""
-        readonly property int selectedIndex: Math.max(0, controller.visibleApps.findIndex(app => app.key === controller.selectedAppKey))
+        count: controller.visibleApps.length
+        selectedIndex: Math.max(0, controller.visibleApps.findIndex(app => app.key === controller.selectedAppKey))
         function move(delta: int): void { controller.select(selectedIndex + delta); }
         function selectFirst(): void { controller.select(0); }
     }

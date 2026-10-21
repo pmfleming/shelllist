@@ -1,13 +1,11 @@
 import QtQuick
 import "Model.js" as Model
 
-Item {
+SelectionModel {
     id: resultStore
 
     required property ProviderRegistry registry
     property var sourceResults: []
-    property string queryText: ""
-    property int selectedIndex
     property int queryGeneration: 0
     property string activeQueryId: ""
     property string searchOwner: ""
@@ -27,7 +25,7 @@ Item {
     // instead of ranking the same catalog synchronously on the UI thread.
     readonly property var visibleResults: fuzzyQuery ? appliedSearchGeneration === searchGeneration ? rustRankedResults : rustRankedResults.length > 0 ? rustRankedResults : baselineResults : baselineResults
     readonly property KeyedListModel visibleModel: visibleListModel
-    readonly property int count: visibleResults.length
+    count: visibleResults.length
 
     signal staleBatchIgnored(string providerId, string queryId)
 
@@ -72,17 +70,6 @@ Item {
             const retainedIndex = Model.indexByKey(visibleResults, previous.key);
             selectedIndex = retainedIndex >= 0 ? retainedIndex : clampIndex(selectedIndex);
         }
-    }
-
-    function clampIndex(index: int): int {
-        return count <= 0 ? 0 : Math.max(0, Math.min(index, count - 1));
-    }
-
-    function move(delta: int): void {
-        selectedIndex = clampIndex(selectedIndex + delta);
-    }
-    function selectFirst(): void {
-        selectedIndex = 0;
     }
 
     function beginQuery(text: string, context: var, providerIds: var, limit: int): var {

@@ -250,15 +250,7 @@ Ui.ProviderChooserController {
         const entries = history.entries || [];
         const results = clipboardProvider.resultsForEntries(entries, history.offset || 0);
         activeHistoryQueryId = "";
-        if (appendingHistory)
-            selectionModel.applyNormalizedBatch({
-                providerId: "clipboard",
-                queryId: historyQueryId,
-                replace: false,
-                results: results
-            });
-        else
-            applyProviderQuery(historyQueryId, results);
+        applyProviderQuery(historyQueryId, results, appendingHistory);
         appendingHistory = false;
         historyPageError = "";
         reconcileMultiSelection(filteredResults.map(function (result) {

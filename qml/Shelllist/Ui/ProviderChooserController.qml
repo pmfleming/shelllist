@@ -38,11 +38,11 @@ ChooserController {
         return results.beginQuery(filterText, context || ({}), [provider.providerId], limit);
     }
 
-    function applyProviderQuery(id: string, values: var): bool {
+    function applyProviderQuery(id: string, values: var, append: bool): bool {
         return results.applyNormalizedBatch({
             providerId: provider.providerId,
             queryId: id,
-            replace: true,
+            replace: !append,
             complete: true,
             results: values || []
         });

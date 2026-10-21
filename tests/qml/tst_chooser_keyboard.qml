@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Shelllist.Ui as Ui
+import Shelllist.Core as Core
 
 DaemonTestCase {
     id: testCase
@@ -32,11 +33,10 @@ DaemonTestCase {
                 hasSelection: true
                 detailActions: [{id: "legacy-action", shortcut: "J", enabled: true}]
                 function triggerDetailAction(actionId) { surface.actionCalls++; return true; }
-                selectionModel: QtObject {
-                    property string queryText: "abcd"
-                    property int selectedIndex: 1
-                    function selectFirst() { selectedIndex = 0; }
-                    function move(delta) { selectedIndex = Math.max(0, Math.min(2, selectedIndex + delta)); }
+                selectionModel: Core.SelectionModel {
+                    queryText: "abcd"
+                    selectedIndex: 1
+                    count: 3
                 }
                 function primarySelected() { surface.primaryActions++; return true; }
                 function cycleDetailsTab() { surface.tabChanges++; }
@@ -178,6 +178,11 @@ DaemonTestCase {
         verify(surface.listItem.listFocused);
         compare(surface.chooserController.selectionModel.selectedIndex, 0);
         keyClick(Qt.Key_Down);
+        compare(surface.chooserController.selectionModel.selectedIndex, 1);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Down);
+        compare(surface.chooserController.selectionModel.selectedIndex, 2, "selection clamps at the last result");
+        keyClick(Qt.Key_Up);
         compare(surface.chooserController.selectionModel.selectedIndex, 1);
         surface.chooserController.detailsOpen = true;
         keyClick(Qt.Key_J);

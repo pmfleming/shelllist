@@ -1,4 +1,5 @@
 module Shelllist.Core
+SelectionModel 1.0 SelectionModel.qml
 WorkspaceCategories 1.0 WorkspaceCategories.js
 singleton ApiEnvelope 1.0 ApiEnvelope.qml
 singleton Model 1.0 ModelApi.qml

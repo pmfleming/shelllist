@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtTest
 import Shelllist.Ui as Ui
+import Shelllist.Core as Core
 
 TestCase {
     id: tests
@@ -32,10 +33,9 @@ TestCase {
                 id: controller
                 uiActive: true
                 hasSelection: true
-                selectionModel: QtObject {
-                    property int selectedIndex: 1
-                    function move(delta) { selectedIndex = Math.max(0, Math.min(2, selectedIndex + delta)); }
-                    function selectFirst() { selectedIndex = 0; }
+                selectionModel: Core.SelectionModel {
+                    selectedIndex: 1
+                    count: 3
                 }
             }
             listComponent: Ui.ChooserListPane {
