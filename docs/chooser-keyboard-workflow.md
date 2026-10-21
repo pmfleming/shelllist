@@ -622,6 +622,12 @@ scrolling fallback, not editable field stops. F5 only refreshes reads. Incoming
 runs preserve stable selection; malformed, stale or closed-view replies cannot
 replace published rows. Live notification deep links target a validated run ID;
 missing runs return to history with a notice, never open an unrelated run.
+Passive local-calendar date headers do not join result or field navigation;
+Up/Down still moves directly between runs in catalog order. Relative timestamps
+and live duration update without requests, selection changes or focus movement.
+Partial-history warnings preserve readable rows; log loading/errors stay inside
+the selected run's log card and never replace the history empty-state reason.
+History coverage appears once in the list footer, not as a detail field.
 The generic Tray chooser keeps its inspect-first behavior and explicit Activate
 application command. No inline tray icon or privileged update control is added.
 See [Updates](updates.md) and `tst_updates.qml`.

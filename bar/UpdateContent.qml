@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
+import "UpdatePresentation.js" as Presentation
 
 Ui.ProviderChooserSurface {
     id: content
@@ -13,6 +14,12 @@ Ui.ProviderChooserSurface {
         text: content.controller.errorText
         briefText: qsTr("Update history unavailable")
         tone: "error"
+    }
+    Ui.FeedbackSource {
+        text: content.controller.warningText
+        briefText: content.controller.warningBrief
+        summaryText: content.controller.warningBrief
+        tone: "warning"
     }
     listComponent: Ui.ChooserListPane {
         id: pane
@@ -26,35 +33,71 @@ Ui.ProviderChooserSurface {
         emptyIcon: "history"
         emptyState: content.controller.errorText ? "unavailable" : content.controller.loading ? "loading" : !content.controller.available ? "unavailable" : filterText ? "filtered" : "empty"
         emptyText: content.controller.errorText || (!content.controller.available ? qsTr("Update history has not been published") : qsTr("No recorded updates"))
-        status: content.controller.loading ? qsTr("Reading update history…") : qsTr("%1 recent runs · read only").arg(content.controller.entries.length)
+        status: content.controller.loading ? qsTr("Reading update history…") : content.controller.countLabel
         feedbackScope: content
         onListNearEndChanged: if (listNearEnd) content.controller.loadMore()
-        listFooterComponent: Ui.ActionButton {
-            objectName: "updateLoadMore"
-            label: qsTr("Load more updates")
-            icon: "expand_more"
-            accessKey: "L"
-            visible: !!content.controller.cursor
-            enabled: !content.controller.loading
-            onClicked: content.controller.loadMore()
+        listFooterComponent: Component {
+            Column {
+                width: parent.width
+                spacing: Ui.Theme.spacingMd
+                Ui.ActionButton {
+                    objectName: "updateLoadMore"
+                    label: qsTr("Load more updates")
+                    icon: "expand_more"
+                    accessKey: "L"
+                    visible: !!content.controller.cursor
+                    enabled: visible && !content.controller.loading
+                    onClicked: content.controller.loadMore()
+                }
+                Ui.ThemeText {
+                    objectName: "updateHistoryCoverage"
+                    width: parent.width
+                    visible: !!text
+                    wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
+                    text: content.controller.coverage
+                }
+            }
         }
-        rowDelegate: Ui.ResultRow {
-            id: row
-            required property var resultData
-            objectName: "updateRun:" + resultData.id
-            listPane: pane
-            rowHeight: pane.delegateHeight
-            leadingIcon: resultData.icon
-            accessibleName: resultData.title + ". " + resultData.subtitle
-            Ui.ResultLabel { title: row.resultData.title; subtitle: row.resultData.subtitle }
+        rowDelegate: Component {
+            Column {
+                id: groupRow
+                required property int index
+                required property var resultData
+                readonly property var run: resultData.metadata.run
+                readonly property string group: Presentation.dateGroup(run.job.started_at, content.controller.nowMs)
+                readonly property var previous: index > 0 ? content.controller.filteredResults[index - 1] : null
+                width: ListView.view.width
+                Ui.SectionHeading {
+                    objectName: "updateDate:" + groupRow.resultData.id
+                    width: parent.width
+                    visible: !groupRow.previous || groupRow.group !== Presentation.dateGroup(groupRow.previous.metadata.run.job.started_at, content.controller.nowMs)
+                    height: implicitHeight + 2 * Ui.Theme.spacingSm
+                    title: groupRow.group
+                }
+                Ui.ResultRow {
+                    index: groupRow.index
+                    width: parent.width
+                    objectName: "updateRun:" + groupRow.resultData.id
+                    listPane: pane
+                    rowHeight: pane.delegateHeight
+                    leadingIcon: groupRow.resultData.icon
+                    accessibleName: groupRow.resultData.title + ". " + label.subtitle
+                    Ui.ResultLabel {
+                        id: label
+                        title: groupRow.resultData.title
+                        subtitle: Presentation.rowSubtitle(groupRow.run, content.controller.nowMs)
+                    }
+                }
+            }
         }
     }
     detailsComponent: Ui.ActionDetailsPane {
         chooserController: content.controller
         uiScale: 1
         title: content.controller.selectedRun ? content.controller.selectedRun.title : qsTr("Updates")
-        subtitle: content.controller.selectedRun ? content.controller.selectedRun.job.operation : ""
-        icon: "history"
+        subtitle: content.controller.selectedRun ? Presentation.label(content.controller.selectedRun.job.operation) : ""
+        icon: content.controller.selectedRun ? Presentation.outcomeIcon(content.controller.selectedRun.outcome) : "history"
         actions: content.controller.detailActions.filter(action => action.id !== "inspect")
         Ui.DetailFlickable {
             anchors.fill: parent
@@ -65,16 +108,18 @@ Ui.ProviderChooserSurface {
                 spacing: Ui.Theme.spacingMd
                 Ui.DetailCard {
                     property bool informationOnly: true
+                    objectName: "updateRecordedOutcome"
                     title: qsTr("Recorded outcome")
                     entries: {
                         const run = content.controller.selectedRun;
                         return run ? [
-                            {label: qsTr("Outcome"), value: run.title},
-                            {label: qsTr("Phase"), value: run.job.phase},
+                            {label: qsTr("Status · outcome"), value: Presentation.label(run.job.status) + " · " + Presentation.label(run.outcome)},
+                            {label: qsTr("Phase"), value: Presentation.label(run.job.phase)},
                             {label: qsTr("Started"), value: content.controller.timeLabel(run.job.started_at)},
-                            {label: qsTr("Finished"), value: content.controller.timeLabel(run.job.finished_at)},
+                            {label: qsTr("Duration"), value: Presentation.durationLabel(run, content.controller.nowMs)},
+                            ...(!Presentation.isRunning(run) && run.job.finished_at !== null ? [{label: qsTr("Finished"), value: content.controller.timeLabel(run.job.finished_at)}] : []),
                             {label: qsTr("Run identity"), value: run.job.id},
-                            {label: qsTr("Exit code"), value: run.job.exit_code === null ? qsTr("Not recorded") : String(run.job.exit_code)}
+                            {label: qsTr("Exit code"), value: Presentation.exitLabel(run.job.exit_code)}
                         ] : [];
                     }
                 }
@@ -89,7 +134,7 @@ Ui.ProviderChooserSurface {
                             Layout.fillWidth: true
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
-                            text: modelData.name + " · " + modelData.phase + "\n"
+                            text: modelData.name + " · " + Presentation.label(modelData.phase) + "\n"
                                 + (modelData.before || qsTr("Unknown")) + " → " + (modelData.after || qsTr("Unknown"))
                                 + (modelData.changed ? " · " + qsTr("Changed in this run") : "")
                                 + (modelData.error ? "\n" + modelData.error : "")
@@ -109,13 +154,15 @@ Ui.ProviderChooserSurface {
                 }
                 Ui.DetailColumnCard {
                     property bool informationOnly: true
+                    objectName: "updateRunLog"
                     title: qsTr("Run log")
-                    visible: !!content.controller.selectedLog
+                    visible: content.controller.selectedLogLoading || !!content.controller.selectedLogError || !!content.controller.selectedLog
                     Ui.ThemeText {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText
-                        text: content.controller.selectedLog
+                        objectName: "updateRunLogText"
+                        text: content.controller.selectedLogLoading ? qsTr("Reading log…") : content.controller.selectedLogError || content.controller.selectedLog
                     }
                 }
                 Ui.DetailColumnCard {
@@ -133,11 +180,6 @@ Ui.ProviderChooserSurface {
                             return state.ready ? qsTr("A checked candidate is ready. This does not mean it is active or booted.") : qsTr("No checked candidate is currently reported. Historical staging is not proof of the running system.");
                         }
                     }
-                }
-                Ui.DetailColumnCard {
-                    property bool informationOnly: true
-                    title: qsTr("History coverage")
-                    Ui.ThemeText { Layout.fillWidth: true; wrapMode: Text.Wrap; textFormat: Text.PlainText; text: content.controller.coverage }
                 }
             }
         }

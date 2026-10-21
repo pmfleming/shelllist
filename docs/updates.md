@@ -17,6 +17,23 @@ Alt+A returns from a deep link to all recent runs. F5 refreshes reads only. Page
 append on scroll; Load more is also available. No Apply, Retry, Reboot, Approve,
 Rollback or updater shutdown action is exposed.
 
+History rows retain catalog chronology and use distinct outcome icons with readable
+outcome/lane labels and component change/failure counts. Counts describe loaded
+versus matching retained runs, not the size of the first page alone. Passive
+**Today / This week / This month / Older** headers use local calendar boundaries;
+they are not selectable runs or new Tab stops. Timestamps show Today/Yesterday
+and a clock, or a date for older records. The list footer carries history coverage
+once, rather than repeating it in each run's details.
+
+Details distinguish recorded job status from outcome, translate operation/phase
+identifiers, explain known exit codes, and show duration. Live elapsed time ticks
+only while the viewer is active; interrupted runs never acquire a fabricated
+finish time or keep accumulating elapsed time. Partial catalog diagnostics are
+warnings alongside readable records, not a total-history outage. The current
+API caps and joins diagnostics, so the UI deliberately does not infer an exact
+unreadable-record count. Log reads have their own loading/error state inside the
+Run log card and cannot replace history feedback or another run's log.
+
 ## Data and semantics
 
 `update-daemon` publishes versioned, atomic `history/RUN_ID.json` records beside
@@ -159,6 +176,9 @@ A blank tray inspector alone does not establish whether history exists.
   and subsequent native failure/success delivery without restart replay.
 - Qt tests: actual browse/detail/log keys, exact-run routes, stale/malformed replies,
   retained rows, close fencing and absence of the standalone bar update item.
+  Readability coverage includes catalog ordering across passive date headers,
+  loaded/total counts, component summaries, status versus outcome, live duration
+  without reads/focus changes, partial-history publication and run-local log errors.
   Replies use the generated protocol version, preventing a matching hardcoded
   test stub from concealing a production protocol mismatch.
 
