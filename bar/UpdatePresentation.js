@@ -171,18 +171,22 @@ function deferredCandidate(state) {
     return state && state.available && !state.error && Array.isArray(state.lanes) ? state.lanes.find(lane => lane.name === "delayed") || null : null;
 }
 
+function laneStatus(job, candidate) {
+    const status = job ? job.status : "";
+    const phase = job ? job.phase : "";
+    if (status === "running") return qsTr("Running · %1").arg(label(phase));
+    if (["failed", "interrupted"].includes(status)) return label(status);
+    if (["blocked", "stale", "queued"].includes(phase)) return label(phase);
+    if (candidate && candidate.ready) return qsTr("Ready · deferred candidate");
+    // A terminal staging job is not proof that this system is still staged or unbooted.
+    if (phase === "staged") return qsTr("Idle · last run staged for boot");
+    return status === "completed" ? qsTr("Idle · last result: %1").arg(label(phase)) : qsTr("Not reported");
+}
+
 function laneOverview(state, name, nowMs) {
     const job = state && state.available && Array.isArray(state.jobs) ? state.jobs.find(job => job.name === name) : null;
     const candidate = name === "system" ? deferredCandidate(state) : null;
-    let status = qsTr("Not reported");
-    if (!state || !state.available) status = qsTr("Unavailable");
-    else if (job && job.status === "running") status = qsTr("Running · %1").arg(label(job.phase));
-    else if (job && (job.status === "failed" || job.status === "interrupted")) status = label(job.status);
-    else if (job && ["blocked", "stale", "queued"].includes(job.phase)) status = label(job.phase);
-    else if (candidate && candidate.ready) status = qsTr("Ready · deferred candidate");
-    // A terminal staging job is not proof that this system is still staged or unbooted.
-    else if (job && job.phase === "staged") status = qsTr("Idle · last run staged for boot");
-    else if (job && job.status === "completed") status = qsTr("Idle · last result: %1").arg(label(job.phase));
+    const status = state && state.available ? laneStatus(job, candidate) : qsTr("Unavailable");
     const stamp = job ? job.finished_at || job.started_at : null;
     const timing = job ? (job.status === "running" ? qsTr("Started %1") : qsTr("Last worker run %1")).arg(timeLabel(stamp, nowMs)) : qsTr("Last check not reported");
     return {name: name, title: label(name), status: status, timing: timing,

@@ -74,3 +74,21 @@ uses native inspect/log/refresh keys, then verifies empty, foreign and duplicate
 completion IDs cannot retire another reader or overwrite its error. Existing
 pagination, malformed reply, close/reopen, overview and log-cache tests pass.
 Keyboard and mutation boundaries are unchanged: Updates still issues only reads.
+
+## 4. Flatten Updates status precedence
+
+Replace `laneOverview`'s long nested else-if chain and repeated job guards with a
+small pure `laneStatus` projection. Worker running/failure/blocking states still
+outrank deferred readiness; readiness outranks historical staging, and a completed
+staging job still does not prove the current boot state. Snapshot availability
+and readiness-read errors retain their independent meanings.
+
+The former **27 cyclomatic / 48 cognitive / 148 effort** projection becomes
+`laneOverview` **14 / 14 / 55** plus `laneStatus` **10 / 9 / 41**. Production sums
+improve: cyclomatic **9255 → 9252**, cognitive **6638 → 6613**, effort **45183 →
+45131**. Source lines increase by three; locality/leverage means are unchanged.
+
+Validation: strict lint and Updates Qt suite **25 passes**. The actual Now page
+now exercises running/failure/interruption/blocking/readiness/staging precedence
+as snapshots arrive, with no reads or selection/focus changes. Existing unavailable,
+missing-job and readiness-error cases remain covered. No interaction changes.

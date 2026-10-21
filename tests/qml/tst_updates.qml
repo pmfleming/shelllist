@@ -504,6 +504,22 @@ DaemonTestCase {
         verify(root.controller.selectedIsOverview);
         compare(system.lane.status, "Not reported");
         verify(!system.lane.status.includes("staged"));
+        const reads = calls.length;
+        for (const [status, phase, ready, expected] of [
+            ["running", "building", true, "Running · Building"],
+            ["failed", "staged", true, "Failed"],
+            ["interrupted", "staged", true, "Interrupted"],
+            ["completed", "blocked", true, "Blocked"],
+            ["completed", "staged", true, "Ready · deferred candidate"],
+            ["completed", "staged", false, "Idle · last run staged for boot"],
+            ["completed", "current", false, "Idle · last result: No changes"]
+        ]) {
+            root.barState.updates = {available: true, error: null, lanes: [{name: "delayed", ready: ready}],
+                jobs: [{name: "system", status: status, phase: phase, operation: "run-delayed", started_at: created, finished_at: created + 10}]};
+            compare(system.lane.status, expected);
+        }
+        compare(calls.length, reads);
+        verify(root.controller.selectedIsOverview && root.content.listItem.listFocused);
         root.controller.filterText = "nothing matches";
         root.controller.refresh();
         reply(latest(), []);
