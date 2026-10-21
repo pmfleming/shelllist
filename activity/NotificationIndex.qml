@@ -68,6 +68,8 @@ Item {
                     width: row.width
                     uiScale: Ui.Theme.expandedSecondaryActionScale
                     objectName: "notificationDate-" + row.modelData.key
+                    // Pad period rows without enlarging their disclosure buttons.
+                    height: implicitHeight + 2 * Ui.Theme.spacingSm
                     label: page.dateLabel(row.modelData.key) + " · " + row.modelData.count
                     icon: page.timeline.requestedDate === row.modelData.key && !page.timeline.collapsed ? "expand_less" : "expand_more"
                     enabled: row.modelData.count > 0
