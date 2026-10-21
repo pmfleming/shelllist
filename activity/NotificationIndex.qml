@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import Shelllist.Core as Core
 
@@ -94,60 +93,13 @@ Item {
             }
             Component {
                 id: message
-                Ui.DetailColumnCard {
-                    id: card
+                NotificationPreviewCard {
                     width: row.width
-                    objectName: "notificationPreview-" + row.modelData.key
-                    readonly property var preview: row.modelData.preview
-                    color: Ui.Theme.surfaceContainer
-                    Ui.ThemeText {
-                        objectName: "notificationPreviewTitle-" + row.modelData.key
-                        Layout.fillWidth: true
-                        text: Ui.NotificationPresentation.previewHeading(card.preview)
-                        visible: text.length > 0
-                        textFormat: Text.PlainText
-                        elide: Text.ElideRight; maximumLineCount: 1
-                        font.pixelSize: Ui.Theme.fontSizeHeading
-                        font.weight: Ui.Theme.fontWeightDemiBold
-                    }
-                    Ui.ThemeText {
-                        objectName: "notificationPreviewBody-" + row.modelData.key
-                        Layout.fillWidth: true
-                        text: Ui.NotificationPresentation.previewBody(card.preview)
-                        visible: text.length > 0
-                        textFormat: Text.PlainText
-                        wrapMode: Text.Wrap; elide: Text.ElideRight; maximumLineCount: 2
-                    }
-                    Ui.ThemeText {
-                        objectName: "notificationPreviewMeta-" + row.modelData.key
-                        Layout.fillWidth: true
-                        text: Ui.NotificationPresentation.timeLabel(card.preview.created_unix_ms, page.controller.nowMs) + (row.modelData.stack ? qsTr(" · %1 similar notifications").arg(row.modelData.count) : "")
-                        color: Ui.Theme.mutedText; font.pixelSize: Ui.Theme.metadataSize
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Ui.Theme.spacingSm
-                        Item { Layout.fillWidth: true }
-                        Ui.FlatIconButton {
-                            objectName: "notificationCard-" + row.modelData.key + ":expand"
-                            visible: row.modelData.stack
-                            sizeRole: "secondary"
-                            uiScale: Ui.Theme.expandedSecondaryActionScale
-                            icon: row.modelData.expanded ? "expand_less" : "expand_more"
-                            accessibleName: row.modelData.expanded ? qsTr("Collapse similar notifications") : qsTr("Expand similar notifications")
-                            onClicked: page.timeline.expandedStacks = Object.assign({}, page.timeline.expandedStacks, {[row.modelData.key]: !row.modelData.expanded})
-                        }
-                        Ui.FlatIconButton {
-                            objectName: "notificationCard-" + row.modelData.key + ":delete"
-                            visible: !row.modelData.stack
-                            sizeRole: "secondary"
-                            uiScale: Ui.Theme.expandedSecondaryActionScale
-                            icon: "delete"
-                            accessibleName: qsTr("Delete this notification")
-                            enabled: page.controller.notificationState.nativeAvailable && !page.controller.deleting
-                            onClicked: page.controller.deleteRecord(card.preview)
-                        }
-                    }
+                    entry: row.modelData
+                    nowMs: page.controller.nowMs
+                    deleteEnabled: page.controller.notificationState.nativeAvailable && !page.controller.deleting
+                    onExpansionRequested: page.timeline.expandedStacks = Object.assign({}, page.timeline.expandedStacks, {[row.modelData.key]: !row.modelData.expanded})
+                    onDeleteRequested: function (record) { page.controller.deleteRecord(record); }
                 }
             }
         }

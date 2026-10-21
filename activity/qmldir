@@ -6,6 +6,7 @@ internal ActivityHeaderButton ActivityHeaderButton.qml
 internal NotificationSettings NotificationSettings.qml
 internal NotificationDetails NotificationDetails.qml
 internal NotificationIndex NotificationIndex.qml
+internal NotificationPreviewCard NotificationPreviewCard.qml
 internal NotificationAppHeader NotificationAppHeader.qml
 internal NotificationAppSettings NotificationAppSettings.qml
 singleton NotificationValidation 1.0 NotificationValidation.qml

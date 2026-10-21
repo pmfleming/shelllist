@@ -63,6 +63,44 @@ DaemonTestCase {
         return {view: "timeline", epoch: "epoch", revision: "1", query: "", app_key: "named:Chat", date: "older", period_day: "2026-10-08", recent: [1000,999,998].map(id => preview(id, "named:Chat")), dates: ["today", "week", "month", "older"].map(key => ({key: key, count: key === "older" ? 40 : 0})), count: 40, total_rows: 40, offset: offset, next_offset: next, anchor_reached: true,
             entries: ids.map(id => ({key: id + ":" + id * 1000, preview: preview(id, "named:Chat"), members: [{id: id, created: id * 1000}]}))};
     }
+    function test_previewCommandsKeepStackAndRecordIdentityInTheOwner() {
+        const {state, controller, content} = make();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => content.detailsNavigation.contentReady);
+        const timeline = controller.timeline;
+        timeline.requestedDate = "older"; timeline.collapsed = false;
+        const page = timelinePage(0, [100], null);
+        page.recent = [];
+        page.count = 2; page.total_rows = 1;
+        page.dates[3].count = 2;
+        page.entries[0].members.push({id: 99, created: 99000});
+        timeline.receive({view: "timeline", generation: timeline.generation, appKey: timeline.appKey,
+            query: timeline.query, date: "older", grouping: timeline.grouping, offset: 0, replacing: true,
+            revision: state.observedHistoryRevision}, page, "", "");
+        compare(timeline.error, "");
+        tryVerify(() => findChild(content, "notificationCard-100:100000:expand") !== null);
+        keyClick(Qt.Key_Tab);
+        compare(content.detailsNavigation.highlightedControl, null, "previews add no editable fields");
+        const expand = findChild(content, "notificationCard-100:100000:expand");
+        mouseClick(expand);
+        compare(timeline.expandedStacks["100:100000"], true);
+        compare(controller.selectedAppKey, "named:Chat");
+        const list = findChild(content, "notificationTimelineList");
+        list.positionViewAtIndex(3, ListView.Contain);
+        tryVerify(() => findChild(content, "notificationCard-member:99:99000:delete") !== null);
+        wait(20);
+        const remove = findChild(content, "notificationCard-member:99:99000:delete");
+        mouseClick(remove);
+        const prepares = calls.filter(call => call.method === "notifications.prepareDelete");
+        compare(prepares.length, 1);
+        compare(prepares[0].params, {app_key: "named:Chat", selected: {id: 99, created: 99000}});
+        verify(!remove.enabled, "pending consent disables repeat deletion");
+        mouseClick(remove);
+        compare(calls.filter(call => call.method === "notifications.prepareDelete").length, 1);
+        compare(controller.selectedAppKey, "named:Chat");
+        state.cancelDelete();
+        content.destroy();
+    }
     function test_timelineAtomicWindowsRejectDuplicateAndStaleReplies() {
         const {state, controller, content} = make();
         controller.openDetails();

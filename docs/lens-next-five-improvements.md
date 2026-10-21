@@ -101,3 +101,59 @@ Validation: strict lint, Updates native suite **26 passes**, and **12000** froze
 projections comparing complete old/new row structures. New native-JS vectors cover
 local-day and lane boundaries, remembered-anchor order and selected-run expansion;
 the existing native key/menu/refresh test covers real consumer fold/unfold behavior.
+
+## 5. Isolate notification preview rendering
+
+Extract `NotificationPreviewCard` from the heavily coupled timeline delegate. Its
+inputs are a projected entry, clock and delete availability; its outputs are
+expansion/deletion intents. It cannot read or mutate the timeline/controller.
+`NotificationIndex` retains the window, scrolling, stack-state mutation and guarded
+record deletion. The surrounding CommandGroup still owns command scope; plain-text
+rendering, stable object names, translation contexts and shared card/button
+composition are preserved. This is domain content, not a new settings wrapper.
+
+NotificationIndex locality improves **0 → 31**, objects **23 → 16**, component
+fan-out **10 → 8**. The leaf has locality **77** and one referenced ID. Production
+mean locality improves **74.2078 → 74.3093**. Costs: **15** source / **19** physical
+lines, **2** cyclomatic and **4** effort for the explicit signal boundary; mean
+leverage falls **36.4608 → 36.3964** because this leaf has only one consumer.
+
+Validation: strict lint and NotificationCenter **5 passes**. The new actual-page
+pointer/key regression expands a native stack, deletes a specific expanded member,
+checks its exact record identity and disabled repeat command, and verifies that
+previews add no editable Tab stops or application-selection side effects. Existing
+native consent/cancel/no-replay and timeline rejection tests remain intact.
+
+## Combined results and acceptance limits
+
+| Metric | Production before → after | All analyzed sources before → after |
+| --- | ---: | ---: |
+| Source lines | 43552 → 43541 | 50263 → 50335 |
+| Physical lines | 48411 → 48407 | 55331 → 55410 |
+| Cyclomatic sum | 9249 → 9247 | 9903 → 9902 |
+| Cognitive sum | 6591 → 6577 | 6851 → 6839 |
+| Weighted function effort | 45082 → 45047 | 50022 → 50050 |
+| Mean locality | 74.1777 → 74.3093 | 75.5558 → 75.6606 |
+| Mean leverage | 36.2801 → 36.3964 | 32.6234 → 32.7332 |
+| Normalized clone groups | 111 → 112 | 152 → 153 |
+| Clone-covered lines | 1542 → 1554 | 2095 → 2096 |
+| `property var` | 523 → 522 | 560 → 559 |
+
+Both clone scans are complete with zero omitted windows/groups. Unknown-signal
+escapes remain **0**, lint-disable occurrences **15**. Cleanup retains only the
+intentional SystemTray enum test stub; parser diagnostics remain zero.
+**This is not an across-the-board reduction:** production code shrinks slightly,
+but added regression coverage raises tracked code (including tests/scripts/TS)
+**64096 → 64177** physical lines. Full-scope effort and normalized cloning also
+rise. The main gains are the typed shared boundary, less coupled notification
+rendering and simpler live operations; not bulk deletion or a runtime speed claim.
+
+Final checks: **207 Qt passes, 0 failures, 1 existing software-renderer skip**;
+strict QML lint; both offscreen Quickshell smokes; TypeScript freshness/typecheck;
+source-tree import check; UI drift review **0 prompts**; whitespace check.
+Incoming edits compare byte-for-byte unchanged. No tests were removed or newly
+skipped, no numeric style override was added, and no interaction/safety guard was
+weakened. The offscreen window-mask warning remains. Static semantic coverage is
+still partial; no full Lens audit pass, package/Nix build, sibling-daemon contract
+campaign, profiler result, live hardware/compositor, IME or screen-reader acceptance
+is claimed. Source-tree checks do not substitute for those release gates.
