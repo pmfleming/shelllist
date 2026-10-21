@@ -1,4 +1,6 @@
 module Shelllist.Bar
+UpdateController 1.0 UpdateController.qml
+UpdateContent 1.0 UpdateContent.qml
 SystemChooserController 1.0 SystemChooserController.qml
 SystemChooserContent 1.0 SystemChooserContent.qml
 BarAction 1.0 BarAction.qml

@@ -180,6 +180,16 @@ Item {
     SystemSlot { surfaceId: "tray" }
 
     SurfaceSlot {
+        surfaceId: "updates"
+        owner: registry
+        sourceComponent: SurfaceBundle {
+            controller: updateController
+            content: Bar.UpdateContent { controller: updateController }
+            Bar.UpdateController { id: updateController; barController: registry.barController }
+        }
+    }
+
+    SurfaceSlot {
         surfaceId: "applications"
         owner: registry
         sourceComponent: Component {

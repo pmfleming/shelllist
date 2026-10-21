@@ -24,24 +24,18 @@ TestCase {
         }
     }
     function init(): void { failOnWarning(/.*/); }
-    function test_updateFailuresRemainVisibleAndRecoverWithoutMutation(): void {
+    function test_updateOutcomesDoNotCreateAStandaloneBarIcon(): void {
         const bar = createTemporaryObject(barFactory, testCase, {width: 700});
-        const controller = bar.controller;
-        const module = function () { return controller.statusModules(new Date()).find(item => item.id === "updates"); };
-        controller.updates = {available: true, jobs: [{name: "ai-tools", status: "failed", phase: "blocked", error: "t3: packaging failure; build suppressed"}]};
-        verify(module().visible);
-        compare(module().tone, "danger");
-        verify(module().tooltip.includes("t3: packaging failure"));
-        compare(module().primary, "updates");
-        controller.updates = {available: true, jobs: [{name: "system", status: "interrupted", error: "worker stopped"}]};
-        compare(module().tone, "danger");
-        controller.updates = {available: true, jobs: [{name: "ai-tools", status: "completed", phase: "current"}]};
-        verify(!module().visible);
-        controller.updates = {available: true, ready: true, jobs: []};
-        verify(module().visible);
-        verify(module().tooltip.includes("ready"));
-        controller.updates = {available: true, error: "malformed status", jobs: []};
-        compare(module().tone, "danger");
+        for (const state of [
+            {available: true, ready: true, jobs: []},
+            {available: true, jobs: [{name: "system", status: "running"}]},
+            {available: true, error: "malformed status", jobs: []},
+            {available: true, jobs: [{name: "ai-tools", status: "failed", error: "build failed"}]}
+        ]) {
+            bar.controller.updates = state;
+            verify(!bar.controller.statusModules(new Date()).some(item => item.id === "updates"));
+            compare(bar.controller.updates, state); // Presentation cannot clear backend outcomes.
+        }
     }
     function test_unknownRoutesCannotCallObjectPrototypeMethods(): void {
         const bar = createTemporaryObject(barFactory, testCase, {width: 700});

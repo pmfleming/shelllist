@@ -40,6 +40,8 @@ Name and setting drafts become saved only after acknowledgement. Failed drafts s
 
 **Activity** contains a month calendar, agenda, persistent todos and source health. Notifications and weather are independent surfaces, not Activity sections.
 
+**Updates** is a real tray application with read-only recent-run history, scoped worker logs and success/failure notifications. Open it from the Tray chooser, desktop launcher or `shelllist updates open`. The standalone update bar icon is removed. Deploy with the matching worker/backend revisions; see [Updates](docs/updates.md).
+
 **Notifications** provides daemon-backed search, DND, actions, inline replies, 15-minute snooze and dismissal with retained history. Search includes unloaded pages within the newest 5,000 persisted notifications plus live records. Reply drafts survive navigation and clear only after success. `bar-daemon` owns ingestion, expiry, snooze and persistence. See [Activity and notifications](docs/activity.md).
 
 **Time & Weather** lists configured cities with conditions, temperatures, rain chance and local time. Expanded Time details show the selected UTC-offset regions, location, daylight and moon phase; Weather shows hourly and seven-day forecasts.

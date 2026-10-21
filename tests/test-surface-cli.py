@@ -95,6 +95,13 @@ exec() {
                     self.assertEqual(self.calls[-1]["args"][-2:], [action, ident])
                     self.assertTrue(all(call["program"] == "quickshell" for call in self.calls))
 
+    def test_update_run_deep_link_is_data_not_a_command(self):
+        self.run_cli(["updates", "run", "boot-123-run-456"])
+        self.assertEqual(self.calls[-1]["args"][-2:], ["openUpdateRun", "boot-123-run-456"])
+        for ident in ["../escape", "run;reboot", "-option", "", "x" * 161]:
+            self.run_cli(["updates", "run", ident], expected=2)
+            self.assertEqual(self.calls, [])
+
     def test_invalid_surfaces_and_arguments_do_not_dispatch(self):
         for args in [["unknown"], ["open", "wifi;quit"], ["toggle", "WiFi"],
                      ["floating", "unknown"], ["audio", "bad-action"],

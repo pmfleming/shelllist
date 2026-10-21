@@ -69,6 +69,8 @@ var methods = ({
     "notifications.invokeAction": "notifications.invokeAction",
     "notifications.reply": "notifications.reply",
     "updates.refresh": "updates.refresh",
+    "updates.queryHistory": "updates.queryHistory",
+    "updates.readLog": "updates.readLog",
 });
 var streams = ({
     "activity.changed": "activity.changed",

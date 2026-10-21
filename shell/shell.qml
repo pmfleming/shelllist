@@ -203,6 +203,11 @@ ShellRoot {
         function open(surfaceId: string): string {
             return shell.openSurface(surfaceId) ? "ok" : "unknown-surface";
         }
+        function openUpdateRun(runId: string): string {
+            if (!/^[A-Za-z0-9][A-Za-z0-9-]{0,159}$/.test(runId)) return "invalid-run";
+            surfaces.whenReady("updates", function(controller) { controller.openRun(runId); });
+            return shell.openSurface("updates") ? "ok" : "unavailable";
+        }
         function toggle(surfaceId: string): string {
             return shell.toggleSurface(surfaceId) ? "ok" : "unknown-surface";
         }
@@ -241,7 +246,7 @@ ShellRoot {
         }
     }
 
-    Ui.ShelllistGlobalShortcut { shortcutName: "update-logs"; description: "Inspect update service logs"; onTriggered: barState.triggerModuleAction("updates") }
+    Ui.ShelllistGlobalShortcut { shortcutName: "update-logs"; description: "Review recent updates"; onTriggered: shell.openSurface("updates") }
     SurfaceShortcuts {
         onSurfaceRequested: function (surfaceId) { shell.toggleSurface(surfaceId); }
     }

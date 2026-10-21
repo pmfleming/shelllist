@@ -612,6 +612,20 @@ circles with 16px icons.
 See [application details](application-details.md) for the visual and capability
 contract and Qt interaction coverage.
 
+## Updates review
+
+Updates uses the shared ProviderChooserSurface and a real native Tray entry.
+Up/Down browse recorded runs; Enter/Right inspect without executing an update.
+Alt+V reads the selected worker's bounded journal, Alt+C copies its recorded
+summary and Alt+A returns to all recent runs. Read-only details use the shared
+scrolling fallback, not editable field stops. F5 only refreshes reads. Incoming
+runs preserve stable selection; malformed, stale or closed-view replies cannot
+replace published rows. Live notification deep links target a validated run ID;
+missing runs return to history with a notice, never open an unrelated run.
+The generic Tray chooser keeps its inspect-first behavior and explicit Activate
+application command. No inline tray icon or privileged update control is added.
+See [Updates](updates.md) and `tst_updates.qml`.
+
 ## Implementing or extending a panel
 
 1. Use `ProviderChooserSurface` or `PanelSurface`; their shared keyboard

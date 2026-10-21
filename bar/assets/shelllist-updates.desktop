@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Shelllist Updates
+Comment=Review recent system and AI-tool updates
+Exec=shelllist updates open
+Icon=shelllist-updates
+Terminal=false
+X-GNOME-UsesNotifications=true
+Categories=System;Monitor;
+Keywords=updates;history;NixOS;

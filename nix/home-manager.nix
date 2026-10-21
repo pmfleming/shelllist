@@ -25,7 +25,7 @@ in
     updateLogsShortcut = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = "SUPER SHIFT, U";
-      description = "Hyprland modifiers and key for update service logs. Set null to disable.";
+      description = "Hyprland modifiers and key for reviewing recent updates. Set null to disable.";
     };
     systemd = {
       enable = lib.mkOption {

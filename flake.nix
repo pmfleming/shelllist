@@ -114,7 +114,7 @@
             '';
           };
 
-          shelllistApplication = pkgs.writeShellApplication {
+          shelllistApplication = (pkgs.writeShellApplication {
             name = "shelllist";
             meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
             runtimeInputs = [
@@ -158,6 +158,7 @@
                 shelllist hide                    Hide the active surface
                 shelllist quit                    Stop the resident host
                 shelllist status                  Print host status as JSON
+                shelllist updates run RUN_ID      Review one retained update run
                 shelllist responsiveness          Print latest interaction timings as JSON
                 shelllist list                    List surfaces as JSON
                 shelllist daemon                  Ensure the resident host is running
@@ -369,7 +370,19 @@
                     *) usage >&2; exit 2 ;;
                   esac
                   ;;
-                ${builtins.concatStringsSep "|" surfaceCatalog.directIds})
+                updates)
+                  action=''${2:-toggle}
+                  if [ "$action" = run ]; then
+                    [ "$#" -eq 3 ] && [[ "$3" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,159}$ ]] || { usage >&2; exit 2; }
+                    ensure_daemon
+                    result=$(popover_ipc openUpdateRun "$3")
+                    [ "$result" = ok ] || { echo "Cannot open update run: $result" >&2; exit 1; }
+                  else
+                    [ "$#" -le 2 ] || { usage >&2; exit 2; }
+                    case "$action" in open|toggle) surface_call "$action" updates ;; *) usage >&2; exit 2 ;; esac
+                  fi
+                  ;;
+                ${builtins.concatStringsSep "|" (builtins.filter (id: id != "updates") surfaceCatalog.directIds)})
                   action=''${2:-toggle}
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
                   case "$action" in open|toggle) surface_call "$action" "$command" ;; *) usage >&2; exit 2 ;; esac
@@ -377,7 +390,12 @@
                 *) usage >&2; exit 2 ;;
               esac
             '';
-          };
+          }).overrideAttrs (old: {
+            buildCommand = old.buildCommand + ''
+              install -Dm644 ${./bar/assets/shelllist-updates.desktop} $out/share/applications/shelllist-updates.desktop
+              install -Dm644 ${./bar/assets/shelllist-updates.svg} $out/share/icons/hicolor/scalable/apps/shelllist-updates.svg
+            '';
+          });
 
           # Client executables remain runtime adapters, not exported backend
           # services. The UI never installs daemon/system integration metadata.
@@ -479,8 +497,10 @@
             touch $out
           '';
           surfaceCli = pkgs.runCommand "shelllist-surface-cli" {
-            nativeBuildInputs = [ pkgs.python3 ];
+            nativeBuildInputs = [ pkgs.python3 pkgs.desktop-file-utils ];
           } ''
+            desktop-file-validate ${self.packages.${system}.shelllistApplication}/share/applications/shelllist-updates.desktop
+            test -f ${self.packages.${system}.shelllistApplication}/share/icons/hicolor/scalable/apps/shelllist-updates.svg
             python3 ${./tests/test-surface-cli.py} ${self.packages.${system}.shelllistApplication}/bin/shelllist ${./contracts/surface-catalog.json}
             touch $out
           '';

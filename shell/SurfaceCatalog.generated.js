@@ -46,6 +46,11 @@ var descriptors = [
         "icon": ""
     },
     {
+        "id": "updates",
+        "name": "Updates",
+        "icon": "history"
+    },
+    {
         "id": "time-weather",
         "name": "Time & Weather",
         "icon": "󰅐"
@@ -108,6 +113,10 @@ var shortcuts = [
     {
         "id": "notifications",
         "description": "Toggle Shelllist Notifications"
+    },
+    {
+        "id": "updates",
+        "description": "Toggle Shelllist Updates"
     },
     {
         "id": "time-weather",

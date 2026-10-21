@@ -285,7 +285,7 @@ Item {
                         wifiController.portal.launchManual("", true);
                 },
                 updates: function () {
-                    Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "update-worker status; printf '\\nFor full logs: journalctl -u nixos-ai-tools-update -u nixos-update-delayed\\n'; read -r -p 'Press enter to close'"]);
+                    openSurface("updates");
                 },
                 "audio-mixer": function () {
                     Quickshell.execDetached(["pavucontrol"]);
