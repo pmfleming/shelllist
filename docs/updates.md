@@ -10,10 +10,14 @@ shelllist updates run RUN_ID
 ```
 
 The existing `update-logs` global shortcut now opens this viewer. The application
-is lazy-loaded and shares Shelllist's chooser/navigation components. Enter/Right
-inspect a run; arrows browse without executing updates. Alt+V reads the run's
-log (worker journal or private rebuild log), Alt+C copies its recorded summary through the clipboard daemon, and
-Alt+A returns from a deep link to all recent runs. F5 refreshes reads only. Pages
+is lazy-loaded and shares Shelllist's chooser/navigation components. A pinned
+**Now** result opens the current-state inspector; the remaining results are runs.
+Enter/Right inspects; arrows browse without executing updates. Alt+V reads or
+refreshes the run's log (worker journal or private rebuild log); failed/partial
+runs also load it automatically when inspected. Alt+C copies a readable bug-report
+summary through the clipboard daemon. **Copy run JSON** and **Copy run log** are
+separate commands under More (Alt+M). Alt+A returns from a deep link to all recent
+runs. F5 refreshes history reads only. Pages
 append on scroll; Load more is also available. No Apply, Retry, Reboot, Approve,
 Rollback or updater shutdown action is exposed.
 
@@ -33,6 +37,36 @@ warnings alongside readable records, not a total-history outage. The current
 API caps and joins diagnostics, so the UI deliberately does not infer an exact
 unreadable-record count. Log reads have their own loading/error state inside the
 Run log card and cannot replace history feedback or another run's log.
+
+**Now** stays above history even during search or history failure, and is excluded
+from run counts. It uses only the live `barController.updates` snapshot, never a
+historical run as proof of current deployment. System, AI tools and stale-check
+cards show the latest worker state/phase and observation time. Missing jobs stay
+“Not reported”, not fabricated idle/success. A last worker run is not necessarily
+a successful check; authoritative last-check times still need backend support.
+The deferred candidate card shows age, automatic/manual-approval policy, revision,
+base hash and system path. A completed staging job is labelled as a **last run**
+observation, not proof that a reboot is still pending. Comparing booted/current/
+staged generations, schedules and installed tool inventory remains future work.
+
+Components use shared read-only label/value rows grouped into Failed, Changed and
+Unchanged, with counts. Failures take precedence in grouping; a component that
+changed before failing still contributes to the overall change count. NixOS store
+paths are shortened for display only. Each component has an explicit Copy command
+with full before/after paths and diagnostics; summaries and JSON also retain them.
+These values and groups add no editable Tab stops.
+
+Logs use monospace plain text with error:/warning: line colours and an explicit
+worker-journal/rebuild-file source. The rendered tail is bounded to 100 lines,
+including multiline journal entries, and the limit/truncation note is separate
+from raw copied output. Up to eight successful or failed log reads are cached for
+one viewer invocation. A pending read retains its run identity; after it finishes,
+the latest inspected failed/partial run may start its own read. Browsing back or
+refreshing history does not automatically retry cached failures; Alt+V explicitly
+retries. A changed phase/completion invalidates the cached log, so a running
+snapshot cannot hide a later terminal failure. Closing clears the cache and
+fences late replies. Copy failures have separate feedback and cannot overwrite
+history diagnostics.
 
 ## Data and semantics
 
@@ -179,6 +213,9 @@ A blank tray inspector alone does not establish whether history exists.
   Readability coverage includes catalog ordering across passive date headers,
   loaded/total counts, component summaries, status versus outcome, live duration
   without reads/focus changes, partial-history publication and run-local log errors.
+  Current-state/history separation, candidate metadata, automatic log queuing and
+  failure caching, plain-text bounded log rendering, readable/JSON/raw-log copies,
+  and the component's full-path pointer Copy route are also exercised.
   Replies use the generated protocol version, preventing a matching hardcoded
   test stub from concealing a production protocol mismatch.
 

@@ -101,6 +101,97 @@ function exitLabel(code) {
     return Object.prototype.hasOwnProperty.call(meanings, code) ? qsTr("%1 (%2)").arg(code).arg(meanings[code]) : String(code);
 }
 
+function shortVersion(value) {
+    if (!value) return qsTr("Unknown");
+    const match = /^\/nix\/store\/[a-z0-9]+-nixos-system-(.+)$/.exec(value);
+    return match ? match[1] : value;
+}
+
+function componentGroups(run) {
+    if (!run) return [];
+    const parts = run.components.map((part, index) => Object.assign({}, part, {componentIndex: index, runId: run.job.id}));
+    return [
+        {key: "failed", title: qsTr("Failed"), parts: parts.filter(part => !!part.error)},
+        {key: "changed", title: qsTr("Changed"), parts: parts.filter(part => part.changed && !part.error)},
+        {key: "unchanged", title: qsTr("Unchanged"), parts: parts.filter(part => !part.changed && !part.error)}
+    ].filter(group => group.parts.length > 0);
+}
+
+function componentCount(run) {
+    if (!run) return "";
+    const changed = run.components.filter(part => part.changed).length;
+    return (run.lane === "ai-tools" || run.lane === "ai-tools-stale"
+        ? qsTr("%1 of %2 tools changed") : qsTr("%1 of %2 components changed")).arg(changed).arg(run.components.length);
+}
+
+function componentSummary(part) {
+    return [part.name + " · " + label(part.phase) + " · " + (part.changed ? qsTr("Changed") : qsTr("Unchanged")),
+        qsTr("Before: %1").arg(part.before || qsTr("Unknown")), qsTr("After: %1").arg(part.after || qsTr("Unknown")),
+        part.error ? qsTr("Error: %1").arg(part.error) : ""].filter(Boolean).join("\n");
+}
+
+function absoluteTime(seconds) {
+    return validTime(seconds) ? new Date(seconds * 1000).toISOString() : qsTr("Not recorded");
+}
+
+function runSummary(run, nowMs) {
+    return [run.title, qsTr("Run: %1").arg(run.job.id),
+        qsTr("Lane: %1").arg(label(run.lane)), qsTr("Operation: %1").arg(label(run.job.operation)),
+        qsTr("Status / outcome: %1 / %2").arg(label(run.job.status)).arg(label(run.outcome)),
+        qsTr("Phase: %1").arg(label(run.job.phase)), qsTr("Started: %1").arg(absoluteTime(run.job.started_at)),
+        isRunning(run) ? qsTr("Still running") : qsTr("Finished: %1").arg(absoluteTime(run.job.finished_at)),
+        qsTr("Duration: %1").arg(durationLabel(run, nowMs)), qsTr("Exit code: %1").arg(exitLabel(run.job.exit_code)),
+        run.job.error ? qsTr("Error: %1").arg(run.job.error) : "",
+        run.components.length ? "\n" + componentCount(run) : "",
+        ...run.components.map(part => "\n" + componentSummary(part))].filter(Boolean).join("\n");
+}
+
+function logSource(run) {
+    return run && run.job.operation === "manual-rebuild" ? qsTr("Rebuild log file") : qsTr("Worker journal");
+}
+
+function logTone(line) {
+    return /\berror:/i.test(line) ? "error" : /\bwarning:/i.test(line) ? "warning" : "info";
+}
+
+function ageLabel(seconds, nowMs) {
+    if (!validTime(seconds) || seconds * 1000 > nowMs) return qsTr("Age unknown");
+    const minutes = Math.floor((nowMs - seconds * 1000) / 60000);
+    return minutes >= 1440 ? qsTr("%1 d").arg(Math.floor(minutes / 1440))
+        : minutes >= 60 ? qsTr("%1 h").arg(Math.floor(minutes / 60)) : qsTr("%1 min").arg(minutes);
+}
+
+function deferredCandidate(state) {
+    // The current snapshot's error describes a failed readiness read. Its
+    // placeholder ready=false lane must not masquerade as a known absence.
+    return state && state.available && !state.error && Array.isArray(state.lanes) ? state.lanes.find(lane => lane.name === "delayed") || null : null;
+}
+
+function laneOverview(state, name, nowMs) {
+    const job = state && state.available && Array.isArray(state.jobs) ? state.jobs.find(job => job.name === name) : null;
+    const candidate = name === "system" ? deferredCandidate(state) : null;
+    let status = qsTr("Not reported");
+    if (!state || !state.available) status = qsTr("Unavailable");
+    else if (job && job.status === "running") status = qsTr("Running · %1").arg(label(job.phase));
+    else if (job && (job.status === "failed" || job.status === "interrupted")) status = label(job.status);
+    else if (job && ["blocked", "stale", "queued"].includes(job.phase)) status = label(job.phase);
+    else if (candidate && candidate.ready) status = qsTr("Ready · deferred candidate");
+    // A terminal staging job is not proof that this system is still staged or unbooted.
+    else if (job && job.phase === "staged") status = qsTr("Idle · last run staged for boot");
+    else if (job && job.status === "completed") status = qsTr("Idle · last result: %1").arg(label(job.phase));
+    const stamp = job ? job.finished_at || job.started_at : null;
+    const timing = job ? (job.status === "running" ? qsTr("Started %1") : qsTr("Last worker run %1")).arg(timeLabel(stamp, nowMs)) : qsTr("Last check not reported");
+    return {name: name, title: label(name), status: status, timing: timing,
+        operation: job ? label(job.operation) : "", error: job && job.error ? job.error : ""};
+}
+
+function nowSummary(state, nowMs) {
+    return ["system", "ai-tools", "ai-tools-stale"].map(name => {
+        const lane = laneOverview(state, name, nowMs);
+        return lane.title + ": " + lane.status;
+    }).join(" · ");
+}
+
 function rowSubtitle(run, nowMs) {
     // Keep the useful change count ahead of metadata when narrow rows elide.
     return [changeSummary(run), timeLabel(run.job.started_at, nowMs), label(run.lane), label(run.outcome)].filter(Boolean).join(" · ");

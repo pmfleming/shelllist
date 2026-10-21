@@ -615,15 +615,22 @@ contract and Qt interaction coverage.
 ## Updates review
 
 Updates uses the shared ProviderChooserSurface and a real native Tray entry.
-Up/Down browse recorded runs; Enter/Right inspect without executing an update.
-Alt+V reads the selected run's bounded worker journal or private rebuild log; Alt+C copies its recorded
-summary and Alt+A returns to all recent runs. Read-only details use the shared
+Up/Down browse the pinned Now result and recorded runs; Enter/Right inspect
+without executing an update. Now is a separate current-state page, remains visible
+under history search, and is excluded from run counts. It never infers the booted
+system from an old run. Alt+V reads/refreshes the selected run's bounded worker
+journal or private rebuild log; inspecting a failed/partial run also requests its
+log automatically. Reads retain their run identity and cached failures require
+explicit retry, never a history-refresh loop. Alt+C copies a readable summary;
+More (Alt+M) offers separate JSON/raw-log copies. Component Copy commands retain
+full store paths even when display values are shortened. Alt+A returns to all
+recent runs. Read-only details use the shared
 scrolling fallback, not editable field stops. F5 only refreshes reads. Incoming
 runs preserve stable selection; malformed, stale or closed-view replies cannot
 replace published rows. Live notification deep links target a validated run ID;
 missing runs return to history with a notice, never open an unrelated run.
 Passive local-calendar date headers do not join result or field navigation;
-Up/Down still moves directly between runs in catalog order. Relative timestamps
+Up/Down still moves directly between Now and runs in catalog order. Relative timestamps
 and live duration update without requests, selection changes or focus movement.
 Partial-history warnings preserve readable rows; log loading/errors stay inside
 the selected run's log card and never replace the history empty-state reason.

@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Bar as Bar
 import Shelllist.Io as Io
+import Shelllist.Ui as Ui
+import "../../clipboard/ClipApi.js" as ClipApi
 import "../../bar/BarProtocol.generated.js" as Contract
 import "../../bar/UpdatePresentation.js" as Presentation
 import "../../qml/Shelllist/Ui/MaterialIcons.js" as Icons
@@ -19,7 +21,9 @@ DaemonTestCase {
             anchors.fill: parent
             property alias controller: controller
             property alias content: content
-            Bar.UpdateController { id: controller }
+            property alias barState: barState
+            Bar.BarController { id: barState; surfaceRegistry: null }
+            Bar.UpdateController { id: controller; barController: barState }
             Bar.UpdateContent { id: content; anchors.fill: parent; controller: controller }
         }
     }
@@ -41,13 +45,17 @@ DaemonTestCase {
         tryVerify(() => latest() !== undefined);
         return root;
     }
+    function focusFirstRun(root): void {
+        root.controller.selectedIndex = 1;
+        root.content.listItem.focusList();
+    }
     function test_browseInspectAndLogCommandNeverRunAnUpdate(): void {
         const root = fixture();
         compare(root.controller.backend.expectedVersion, Contract.version);
         compare(root.controller.backend.expectedProtocol, Contract.protocol);
         reply(latest(), [entry("run-1", "staged"), entry("run-2", "failed")]);
         tryCompare(root.controller, "hasSelection", true);
-        root.content.listItem.focusList();
+        focusFirstRun(root);
         keyClick(Qt.Key_Right);
         tryVerify(() => root.controller.detailsOpen && root.content.detailsNavigation.contentReady);
         keyClick(Qt.Key_Down);
@@ -65,7 +73,7 @@ DaemonTestCase {
         run.job.operation = "manual-rebuild";
         run.components = [{name: "NixOS system", before: "/nix/store/old-system", after: "/nix/store/new-system", changed: true, phase: "activated", error: null}];
         reply(latest(), [run]);
-        root.content.listItem.focusList();
+        focusFirstRun(root);
         keyClick(Qt.Key_Right);
         tryVerify(() => root.controller.detailsOpen && root.content.detailsNavigation.contentReady);
         keyClick(Qt.Key_V, Qt.AltModifier);
@@ -131,14 +139,14 @@ DaemonTestCase {
         ];
         reply(latest(), [run, entry("older", "staged")], null, true, null, 312);
         compare(root.controller.countLabel, "2 of 312 runs · read only");
-        tryCompare(root.content.listItem, "resultCount", 2);
+        tryCompare(root.content.listItem, "resultCount", 3);
         const row = findChild(root, "updateRun:changed");
         verify(row !== null);
         verify(row.accessibleName.includes("2 tools changed / 1 failed"));
         verify(row.accessibleName.includes("AI tools · Partial"));
         compare(findChild(root, "updateDate:changed").title, "Today");
         compare(findChild(root, "updateDate:older").title, "Older");
-        root.content.listItem.focusList();
+        focusFirstRun(root);
         keyClick(Qt.Key_Right);
         tryVerify(() => root.content.detailsNavigation.contentReady);
         const card = findChild(root, "updateRecordedOutcome");
@@ -157,7 +165,7 @@ DaemonTestCase {
         run.job.started_at = Math.floor(Date.now() / 1000) - 60;
         run.job.finished_at = null;
         reply(latest(), [run]);
-        root.content.listItem.focusList();
+        focusFirstRun(root);
         keyClick(Qt.Key_Right);
         tryVerify(() => root.content.detailsNavigation.contentReady);
         const card = findChild(root, "updateRecordedOutcome");
@@ -201,7 +209,7 @@ DaemonTestCase {
     function test_logLoadingAndFailuresStayWithTheirRun(): void {
         const root = fixture();
         reply(latest(), [entry("one", "failed"), entry("two", "staged")]);
-        root.content.listItem.focusList();
+        focusFirstRun(root);
         keyClick(Qt.Key_Right);
         tryVerify(() => root.content.detailsNavigation.contentReady);
         root.controller.errorText = "History read failed";
@@ -260,6 +268,222 @@ DaemonTestCase {
         const current = entry("current", "current");
         current.components = [{changed: false, phase: "activated", error: null}];
         compare(Presentation.changeSummary(current), "No component changes");
+    }
+    function logReply(request, text, truncated, error): void {
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(request.id, error ? null : {
+            protocol: Contract.protocol, version: Contract.version, ok: true,
+            data: {log: {run_id: request.params.run_id, text: text, truncated: !!truncated}}
+        }, error || "", request.route);
+    }
+    function logCalls(): var { return calls.filter(call => call.method === "updates.readLog"); }
+    function copyCalls(): var { return calls.filter(call => call.method === ClipApi.methods.selectionPublishText); }
+    function acknowledgeCopy(request): void {
+        Io.DaemonSessions.sessions["clip-daemon"].client.response(request.id, {
+            protocol: ClipApi.protocol, version: ClipApi.version, ok: true, data: {}
+        }, "", request.route);
+    }
+    function test_nowIsIndependentOfHistoryAndDoesNotClaimBootedState(): void {
+        const root = fixture();
+        const now = Date.now();
+        const created = Math.floor(now / 1000) - 3 * 86400;
+        root.barState.updates = {available: true, error: null, lanes: [{name: "delayed", ready: true,
+            revision: "revision-123", base_hash: "base-456", created_at: created, auto_apply: false, system: "/nix/store/candidate"}],
+            jobs: [{name: "system", operation: "check-delayed", status: "completed", phase: "ready", started_at: created, finished_at: created + 10, error: null},
+                {name: "ai-tools", operation: "ai-update", status: "running", phase: "building", started_at: created, finished_at: null, error: null}]};
+        reply(latest(), [entry("old-staged", "staged")]);
+        verify(root.controller.selectedIsOverview);
+        compare(root.controller.selectedRun, null);
+        compare(root.controller.entries.length, 1);
+        compare(root.controller.countLabel, "1 of 1 runs · read only");
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        const system = findChild(root, "updateLane:system");
+        const tools = findChild(root, "updateLane:ai-tools");
+        const candidate = findChild(root, "updateDeferredCandidate");
+        compare(system.lane.status, "Ready · deferred candidate");
+        compare(tools.lane.status, "Running · Building");
+        compare(findChild(root, "updateLane:ai-tools-stale").lane.status, "Not reported");
+        verify(system.lane.timing.startsWith("Last worker run"));
+        verify(candidate.visible);
+        compare(findChild(root, "updateCandidate:revision").modelData.value, "revision-123");
+        compare(findChild(root, "updateCandidate:base").modelData.value, "base-456");
+        compare(findChild(root, "updateCandidate:application").modelData.value, "Approval required");
+        verify(findChild(root, "updateCandidate:waiting").modelData.value.startsWith("3 d"));
+        root.barState.updates = Object.assign({}, root.barState.updates, {error: "Readiness is unreadable"});
+        compare(findChild(root, "updateCandidateStatus").text, "Candidate status unavailable");
+        compare(tools.lane.status, "Running · Building");
+        root.barState.updates = Object.assign({}, root.barState.updates, {error: null,
+            lanes: [Object.assign({}, root.barState.updates.lanes[0], {auto_apply: true})]});
+        compare(findChild(root, "updateCandidate:application").modelData.value, "Automatic");
+        compare(logCalls().length, 0);
+        keyClick(Qt.Key_Tab);
+        verify(root.content.detailsNavigation.browsing);
+        compare(root.content.detailsNavigation.highlightedControl, null);
+        keyClick(Qt.Key_Down);
+        compare(root.controller.selectedRun.job.id, "old-staged");
+        verify(!candidate.visible);
+        compare(root.controller.selectedRun.outcome, "staged");
+        root.barState.updates = {available: true, error: null, lanes: [{name: "delayed", ready: false}], jobs: []};
+        compare(root.controller.selectedRun.outcome, "staged");
+        keyClick(Qt.Key_Up);
+        verify(root.controller.selectedIsOverview);
+        compare(system.lane.status, "Not reported");
+        verify(!system.lane.status.includes("staged"));
+        root.controller.filterText = "nothing matches";
+        root.controller.refresh();
+        reply(latest(), []);
+        compare(root.controller.filteredResults.length, 1);
+        verify(root.controller.selectedIsOverview);
+        compare(root.controller.countLabel, "0 of 0 matching runs · read only");
+        verify(calls.every(call => ["updates.queryHistory", "bar.snapshot"].includes(call.method)));
+    }
+    function test_autoLogsQueueTheLatestSelectionAndCacheFailuresWithoutRetry(): void {
+        const root = fixture();
+        const runs = [entry("failed-auto", "failed"), entry("partial-auto", "partial"), entry("good-auto", "activated")];
+        reply(latest(), runs);
+        compare(logCalls().length, 0);
+        focusFirstRun(root);
+        keyClick(Qt.Key_Right);
+        tryCompare(root.controller, "selectedLogLoading", true);
+        compare(logCalls().length, 1);
+        const first = logCalls()[0];
+        keyClick(Qt.Key_Down);
+        compare(root.controller.selectedRun.job.id, "partial-auto");
+        verify(root.controller.selectedLogQueued);
+        compare(findChild(root, "updateRunLogText").text, "Waiting to read log…");
+        compare(logCalls().length, 1);
+        logReply(first, "First run log", false);
+        tryCompare(root.controller, "selectedLogLoading", true);
+        compare(logCalls().length, 2);
+        compare(logCalls()[1].params.run_id, "partial-auto");
+        compare(root.controller.selectedLog, "");
+        logReply(logCalls()[1], "", false, "Not permitted");
+        compare(root.controller.selectedLogError, "Not permitted");
+        keyClick(Qt.Key_Up);
+        compare(root.controller.selectedLog, "First run log");
+        keyClick(Qt.Key_Down);
+        root.controller.refresh();
+        reply(latest(), runs);
+        wait(30);
+        compare(root.controller.selectedLogError, "Not permitted");
+        compare(logCalls().length, 2);
+        keyClick(Qt.Key_V, Qt.AltModifier);
+        tryCompare(root.controller, "selectedLogLoading", true);
+        const text = "ordinary <b>literal</b>\nerror: build failed\nwarning: retry later";
+        logReply(logCalls()[2], text, true);
+        compare(root.controller.selectedLog, text);
+        compare(findChild(root, "updateLogSource").text, "Worker journal");
+        compare(findChild(root, "updateLogLine:0").textFormat, Text.PlainText);
+        compare(findChild(root, "updateLogLine:1").font.family, "monospace");
+        compare(findChild(root, "updateLogLine:1").color, Ui.Theme.danger);
+        compare(findChild(root, "updateLogLine:2").color, Ui.Theme.warning);
+        verify(findChild(root, "updateLogLimit").text.includes("last 100 lines"));
+        keyClick(Qt.Key_Down);
+        wait(30);
+        compare(logCalls().length, 3);
+        keyClick(Qt.Key_Up);
+        compare(root.controller.selectedLog, text);
+        keyClick(Qt.Key_V, Qt.AltModifier);
+        const late = logCalls().slice(-1)[0];
+        root.controller.deactivateUi();
+        logReply(late, "Too late", false);
+        compare(root.controller.logCache.length, 0);
+    }
+    function test_runningLogIsInvalidatedAtCompletionAndCacheIsBounded(): void {
+        const root = fixture();
+        const runs = Array.from({length: 10}, (_, index) => entry("cache-" + index, "activated"));
+        runs[0].outcome = "running";
+        runs[0].job.status = "running";
+        runs[0].job.phase = "building";
+        runs[0].job.finished_at = null;
+        reply(latest(), runs);
+        focusFirstRun(root);
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        keyClick(Qt.Key_V, Qt.AltModifier);
+        logReply(logCalls()[0], "Still building", false);
+        compare(root.controller.selectedLog, "Still building");
+        // A transport reply supplies a new immutable snapshot, not an in-place
+        // mutation of the previously published JavaScript fixture.
+        runs[0] = Object.assign({}, runs[0], {outcome: "failed",
+            job: Object.assign({}, runs[0].job, {status: "failed", finished_at: 200})});
+        root.controller.refresh();
+        reply(latest(), runs);
+        tryVerify(() => logCalls().length === 2);
+        compare(root.controller.selectedLog, "");
+        logReply(logCalls()[1], "error: terminal failure", false);
+        compare(root.controller.selectedLog, "error: terminal failure");
+        for (let index = 1; index < runs.length; ++index) {
+            root.controller.selectedIndex = index + 1;
+            verify(root.controller.perform("logs"));
+            logReply(logCalls().slice(-1)[0], "Log " + index, false);
+        }
+        compare(root.controller.logCache.length, 8);
+        verify(!root.controller.logCache.some(log => log.id === "cache-0"));
+    }
+    function test_componentGroupsAndCopiesPreserveFullVersions(): void {
+        const root = fixture();
+        const run = entry("copy-run", "partial");
+        run.job.operation = "manual-rebuild";
+        const before = "/nix/store/0123456789abcdef-nixos-system-host-26.05.1";
+        const after = "/nix/store/fedcba9876543210-nixos-system-host-26.05.2";
+        run.components = [
+            {name: "NixOS", phase: "failed", changed: true, before: before, after: after, error: "Follow-up failed"},
+            {name: "Changed", phase: "activated", changed: true, before: "1", after: "2", error: null},
+            {name: "Unchanged", phase: "current", changed: false, before: "3", after: "3", error: null}
+        ];
+        reply(latest(), [run]);
+        focusFirstRun(root);
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady && logCalls().length === 1);
+        const rawLog = Array.from({length: 105}, (_, index) => index === 104 ? "error: raw log" : "line " + index).join("\n");
+        logReply(logCalls()[0], rawLog, false);
+        compare(findChild(root, "updateLogSource").text, "Rebuild log file");
+        compare(findChild(root, "updateLogLine:0").text, "line 5");
+        compare(findChild(root, "updateLogLine:99").text, "error: raw log");
+        compare(findChild(root, "updateLogLine:100"), null);
+        verify(findChild(root, "updateLogLimit").text.startsWith("Log truncated"));
+        compare(findChild(root, "updateComponentCount").text, "2 of 3 components changed");
+        compare(findChild(root, "updateComponentGroup:failed").title, "Failed · 1");
+        compare(findChild(root, "updateComponentGroup:changed").title, "Changed · 1");
+        compare(findChild(root, "updateComponentGroup:unchanged").title, "Unchanged · 1");
+        compare(findChild(root, "updateComponent:NixOS").subtitle, "Failed · Changed before failure");
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        tryVerify(() => copyCalls().length === 1);
+        const summary = copyCalls()[0].params.text;
+        verify(summary.startsWith(run.title + "\nRun: copy-run"));
+        verify(summary.includes("Status / outcome:"));
+        verify(summary.includes(before) && summary.includes(after));
+        verify(summary.includes("Follow-up failed"));
+        acknowledgeCopy(copyCalls()[0]);
+        verify(root.controller.triggerDetailAction("copy-json"));
+        const jsonCopy = copyCalls()[1];
+        compare(JSON.parse(jsonCopy.params.text).components[0].after, after);
+        acknowledgeCopy(jsonCopy);
+        verify(root.controller.triggerDetailAction("copy-log"));
+        compare(copyCalls()[2].params.text, rawLog);
+        acknowledgeCopy(copyCalls()[2]);
+        const button = findChild(root, "updateCopyComponent:NixOS");
+        const scroll = findChild(root, "updateDetailsScroll");
+        compare(findChild(root, "updateComponent:NixOS").modelData.componentIndex, 0);
+        verify(!root.controller.copyComponent("another-run", 0));
+        scroll.revealItem(button);
+        wait(50);
+        verify(button.visible && button.enabled);
+        verify(button.mapToItem(scroll, 0, 0).y >= 0 && button.mapToItem(scroll, 0, button.height).y <= scroll.height, "copy command is in the viewport");
+        mouseClick(button);
+        tryVerify(() => copyCalls().length === 4);
+        verify(copyCalls()[3].params.text.includes(before));
+        verify(copyCalls()[3].params.text.includes(after));
+        root.controller.errorText = "History error";
+        Io.DaemonSessions.sessions["clip-daemon"].client.response(copyCalls()[3].id, null, "Clipboard unavailable", copyCalls()[3].route);
+        compare(root.controller.copyError, "Clipboard unavailable");
+        compare(root.controller.errorText, "History error");
+        compare(Presentation.shortVersion(before), "host-26.05.1");
+        compare(Presentation.shortVersion("/nix/store/abc-other-package"), "/nix/store/abc-other-package");
+        compare(Presentation.shortVersion(null), "Unknown");
+        verify(calls.every(call => ["updates.queryHistory", "updates.readLog", "bar.snapshot", ClipApi.methods.selectionPublishText].includes(call.method)));
     }
     function test_exactRunAndCloseFenceTheRead(): void {
         const root = fixture();

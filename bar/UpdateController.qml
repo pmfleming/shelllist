@@ -9,6 +9,7 @@ Ui.ProviderChooserController {
     id: controller
     property BarController barController: null
     property string errorText: ""
+    property string copyError: ""
     property string warningText: ""
     property string warningBrief: ""
     property int total: 0
@@ -26,13 +27,20 @@ Ui.ProviderChooserController {
     property bool appendRequest: false
     property string logRequest: ""
     property string logRun: ""
-    property string logText: ""
-    property string logError: ""
+    property string logVersion: ""
+    // Invocation-local, bounded cache. Failed reads are cached too: browsing or
+    // history refresh must not create an automatic retry loop.
+    property var logCache: []
+    readonly property var selectedLogRecord: selectedRun ? logCache.find(log => log.id === selectedRun.job.id && log.version === runLogVersion(selectedRun)) || null : null
     readonly property bool selectedLogLoading: !!selectedRun && selectedRun.job.id === logRun && !!logRequest
-    readonly property string selectedLogError: selectedRun && selectedRun.job.id === logRun ? logError : ""
-    readonly property string selectedLog: selectedRun && selectedRun.job.id === logRun ? logText : ""
+    readonly property bool selectedLogQueued: uiActive && detailsOpen && !!selectedRun && !selectedLogRecord && !!logRequest
+        && selectedRun.job.id !== logRun && ["failed", "partial"].includes(selectedRun.outcome)
+    readonly property string selectedLogError: selectedLogRecord ? selectedLogRecord.error : ""
+    readonly property string selectedLog: selectedLogRecord ? selectedLogRecord.text : ""
+    readonly property bool selectedIsOverview: !!selectedResult && selectedResult.metadata.overview === true
+    readonly property var currentState: barController ? barController.updates : null
     property alias backend: backend
-    readonly property var selectedRun: selectedResult ? selectedResult.metadata.run : null
+    readonly property var selectedRun: selectedResult && selectedResult.metadata.run ? selectedResult.metadata.run : null
     providerRankedResults: true
     closeDetailsWithoutSelection: true
     sharedScreenshotEnabled: true
@@ -54,9 +62,14 @@ Ui.ProviderChooserController {
     function activateUi(workspaceId: string): void {
         activateUiState(workspaceId);
         nowMs = Date.now();
+        publishResults();
         refresh();
     }
-    onUiActiveChanged: if (!uiActive) { ownedRequest = ""; logRequest = ""; loading = false; }
+    onUiActiveChanged: if (!uiActive) { ownedRequest = ""; logRequest = ""; loading = false; logCache = []; }
+    onSelectedRunChanged: Qt.callLater(autoReadLog)
+    onDetailsOpenChanged: Qt.callLater(autoReadLog)
+    onLogRequestChanged: Qt.callLater(autoReadLog)
+    onNavigationBlockedChanged: if (!navigationBlocked) Qt.callLater(autoReadLog)
     onFilterTextChanged: { runId = ""; ownedRequest = ""; loading = false; }
     Timer {
         interval: controller.selectedRun && Presentation.isRunning(controller.selectedRun) && controller.detailsOpen ? 1000 : 30000
@@ -101,11 +114,12 @@ Ui.ProviderChooserController {
         if (id === logRequest && logRequest) {
             logRequest = "";
             const failure = backend.responseError(envelope, transportError, qsTr("Update log unavailable"));
-            if (failure) { logError = failure; return; }
+            if (failure) { cacheLog("", failure, false); return; }
             const log = envelope.data ? envelope.data.log : null;
-            if (!log || log.run_id !== logRun || typeof log.text !== "string" || typeof log.truncated !== "boolean") { logError = qsTr("Invalid update log reply"); return; }
-            logText = log.text || qsTr("No readable log entries for this run. Child-build output may be recorded separately.");
-            if (log.truncated) logText += "\n" + qsTr("Output truncated to 32 KiB.");
+            if (!log || log.run_id !== logRun || typeof log.text !== "string" || log.text.length > 32768 || typeof log.truncated !== "boolean") {
+                cacheLog("", qsTr("Invalid update log reply"), false); return;
+            }
+            cacheLog(log.text, "", log.truncated);
             return;
         }
         if (!ownedRequest || id !== ownedRequest) return;
@@ -156,7 +170,14 @@ Ui.ProviderChooserController {
         // so do not invent an unreadable-record count by splitting the string.
         warningText = page.error || (missingRun ? qsTr("The requested run is no longer retained. Showing recent updates.") : "");
         warningBrief = page.error ? qsTr("Some update history could not be read") : warningText;
-        replaceProviderResults(entries.map(function(entry, index) {
+        publishResults();
+        if (runId && entries.length) { selectedIndex = filteredResults.findIndex(result => result.id === runId); openDetails(); }
+    }
+    function publishResults(): void {
+        const overview = provider.makeResult({id: "_now", title: qsTr("Now"), subtitle: qsTr("Current worker status and deferred candidate"),
+            score: 1, icon: "today", primaryActionId: "inspect", metadata: {overview: true},
+            actions: [{id: "inspect", label: qsTr("Review current status"), closePolicy: "keep-open", presentation: {group: "primary"}}]});
+        replaceProviderResults([overview].concat(entries.map(function(entry, index) {
             // The shared store uses score even for provider-ranked results.
             // Preserve the catalog's chronology, not alphabetical title order.
             return provider.makeResult({id: entry.job.id, title: entry.title, score: -index,
@@ -164,11 +185,40 @@ Ui.ProviderChooserController {
                 icon: Presentation.outcomeIcon(entry.outcome),
                 primaryActionId: "inspect", metadata: {run: entry},
                 actions: [{id: "inspect", label: qsTr("Review run"), closePolicy: "keep-open", presentation: {group: "primary"}},
-                    {id: "logs", label: qsTr("Read run log"), accessKey: "V", closePolicy: "keep-open", presentation: {group: "toolbar"}},
-                    {id: "copy", label: qsTr("Copy run summary"), accessKey: "C", closePolicy: "keep-open", presentation: {group: "toolbar"}},
-                    {id: "all", label: qsTr("Show all recent updates"), accessKey: "A", closePolicy: "keep-open", presentation: {group: "toolbar"}}]});
-        }), false);
-        if (runId && entries.length) { selectedIndex = 0; openDetails(); }
+                    {id: "logs", label: qsTr("Read run log"), icon: "find_in_page", accessKey: "V", closePolicy: "keep-open", presentation: {group: "toolbar"}},
+                    {id: "copy", label: qsTr("Copy run summary"), icon: "content_copy", accessKey: "C", closePolicy: "keep-open", presentation: {group: "toolbar"}},
+                    {id: "copy-json", label: qsTr("Copy run JSON"), icon: "article", closePolicy: "keep-open", presentation: {group: "overflow"}},
+                    {id: "copy-log", label: qsTr("Copy run log"), icon: "content_copy", closePolicy: "keep-open", presentation: {group: "overflow"}},
+                    {id: "all", label: qsTr("Show all recent updates"), icon: "history", accessKey: "A", closePolicy: "keep-open", presentation: {group: "toolbar"}}]});
+        })), false);
+    }
+    function runLogVersion(run: var): string {
+        return JSON.stringify([run.outcome, run.job.status, run.job.phase, run.job.finished_at, run.job.exit_code, run.job.error]);
+    }
+    function cacheLog(text: string, error: string, truncated: bool): void {
+        logCache = logCache.filter(log => log.id !== logRun).slice(-7).concat([{id: logRun, version: logVersion, text: text, error: error, truncated: truncated}]);
+    }
+    function readLog(run: var): bool {
+        if (!uiActive || !run || logRequest) return false;
+        logRun = run.job.id;
+        logVersion = runLogVersion(run);
+        logCache = logCache.filter(log => log.id !== logRun);
+        logRequest = backend.nextRequestId("update-log");
+        const sent = backend.call(logRequest, "updates.readLog", {run_id: logRun});
+        if (!sent && logRequest) { logRequest = ""; cacheLog("", qsTr("Update log unavailable"), false); }
+        return sent;
+    }
+    function autoReadLog(): void {
+        if (!uiActive || !detailsOpen || navigationBlocked || logRequest || !selectedRun || selectedLogRecord) return;
+        if (["failed", "partial"].includes(selectedRun.outcome)) readLog(selectedRun);
+    }
+    function copyComponent(id: string, index: int): bool {
+        if (!uiActive || navigationBlocked || !selectedRun || selectedRun.job.id !== id || index < 0 || index >= selectedRun.components.length) return false;
+        return copyText(Presentation.componentSummary(selectedRun.components[index]), qsTr("Component versions copied"));
+    }
+    function copyText(text: string, message: string): bool {
+        copyError = "";
+        return clipboardPublisher.publishText(text, message);
     }
     function timeLabel(seconds: var): string {
         return Presentation.timeLabel(seconds, nowMs);
@@ -178,24 +228,18 @@ Ui.ProviderChooserController {
     function perform(actionId: string): bool {
         if (!uiActive || navigationBlocked) return false;
         if (actionId === "all") { runId = ""; missingRun = false; filterText = ""; refresh(); return true; }
+        if (actionId === "inspect" && hasSelection) { openDetails(); return true; }
         if (!selectedRun) return false;
-        if (actionId === "inspect") { openDetails(); return true; }
-        if (actionId === "logs") {
-            if (logRequest) return false;
-            logRun = selectedRun.job.id;
-            logText = "";
-            logError = "";
-            logRequest = backend.nextRequestId("update-log");
-            const sent = backend.call(logRequest, "updates.readLog", {run_id: logRun});
-            if (!sent && logRequest) { logRequest = ""; logError = qsTr("Update log unavailable"); }
-            return sent;
-        }
-        if (actionId === "copy") return clipboardPublisher.publishText(JSON.stringify(selectedRun, null, 2), qsTr("Run summary copied"));
+        if (actionId === "logs") return readLog(selectedRun);
+        if (actionId === "copy") return copyText(Presentation.runSummary(selectedRun, nowMs), qsTr("Run summary copied"));
+        if (actionId === "copy-json") return copyText(JSON.stringify(selectedRun, null, 2), qsTr("Run JSON copied"));
+        if (actionId === "copy-log" && selectedLogRecord && !selectedLogError && selectedLog && !selectedLogLoading)
+            return copyText(selectedLog, qsTr("Run log copied"));
         return false;
     }
     Io.ClipboardPublisher {
         id: clipboardPublisher
-        onFinished: function(succeeded, message) { if (!succeeded) controller.errorText = message; }
+        onFinished: function(succeeded, message) { controller.copyError = succeeded ? "" : message; }
     }
     Io.BarDaemonBackend {
         id: backend
@@ -210,7 +254,7 @@ Ui.ProviderChooserController {
         onResponseReceived: function(id, envelope, transportError) { controller.finish(id, envelope, transportError); }
         onSendFailed: function(id, message) { controller.finish(id, null, message); }
         onTransportFailed: function(message, ids) {
-            if (controller.logRequest) controller.logError = message;
+            if (controller.logRequest) controller.cacheLog("", message, false);
             if (controller.ownedRequest) controller.errorText = message;
             controller.ownedRequest = "";
             controller.logRequest = "";
