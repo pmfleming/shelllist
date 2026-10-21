@@ -4,6 +4,7 @@ import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "BarProtocol.generated.js" as Contract
 import "UpdatePresentation.js" as Presentation
+import "UpdateOverviewValidation.js" as OverviewValidation
 
 Ui.ProviderChooserController {
     id: controller
@@ -17,6 +18,11 @@ Ui.ProviderChooserController {
     readonly property string countLabel: filterText.trim() ? qsTr("%1 of %2 matching runs · read only").arg(entries.length).arg(total)
         : qsTr("%1 of %2 runs · read only").arg(entries.length).arg(total)
     property string coverage: ""
+    property var overview: null
+    property string overviewRequest: ""
+    property bool overviewLoading: false
+    property bool overviewRefreshPending: false
+    property string overviewError: ""
     property bool available: false
     property bool loading: false
     property string cursor: ""
@@ -65,7 +71,7 @@ Ui.ProviderChooserController {
         publishResults();
         refresh();
     }
-    onUiActiveChanged: if (!uiActive) { ownedRequest = ""; logRequest = ""; loading = false; logCache = []; }
+    onUiActiveChanged: if (!uiActive) { ownedRequest = ""; overviewRequest = ""; overviewLoading = false; overviewRefreshPending = false; logRequest = ""; loading = false; logCache = []; }
     onSelectedRunChanged: Qt.callLater(autoReadLog)
     onDetailsOpenChanged: Qt.callLater(autoReadLog)
     onLogRequestChanged: Qt.callLater(autoReadLog)
@@ -85,7 +91,19 @@ Ui.ProviderChooserController {
         detailsOpen = false;
         if (uiActive) refresh();
     }
-    function refresh(): void { requestPage(false); }
+    function refresh(): void { requestPage(false); requestOverview(); }
+    function requestOverview(): void {
+        if (!uiActive || !backend.ready) return;
+        if (overviewRequest) { overviewRefreshPending = true; return; }
+        overviewRefreshPending = false;
+        overviewRequest = backend.nextRequestId("update-overview");
+        overviewLoading = true;
+        overviewError = "";
+        if (!backend.call(overviewRequest, "updates.getOverview", {})) overviewLoading = false;
+    }
+    function reviewIssue(id: string): void {
+        if (uiActive && !navigationBlocked) openRun(id);
+    }
     function loadMore(): void { if (cursor && !loading) requestPage(true); }
     function requestPage(append: bool): void {
         if (!uiActive || !backend.ready) return;
@@ -106,11 +124,30 @@ Ui.ProviderChooserController {
             && time(entry.job.started_at) && (entry.job.finished_at === null || time(entry.job.finished_at))
             && (entry.job.exit_code === null || Number.isSafeInteger(entry.job.exit_code))
             && optionalText(entry.job.error) && Array.isArray(entry.components) && entry.components.length <= 32
+            && (entry.failed_stage === undefined || optionalText(entry.failed_stage))
+            && (entry.deployed === undefined || entry.deployed === null || typeof entry.deployed === "boolean")
+            && (entry.issues === undefined || (Array.isArray(entry.issues) && entry.issues.length <= 33
+                && entry.issues.every(issue => !!issue && (issue.component === null || (Number.isSafeInteger(issue.component) && issue.component >= 0 && issue.component < entry.components.length))
+                    && time(issue.failed_at) && (issue.recovered_at === null || (time(issue.recovered_at) && issue.recovered_at > issue.failed_at))
+                    && (issue.recovered_run_id === null || /^[A-Za-z0-9][A-Za-z0-9-]{0,159}$/.test(issue.recovered_run_id))
+                    && (issue.recovered_at === null) === (issue.recovered_run_id === null))))
             && entry.components.every(part => !!part && typeof part.name === "string" && typeof part.phase === "string"
-                && typeof part.changed === "boolean" && optionalText(part.before) && optionalText(part.after) && optionalText(part.error));
+                && typeof part.changed === "boolean" && optionalText(part.before) && optionalText(part.after) && optionalText(part.error)
+                && (part.incident === undefined || part.incident === null || (typeof part.incident === "string" && part.incident.trim().length > 0 && part.incident.length <= 2048 && !/[\u0000-\u001f\u007f]/.test(part.incident))));
     }
     function finish(id: string, envelope: var, transportError: string): void {
         if (!uiActive) return;
+        if (id === overviewRequest && overviewRequest) {
+            overviewRequest = "";
+            overviewLoading = false;
+            if (overviewRefreshPending) { overviewRefreshPending = false; Qt.callLater(requestOverview); }
+            overviewError = backend.responseError(envelope, transportError, qsTr("Update overview unavailable"));
+            if (overviewError) return;
+            const value = envelope.data ? envelope.data.overview : null;
+            if (!OverviewValidation.valid(value)) { overviewError = qsTr("Invalid update overview reply"); return; }
+            overview = value;
+            return;
+        }
         if (id === logRequest && logRequest) {
             logRequest = "";
             const failure = backend.responseError(envelope, transportError, qsTr("Update log unavailable"));
@@ -256,6 +293,10 @@ Ui.ProviderChooserController {
         onTransportFailed: function(message, ids) {
             if (controller.logRequest) controller.cacheLog("", message, false);
             if (controller.ownedRequest) controller.errorText = message;
+            if (controller.overviewRequest) controller.overviewError = message;
+            controller.overviewRequest = "";
+            controller.overviewLoading = false;
+            controller.overviewRefreshPending = false;
             controller.ownedRequest = "";
             controller.logRequest = "";
             controller.loading = false;

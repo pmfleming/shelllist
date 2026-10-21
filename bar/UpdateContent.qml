@@ -26,6 +26,11 @@ Ui.ProviderChooserSurface {
         briefText: qsTr("Could not copy update details")
         tone: "error"
     }
+    Ui.FeedbackSource {
+        text: content.controller.selectedIsOverview ? content.controller.overviewError || (content.controller.overview ? content.controller.overview.error || "" : "") : ""
+        briefText: qsTr("Worker overview unavailable")
+        tone: "error"
+    }
     listComponent: Ui.ChooserListPane {
         id: pane
         chooserController: content.controller
@@ -136,6 +141,8 @@ Ui.ProviderChooserSurface {
                         return run ? [
                             {label: qsTr("Status · outcome"), value: Presentation.label(run.job.status) + " · " + Presentation.label(run.outcome)},
                             {label: qsTr("Phase"), value: Presentation.label(run.job.phase)},
+                            ...(run.failed_stage ? [{label: qsTr("Failed stage"), value: Presentation.label(run.failed_stage)}] : []),
+                            ...(run.job.operation === "manual-rebuild" ? [{label: qsTr("Deployment recorded"), value: run.deployed === true ? qsTr("Yes") : run.deployed === false ? qsTr("No") : qsTr("Not recorded")}] : []),
                             {label: qsTr("Started"), value: content.controller.timeLabel(run.job.started_at)},
                             {label: qsTr("Duration"), value: Presentation.durationLabel(run, content.controller.nowMs)},
                             ...(!Presentation.isRunning(run) && run.job.finished_at !== null ? [{label: qsTr("Finished"), value: content.controller.timeLabel(run.job.finished_at)}] : []),
@@ -145,6 +152,25 @@ Ui.ProviderChooserSurface {
                     }
                 }
                 UpdateComponents { controller: content.controller }
+                Ui.DetailColumnCard {
+                    property bool informationOnly: true
+                    title: qsTr("Failure and recovery")
+                    visible: !!content.controller.selectedRun && !!content.controller.selectedRun.issues && content.controller.selectedRun.issues.length > 0
+                    Repeater {
+                        model: content.controller.selectedRun ? content.controller.selectedRun.issues || [] : []
+                        Ui.FieldRow {
+                            id: recoveryRow
+                            required property var modelData
+                            label: modelData.component === null ? qsTr("Run") : content.controller.selectedRun.components[modelData.component].name
+                            Ui.ThemeText {
+                                Layout.fillWidth: true
+                                textFormat: Text.PlainText
+                                wrapMode: Text.Wrap
+                                text: Presentation.issueLabel(recoveryRow.modelData, content.controller.nowMs)
+                            }
+                        }
+                    }
+                }
                 Ui.DetailColumnCard {
                     property bool informationOnly: true
                     title: qsTr("Diagnostics")

@@ -30,6 +30,8 @@ DaemonTestCase {
         id: trayFactory
         TrayFixture.SystemTrayItem { hasMenu: true; menu: QtObject {} }
     }
+    Component { id: residentFactory; Bar.BarController { surfaceRegistry: null } }
+    Component { id: lateTrayFactory; Bar.SystemChooserController { kind: "tray" } }
     property int previousScheme
     function init(): void { calls = []; failOnWarning(/.*/); previousScheme = Ui.Theme.previewColorScheme; }
     function cleanup(): void { clientReady = true; TrayFixture.SystemTray.items.values = []; Quickshell.themeIcons = {}; Ui.Theme.previewColorScheme = previousScheme; }
@@ -68,6 +70,21 @@ DaemonTestCase {
         verify(root.desktop.triggerModuleAction("audio-mute"));
         compare(calls.length, 2);
         compare(calls[1].method, BarApi.methods.audioSetMuted);
+    }
+    function test_residentBarCollectsTrayItemsBeforeTheChooserExists(): void {
+        const resident = createTemporaryObject(residentFactory, testCase);
+        const updates = createTemporaryObject(trayFactory, testCase, {id: "shelllist-updates", title: "Shelllist Updates"});
+        TrayFixture.SystemTray.items.values = [updates];
+        compare(resident.trayItems.length, 1);
+        compare(resident.trayItems[0], updates);
+        const chooser = createTemporaryObject(lateTrayFactory, testCase, {barController: resident});
+        compare(chooser.sourceEntries.length, 1);
+        chooser.activateUi("");
+        compare(chooser.filteredResults[0].id, "shelllist-updates");
+        compare(updates.activationCount, 0);
+        chooser.deactivateUi();
+        TrayFixture.SystemTray.items.values = [];
+        compare(resident.trayItems.length, 0);
     }
     function test_trayCommandsKeepLiveIdentityAndInvocationGuards(): void {
         const root = fixture();

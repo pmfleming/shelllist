@@ -9,15 +9,18 @@ shelllist updates open
 shelllist updates run RUN_ID
 ```
 
-The existing `update-logs` global shortcut now opens this viewer. The application
-is lazy-loaded and shares Shelllist's chooser/navigation components. A pinned
+Home Manager binds **Super+U** directly to Updates (`updatesShortcut`; set it to
+`null` to disable). The existing **Super+Shift+U** / `update-logs` shortcut also
+opens this viewer. The application is lazy-loaded and shares Shelllist's
+chooser/navigation components; tray discovery is resident, not delayed until
+someone first opens the Tray chooser. A pinned
 **Now** result opens the current-state inspector; the remaining results are runs.
 Enter/Right inspects; arrows browse without executing updates. Alt+V reads or
 refreshes the run's log (worker journal or private rebuild log); failed/partial
 runs also load it automatically when inspected. Alt+C copies a readable bug-report
 summary through the clipboard daemon. **Copy run JSON** and **Copy run log** are
 separate commands under More (Alt+M). Alt+A returns from a deep link to all recent
-runs. F5 refreshes history reads only. Pages
+runs. F5 refreshes history and overview reads only. Pages
 append on scroll; Load more is also available. No Apply, Retry, Reboot, Approve,
 Rollback or updater shutdown action is exposed.
 
@@ -39,15 +42,20 @@ unreadable-record count. Log reads have their own loading/error state inside the
 Run log card and cannot replace history feedback or another run's log.
 
 **Now** stays above history even during search or history failure, and is excluded
-from run counts. It uses only the live `barController.updates` snapshot, never a
-historical run as proof of current deployment. System, AI tools and stale-check
-cards show the latest worker state/phase and observation time. Missing jobs stay
-“Not reported”, not fabricated idle/success. A last worker run is not necessarily
-a successful check; authoritative last-check times still need backend support.
+from run counts. Live job/candidate cards use `barController.updates`; current
+system/baseline/tool/schedule details use `updates.getOverview`, backed by the
+installed worker's read-only status report. Historical runs are never proof of
+current deployment. Missing jobs stay “Not reported”, not fabricated idle/success.
+A last worker run remains distinct from an authoritative successful-check time.
 The deferred candidate card shows age, automatic/manual-approval policy, revision,
-base hash and system path. A completed staging job is labelled as a **last run**
-observation, not proof that a reboot is still pending. Comparing booted/current/
-staged generations, schedules and installed tool inventory remains future work.
+base hash and system path. The overview separately reports booted/active/profile
+systems, validated boot staging and its known age, baseline validity, installed
+tool versions and successful checks, and systemd's actual next timer timestamps.
+Unknown evidence stays unknown; a pending transaction cannot claim completed
+staging. Older workers may lack system check/staging timestamps. Overview errors
+have separate feedback and cannot replace history or logs. Transport/validation
+failures retain the last good overview; worker-declared missing evidence stays
+unknown.
 
 Components use shared read-only label/value rows grouped into Failed, Changed and
 Unchanged, with counts. Failures take precedence in grouping; a component that
@@ -84,15 +92,16 @@ History covers **worker-managed system/AI-tool jobs and the existing manual
 `history.jsonl` and live `.run.json` markers. `BAR_DAEMON_REBUILD_STATE_DIR` can
 select another producer directory. Reports stay private; nothing is copied into
 root-owned update state. A rebuild that activated a system but failed during a
-follow-up step is a partial outcome, not a claim that activation failed.
+follow-up step is a partial outcome, not a claim that activation failed. Structured
+`failed_stage` and `deployed` fields preserve that distinction in details and copies.
 Terminal publication wins over a not-yet-removed running marker; abandoned markers
 remain completion-unknown until the producer supplies its final report.
 
 Direct `nixos-rebuild` calls outside this reporting wrapper, control-only
 rollback/resume commands and unrecorded operations do not acquire fabricated
 history. Existing recorded manual runs can be imported, but old successful runs
-never trigger a notification backlog. Detailed system generation/baseline diagnostics remain
-available through `update-worker status --json`. Missing, unreadable and invalid
+never trigger a notification backlog. Full raw system generation/baseline diagnostics
+remain available through `update-worker status --json`. Missing, unreadable and invalid
 records are explicit, not an empty “everything current” result.
 
 The producer retains up to 1,000 completed/abandoned records for 90 days and
@@ -100,8 +109,10 @@ never prunes a live job. Pruning occurs on terminal publication. History writes
 are display projection writes: a failure cannot roll back, retry or relabel an
 already verified deployment. They are reported separately in the worker journal.
 
-`bar-daemon` provides `updates.queryHistory` (query/cursor/run_id/limit) and
-`updates.readLog` (run_id). History pages are capped at 100 records/128 KiB, with
+`bar-daemon` provides `updates.queryHistory` (query/cursor/run_id/limit),
+`updates.readLog` (run_id), and `updates.getOverview` (no parameters). Search
+includes outcome codes such as `partial` and `blocked`. History pages are capped
+at 100 records/128 KiB, with
 revision-fenced cursors. Reads are off the render thread and admission/deadline
 bounded. This implementation deliberately uses the bounded producer catalog
 rather than maintaining a duplicate SQL update index; notification persistence
@@ -109,6 +120,13 @@ already uses SQLite. The filesystem watcher also reconciles missed events.
 Both sources invalidate open history views; ordinary rebuild log chatter does not
 trigger repeated catalog scans. The combined view retains up to 1,000 terminal
 runs over 90 days without deleting the manual producer's files.
+
+Overview invokes only `/run/current-system/sw/bin/update-worker status --json`,
+without a shell or sudo. `BAR_DAEMON_UPDATE_WORKER` may select another absolute
+installed executable, never a request-supplied command. The report is capped at
+256 KiB with two readers, a five-second process deadline and six-second total
+budget. The matching worker has a four-second report deadline so cancellation
+cleans up its own nested process groups. Read failures do not run update jobs.
 
 Worker journal reads use the recorded boot ID/PID/time window. Manual log reads
 use only validated rebuild filenames inside the user-owned ledger directory:
@@ -157,8 +175,16 @@ fallback if no tray host exists.
 
 Historical failures remain failures: opening or dismissing one does not acknowledge
 an update, change an incident's execution state, or authorize deployment. Current
-status is shown separately. This initial viewer does not yet annotate every old
-failed row with its later recovery relationship.
+status is shown separately. The retained catalog annotates historical failures
+with later recovery without rewriting their outcomes. Matching component success
+clears only that component's pending failures; running, held, cancelled or
+completion-unknown results cannot manufacture recovery. Equal timestamps do not
+establish ordering. Recurrences remain new open issues; repeated failures select
+the latest issue. Component incident identities are validated and retained in
+copies. Now shows up to 50 latest unresolved issues with explicit total/partial
+history coverage and read-only **Review failure** links (also in the shared
+Alt+J content-command menu). This is retained-history
+evidence, not an acknowledgement or an exhaustive diagnosis of the whole machine.
 
 ## Coordinated deployment and rollback
 
@@ -203,7 +229,9 @@ A blank tray inspector alone does not establish whether history exists.
   genuine changes versus retained activation, and display-write failure isolation.
 - Native tests: bounded/partial history, cursor validation, notification persistence
   and restart dedupe under DND, per-tool recovery/recurrence, deliberate holds,
-  real SNI registration/menu/activation and watcher restart on a private D-Bus.
+  real SNI registration/menu/activation before and after watcher startup/restart
+  on a private D-Bus. Overview tests cover exact read-only arguments, bounded and
+  invalid output, deadlines, unknown/staging normalization and outcome search.
   The tray test uses a recording launcher, never the live updater. Manual-source
   tests cover real report shapes, activation versus follow-up failure, private
   log bounds/path rejection, running/final races, watcher filtering, silent import
@@ -215,7 +243,11 @@ A blank tray inspector alone does not establish whether history exists.
   without reads/focus changes, partial-history publication and run-local log errors.
   Current-state/history separation, candidate metadata, automatic log queuing and
   failure caching, plain-text bounded log rendering, readable/JSON/raw-log copies,
-  and the component's full-path pointer Copy route are also exercised.
+  and the component's full-path pointer Copy route are also exercised. Native
+  overview rendering, pointer/keyboard issue navigation, coalesced refreshes,
+  structured deployment/recovery
+  summaries, malformed/late overview replies and resident-before-chooser tray
+  inventory are covered. Home Manager evaluation verifies Super+U and disabling it.
   Replies use the generated protocol version, preventing a matching hardcoded
   test stub from concealing a production protocol mismatch.
 

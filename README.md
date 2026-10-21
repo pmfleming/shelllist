@@ -10,7 +10,7 @@ The adaptive 51 px bar uses a balanced, icon-only layout: fixed **Shell, Browser
 
 Media always shows artwork and all three transport controls; missing players disable transport without removing it. Music uses Previous/Next; other content uses symmetric ±30-second seeking. Media details can override that mode. The daemon follows recently started playback unless pinned; pins and per-player overrides expire when the player exits. Opening or restoring a result never changes playback policy.
 
-Artwork opens Media; network opens Wi-Fi, with right-click portal fallback; Bluetooth/Battery open their choosers; the bell opens Notifications, with right-click Activity and middle-click DND; Tray opens its list; clock/date open Time & Weather. Update logs use `shelllist:update-logs`, default Super+Shift+U in Home Manager.
+Artwork opens Media; network opens Wi-Fi, with right-click portal fallback; Bluetooth/Battery open their choosers; the bell opens Notifications, with right-click Activity and middle-click DND; Tray opens its list; clock/date open Time & Weather. Updates opens directly with Super+U (`updatesShortcut` in Home Manager); the existing `shelllist:update-logs` / Super+Shift+U route remains.
 
 A shared OSD frame presents volume, microphone, brightness, power profile, lock keys, idle inhibition, keyboard backlight, privacy and device changes. Now-playing state stays in the bar. See [Material bar](docs/material-bar.md) and [OSD policy](docs/bar-osd.md).
 
@@ -40,7 +40,7 @@ Name and setting drafts become saved only after acknowledgement. Failed drafts s
 
 **Activity** contains a month calendar, agenda, persistent todos and source health. Notifications and weather are independent surfaces, not Activity sections.
 
-**Updates** is a real tray application with read-only recent-run history, scoped worker logs and success/failure notifications. Open it from the Tray chooser, desktop launcher or `shelllist updates open`. The standalone update bar icon is removed. Deploy with the matching worker/backend revisions; see [Updates](docs/updates.md).
+**Updates** is a real tray application with read-only recent-run history, scoped worker logs and success/failure notifications. Open it with Super+U, from the Tray chooser, desktop launcher or `shelllist updates open`. Now includes read-only deployment/baseline details, check schedules and unresolved failures; history retains recovery annotations. Tray discovery starts with the resident bar rather than waiting for the lazy chooser. The standalone update bar icon is removed. Deploy with the matching worker/backend revisions; see [Updates](docs/updates.md).
 
 **Notifications** provides daemon-backed search, DND, actions, inline replies, 15-minute snooze and dismissal with retained history. Search includes unloaded pages within the newest 5,000 persisted notifications plus live records. Reply drafts survive navigation and clear only after success. `bar-daemon` owns ingestion, expiry, snooze and persistence. See [Activity and notifications](docs/activity.md).
 

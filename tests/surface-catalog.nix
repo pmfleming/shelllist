@@ -34,13 +34,14 @@ let
     ];
   }).config;
   defaults = evaluate {};
-  disabled = evaluate { programs.shelllist = { notificationsShortcut = null; audioShortcut = null; mediaShortcut = null; trayShortcut = null; updateLogsShortcut = null; }; };
+  disabled = evaluate { programs.shelllist = { notificationsShortcut = null; updatesShortcut = null; audioShortcut = null; mediaShortcut = null; trayShortcut = null; updateLogsShortcut = null; }; };
   custom = evaluate { programs.shelllist = { audioShortcut = "SUPER, F8"; notificationsShortcut = null; }; };
   noCompositor = evaluate { wayland.windowManager.hyprland.enable = false; };
   noProgram = evaluate { programs.shelllist.enable = false; };
   bindings = config: config.wayland.windowManager.hyprland.settings.bind;
   expected = [
     "SUPER SHIFT, N, exec, ${package}/bin/shelllist notifications open"
+    "SUPER, U, exec, ${package}/bin/shelllist updates open"
     "SUPER SHIFT, A, exec, ${package}/bin/shelllist audio open"
     "SUPER SHIFT, M, exec, ${package}/bin/shelllist media open"
     "SUPER SHIFT, T, exec, ${package}/bin/shelllist tray open"
@@ -60,6 +61,7 @@ assert builtins.elem "SUPER, F8, exec, ${package}/bin/shelllist audio open" (bin
 assert !(builtins.elem (builtins.head expected) (bindings custom));
 assert defaults.programs.shelllist.notificationsShortcut == "SUPER SHIFT, N";
 assert defaults.programs.shelllist.updateLogsShortcut == "SUPER SHIFT, U";
+assert defaults.programs.shelllist.updatesShortcut == "SUPER, U";
 assert rejects (source // { schema_version = 2; });
 assert rejects (source // { default_surface = "unknown"; });
 assert rejects (replaceFirst { id = "run"; });

@@ -60,6 +60,13 @@ Ui.DetailColumnCard {
                             color: Ui.Theme.danger
                             text: partRow.modelData.error || ""
                         }
+                        Ui.ThemeText {
+                            Layout.fillWidth: true
+                            visible: !!partRow.modelData.incident
+                            textFormat: Text.PlainText
+                            wrapMode: Text.WrapAnywhere
+                            text: partRow.modelData.incident ? qsTr("Incident: %1").arg(partRow.modelData.incident) : ""
+                        }
                     }
                     accessories: Ui.FlatIconButton {
                         objectName: "updateCopyComponent:" + partRow.modelData.name

@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Services.SystemTray
 import QtQuick
 import Shelllist.Ui as Ui
 import Shelllist.Wifi as Wifi
@@ -14,6 +15,9 @@ Item {
     id: controller
 
     required property var surfaceRegistry
+    // Start the SNI watcher with the resident bar, not on first opening the lazy
+    // Tray chooser. Otherwise applications only start registering at that click.
+    readonly property list<SystemTrayItem> trayItems: SystemTray.items.values
     property var activity: ({
             available: false,
             syncing: false,

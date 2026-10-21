@@ -64,7 +64,7 @@ DaemonTestCase {
         tryVerify(() => calls.some(call => call.method === "updates.readLog"));
         const log = calls.filter(call => call.method === "updates.readLog").slice(-1)[0];
         compare(log.params.run_id, "run-2");
-        verify(calls.every(call => ["updates.queryHistory", "updates.readLog", "bar.snapshot"].includes(call.method)));
+        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot"].includes(call.method)));
     }
     function test_manualRebuildUsesTheSameReadOnlyHistoryAndLogRoute(): void {
         const root = fixture();
@@ -336,7 +336,7 @@ DaemonTestCase {
         compare(root.controller.filteredResults.length, 1);
         verify(root.controller.selectedIsOverview);
         compare(root.controller.countLabel, "0 of 0 matching runs · read only");
-        verify(calls.every(call => ["updates.queryHistory", "bar.snapshot"].includes(call.method)));
+        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "bar.snapshot"].includes(call.method)));
     }
     function test_autoLogsQueueTheLatestSelectionAndCacheFailuresWithoutRetry(): void {
         const root = fixture();
@@ -483,7 +483,131 @@ DaemonTestCase {
         compare(Presentation.shortVersion(before), "host-26.05.1");
         compare(Presentation.shortVersion("/nix/store/abc-other-package"), "/nix/store/abc-other-package");
         compare(Presentation.shortVersion(null), "Unknown");
-        verify(calls.every(call => ["updates.queryHistory", "updates.readLog", "bar.snapshot", ClipApi.methods.selectionPublishText].includes(call.method)));
+        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot", ClipApi.methods.selectionPublishText].includes(call.method)));
+    }
+    function overviewValue(): var {
+        return {schema_version: 1, available: true, observed_at: 400, error: null,
+            history_available: true, history_error: null, issue_total: 1,
+            issues: [{run_id: "failed-overview", lane: "system", component: "manual-rebuild", incident: null, error: "Hook failed", failed_at: 200}],
+            system: {active: "/nix/store/active", booted: "/nix/store/booted", profile: "/nix/store/staged", staged_for_next_boot: true,
+                staged_since: 300, pending_transaction: false, queued: false, last_successful_check: 250, errors: []},
+            baseline: {valid: true, approved_at: 300, revision: "rev", reasons: [], error: null},
+            tools: [{name: "pi", installed_version: "1.0", phase: "current", last_successful_check: 280, last_activation: 270, error: null}],
+            timers: [{unit: "nixos-update.timer", next_at: 500, last_at: 250}], timers_error: null};
+    }
+    function overviewReply(request, value): void {
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(request.id, {
+            protocol: Contract.protocol, version: Contract.version, ok: true, data: {overview: value}
+        }, "", request.route);
+    }
+    function latestOverview(): var { return calls.filter(call => call.method === "updates.getOverview").slice(-1)[0]; }
+    function test_nativeOverviewIssueNavigationAndStructuredRecovery(): void {
+        const root = fixture();
+        reply(latest(), []);
+        overviewReply(latestOverview(), overviewValue());
+        compare(root.controller.overviewLoading, false);
+        compare(root.controller.overviewError, "");
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        const system = findChild(root, "updateSystemOverview");
+        verify(system.visible);
+        verify(system.entries.find(field => field.label === "Staging").value.startsWith("Staged for next boot since"));
+        compare(system.entries.find(field => field.label === "Active").value, "/nix/store/active");
+        compare(findChild(root, "updateInstalledTool:pi").modelData.last_successful_check, 280);
+        compare(findChild(root, "updateTimer:nixos-update.timer").modelData.next_at, 500);
+        const review = findChild(root, "updateReviewIssue:failed-overview");
+        findChild(root, "updateDetailsScroll").revealItem(review);
+        wait(50);
+        mouseClick(review);
+        tryCompare(root.controller, "runId", "failed-overview");
+        compare(latest().params.run_id, "failed-overview");
+        const run = entry("failed-overview", "partial");
+        run.job.status = "failed";
+        run.job.operation = "manual-rebuild";
+        run.job.exit_code = 1;
+        run.deployed = true;
+        run.failed_stage = "activation-hook";
+        run.issues = [{component: null, failed_at: 200, recovered_at: 300, recovered_run_id: "later-success"}];
+        reply(latest(), [run]);
+        tryVerify(() => root.content.detailsNavigation.contentReady && root.controller.selectedRun !== null);
+        compare(root.controller.selectedRun.job.id, "failed-overview");
+        const outcome = findChild(root, "updateRecordedOutcome");
+        compare(outcome.entries.find(field => field.label === "Failed stage").value, "Activation hook");
+        compare(outcome.entries.find(field => field.label === "Deployment recorded").value, "Yes");
+        compare(outcome.entries[0].value, "Failed · Partial");
+        verify(findChild(root, "updateRun:failed-overview").accessibleName.includes("Recovered"));
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        tryVerify(() => copyCalls().length === 1);
+        const copied = copyCalls()[0].params.text;
+        verify(copied.includes("Failed stage: Activation hook") && copied.includes("Deployment recorded: Yes") && copied.includes("recovered"));
+        acknowledgeCopy(copyCalls()[0]);
+        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot", ClipApi.methods.selectionPublishText].includes(call.method)));
+    }
+    function test_overviewIssueReviewUsesTheSharedKeyboardCommandMenu(): void {
+        const root = fixture();
+        reply(latest(), []);
+        overviewReply(latestOverview(), overviewValue());
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        keyClick(Qt.Key_Tab);
+        verify(root.content.detailsNavigation.browsing);
+        compare(root.content.detailsNavigation.highlightedControl, null);
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        tryVerify(() => root.content.detailsNavigation.commandMenuOpen);
+        keyClick(Qt.Key_Return);
+        tryCompare(root.controller, "runId", "failed-overview");
+        compare(latest().params.run_id, "failed-overview");
+    }
+    function test_overviewRefreshDuringAReadGetsOneFollowup(): void {
+        const root = fixture();
+        const first = latestOverview();
+        root.controller.requestOverview();
+        root.controller.requestOverview();
+        compare(calls.filter(call => call.method === "updates.getOverview").length, 1);
+        overviewReply(first, overviewValue());
+        tryVerify(() => calls.filter(call => call.method === "updates.getOverview").length === 2);
+        const newer = overviewValue();
+        newer.observed_at = 450;
+        overviewReply(latestOverview(), newer);
+        wait(0);
+        compare(calls.filter(call => call.method === "updates.getOverview").length, 2);
+        compare(root.controller.overview.observed_at, 450);
+        compare(root.controller.overviewRefreshPending, false);
+    }
+    function test_overviewFailuresAndLateRepliesCannotReplacePublishedStateOrHistory(): void {
+        const root = fixture();
+        reply(latest(), [entry("retained", "staged")]);
+        const first = latestOverview();
+        overviewReply(first, overviewValue());
+        root.controller.errorText = "Independent history error";
+        root.controller.requestOverview();
+        const second = latestOverview();
+        const bad = overviewValue();
+        bad.timers[0].next_at = -1;
+        overviewReply(second, bad);
+        compare(root.controller.overviewError, "Invalid update overview reply");
+        compare(root.controller.overview.timers[0].next_at, 500);
+        compare(root.controller.errorText, "Independent history error");
+        overviewReply(first, bad);
+        compare(root.controller.overview.timers[0].next_at, 500);
+        root.controller.requestOverview();
+        const late = latestOverview();
+        root.controller.deactivateUi();
+        const replacement = overviewValue();
+        replacement.issue_total = 0;
+        replacement.issues = [];
+        overviewReply(late, replacement);
+        compare(root.controller.overview.issue_total, 1);
+        compare(root.controller.entries[0].job.id, "retained");
+        const invalidRun = entry("invalid", "failed");
+        invalidRun.components = [{name: "pi", phase: "failed", changed: false, before: null, after: null, error: "bad", incident: "bad\nkey"}];
+        verify(!root.controller.validEntry(invalidRun));
+        invalidRun.components[0].incident = "pi:build:fingerprint";
+        verify(root.controller.validEntry(invalidRun));
+        invalidRun.issues = [{component: 2, failed_at: 200, recovered_at: null, recovered_run_id: null}];
+        verify(!root.controller.validEntry(invalidRun));
     }
     function test_exactRunAndCloseFenceTheRead(): void {
         const root = fixture();

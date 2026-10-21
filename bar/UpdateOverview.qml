@@ -15,7 +15,7 @@ Column {
         width: parent.width
         wrapMode: Text.Wrap
         textFormat: Text.PlainText
-        text: qsTr("Current worker observations, independent of the selected history. Booted and staged system comparison is not available yet.")
+        text: qsTr("Current worker observations, independent of historical outcomes. Unknown fields are not proof of deployment or recovery.")
     }
     Ui.ThemeText {
         width: parent.width
@@ -64,6 +64,7 @@ Column {
             }
         }
     }
+    UpdateOverviewDetails { width: parent.width; controller: overview.controller }
     Ui.DetailColumnCard {
         property bool informationOnly: true
         objectName: "updateDeferredCandidate"

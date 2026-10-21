@@ -615,10 +615,16 @@ contract and Qt interaction coverage.
 ## Updates review
 
 Updates uses the shared ProviderChooserSurface and a real native Tray entry.
+Home Manager's Super+U opens it directly (`updatesShortcut`, nullable); the
+existing Super+Shift+U / update-logs route remains. Tray discovery starts with
+the resident bar, while the chooser/application content remains lazy.
 Up/Down browse the pinned Now result and recorded runs; Enter/Right inspect
 without executing an update. Now is a separate current-state page, remains visible
 under history search, and is excluded from run counts. It never infers the booted
-system from an old run. Alt+V reads/refreshes the selected run's bounded worker
+system from an old run. Current deployment/baseline, checks and schedules come
+from the worker's read-only overview. Open issues provide explicit Review failure
+commands; passive metadata remains out of editable field traversal. Historical
+recovery never changes the original failure. Alt+V reads/refreshes the selected run's bounded worker
 journal or private rebuild log; inspecting a failed/partial run also requests its
 log automatically. Reads retain their run identity and cached failures require
 explicit retry, never a history-refresh loop. Alt+C copies a readable summary;

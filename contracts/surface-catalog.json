@@ -17,7 +17,13 @@
         "description": "Hyprland modifiers and key for opening Notifications directly. Set null to disable."
       }
     },
-    { "id": "updates", "name": "Updates", "icon": "history", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
+    {
+      "id": "updates", "name": "Updates", "icon": "history", "loading": "lazy", "resident_state": null,
+      "home_manager_shortcut": {
+        "option": "updatesShortcut", "default": "SUPER, U",
+        "description": "Hyprland modifiers and key for opening Updates directly. Set null to disable."
+      }
+    },
     { "id": "time-weather", "name": "Time & Weather", "icon": "󰅐", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
     {
       "id": "audio", "name": "Audio", "icon": "󰕾", "loading": "lazy", "resident_state": null,

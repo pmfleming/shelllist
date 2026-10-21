@@ -70,6 +70,7 @@ var methods = ({
     "notifications.reply": "notifications.reply",
     "updates.refresh": "updates.refresh",
     "updates.queryHistory": "updates.queryHistory",
+    "updates.getOverview": "updates.getOverview",
     "updates.readLog": "updates.readLog",
 });
 var streams = ({

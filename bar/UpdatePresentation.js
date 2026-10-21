@@ -127,7 +127,7 @@ function componentCount(run) {
 function componentSummary(part) {
     return [part.name + " · " + label(part.phase) + " · " + (part.changed ? qsTr("Changed") : qsTr("Unchanged")),
         qsTr("Before: %1").arg(part.before || qsTr("Unknown")), qsTr("After: %1").arg(part.after || qsTr("Unknown")),
-        part.error ? qsTr("Error: %1").arg(part.error) : ""].filter(Boolean).join("\n");
+        part.error ? qsTr("Error: %1").arg(part.error) : "", part.incident ? qsTr("Incident: %1").arg(part.incident) : ""].filter(Boolean).join("\n");
 }
 
 function absoluteTime(seconds) {
@@ -138,12 +138,16 @@ function runSummary(run, nowMs) {
     return [run.title, qsTr("Run: %1").arg(run.job.id),
         qsTr("Lane: %1").arg(label(run.lane)), qsTr("Operation: %1").arg(label(run.job.operation)),
         qsTr("Status / outcome: %1 / %2").arg(label(run.job.status)).arg(label(run.outcome)),
-        qsTr("Phase: %1").arg(label(run.job.phase)), qsTr("Started: %1").arg(absoluteTime(run.job.started_at)),
+        qsTr("Phase: %1").arg(label(run.job.phase)),
+        run.failed_stage ? qsTr("Failed stage: %1").arg(label(run.failed_stage)) : "",
+        typeof run.deployed === "boolean" ? qsTr("Deployment recorded: %1").arg(run.deployed ? qsTr("Yes") : qsTr("No")) : "",
+        qsTr("Started: %1").arg(absoluteTime(run.job.started_at)),
         isRunning(run) ? qsTr("Still running") : qsTr("Finished: %1").arg(absoluteTime(run.job.finished_at)),
         qsTr("Duration: %1").arg(durationLabel(run, nowMs)), qsTr("Exit code: %1").arg(exitLabel(run.job.exit_code)),
         run.job.error ? qsTr("Error: %1").arg(run.job.error) : "",
         run.components.length ? "\n" + componentCount(run) : "",
-        ...run.components.map(part => "\n" + componentSummary(part))].filter(Boolean).join("\n");
+        ...run.components.map(part => "\n" + componentSummary(part)),
+        ...(run.issues || []).map(issue => issueLabel(issue, nowMs))].filter(Boolean).join("\n");
 }
 
 function logSource(run) {
@@ -192,7 +196,20 @@ function nowSummary(state, nowMs) {
     }).join(" · ");
 }
 
+function issueLabel(issue, nowMs) {
+    return qsTr("Failed %1").arg(timeLabel(issue.failed_at, nowMs)) + " · "
+        + (issue.recovered_at ? qsTr("recovered %1").arg(timeLabel(issue.recovered_at, nowMs)) : qsTr("No later recovery in retained history"));
+}
+
+function recoverySummary(run, nowMs) {
+    const issues = run.issues || [];
+    if (!issues.length) return "";
+    if (issues.every(issue => issue.recovered_at !== null))
+        return qsTr("Recovered %1").arg(timeLabel(Math.max(...issues.map(issue => issue.recovered_at)), nowMs));
+    return qsTr("%1 unresolved").arg(issues.filter(issue => issue.recovered_at === null).length);
+}
+
 function rowSubtitle(run, nowMs) {
     // Keep the useful change count ahead of metadata when narrow rows elide.
-    return [changeSummary(run), timeLabel(run.job.started_at, nowMs), label(run.lane), label(run.outcome)].filter(Boolean).join(" · ");
+    return [recoverySummary(run, nowMs), changeSummary(run), timeLabel(run.job.started_at, nowMs), label(run.lane), label(run.outcome)].filter(Boolean).join(" · ");
 }
