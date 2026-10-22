@@ -38,6 +38,7 @@ ConfirmationDialog 1.0 ConfirmationDialog.qml
 internal ControlLabel ControlLabel.qml
 ControlPointerArea 1.0 ControlPointerArea.qml
 DetailCard 1.0 DetailCard.qml
+DetailRows 1.0 DetailRows.qml
 DetailColumnCard 1.0 DetailColumnCard.qml
 DetailField 1.0 DetailField.qml
 DetailFlickable 1.0 DetailFlickable.qml

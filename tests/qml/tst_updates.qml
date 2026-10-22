@@ -57,34 +57,53 @@ DaemonTestCase {
         root.controller.selectedIndex = 1;
         root.content.listItem.focusList();
     }
-    function test_filtersUseSharedMenusAndDateSearchUsesNativeKeys(): void {
+    function showPage(root, page): void {
+        root.content.listItem.focusList();
+        for (let i = 0; root.controller.detailsTab !== page && i < 6; ++i) {
+            keyClick(Qt.Key_Tab, Qt.ControlModifier);
+            wait(0);
+        }
+        compare(root.controller.detailsTab, page);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        wait(20);
+    }
+    function test_filtersUseSharedFieldsBehindSearchGearAndDateSearchUsesNativeKeys(): void {
         verify(["layers", "filter_alt", "unfold_less", "unfold_more"].every(icon => Icons.name(icon) === icon));
         const root = fixture();
         reply(latest(), historyRuns(50));
         root.content.listItem.focusList();
         const before = calls.length;
         keyClick(Qt.Key_F, Qt.AltModifier);
-        const menu = findChild(root, "updateFilterMenu");
-        tryVerify(() => menu.opened);
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_F5);
+        tryCompare(root.controller, "settingsOpen", true);
+        tryVerify(() => root.content.detailsNavigation.browsing && root.content.detailsNavigation.contentReady
+            && !root.content.detailsNavigation.pendingMemory && root.content.detailsNavigation.highlightedControl === findChild(root, "updateOutcomeFilter"));
+        compare(findChild(root, "updateFilterMenu"), null);
+        compare(root.content.listItem.listOptionsComponent, null);
         compare(calls.length, before);
+        keyClick(Qt.Key_Return);
+        tryVerify(() => root.content.detailsNavigation.editing);
+        keyClick(Qt.Key_Down);
         compare(root.controller.outcomeFilter, "");
+        compare(calls.length, before);
         keyClick(Qt.Key_Escape);
-        tryVerify(() => !menu.visible);
         compare(root.controller.outcomeFilter, "");
-        keyClick(Qt.Key_F, Qt.AltModifier);
-        tryVerify(() => menu.opened);
+        keyClick(Qt.Key_Return);
+        tryVerify(() => root.content.detailsNavigation.editing);
         keyClick(Qt.Key_Down);
         keyClick(Qt.Key_Return);
         tryCompare(root.controller, "outcomeFilter", "problems");
         compare(latest().params.outcome, "problems");
         reply(latest(), [entry("problem", "failed")]);
-        mouseClick(findChild(root, "updateLaneFilter"));
-        tryVerify(() => menu.opened);
-        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_T, Qt.AltModifier);
+        tryVerify(() => root.content.detailsNavigation.browsing && !root.content.detailsNavigation.pendingMemory
+            && root.content.detailsNavigation.highlightedControl === findChild(root, "updateLaneFilter"));
         keyClick(Qt.Key_Return);
+        tryVerify(() => root.content.detailsNavigation.editing);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Tab);
         tryCompare(root.controller, "laneFilter", "system");
+        // Tab saves one field and edits the next; Escape must not save it.
+        keyClick(Qt.Key_Escape);
         compare(latest().params.lane, "system");
         const superseded = latest();
         root.content.listItem.focusSearch();
@@ -336,9 +355,10 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         tryVerify(() => root.content.detailsNavigation.contentReady);
         const card = findChild(root, "updateRecordedOutcome");
-        compare(card.entries[0].value, "Failed · Partial");
-        compare(card.entries.find(field => field.label === "Duration").value, "1 min 40 s");
-        compare(card.entries.find(field => field.label === "Exit code").value, "1 (failed)");
+        compare(card.rows.find(field => field.label === "Outcome").value, "Partial");
+        compare(card.rows.find(field => field.label === "Job status").value, "Failed");
+        compare(card.rows.find(field => field.label === "Duration").value, "1 min 40 s");
+        compare(card.rows.find(field => field.label === "Exit code").value, "1 (failed)");
         keyClick(Qt.Key_Down);
         compare(root.controller.selectedRun.job.id, "older");
         verify(root.controller.detailsOpen);
@@ -355,11 +375,11 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         tryVerify(() => root.content.detailsNavigation.contentReady);
         const card = findChild(root, "updateRecordedOutcome");
-        const duration = () => card.entries.find(field => field.label === "Duration").value;
+        const duration = () => card.rows.find(field => field.label === "Duration").value;
         const before = duration();
         const requests = calls.length;
         verify(before.includes("elapsed"));
-        verify(!card.entries.some(field => field.label === "Finished"));
+        verify(!card.rows.some(field => field.label === "Finished"));
         tryVerify(() => duration() !== before, 2500);
         compare(calls.length, requests);
         compare(root.controller.selectedRun.job.id, "running");
@@ -491,6 +511,8 @@ DaemonTestCase {
         compare(tools.lane.status, "Running · Building");
         compare(findChild(root, "updateLane:ai-tools-stale").lane.status, "Not reported");
         verify(system.lane.timing.startsWith("Last worker run"));
+        verify(!candidate.visible);
+        showPage(root, "system");
         verify(candidate.visible);
         compare(findChild(root, "updateCandidate:revision").modelData.value, "revision-123");
         compare(findChild(root, "updateCandidate:base").modelData.value, "base-456");
@@ -570,6 +592,7 @@ DaemonTestCase {
         wait(30);
         compare(root.controller.selectedLogError, "Not permitted");
         compare(logCalls().length, 2);
+        tryVerify(() => root.content.detailsNavigation.commandButtons.some(button => button.accessKey === "V" && button.enabled));
         keyClick(Qt.Key_V, Qt.AltModifier);
         tryCompare(root.controller, "selectedLogLoading", true);
         const text = "ordinary <b>literal</b>\nerror: build failed\nwarning: retry later";
@@ -666,6 +689,7 @@ DaemonTestCase {
         verify(root.controller.triggerDetailAction("copy-log"));
         compare(copyCalls()[2].params.text, rawLog);
         acknowledgeCopy(copyCalls()[2]);
+        showPage(root, "changes");
         const button = findChild(root, "updateCopyComponent:NixOS");
         const scroll = findChild(root, "updateDetailsScroll");
         compare(findChild(root, "updateComponent:NixOS").modelData.componentIndex, 0);
@@ -713,11 +737,14 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         tryVerify(() => root.content.detailsNavigation.contentReady);
         const system = findChild(root, "updateSystemOverview");
+        verify(!system.visible);
+        showPage(root, "system");
         verify(system.visible);
-        verify(system.entries.find(field => field.label === "Staging").value.startsWith("Staged for next boot since"));
-        compare(system.entries.find(field => field.label === "Active").value, "/nix/store/active");
+        verify(system.rows.find(field => field.label === "Staging").value.startsWith("Staged for next boot since"));
+        compare(system.rows.find(field => field.label === "Active").value, "/nix/store/active");
         compare(findChild(root, "updateInstalledTool:pi").modelData.last_successful_check, 280);
         compare(findChild(root, "updateTimer:nixos-update.timer").modelData.next_at, 500);
+        showPage(root, "overview");
         const review = findChild(root, "updateReviewIssue:failed-overview");
         findChild(root, "updateDetailsScroll").revealItem(review);
         wait(50);
@@ -735,9 +762,9 @@ DaemonTestCase {
         tryVerify(() => root.content.detailsNavigation.contentReady && root.controller.selectedRun !== null);
         compare(root.controller.selectedRun.job.id, "failed-overview");
         const outcome = findChild(root, "updateRecordedOutcome");
-        compare(outcome.entries.find(field => field.label === "Failed stage").value, "Activation hook");
-        compare(outcome.entries.find(field => field.label === "Deployment recorded").value, "Yes");
-        compare(outcome.entries[0].value, "Failed · Partial");
+        compare(outcome.rows.find(field => field.label === "Failed stage").value, "Activation hook");
+        compare(outcome.rows.find(field => field.label === "Deployment recorded").value, "Yes");
+        compare(outcome.rows[0].value, "Partial");
         verify(findChild(root, "updateRun:failed-overview").accessibleName.includes("Recovered"));
         keyClick(Qt.Key_C, Qt.AltModifier);
         tryVerify(() => copyCalls().length === 1);
@@ -756,8 +783,12 @@ DaemonTestCase {
         keyClick(Qt.Key_Tab);
         verify(root.content.detailsNavigation.browsing);
         compare(root.content.detailsNavigation.highlightedControl, null);
+        const commands = root.content.detailsNavigation.contentCommands.filter(item => !item.accessKey || item.includeInCommandMenu);
+        const reviewIndex = commands.findIndex(item => item.accessibleName === "Review failure: manual-rebuild");
+        verify(reviewIndex >= 0);
         keyClick(Qt.Key_J, Qt.AltModifier);
         tryVerify(() => root.content.detailsNavigation.commandMenuOpen);
+        for (let i = 0; i < reviewIndex; ++i) keyClick(Qt.Key_Down);
         keyClick(Qt.Key_Return);
         tryCompare(root.controller, "runId", "failed-overview");
         compare(latest().params.run_id, "failed-overview");
@@ -844,6 +875,133 @@ DaemonTestCase {
         verify(root.controller.validEntry(invalidRun));
         invalidRun.issues = [{component: 2, failed_at: 200, recovered_at: null, recovered_run_id: null}];
         verify(!root.controller.validEntry(invalidRun));
+    }
+    function test_taskTabsGearTransactionsAndFreshnessEvidence(): void {
+        const root = fixture();
+        reply(latest(), [entry("recorded", "staged")]);
+        const value = overviewValue();
+        value.git = {available: true, path: "/configuration", revision: "a".repeat(40), branch: "main", upstream: "origin/main",
+            ahead: 2, behind: 4, dirty: true, shallow: false, observed_at: 390, target_observed_at: null, error: null};
+        value.tools[0].freshness = {latest_version: "1.0", source: "vendor stable", published_at: null, origin: "vendor",
+            comparison: "rebuild", stale: true, held: true, hold_since: 320, hold_reason: "Deliberate rollback"};
+        overviewReply(latestOverview(), value);
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        compare(root.controller.detailsTab, "overview");
+        verify(root.controller.detailTabs.every(tab => Icons.name(tab.icon) === tab.icon));
+        verify(findChild(root, "updateArea:applications").modelData.value.includes("not reported"));
+        verify(findChild(root, "updateArea:git").modelData.value.includes("Diverged"));
+        const reads = calls.length;
+        showPage(root, "git");
+        const git = findChild(root, "updateGitOverview");
+        verify(git.visible);
+        compare(git.rows.find(row => row.label === "Remote checked").value, "Not recorded");
+        showPage(root, "ai");
+        const tool = findChild(root, "updateInstalledTool:pi");
+        verify(tool.visible);
+        compare(tool.rows.find(row => row.label === "Latest known").value, "1.0");
+        verify(tool.rows.find(row => row.label === "Comparison").value.includes("packaging update"));
+        verify(tool.rows.find(row => row.label === "Comparison").value.startsWith("Last known:"));
+        showPage(root, "applications");
+        verify(findChild(root, "updateApplicationsOverview").visible);
+        showPage(root, "system");
+        verify(findChild(root, "updateSystemOverview").visible);
+        compare(calls.length, reads, "tabs do not fetch, check or install");
+        keyClick(Qt.Key_Tab);
+        compare(root.content.detailsNavigation.highlightedControl, null);
+        const gear = findChild(root, "fieldTrailingAction");
+        mouseClick(gear);
+        tryVerify(() => root.controller.settingsOpen && root.content.detailsNavigation.browsing);
+        compare(root.controller.pageKey, "settings");
+        compare(root.controller.detailTabs.length, 0);
+        compare(root.content.listItem.listOptionsComponent, null);
+        compare(calls.length, reads);
+        keyClick(Qt.Key_T, Qt.AltModifier);
+        tryVerify(() => root.content.detailsNavigation.highlightedControl === findChild(root, "updateLaneFilter"));
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        compare(root.controller.laneFilter, "");
+        // Leaving through the gear discards rather than saving the proposed filter.
+        mouseClick(gear);
+        tryCompare(root.controller, "detailsOpen", false);
+        compare(root.controller.laneFilter, "");
+        compare(calls.length, reads);
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => !root.controller.settingsOpen && root.controller.detailsOpen);
+        tryCompare(root.controller, "detailsTab", "system");
+        keyClick(Qt.Key_Down);
+        tryCompare(root.controller, "detailsTab", "summary");
+        showPage(root, "changes");
+        keyClick(Qt.Key_Up);
+        tryCompare(root.controller, "detailsTab", "system");
+        keyClick(Qt.Key_Down);
+        tryCompare(root.controller, "detailsTab", "changes");
+        compare(calls.length, reads);
+        root.controller.requestOverview();
+        const invalid = overviewValue();
+        invalid.tools[0].freshness = Object.assign({}, value.tools[0].freshness, {comparison: "guessed"});
+        overviewReply(latestOverview(), invalid);
+        compare(root.controller.overviewError, "Invalid update overview reply");
+        compare(root.controller.overview.git.behind, 4);
+        root.controller.requestOverview();
+        overviewReply(latestOverview(), overviewValue());
+        compare(root.controller.overviewError, "");
+        compare(root.controller.overview.git, undefined, "older worker omits the optional evidence");
+        verify(Presentation.toolFreshness(root.controller.overview.tools[0]).includes("not reported"));
+    }
+    function test_globalSettingsSurvivePrunedSelectionButExactLinksOpenTheRun(): void {
+        const root = fixture();
+        reply(latest(), [entry("old", "current")]);
+        overviewReply(latestOverview(), overviewValue());
+        root.controller.selectedIndex = 1;
+        root.controller.openSettings("");
+        tryVerify(() => root.content.detailsNavigation.contentReady && root.content.detailsNavigation.browsing);
+        root.controller.refresh();
+        reply(latest(), []);
+        tryVerify(() => root.controller.selectedIsOverview);
+        verify(root.controller.settingsOpen && root.controller.detailsOpen);
+        compare(root.controller.viewMemory.key, "updates::settings");
+        root.controller.openRun("exact");
+        reply(latest(), [entry("exact", "current")]);
+        tryVerify(() => !root.controller.settingsOpen && root.controller.detailsOpen);
+        compare(root.controller.selectedRun.job.id, "exact");
+        compare(root.controller.detailsTab, "summary");
+    }
+    function test_toolEvidenceHelpAndCopyKeepPlainCompleteDiagnostics(): void {
+        const root = fixture();
+        reply(latest(), []);
+        const value = overviewValue();
+        value.tools[0].error = "Verification <b>failed</b>\nFull diagnostic";
+        overviewReply(latestOverview(), value);
+        root.controller.openDetails();
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        showPage(root, "ai");
+        const tool = findChild(root, "updateInstalledTool:pi");
+        mouseClick(findChild(tool, "formFieldHelp"));
+        verify(tool.helpOpen);
+        const support = findChild(tool, "formFieldSupport");
+        compare(support.textFormat, Text.PlainText);
+        verify(support.text.includes(value.tools[0].error));
+        mouseClick(findChild(tool, "formFieldCopy"));
+        tryVerify(() => copyCalls().length === 1);
+        verify(copyCalls()[0].params.text.includes(value.tools[0].error));
+        verify(copyCalls()[0].params.text.includes("1970-01-01T00:04:40.000Z"));
+        acknowledgeCopy(copyCalls()[0]);
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Tab);
+        verify(root.content.detailsNavigation.browsing);
+        compare(root.content.detailsNavigation.highlightedControl, null);
+    }
+    function test_freshnessDoesNotInventReleaseDistanceOrRemoteChecks(): void {
+        compare(Presentation.toolFreshness({installed_version: "1.0", freshness: {latest_version: "1.0"}}), "Comparison not reported");
+        compare(Presentation.gitSummary({available: true, upstream: "origin/main", shallow: true, ahead: 0, behind: 0}), "Commit distance unavailable");
+        compare(Presentation.gitSummary({available: true, upstream: null}), "No tracked upstream");
+        verify(Presentation.gitSummary({available: true, upstream: "origin/main", shallow: false, ahead: 0, behind: 0}).includes("cached"));
+        compare(Presentation.systemSummary(null, null), "Release comparison not reported");
+        const tool = {freshness: {comparison: "newer", stale: false}};
+        compare(Presentation.toolsSummary([tool, {}]), "1 of 2 tools have updates · 1 unknown");
     }
     function test_exactRunAndCloseFenceTheRead(): void {
         const root = fixture();

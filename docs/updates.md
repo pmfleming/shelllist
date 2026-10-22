@@ -26,12 +26,20 @@ Rollback or updater shutdown action is exposed.
 
 ## History browsing
 
-**Alt+T** opens the lane filter; **Alt+F** opens the outcome filter, including
-**Problems** (failed, partial, blocked and interrupted). These shared command
-menus work with details closed; arrows only browse choices, Enter/click selects,
-and Escape cancels. They are not editable Tab stops. Filters apply in the native
-catalog before pagination/counting, together with text search. Now stays pinned;
-exact-run links bypass filters. Alt+A on a run clears search and filters.
+The **settings gear inside search** opens global history settings in the inspector;
+there is no permanent filter strip and no Settings tab on Now. The gear toggles
+this context independently of selection. **Alt+T** opens settings at Update job
+(the existing lane filter); **Alt+F** opens Outcome, including **Problems**
+(failed, partial, blocked and interrupted). These are shared `FormField` /
+`DropDownList` editors: Enter begins editing, arrows change a draft, Enter/Tab
+saves and Escape discards. Leaving settings discards drafts too. Fold routine
+checks is an immediate shared switch. Only enabled editors are Tab stops;
+passive facts, tabs, Help and Copy are commands, not editors.
+
+Filters apply in the native catalog before pagination/counting, together with
+text search. Now stays pinned; exact-run links bypass filters. Alt+A or Show all
+recent updates clears search, filters and a deep link. Keyboard commands remain
+available when settings is closed.
 
 Search accepts `today`, `yesterday`, `YYYY-MM-DD`, `on:YYYY-MM-DD`,
 `since:YYYY-MM-DD` (inclusive), and `before:YYYY-MM-DD` (exclusive), combined
@@ -70,6 +78,12 @@ they are not selectable runs or new Tab stops. Timestamps show Today/Yesterday
 and a clock, or a date for older records. The list footer carries history coverage
 once, rather than repeating it in each run's details.
 
+Historical inspectors use **Summary / Changes / Log**; Now uses **Overview /
+Local Git / AI tools / Applications / System**. Shared tabs keep each result's
+page and presentation context separate. Ctrl+Tab/Backtab switches tabs, while
+ordinary Tab traverses only editable fields. Settings is a global inspector
+context, not a property of the currently highlighted run.
+
 Details distinguish recorded job status from outcome, translate operation/phase
 identifiers, explain known exit codes, and show duration. Live elapsed time ticks
 only while the viewer is active; interrupted runs never acquire a fabricated
@@ -94,6 +108,36 @@ staging. Older workers may lack system check/staging timestamps. Overview errors
 have separate feedback and cannot replace history or logs. Transport/validation
 failures retain the last good overview; worker-declared missing evidence stays
 unknown.
+
+The Now overview provides four concise domain summaries with explicit navigation
+commands. Domain pages use shared wrapping label/value composition rather than a
+stack of unrelated cards. The AI inventory shows installed → latest-known pairs,
+comparison and check time together; each tool's Help and Copy retain complete
+source, timestamps, holds and diagnostics. Its successful-check time is not an
+installation time. Job activity and actual schedules remain on their domain pages.
+
+Freshness is separate from execution and deployment:
+
+- **Local Git** observes the worker-configured repository and cached tracking ref,
+  not every repository on the machine. Ahead/behind counts require a complete
+  local graph; shallow/no-upstream observations do not claim zero. Dirty state
+  and revision are separate facts. This bounded observation does not fetch/pull
+  or refresh remote tracking refs; remote-check time remains unknown.
+- **AI tools** compares worker-managed installed receipts against the last known
+  release and packaging fingerprint. Current, newer, installed-ahead, unknown,
+  stale and packaging-rebuild states remain distinct. A newer version proves
+  availability, not an exact number of releases behind. Adapter evidence is
+  optional so older installed workers still render honestly.
+- **Applications** has no authoritative installed/latest inventory yet. The tab
+  explicitly says comparison is not reported; a successful system build is not
+  proof that every application is current.
+- **System** shows booted, active, next-boot and candidate paths independently.
+  Staging is not running, and deployment evidence is not an upstream comparison.
+  Exact release distance needs a comparable authoritative release catalogue and
+  is not reported by today's worker.
+
+Opening a tab/settings or pressing Refresh only reads observations/history/logs.
+It never checks upstream networks, approves, installs, retries updates or reboots.
 
 Components use shared read-only label/value rows grouped into Failed, Changed and
 Unchanged, with counts. Failures take precedence in grouping; a component that
@@ -285,12 +329,25 @@ A blank tray inspector alone does not establish whether history exists.
   and the component's full-path pointer Copy route are also exercised. Native
   overview rendering, pointer/keyboard issue navigation, coalesced refreshes,
   structured deployment/recovery
-  summaries, native filter-menu/date-search keys, conservative fold/expand routes,
+  summaries, shared settings-editor/date-search keys, conservative fold/expand routes,
   multi-page atomic refresh with keyed viewport/focus preservation, bounded stale
   cursor recovery, malformed continuations, malformed/late overview replies and resident-before-chooser tray
   inventory are covered. Home Manager evaluation verifies Super+U and disabling it.
   Replies use the generated protocol version, preventing a matching hardcoded
   test stub from concealing a production protocol mismatch.
+
+- Native tab/settings regressions cover pointer gear toggling, independent Now/run
+  tabs, Ctrl+Tab, editable-only browsing, Enter save/Escape discard, draft discard
+  on context switches, older worker evidence and full plain-text tool Help/Copy.
+- `tests/manual/tst_update_review.qml` captures the actual production panel using
+  recording transports: nine pages in dark/light at 1040×720 and 976×600. Run it
+  with `tests/run-qmlquality-tests.sh -input tests/manual/tst_update_review.qml`
+  after creating `target/update-panel-implementation/captures/`. No live daemon,
+  update, clipboard or network mutation is dispatched by this capture fixture.
+  Capture review checks native icon resolution, wrapping paths, inventory density,
+  settings alignment and absence of a permanent filter strip. New composition
+  uses shared typography/spacing; `review-panel-ui.py` reviews changed numeric
+  overrides rather than exempting a panel-specific visual vocabulary.
 
 Live compositor focus/placement, a human accessibility review, performance
 measurements, and real SwayNC integration are not certified by these fixtures.
@@ -302,5 +359,6 @@ No system update, reboot or privileged deployment is needed for these tests.
 [desktop notification protocol](https://specifications.freedesktop.org/notification-spec/latest/protocol.html),
 [urgency](https://specifications.freedesktop.org/notification-spec/latest/urgency-levels.html),
 and [StatusNotifierItem](https://www.freedesktop.org/wiki/Specifications/StatusNotifierItem/StatusNotifierItem/).
-The reviewed HTML proposal is `shelllist-update-center-plan.html` in the parent
-Projects directory; this document records the implemented first-release scope.
+The initial proposal is `shelllist-update-center-plan.html`; the native-tab
+alignment plan is `shelllist-update-panel-alignment-plan.html`, both in the parent
+Projects directory. This document records implemented scope and evidence gaps.

@@ -1,6 +1,9 @@
 module Shelllist.Bar
 UpdateController 1.0 UpdateController.qml
 UpdateContent 1.0 UpdateContent.qml
+internal UpdateDetails UpdateDetails.qml
+internal UpdateFreshness UpdateFreshness.qml
+internal UpdateTools UpdateTools.qml
 internal UpdateOverview UpdateOverview.qml
 internal UpdateOverviewDetails UpdateOverviewDetails.qml
 internal UpdateHistoryControls UpdateHistoryControls.qml

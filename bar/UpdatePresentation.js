@@ -213,6 +213,61 @@ function recoverySummary(run, nowMs) {
     return qsTr("%1 unresolved").arg(issues.filter(issue => issue.recovered_at === null).length);
 }
 
+// Comparisons are producer evidence, not version-string arithmetic or job outcomes.
+function toolFreshness(tool) {
+    const f = tool.freshness || {};
+    const states = {current: qsTr("Current in reported source"), newer: qsTr("Newer release available"),
+        ahead: qsTr("Installed ahead of reported target"), rebuild: qsTr("Same version · packaging update available")};
+    const value = states[f.comparison] || qsTr("Comparison not reported");
+    return (f.stale !== false && states[f.comparison] ? qsTr("Last known: %1").arg(value) : value)
+        + (f.held === true ? " · " + qsTr("On hold") : "");
+}
+function toolRows(tool) {
+    const f = tool.freshness || {};
+    return [
+        {label: qsTr("Installed"), value: tool.installed_version || qsTr("Not recorded")},
+        {label: qsTr("Latest known"), value: f.latest_version || qsTr("Not reported")},
+        {label: qsTr("Comparison"), value: toolFreshness(tool)},
+        {label: qsTr("Source"), value: f.source || qsTr("Not reported")},
+        {label: qsTr("Last successful check"), value: absoluteTime(tool.last_successful_check)},
+        {label: qsTr("Last changed"), value: absoluteTime(tool.last_activation)},
+        {label: qsTr("Phase"), value: label(tool.phase)},
+        ...(f.origin ? [{label: qsTr("Installed origin"), value: f.origin}] : []),
+        ...(f.published_at ? [{label: qsTr("Target published"), value: f.published_at}] : []),
+        ...(f.held ? [{label: qsTr("Hold"), value: f.hold_reason || qsTr("On hold")}, {label: qsTr("Held since"), value: absoluteTime(f.hold_since)}] : []),
+        ...(tool.error ? [{label: qsTr("Diagnostics"), value: tool.error}] : [])
+    ];
+}
+function toolsSummary(tools) {
+    if (!tools || !tools.length) return qsTr("Tool comparison not reported");
+    const known = tools.filter(tool => tool.freshness && tool.freshness.comparison);
+    const updates = known.filter(tool => ["newer", "rebuild"].includes(tool.freshness.comparison)).length;
+    const unknown = tools.length - known.length;
+    if (!known.length) return qsTr("%1 tools · latest comparison not reported").arg(tools.length);
+    const parts = [qsTr("%1 of %2 tools have updates").arg(updates).arg(tools.length)];
+    const ahead = known.filter(tool => tool.freshness.comparison === "ahead").length;
+    if (ahead) parts.push(qsTr("%1 ahead of target").arg(ahead));
+    if (unknown) parts.push(qsTr("%1 unknown").arg(unknown));
+    if (known.some(tool => tool.freshness.stale !== false)) parts.push(qsTr("Includes last-known comparisons"));
+    return parts.join(" · ");
+}
+function gitSummary(git) {
+    if (!git || !git.available) return qsTr("Repository comparison not reported");
+    if (!git.upstream) return qsTr("No tracked upstream");
+    if (git.shallow || git.ahead === null || git.behind === null) return qsTr("Commit distance unavailable");
+    if (!git.ahead && !git.behind) return qsTr("In sync with cached tracking ref");
+    return (git.ahead && git.behind ? qsTr("Diverged · ") : "")
+        + qsTr("%1 commits behind · %2 ahead").arg(git.behind).arg(git.ahead);
+}
+function systemSummary(overview, state) {
+    const system = overview ? overview.system : null;
+    if (system && system.staged_for_next_boot === true) return qsTr("Target staged for next boot");
+    if (system && system.pending_transaction === true) return qsTr("Recovery pending");
+    const candidate = deferredCandidate(state);
+    if (candidate && candidate.ready) return qsTr("Target ready · not proof of deployment");
+    return qsTr("Release comparison not reported");
+}
+
 function rowSubtitle(run, nowMs) {
     // Keep the useful change count ahead of metadata when narrow rows elide.
     return [recoverySummary(run, nowMs), changeSummary(run), timeLabel(run.job.started_at, nowMs), label(run.lane), label(run.outcome)].filter(Boolean).join(" · ");

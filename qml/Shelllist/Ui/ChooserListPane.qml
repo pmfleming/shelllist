@@ -36,6 +36,7 @@ ColumnLayout {
     property alias searchActionIcon: header.searchActionIcon
     property alias searchActionToolTip: header.searchActionToolTip
     property alias searchActionEnabled: header.searchActionEnabled
+    property alias searchActionActive: header.searchActionActive
     property alias filterText: header.filterText
     property alias status: body.status
     property alias statusSummary: body.statusSummary

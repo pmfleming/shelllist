@@ -11,15 +11,11 @@ Column {
     readonly property var candidate: Presentation.deferredCandidate(snapshot)
     spacing: Ui.Theme.spacingMd
 
+    UpdateFreshness { width: parent.width; controller: overview.controller }
+    UpdateOverviewDetails { width: parent.width; controller: overview.controller }
     Ui.ThemeText {
         width: parent.width
-        wrapMode: Text.Wrap
-        textFormat: Text.PlainText
-        text: qsTr("Current worker observations, independent of historical outcomes. Unknown fields are not proof of deployment or recovery.")
-    }
-    Ui.ThemeText {
-        width: parent.width
-        visible: !!text
+        visible: !!text && overview.controller.detailsTab === "overview"
         wrapMode: Text.Wrap
         textFormat: Text.PlainText
         color: Ui.Theme.warning
@@ -33,7 +29,9 @@ Column {
             readonly property var lane: Presentation.laneOverview(overview.snapshot, modelData, overview.controller.nowMs)
             property bool informationOnly: true
             objectName: "updateLane:" + modelData
-            title: lane.title
+            visible: overview.controller.detailsTab === "system" ? modelData === "system"
+                : overview.controller.detailsTab === "ai" && modelData !== "system"
+            title: lane.title + " · " + qsTr("Activity")
             Ui.FieldRow {
                 label: qsTr("State")
                 Ui.ThemeText {
@@ -64,10 +62,10 @@ Column {
             }
         }
     }
-    UpdateOverviewDetails { width: parent.width; controller: overview.controller }
     Ui.DetailColumnCard {
         property bool informationOnly: true
         objectName: "updateDeferredCandidate"
+        visible: overview.controller.detailsTab === "system"
         title: qsTr("Deferred system candidate")
         Ui.ThemeText {
             objectName: "updateCandidateStatus"

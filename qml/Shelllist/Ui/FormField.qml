@@ -77,6 +77,7 @@ Item {
         width: parent.width
         visible: field.helpOpen && field.helpText.length > 0
         text: field.helpText
+        textFormat: Text.PlainText
         font.pixelSize: Theme.formSupportSize
         color: Theme.mutedText
         wrapMode: Text.Wrap

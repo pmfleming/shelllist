@@ -9,16 +9,19 @@ Column {
     required property UpdateController controller
     readonly property var snapshot: controller.overview
     property bool informationOnly: true
-    spacing: Ui.Theme.spacingMd
+    spacing: Ui.Theme.cardGap
     Ui.ThemeText {
         width: parent.width
+        visible: details.controller.detailsTab !== "applications" && details.controller.detailsTab !== "git"
         wrapMode: Text.Wrap
         textFormat: Text.PlainText
+        font.pixelSize: Ui.Theme.metadataSize
         text: details.controller.overviewLoading ? qsTr("Reading worker overview…")
             : details.snapshot && details.snapshot.observed_at ? qsTr("Observed %1 · read only").arg(details.controller.timeLabel(details.snapshot.observed_at)) : qsTr("Worker overview not recorded")
     }
     Ui.DetailColumnCard {
         objectName: "updateOpenIssues"
+        visible: details.controller.detailsTab === "overview"
         title: qsTr("Open issues")
         Ui.ThemeText {
             Layout.fillWidth: true
@@ -53,13 +56,13 @@ Column {
             }
         }
     }
-    Ui.DetailCard {
+    Ui.DetailRows {
         objectName: "updateSystemOverview"
         title: qsTr("Booted, active and next boot")
-        visible: !!details.snapshot && !!details.snapshot.system
-        entries: {
+        visible: details.controller.detailsTab === "system"
+        rows: {
             const system = details.snapshot ? details.snapshot.system : null;
-            if (!system) return [];
+            if (!system) return [{label: qsTr("Deployment"), value: qsTr("System evidence not reported")}];
             return [
                 {label: qsTr("Booted"), value: system.booted || qsTr("Unknown")},
                 {label: qsTr("Active"), value: system.active || qsTr("Unknown")},
@@ -70,15 +73,16 @@ Column {
                 {label: qsTr("Pending transaction"), value: system.pending_transaction === null ? qsTr("Unknown") : system.pending_transaction ? qsTr("Recovery pending on next worker run") : qsTr("None reported")},
                 {label: qsTr("Queued"), value: system.queued === null ? qsTr("Unknown") : system.queued ? qsTr("Yes") : qsTr("No")},
                 {label: qsTr("System last successful check"), value: details.controller.timeLabel(system.last_successful_check)},
+                {label: qsTr("Release distance"), value: qsTr("Not reported — deployment generations are not release counts")},
                 ...(system.errors.length ? [{label: qsTr("Diagnostics"), value: system.errors.join("\n")}] : [])
             ];
         }
     }
-    Ui.DetailCard {
+    Ui.DetailRows {
         objectName: "updateBaseline"
         title: qsTr("Approved baseline")
-        visible: !!details.snapshot && !!details.snapshot.baseline
-        entries: {
+        visible: details.controller.detailsTab === "system" && !!details.snapshot && !!details.snapshot.baseline
+        rows: {
             const baseline = details.snapshot ? details.snapshot.baseline : null;
             return baseline ? [
                 {label: qsTr("Validation"), value: baseline.valid === null ? qsTr("Unknown") : baseline.valid ? qsTr("Valid") : qsTr("Invalid")},
@@ -88,36 +92,17 @@ Column {
             ] : [];
         }
     }
-    Ui.DetailColumnCard {
-        objectName: "updateInstalledTools"
-        title: qsTr("Installed AI tools and checks")
-        visible: !!details.snapshot && details.snapshot.tools.length > 0
-        Repeater {
-            model: details.snapshot ? details.snapshot.tools : []
-            Ui.FieldRow {
-                id: toolRow
-                required property var modelData
-                objectName: "updateInstalledTool:" + modelData.name
-                label: modelData.name || qsTr("Unknown tool")
-                subtitle: Presentation.label(modelData.phase)
-                Ui.ThemeText {
-                    Layout.fillWidth: true
-                    textFormat: Text.PlainText
-                    wrapMode: Text.Wrap
-                    text: qsTr("Installed: %1\nLast changed: %2\nLast successful check: %3")
-                        .arg(toolRow.modelData.installed_version || qsTr("Not recorded"))
-                        .arg(details.controller.timeLabel(toolRow.modelData.last_activation))
-                        .arg(details.controller.timeLabel(toolRow.modelData.last_successful_check))
-                        + (toolRow.modelData.error ? "\n" + toolRow.modelData.error : "")
-                }
-            }
-        }
+    UpdateTools {
+        width: parent.width
+        controller: details.controller
+        visible: details.controller.detailsTab === "ai"
     }
-    Ui.DetailColumnCard {
-        objectName: "updateTimers"
-        title: qsTr("Scheduled checks")
+    Column {
+        width: parent.width
+        visible: details.controller.detailsTab === "system"
+        spacing: Ui.Theme.cardGap
         Ui.ThemeText {
-            Layout.fillWidth: true
+            width: parent.width
             visible: !!text
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
@@ -125,17 +110,15 @@ Column {
         }
         Repeater {
             model: details.snapshot ? details.snapshot.timers : []
-            Ui.FieldRow {
-                id: timerRow
+            Ui.DetailRows {
                 required property var modelData
                 objectName: "updateTimer:" + modelData.unit
-                label: modelData.unit || qsTr("Unknown timer")
-                Ui.ThemeText {
-                    Layout.fillWidth: true
-                    textFormat: Text.PlainText
-                    wrapMode: Text.Wrap
-                    text: qsTr("Next: %1\nLast trigger: %2").arg(details.controller.timeLabel(timerRow.modelData.next_at)).arg(details.controller.timeLabel(timerRow.modelData.last_at))
-                }
+                title: qsTr("Scheduled check")
+                rows: [
+                    {label: qsTr("Timer"), value: modelData.unit || qsTr("Unknown timer")},
+                    {label: qsTr("Next"), value: details.controller.timeLabel(modelData.next_at)},
+                    {label: qsTr("Last trigger"), value: details.controller.timeLabel(modelData.last_at)}
+                ]
             }
         }
     }

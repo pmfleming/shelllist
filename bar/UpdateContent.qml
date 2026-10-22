@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "UpdatePresentation.js" as Presentation
 
@@ -9,7 +8,17 @@ Ui.ProviderChooserSurface {
     required property UpdateController controller
     chooserController: controller
     feedbackScope: content
-    sessionContext: controller.selectedResult ? controller.selectedResult.key : ""
+    sessionContext: JSON.stringify([controller.viewMemory.key, controller.pageKey])
+    detailsTabEnabled: controller.detailsOpen && !controller.settingsOpen && controller.detailTabs.length > 1
+    Connections {
+        target: content.controller
+        function onSettingsFieldRequested(field: string): void {
+            Qt.callLater(function() {
+                if (content.controller.uiActive && content.controller.settingsOpen && content.controller.detailsOpen)
+                    content.detailsNavigation.focusSessionLocation({target: field, editing: false});
+            });
+        }
+    }
     additionalCommandItem: content.listItem
     commandsWithoutDetails: true
     Ui.FeedbackSource {
@@ -38,15 +47,41 @@ Ui.ProviderChooserSurface {
         chooserController: content.controller
         resultModel: content.controller.filteredResultsModel
         filterText: content.controller.filterText
-        placeholder: qsTr("Search runs, today or YYYY-MM-DD…")
-        listOptionsComponent: Component { UpdateHistoryControls { controller: content.controller } }
+        placeholder: qsTr("Search updates…")
+        searchActionIcon: "settings"
+        searchActionToolTip: qsTr("Update view settings: %1").arg(content.controller.filterDescription)
+        searchActionActive: !content.controller.runId && (!!content.controller.laneFilter || !!content.controller.outcomeFilter)
+        searchActionEnabled: !content.controller.navigationBlocked
+        onSearchActionRequested: content.controller.toggleSettings()
+        Ui.CommandGroup {
+            Ui.ActionControl {
+                accessibleName: qsTr("Filter update job")
+                accessKey: "T"
+                onClicked: content.controller.openSettings("updateLaneFilter")
+            }
+            Ui.ActionControl {
+                accessibleName: qsTr("Filter update outcome")
+                accessKey: "F"
+                onClicked: content.controller.openSettings("updateOutcomeFilter")
+            }
+            Ui.ActionControl {
+                accessibleName: content.controller.collapseRoutine ? qsTr("Show individual no-change checks") : qsTr("Fold routine checks")
+                accessKey: "N"
+                onClicked: content.controller.collapseRoutine = !content.controller.collapseRoutine
+            }
+            Ui.ActionControl {
+                accessibleName: qsTr("Show all recent updates")
+                accessKey: "A"
+                onClicked: content.controller.perform("all")
+            }
+        }
         powerVisible: false
         refreshing: content.controller.loading
         preserveViewportOnAppend: true
         emptyIcon: "history"
         emptyState: content.controller.errorText ? "unavailable" : content.controller.loading ? "loading" : !content.controller.available ? "unavailable" : content.controller.historyFiltered ? "filtered" : "empty"
         emptyText: content.controller.errorText || (!content.controller.available ? qsTr("Update history has not been published") : content.controller.historyFiltered ? qsTr("No matching updates") : qsTr("No recorded updates"))
-        status: content.controller.loading ? qsTr("Reading update history…") : content.controller.countLabel
+        status: content.controller.loading ? qsTr("Reading update history…") : content.controller.runId ? qsTr("Exact run · history filters bypassed") : content.controller.countLabel
         feedbackScope: content
         onListNearEndChanged: if (listNearEnd) content.controller.loadMore()
         listFooterComponent: Component {
@@ -107,99 +142,11 @@ Ui.ProviderChooserSurface {
                     Ui.ResultLabel {
                         id: label
                         title: groupRow.resultData.title
-                        subtitle: groupRow.resultData.metadata.quietGroup ? groupRow.resultData.subtitle : groupRow.run ? Presentation.rowSubtitle(groupRow.run, content.controller.nowMs) : Presentation.nowSummary(content.controller.currentState, content.controller.nowMs)
+                        subtitle: groupRow.resultData.metadata.quietGroup ? groupRow.resultData.subtitle : groupRow.run ? Presentation.rowSubtitle(groupRow.run, content.controller.nowMs) : qsTr("Local Git · AI tools · Applications · System")
                     }
                 }
             }
         }
     }
-    detailsComponent: Ui.ActionDetailsPane {
-        chooserController: content.controller
-        uiScale: 1
-        title: content.controller.selectedIsOverview ? qsTr("Now") : content.controller.selectedResult ? content.controller.selectedResult.title : qsTr("Updates")
-        subtitle: content.controller.selectedIsOverview ? qsTr("Current worker status") : content.controller.selectedRun ? Presentation.label(content.controller.selectedRun.job.operation) : ""
-        icon: content.controller.selectedIsOverview ? "today" : content.controller.selectedRun ? Presentation.outcomeIcon(content.controller.selectedRun.outcome) : "history"
-        actions: content.controller.detailActions.filter(action => action.id !== "inspect").map(action => action.id === "copy-log"
-            ? Object.assign({}, action, {enabled: !!content.controller.selectedLog && !content.controller.selectedLogLoading && !content.controller.selectedLogError}) : action)
-        Ui.DetailFlickable {
-            objectName: "updateDetailsScroll"
-            anchors.fill: parent
-            viewMemory: content.controller.viewMemory
-            memoryTab: "details"
-            Column {
-                width: parent.width
-                spacing: Ui.Theme.spacingMd
-                UpdateOverview {
-                    width: parent.width
-                    controller: content.controller
-                    visible: content.controller.selectedIsOverview
-                }
-                Ui.DetailCard {
-                    objectName: "updateQuietGroup"
-                    visible: !!content.controller.selectedQuietGroup
-                    title: qsTr("Routine no-change checks")
-                    entries: {
-                        const group = content.controller.selectedQuietGroup;
-                        return group ? [{label: qsTr("Loaded runs"), value: String(group.ids.length)},
-                            {label: qsTr("Lane"), value: Presentation.label(group.first.lane)},
-                            {label: qsTr("Newest"), value: content.controller.timeLabel(group.first.job.started_at)},
-                            {label: qsTr("Oldest"), value: content.controller.timeLabel(group.last.job.started_at)},
-                            {label: qsTr("Scope"), value: qsTr("Consecutive same-day checks in loaded history; expand to review each run.")}] : [];
-                    }
-                }
-                Ui.DetailCard {
-                    visible: !!content.controller.selectedRun
-                    property bool informationOnly: true
-                    objectName: "updateRecordedOutcome"
-                    title: qsTr("Recorded outcome")
-                    entries: {
-                        const run = content.controller.selectedRun;
-                        return run ? [
-                            {label: qsTr("Status · outcome"), value: Presentation.label(run.job.status) + " · " + Presentation.label(run.outcome)},
-                            {label: qsTr("Phase"), value: Presentation.label(run.job.phase)},
-                            ...(run.failed_stage ? [{label: qsTr("Failed stage"), value: Presentation.label(run.failed_stage)}] : []),
-                            ...(run.job.operation === "manual-rebuild" ? [{label: qsTr("Deployment recorded"), value: run.deployed === true ? qsTr("Yes") : run.deployed === false ? qsTr("No") : qsTr("Not recorded")}] : []),
-                            {label: qsTr("Started"), value: content.controller.timeLabel(run.job.started_at)},
-                            {label: qsTr("Duration"), value: Presentation.durationLabel(run, content.controller.nowMs)},
-                            ...(!Presentation.isRunning(run) && run.job.finished_at !== null ? [{label: qsTr("Finished"), value: content.controller.timeLabel(run.job.finished_at)}] : []),
-                            {label: qsTr("Run identity"), value: run.job.id},
-                            {label: qsTr("Exit code"), value: Presentation.exitLabel(run.job.exit_code)}
-                        ] : [];
-                    }
-                }
-                UpdateComponents { controller: content.controller }
-                Ui.DetailColumnCard {
-                    property bool informationOnly: true
-                    title: qsTr("Failure and recovery")
-                    visible: !!content.controller.selectedRun && !!content.controller.selectedRun.issues && content.controller.selectedRun.issues.length > 0
-                    Repeater {
-                        model: content.controller.selectedRun ? content.controller.selectedRun.issues || [] : []
-                        Ui.FieldRow {
-                            id: recoveryRow
-                            required property var modelData
-                            label: modelData.component === null ? qsTr("Run") : content.controller.selectedRun.components[modelData.component].name
-                            Ui.ThemeText {
-                                Layout.fillWidth: true
-                                textFormat: Text.PlainText
-                                wrapMode: Text.Wrap
-                                text: Presentation.issueLabel(recoveryRow.modelData, content.controller.nowMs)
-                            }
-                        }
-                    }
-                }
-                Ui.DetailColumnCard {
-                    property bool informationOnly: true
-                    title: qsTr("Diagnostics")
-                    visible: !!content.controller.selectedRun && !!content.controller.selectedRun.job.error
-                    Ui.ThemeText {
-                        Layout.fillWidth: true
-                        wrapMode: Text.Wrap
-                        textFormat: Text.PlainText
-                        text: content.controller.selectedRun ? content.controller.selectedRun.job.error || "" : ""
-                    }
-                }
-                UpdateLog { controller: content.controller }
-            }
-        }
-    }
+    detailsComponent: UpdateDetails { controller: content.controller }
 }

@@ -25,6 +25,24 @@ Ui.ProviderChooserController {
     property string laneFilter: ""
     property string outcomeFilter: ""
     property bool collapseRoutine: true
+    property bool settingsOpen: false
+    property string detailsTab: "overview"
+    signal settingsFieldRequested(string field)
+    readonly property var detailTabs: settingsOpen ? [] : selectedIsOverview ? [
+        {value: "overview", label: qsTr("Overview"), icon: "dashboard"},
+        {value: "git", label: qsTr("Local Git"), icon: "account_tree"},
+        {value: "ai", label: qsTr("AI tools"), icon: "auto_awesome"},
+        {value: "applications", label: qsTr("Applications"), icon: "apps"},
+        {value: "system", label: qsTr("System"), icon: "computer"}
+    ] : selectedRun ? [
+        {value: "summary", label: qsTr("Summary"), icon: "history"},
+        {value: "changes", label: qsTr("Changes"), icon: "view_list"},
+        {value: "log", label: qsTr("Log"), icon: "article"}
+    ] : []
+    readonly property string pageKey: settingsOpen ? "settings" : detailsTab
+    readonly property string filterDescription: runId ? qsTr("Exact run · history filters bypassed")
+        : (laneFilter ? Presentation.label(laneFilter) : qsTr("All jobs")) + " · "
+            + (outcomeFilter ? Presentation.label(outcomeFilter) : qsTr("All outcomes"))
     property var expandedQuietIds: []
     property int foldedCount: 0
     readonly property bool historyFiltered: !!filterText.trim() || !!laneFilter || !!outcomeFilter
@@ -79,11 +97,53 @@ Ui.ProviderChooserController {
     }
     viewMemory: Ui.ChooserMemory {
         controller: controller
-        key: controller.selectedResult ? controller.selectedResult.key : ""
-        tab: "details"
-        initialTab: "details"
-        tabs: ["details"]
-        onRestoreRequested: function(open, tab) { controller.detailsOpen = open; }
+        key: controller.settingsOpen ? "updates::settings" : controller.selectedResult ? controller.selectedResult.key : ""
+        tab: controller.pageKey
+        initialTab: controller.selectedIsOverview ? "overview" : "summary"
+        tabs: controller.settingsOpen ? ["settings"] : controller.detailTabs.length ? controller.detailTabs.map(item => item.value) : ["summary"]
+        onRestoreRequested: function(open, tab) {
+            if (!controller.settingsOpen) controller.detailsTab = tab;
+            controller.detailsOpen = open;
+        }
+    }
+    function selectDetailsTab(value: string): void {
+        if (navigationBlocked || settingsOpen || !detailTabs.some(tab => tab.value === value)) return;
+        detailsClosing();
+        viewMemory.synchronize();
+        detailsTab = value;
+        viewMemory.synchronize();
+    }
+    function cycleDetailsTab(backwards: bool): bool {
+        if (settingsOpen || detailTabs.length < 2) return false;
+        selectDetailsTab(tabAfter(detailTabs.map(tab => tab.value), detailsTab, backwards));
+        return true;
+    }
+    function openSettings(field: string): void {
+        if (!uiActive || navigationBlocked) return;
+        detailsClosing();
+        viewMemory.synchronize();
+        settingsOpen = true;
+        detailsOpen = true;
+        viewMemory.synchronize();
+        focusDetailsRequested();
+        if (field) settingsFieldRequested(field);
+    }
+    function toggleSettings(): void {
+        if (settingsOpen && detailsOpen) closeDetails();
+        else openSettings("");
+    }
+    function closeDetails(): void {
+        detailsClosing();
+        viewMemory.synchronize();
+        detailsOpen = false;
+    }
+    function openDetails(): void {
+        if (!hasSelection) return;
+        if (settingsOpen) detailsClosing();
+        viewMemory.synchronize();
+        settingsOpen = false;
+        detailsOpen = true;
+        viewMemory.synchronize();
     }
     function activateUi(workspaceId: string): void {
         activateUiState(workspaceId);
@@ -132,6 +192,7 @@ Ui.ProviderChooserController {
     }
     function setHistoryFilter(kind: string, value: string): void {
         if (!uiActive || navigationBlocked) return;
+        if (!runId && ((kind === "lane" && laneFilter === value) || (kind === "outcome" && outcomeFilter === value))) return;
         if (kind === "lane" && ["", "system", "ai-tools", "ai-tools-stale"].includes(value)) laneFilter = value;
         else if (kind === "outcome" && ["", "problems", "running", "current", "activated", "staged", "ready", "queued", "failed", "partial", "blocked", "interrupted", "available", "skipped", "approved", "completed"].includes(value)) outcomeFilter = value;
         else return;
@@ -325,8 +386,8 @@ Ui.ProviderChooserController {
         const rows = History.project(entries, collapseRoutine && !runId, expandedQuietIds, selectedId);
         foldedCount = rows.reduce((count, row) => count + (row.quietGroup && !row.quietGroup.expanded ? row.quietGroup.ids.length : 0), 0);
         resultsAboutToChange(preserve !== false);
-        const overview = provider.makeResult({id: "_now", title: qsTr("Now"), subtitle: qsTr("Current worker status and deferred candidate"),
-            score: 1, icon: "today", primaryActionId: "inspect", metadata: {overview: true},
+        const overview = provider.makeResult({id: "_now", title: qsTr("Now"), subtitle: qsTr("Local Git · AI tools · Applications · System"),
+            score: 1, icon: "dashboard", primaryActionId: "inspect", metadata: {overview: true},
             actions: [{id: "inspect", label: qsTr("Review current status"), closePolicy: "keep-open", presentation: {group: "primary"}}]});
         replaceProviderResults([overview].concat(rows.map(function(row, index) {
             if (row.quietGroup) {
@@ -348,9 +409,12 @@ Ui.ProviderChooserController {
                     {id: "copy", label: qsTr("Copy run summary"), icon: "content_copy", accessKey: "C", closePolicy: "keep-open", presentation: {group: "toolbar"}},
                     {id: "copy-json", label: qsTr("Copy run JSON"), icon: "article", closePolicy: "keep-open", presentation: {group: "overflow"}},
                     {id: "copy-log", label: qsTr("Copy run log"), icon: "content_copy", closePolicy: "keep-open", presentation: {group: "overflow"}},
-                    {id: "all", label: qsTr("Show all recent updates"), icon: "history", accessKey: "A", closePolicy: "keep-open", presentation: {group: "toolbar"}}]});
+                    {id: "all", label: qsTr("Show all recent updates"), icon: "history", closePolicy: "keep-open", presentation: {group: "toolbar"}}]});
         })), false);
-        if (selectedId && !filteredResults.some(result => result.id === selectedId)) { detailsOpen = false; selectFirst(); }
+        if (selectedId && !filteredResults.some(result => result.id === selectedId)) {
+            if (!settingsOpen) detailsOpen = false;
+            selectFirst();
+        }
         resultsChanged();
     }
     function toggleQuietGroup(): bool {
@@ -378,7 +442,7 @@ Ui.ProviderChooserController {
         return sent;
     }
     function autoReadLog(): void {
-        if (!uiActive || !detailsOpen || navigationBlocked || logRequest || !selectedRun || selectedLogRecord) return;
+        if (!uiActive || !detailsOpen || settingsOpen || navigationBlocked || logRequest || !selectedRun || selectedLogRecord) return;
         if (["failed", "partial"].includes(selectedRun.outcome)) readLog(selectedRun);
     }
     function copyComponent(id: string, index: int): bool {
@@ -386,6 +450,7 @@ Ui.ProviderChooserController {
         return copyText(Presentation.componentSummary(selectedRun.components[index]), qsTr("Component versions copied"));
     }
     function copyText(text: string, message: string): bool {
+        if (!uiActive || navigationBlocked) return false;
         copyError = "";
         return clipboardPublisher.publishText(text, message);
     }
@@ -400,7 +465,7 @@ Ui.ProviderChooserController {
         if (actionId === "toggle-quiet") return toggleQuietGroup();
         if (actionId === "inspect" && hasSelection) { openDetails(); return true; }
         if (!selectedRun) return false;
-        if (actionId === "logs") return readLog(selectedRun);
+        if (actionId === "logs") { selectDetailsTab("log"); return logRequest ? false : readLog(selectedRun); }
         if (actionId === "copy") return copyText(Presentation.runSummary(selectedRun, nowMs), qsTr("Run summary copied"));
         if (actionId === "copy-json") return copyText(JSON.stringify(selectedRun, null, 2), qsTr("Run JSON copied"));
         if (actionId === "copy-log" && selectedLogRecord && !selectedLogError && selectedLog && !selectedLogLoading)

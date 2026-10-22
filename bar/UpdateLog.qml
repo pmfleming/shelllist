@@ -28,7 +28,8 @@ Ui.DetailColumnCard {
         wrapMode: Text.Wrap
         textFormat: Text.PlainText
         text: card.controller.selectedLogLoading ? qsTr("Reading log…") : card.controller.selectedLogQueued ? qsTr("Waiting to read log…") : card.controller.selectedLogError
-            || (!card.controller.selectedLog ? qsTr("No readable log entries for this run. Child-build output may be recorded separately.") : "")
+            || (!card.controller.selectedLogRecord ? qsTr("Log not read. Use Read run log to inspect the recorded output.")
+                : !card.controller.selectedLog ? qsTr("No readable log entries for this run. Child-build output may be recorded separately.") : "")
     }
     Repeater {
         model: card.rawLines.slice(-100)

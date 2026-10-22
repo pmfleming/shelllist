@@ -23,6 +23,7 @@ Rectangle {
     property string searchActionIcon: ""
     property string searchActionToolTip: ""
     property bool searchActionEnabled: true
+    property bool searchActionActive: false
 
     signal querySelectionChanged
     signal filterEdited(string text)
@@ -107,6 +108,17 @@ Rectangle {
             accessibleName: header.searchActionToolTip
             enabled: header.searchActionEnabled
             onClicked: header.searchActionRequested()
+            Rectangle {
+                objectName: "searchActionActiveMark"
+                visible: header.searchActionActive
+                anchors.right: parent.right
+                anchors.top: parent.top
+                width: Theme.spacingXs * header.uiScale
+                height: width
+                radius: width / 2
+                color: Theme.accent
+                Accessible.ignored: true
+            }
         }
 
         FlatIconButton {
