@@ -259,6 +259,10 @@
       "requirement": "0.31",
       "version": "0.31.15"
     },
+    "wayland-server": {
+      "requirement": "0.31",
+      "version": "0.31.14"
+    },
     "zbus": {
       "requirement": "5.18",
       "version": "5.18.0"
