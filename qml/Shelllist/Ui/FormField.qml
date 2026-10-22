@@ -17,11 +17,13 @@ Item {
     property bool separatorVisible: true
     property string readOnlyReason: ""
     property bool helpOpen: false
-    property bool showHelpButton: helpText.length > 0
+    property bool helpOnFocus: false
+    property bool showHelpButton: !helpOnFocus && helpText.length > 0
     property bool copyAvailable: false
     property bool copyEnabled: true
     signal copyRequested
-    readonly property bool editorAvailable: ((editor as TextField)?.editSession || (editor as IpField)?.editSession || (editor as TextEditor)?.editSession || (editor as DropDownList)?.editSession || (editor as SegmentedControl)?.editSession || (editor as ValueSlider)?.editSession || (editor as LabeledValueSlider)?.editSession)?.available ?? false
+    readonly property FieldEditSession editorSession: (editor as TextField)?.editSession || (editor as IpField)?.editSession || (editor as TextEditor)?.editSession || (editor as DropDownList)?.editSession || (editor as SegmentedControl)?.editSession || (editor as ValueSlider)?.editSession || (editor as LabeledValueSlider)?.editSession || null
+    readonly property bool editorAvailable: editorSession?.available ?? false
     readonly property string helpText: [readOnlyReason, supportingText].filter(Boolean).join(". ")
     readonly property string message: errorText || statusText
     implicitWidth: 320
@@ -81,6 +83,15 @@ Item {
         font.pixelSize: Theme.formSupportSize
         color: Theme.mutedText
         wrapMode: Text.Wrap
+    }
+    FeedbackSource {
+        objectName: "formFieldContext"
+        active: field.helpOnFocus && ((field.editorSession?.focused ?? false)
+            || ((field.editorSession?.navigation?.activeFocus ?? false)
+                && field.editorSession.navigation.currentTarget === field.editor))
+        text: field.helpText
+        briefText: text
+        priority: 1 // Routine context stays below operation and validation feedback.
     }
     FeedbackSource {
         text: field.message

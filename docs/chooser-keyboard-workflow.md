@@ -334,7 +334,14 @@ unscoped named entries in Alt+J, since those rows cannot be selected with Tab.
 They remain outside field traversal. Copy is opt-in and routed through the
 existing domain publisher/guards; secrets never acquire automatic copy actions.
 Existing external Help commands can suppress the embedded button without losing
-accessible guidance. Errors, safety/recovery messages and in-flight status remain
+accessible guidance. Wi-Fi's IP address, Gateway, DNS and Domains rows instead use
+shared `FormField.helpOnFocus`: no question-mark buttons or expanding Help rows.
+Their context contributes through `FeedbackSource` to the fixed status bar while
+the field is browsed or natively focused, and clears when focus leaves. Operational
+and validation feedback outrank this routine context. Read-only fields retain
+accessible descriptions and Copy without gaining Tab stops. Native Qt coverage
+lives in `tst_ip_fields.qml`; save/discard and backend guards are unchanged.
+Errors, safety/recovery messages and in-flight status remain
 visible in a fixed surface status allocation: provider panels use their existing
 list footer; standalone panels use `PanelSurface`'s shared footer. `FeedbackSource`
 contributes domain text, summary, tone and priority without taking layout space.

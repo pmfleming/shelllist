@@ -29,8 +29,10 @@ size token merely to fix one role. Shared passive compositions must not become
 editable stops or request owners. Read-only telemetry is not a disabled field.
 Known values and labels remain readable when controls are unavailable.
 
-Routine guidance belongs in explicit Help and native descriptions, not persistent
-key legends or hover tooltips. Failures, blockers, pending operations, countdowns,
+Routine guidance belongs in explicit Help, focus-scoped status context and native
+descriptions, not persistent key legends or hover tooltips. Wi-Fi IP & DNS fields
+use shared `FormField.helpOnFocus` instead of question-mark buttons; context adds
+no field stops or row height and has lower priority than operational feedback. Failures, blockers, pending operations, countdowns,
 dirty display layouts and safety consequences remain visible. Keep independent
 error/retry ownership; presentation components never dispatch domain mutations.
 Errors contribute through `FeedbackSource` to a fixed `StatusPanel`/`FeedbackSlot`,

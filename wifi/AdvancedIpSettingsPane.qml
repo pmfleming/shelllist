@@ -88,6 +88,7 @@ AdvancedSettingsFlickable {
                     label: hardwareFlick.settings.ipFamily === "ipv6" ? "IPv6" : "IPv4"
                     icon: "lan"
                     accessibleName: hardwareFlick.settings.ipFamily === "ipv6" ? qsTr("IPv6 address and subnet") : qsTr("IPv4 address and subnet")
+                    helpOnFocus: true
                     requiredInput: hardwareFlick.settings.currentMethod === "manual"
                     readOnlyReason: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : ipAddress.readOnly ? qsTr("Assigned automatically") : ""
                     copyAvailable: ipAddress.readOnly && ipAddress.enabled && ipAddress.text.length > 0
@@ -115,6 +116,7 @@ AdvancedSettingsFlickable {
                     label: qsTr("Gateway")
                     icon: "route"
                     accessibleName: qsTr("Gateway (optional)")
+                    helpOnFocus: true
                     readOnlyReason: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : gateway.readOnly ? qsTr("Assigned automatically") : ""
                     copyAvailable: gateway.readOnly && gateway.enabled && gateway.text.length > 0
                     onCopyRequested: hardwareFlick.settings.controller.copyText(gateway.text, qsTr("Gateway copied"))
@@ -139,6 +141,7 @@ AdvancedSettingsFlickable {
                     label: qsTr("DNS")
                     icon: "dns"
                     accessibleName: qsTr("DNS servers")
+                    helpOnFocus: true
                     readOnlyReason: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : dnsServers.readOnly ? qsTr("Assigned automatically") : ""
                     copyAvailable: dnsServers.readOnly && dnsServers.enabled && dnsServers.text.length > 0
                     onCopyRequested: hardwareFlick.settings.controller.copyText(dnsServers.text, qsTr("DNS servers copied"))
@@ -164,6 +167,7 @@ AdvancedSettingsFlickable {
                     label: qsTr("Domains")
                     icon: "language"
                     accessibleName: qsTr("DNS search domains (optional)")
+                    helpOnFocus: true
                     supportingText: qsTr("Comma or whitespace separated")
                     TextField {
                         Layout.fillWidth: true

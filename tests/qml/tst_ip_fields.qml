@@ -76,6 +76,51 @@ DaemonTestCase {
     function updates() {
         return calls.filter(call => call.method === "wifi.profile.operation" && call.params.operation === "update");
     }
+    function test_fieldContextUsesStatusWithoutHelpButtons() {
+        const panel = make();
+        const footer = findChild(panel, "panelFeedback");
+        const status = findChild(footer, "feedbackText");
+        for (const name of ["wifiIpAddress", "wifiIpGateway", "wifiDnsServers", "wifiDnsSearch"]) {
+            const editor = findChild(panel, name);
+            let row = editor.parent;
+            while (!(row instanceof Ui.FormField)) row = row.parent;
+            verify(!findChild(row, "formFieldHelp").visible);
+            verify(!findChild(row, "formFieldSupport").visible);
+        }
+        const dns = browse(panel, "wifiDnsServers");
+        tryCompare(status, "text", "Comma or whitespace separated");
+        keyClick(Qt.Key_Return);
+        verify(panel.editing);
+        compare(status.text, "Comma or whitespace separated");
+        paste("1.1.1.1");
+        keyClick(Qt.Key_Escape);
+        compare(dns.text, "");
+        compare(status.text, "Comma or whitespace separated");
+        keyClick(Qt.Key_Tab);
+        compare(panel.currentTarget.objectName, "wifiDnsSearch");
+        compare(status.text, "Comma or whitespace separated");
+        keyClick(Qt.Key_Tab);
+        tryCompare(status, "text", "");
+        browse(panel, "wifiDnsSearch");
+        const domains = panel.currentTarget;
+        const height = domains.height;
+        panel.forceActiveFocus();
+        tryCompare(status, "text", "");
+        mouseClick(domains, domains.width / 2, domains.height / 2);
+        tryVerify(() => panel.editing);
+        tryCompare(status, "text", "Comma or whitespace separated");
+        compare(domains.height, height, "context never expands the field");
+        keyClick(Qt.Key_Escape);
+        panel.page.currentIp.method = "auto";
+        panel.page.currentIp.autoDns = true;
+        for (const name of ["wifiIpAddress", "wifiIpGateway", "wifiDnsServers"]) {
+            const editor = findChild(panel, name);
+            verify(editor.readOnly);
+            verify(!panel.availableFields().includes(editor));
+            verify(editor.Accessible.description.includes("Assigned automatically"));
+        }
+        compare(updates().length, 0);
+    }
     function test_nativeBufferLimitAndInvalidPairNeverDispatch() {
         const panel = make();
         const address = browse(panel, "wifiIpAddress");
