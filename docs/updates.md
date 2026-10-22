@@ -11,7 +11,11 @@ shelllist updates run RUN_ID
 
 Home Manager binds **Super+U** directly to Updates (`updatesShortcut`; set it to
 `null` to disable). The existing **Super+Shift+U** / `update-logs` shortcut also
-opens this viewer. The application is lazy-loaded and shares Shelllist's
+opens this viewer. A separately managed Hyprland Lua configuration must register
+`hl.bind("SUPER + U", hl.dsp.global("shelllist:updates"))` itself; Home Manager's
+legacy `settings.bind` output does not configure that Lua session. The host Lua
+configuration also retains Super+Shift+U → `shelllist:update-logs`.
+The application is lazy-loaded and shares Shelllist's
 chooser/navigation components; tray discovery is resident, not delayed until
 someone first opens the Tray chooser. A pinned
 **Now** result opens the current-state inspector; the remaining results are runs.
@@ -379,8 +383,8 @@ A blank tray inspector alone does not establish whether history exists.
   Application inventory tests cover actual read-only tab/scroll keys, known and
   unknown versions, partial counts, malformed-refresh retention and missing manifests.
   Worker and native projection tests cover bounded files/rows, symlinked NixOS etc
-  entries, deduplication, scope and rejection. Host Nix checks cover manifest
-  generation.
+  entries, deduplication, scope and rejection. Host Nix and rendered-Lua checks
+  cover manifest generation and both update shortcuts.
 - `tests/manual/tst_update_review.qml` captures the actual production panel using
   recording transports: nine pages in dark/light at 1040×720 and 976×600. Run it
   with `tests/run-qmlquality-tests.sh -input tests/manual/tst_update_review.qml`

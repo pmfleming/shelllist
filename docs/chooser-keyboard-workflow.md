@@ -634,7 +634,9 @@ contract and Qt interaction coverage.
 
 Updates uses the shared ProviderChooserSurface and a real native Tray entry.
 Home Manager's Super+U opens it directly (`updatesShortcut`, nullable); the
-existing Super+Shift+U / update-logs route remains.
+existing Super+Shift+U / update-logs route remains. Separately managed Hyprland
+Lua sessions must register those bindings in their Lua configuration; the host
+maps them to `shelllist:updates` and `shelllist:update-logs`.
 Updates' Applications tab displays read-only Local / Latest version columns.
 Local is active-generation declared package metadata; Latest uses cached upstream
 release evidence and stays unknown when none is supplied. Failed/expired checks
