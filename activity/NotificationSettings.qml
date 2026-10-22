@@ -103,7 +103,7 @@ Column {
         to: 30
         stepSize: 1
         value: settings.notificationState.settings?.history_days || 30
-        valueText: qsTr("%1 days").arg(Math.round(value))
+        valueText: Math.round(value) === 1 ? qsTr("1 day") : qsTr("%1 days").arg(Math.round(value))
         enabled: settings.nativeAvailable && !!settings.notificationState.settings && !settings.notificationState.settingsPending
         onEdited: settings.notificationState.setSettings({history_days: Math.round(value)})
     }

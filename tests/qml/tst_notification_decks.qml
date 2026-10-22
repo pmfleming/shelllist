@@ -78,6 +78,11 @@ DaemonTestCase {
         deck.group = {key: "named:chat", monitor: "test", records: [record(1)]};
         tryCompare(second, "y", 0);
         compare(findChild(deck, "notificationDeckCard1"), second, "Stable record identity retains delegate");
+        deck.group = {key: "named:chat", monitor: "test", records: [Object.assign(record(1), {interaction_blocked: true})]};
+        const count = calls.length;
+        mouseClick(findChild(second, "notificationToastDismiss"));
+        mouseClick(findChild(second, "notificationToastSurface"), 100, 30);
+        compare(calls.length, count, "A frozen replacement is readable but cannot invoke or dismiss its newer version");
         mouseMove(testCase, 490, 640);
         tryCompare(deck, "expanded", false);
     }
@@ -105,6 +110,18 @@ DaemonTestCase {
         compare(card.copiedAction, "");
         state.contextActionFinished("1:1000", 1000, "copy-code", true, "");
         compare(card.copiedAction, "", "late copy acknowledgement cannot mark a replacement");
+    }
+    function test_countdownPreferenceChangesOnlyPresentation() {
+        const n = Object.assign(record(1), {created_unix_ms: Date.now(), updated_unix_ms: Date.now(), toast_expires_unix_ms: Date.now() + 30000});
+        const deck = createTemporaryObject(factory, testCase, {group: {key: "chat", records: [n]}});
+        const state = deck.controller.notificationState;
+        state.notifications = {available: true, backend: "native", settings: {countdown: false}};
+        const expiry = findChild(deck, "notificationToastCountdown");
+        verify(expiry);
+        compare(expiry.visible, false);
+        state.notifications = {available: true, backend: "native", settings: {countdown: true}};
+        compare(expiry.visible, true);
+        compare(findChild(deck, "notificationDeckCard1").notification.toast_expires_unix_ms, n.toast_expires_unix_ms);
     }
     function test_nativeProjectionOwnsRoutingAndOrder() {
         const deck = createTemporaryObject(factory, testCase, {group: {key: "chat", records: [record(1)]}});

@@ -75,7 +75,8 @@ BarOverlayWindow {
                     group: JSON.parse(resultData.payload)
                     controller: window.controller
                     width: toastColumn.width
-                    maximumHeight: viewport.height > 0 ? window.height : 480
+                    maximumHeight: window.height
+                    readingGuarded: reading.hovered
                 }
             }
         }

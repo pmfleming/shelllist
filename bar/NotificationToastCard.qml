@@ -11,6 +11,7 @@ Rectangle {
     required property BarController controller
     property int groupCount: 1
     property bool breakoutVisible: false
+    property bool pauseCountdown: false
     readonly property var actions: Ui.NotificationPresentation.standardActions(notification)
     readonly property var replyAction: Ui.NotificationPresentation.replyAction(notification)
     readonly property var defaultAction: Ui.NotificationPresentation.defaultAction(notification)
@@ -37,7 +38,7 @@ Rectangle {
     Accessible.name: notification.summary || notification.app_name || qsTr("Notification")
     Accessible.onPressAction: if (!removing) activate()
     property double nowMs: Date.now()
-    readonly property bool removing: !!replyState?.operations[recordKey]
+    readonly property bool removing: !!replyState?.operations[recordKey] || notification.interaction_blocked === true
     readonly property bool hovered: cardHover.hovered
 
     HoverHandler { id: cardHover }
@@ -97,12 +98,15 @@ Rectangle {
         drag.minimumX: 0
         drag.maximumX: card.width
         drag.threshold: 12
+        property bool dismissedBySwipe: false
+        onPressed: dismissedBySwipe = false
         onReleased: {
-            if (card.x > card.width * 0.3 && !card.removing)
+            dismissedBySwipe = card.x > card.width * 0.3;
+            if (dismissedBySwipe && !card.removing)
                 card.controller.dismissNotification(card.notification.id);
             card.x = 0;
         }
-        onClicked: if (!card.removing && card.x < 2)
+        onClicked: if (!dismissedBySwipe && !card.removing && card.x < 2)
             card.activate()
     }
 
@@ -188,6 +192,7 @@ Rectangle {
 
         Ui.NotificationReplyRow {
             id: replyRow
+            enabled: !card.removing
             visible: card.replyVisible
             notificationKey: card.recordKey
             draftText: card.draft
@@ -237,6 +242,7 @@ Rectangle {
             id: countdown
             target: expiry
             property: "fraction"
+            paused: running && card.pauseCountdown
             to: 0
         }
     }

@@ -30,15 +30,15 @@ Io.BarDaemonBackend {
         return request("center", Api.methods.notificationsQueryCenter, params, {center: context});
     }
     function snoozeSharing(generation: double, minutes: int): bool {
-        return request("sharing", "notifications.snoozeSharing", {generation: generation, minutes: minutes}, {sharingGeneration: generation});
+        return request("sharing", Api.methods.notificationsSnoozeSharing, {generation: generation, minutes: minutes}, {sharingGeneration: generation});
     }
     function setSettings(patch: var): bool {
-        return request("settings", "notifications.setSettings", patch, {});
+        return request("settings", Api.methods.notificationsSetSettings, patch, {});
     }
     function setReading(monitor: string, reading: bool): bool {
         if (Object.values(requests).some(context => context.kind === "reading" && context.monitor === monitor))
             return false;
-        return request("reading", "notifications.setReading", {monitor: monitor, reading: reading}, {monitor: monitor});
+        return request("reading", Api.methods.notificationsSetReading, {monitor: monitor, reading: reading}, {monitor: monitor});
     }
     function setDnd(enabled: bool, until: var): bool {
         return request("dnd", Api.methods.notificationsSetDnd, {
@@ -82,7 +82,7 @@ Io.BarDaemonBackend {
         }, {operationKey: store.keyFor(id)});
     }
     function contextAction(record: var, key: string): bool {
-        return request("context-action", "notifications.contextAction", {
+        return request("context-action", Api.methods.notificationsContextAction, {
             id: record.id, created_unix_ms: record.created_unix_ms, updated_unix_ms: record.updated_unix_ms, key: key
         }, {operationKey: store.keyFor(record), updated: record.updated_unix_ms, actionKey: key});
     }

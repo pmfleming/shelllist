@@ -117,7 +117,11 @@ Shelllist renews once per second while the pointer is over the toast surface.
 The lease freezes all deck insertions/reordering on that display, including other
 applications. New arrivals remain collected and appear after release. Popup-only
 timeouts pause; explicit sender protocol expiry, silence, DND and acknowledged
-removal remain authoritative. A crashed/disconnected UI cannot hold a deck forever.
+removal remain authoritative. Replacements keep an inert, readable placeholder
+until leave rather than moving a different action under the pointer. Same-clock-tick
+replacements receive distinct update identities. A crashed/disconnected UI cannot
+hold a deck forever. Monitor removal reroutes on workspace observations; ordinary
+focus changes leave existing decks pinned.
 No read guard, timer policy or app grouping is implemented in TypeScript/Python.
 
 Native deck/expiry tests and `tst_notification_decks.qml` cover queueing, lease
@@ -197,7 +201,9 @@ part of this change.
 
 ## Deployment and verification
 
-Rebuild/restart **bar-daemon and shelllist together**; the frontend requires the
+Rebuild/restart **clip-daemon, bar-daemon and shelllist together**; sensitive copies
+fail closed if the new clipboard method is unavailable. No running service or
+user clipboard was changed by implementation/testing. The frontend requires the
 additive timeline, policy and deletion protocol methods. There is no local catalog
 fallback. SwayNC retains its existing managed-settings notice; native-only controls
 are disabled.
@@ -209,3 +215,17 @@ windows, stale pages and reused-request ownership. Query replays, icon resolutio
 and pixel-offset/period-header matrices are retired; see
 [current tradeoffs](../tests/test-reduction-owners.md).
 Rust tests: `activity::notifications`, including `redesign_tests`.
+
+Augmentation validation (combined working tree, offscreen Qt/software renderer):
+223 Qt passes, zero failures, one existing RHI-only artwork skip; bar-daemon's
+library suite passes with 186 tests and three existing ignores; clip-daemon passes
+34 library, six API and one client test. Strict QML lint, daemon library Clippy,
+generated-contract checks and bar/clip fixture-registry checks pass. Native fixtures
+and QML registry bindings were regenerated with the Rust tools. No new TypeScript
+or Python implementation was added. The existing UI-review tool reports only the
+two new shared toggle compositions: stable field identities and ordinary settings
+transactions are intentional. The shell UI owner retains bounded popup geometry
+(390px width, 480px standalone expansion limit); it is not a panel-setting style.
+Full Nix/package deployment, real provider/compositor sharing detection and a human
+accessibility walkthrough were not performed. Tests include lifecycle hooks in
+reported counts and do not imply those manual gates passed.

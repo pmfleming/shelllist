@@ -9,6 +9,7 @@ Item {
     required property var group
     required property BarController controller
     property real maximumHeight: 480
+    property bool readingGuarded: expanded
     readonly property bool expanded: hover.hovered || cards.activeFocus
     readonly property bool stacked: group.records.length > 1
     property real cardHeight: 0
@@ -19,8 +20,11 @@ Item {
         let height = 0;
         for (let i = 0; i < repeater.count; ++i)
             height = Math.max(height, repeater.itemAt(i)?.implicitHeight || 0);
-        cardHeight = height;
+        // Shrinking a dismissed tallest card must not move the remaining close
+        // targets while reading. Collapse releases this presentation-only floor.
+        cardHeight = expanded ? Math.max(cardHeight, height) : height;
     }
+    onExpandedChanged: if (!expanded) Qt.callLater(measure)
     HoverHandler { id: hover }
     Flickable {
         id: cards
@@ -51,6 +55,7 @@ Item {
                 z: repeater.count - index
                 visible: stack.expanded || index < 3
                 enabled: stack.expanded || index === 0
+                pauseCountdown: stack.readingGuarded
                 groupCount: stack.expanded ? 1 : stack.group.records.length
                 breakoutVisible: stack.stacked && !stack.expanded
                 onBreakoutRequested: stack.controller.openNotificationCenter(stack.group.key)
