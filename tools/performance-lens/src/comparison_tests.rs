@@ -145,6 +145,27 @@ fn report_shows_unpaired_lifetime_counters_without_inventing_rates() {
 }
 
 #[test]
+fn write_hotspots_do_not_hide_quiet_cpu_writers() {
+    let m = manifest();
+    let mut s = summary(&m, 0.0, 0.0);
+    s.resources[0].io_write_observed_bytes = Some(2_520_000.0);
+    s.resources[0].io_write_covered_s = 2.0;
+    s.resources[0].cpu_percent_one_core = None;
+    let dir = tempfile::tempdir().unwrap();
+    report::write(dir.path(), &m, &s, &[], &[]).unwrap();
+    let html = std::fs::read_to_string(dir.path().join("report.html")).unwrap();
+    let table = html
+        .split("Highest observed disk-write rate")
+        .nth(1)
+        .unwrap()
+        .split("</table>")
+        .next()
+        .unwrap();
+    assert!(table.contains("1260000.000"));
+    assert!(table.contains(&s.resources[0].label));
+}
+
+#[test]
 fn legacy_protocol_defaults_and_missing_phases_remain_explicit() {
     let a = manifest();
     let mut b = a.clone();

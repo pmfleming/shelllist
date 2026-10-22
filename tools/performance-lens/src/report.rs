@@ -205,6 +205,14 @@ fn number(v: Option<f64>) -> String {
     v.map(|n| format!("{n:.3}"))
         .unwrap_or_else(|| "unavailable".into())
 }
+fn write_rate(row: &ResourceSummary) -> Option<f64> {
+    (row.io_write_covered_s > 0.0)
+        .then(|| {
+            row.io_write_observed_bytes
+                .map(|n| n / row.io_write_covered_s)
+        })
+        .flatten()
+}
 fn mib(v: Option<u64>) -> String {
     number(v.map(|n| n as f64 / 1048576.0))
 }
@@ -282,7 +290,7 @@ pub fn write(
     for limit in &summary.evidence_limits {
         let _ = write!(html, "<li>{}</li>", escape(limit));
     }
-    html.push_str("</ul><h3>Highest observed CPU by scope / phase</h3><p>Localization only, not proof of a bottleneck. Initial settling is excluded here; all phases remain below.</p><table><tr><th>Scope / phase</th><th>% one core</th><th>Covered seconds</th></tr>");
+    html.push_str("</ul><h3>Highest observed CPU by scope / phase</h3><p>Localization only, not proof of a bottleneck. Initial settling is excluded here; all phases remain below.</p><table><tr><th>Scope / phase</th><th>% one core</th><th>CPU covered s</th><th>Write bytes/s</th><th>Write covered s</th></tr>");
     let mut hotspots: Vec<_> = summary
         .resources
         .iter()
@@ -296,11 +304,31 @@ pub fn write(
     for r in hotspots.into_iter().take(10) {
         let _ = write!(
             html,
-            "<tr><td>{} / {}</td><td>{}</td><td>{:.3}</td></tr>",
+            "<tr><td>{} / {}</td><td>{}</td><td>{:.3}</td><td>{}</td><td>{:.3}</td></tr>",
             escape(&r.label),
             escape(&r.phase),
             number(r.cpu_percent_one_core),
-            r.valid_cpu_seconds
+            r.valid_cpu_seconds,
+            number(write_rate(r)),
+            r.io_write_covered_s
+        );
+    }
+    html.push_str("</table><h3>Highest observed disk-write rate</h3><p>Ranked independently of CPU. Process storage accounting, not durable writes or physical device throughput; rates use only covered intervals.</p><table><tr><th>Scope / phase</th><th>Write bytes/s</th><th>Observed write bytes</th><th>Covered seconds</th></tr>");
+    let mut writers: Vec<_> = summary
+        .resources
+        .iter()
+        .filter(|r| r.phase != "initial-settle" && write_rate(r).is_some())
+        .collect();
+    writers.sort_by(|a, b| write_rate(b).unwrap().total_cmp(&write_rate(a).unwrap()));
+    for r in writers.into_iter().take(10) {
+        let _ = write!(
+            html,
+            "<tr><td>{} / {}</td><td>{}</td><td>{}</td><td>{:.3}</td></tr>",
+            escape(&r.label),
+            escape(&r.phase),
+            number(write_rate(r)),
+            number(r.io_write_observed_bytes),
+            r.io_write_covered_s
         );
     }
     html.push_str("</table></section>");
