@@ -33,6 +33,12 @@ remain out of scope. Existing Shelllist benchmarks are unchanged.
 
 ## Build and test
 
+The product dependency audit records this exact standalone crate in
+`contracts/build-inputs.json` under `independentCrates`. Its own lockfile and
+requirements are intentionally separate from production dependency alignment;
+production path dependencies on it remain forbidden. This does not exempt new
+nested crates from inventory checks or run the tool's tests during a rebuild.
+
 From the Shelllist root, using its Rust development environment:
 
 ```sh

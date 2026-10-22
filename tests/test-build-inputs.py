@@ -106,6 +106,51 @@ class BuildInputTests(unittest.TestCase):
         self.put("shelllist/new/Cargo.toml", '[package]\nname = "new"\n')
         self.rejects("manifest inventory changed")
 
+    def independent_crate(self):
+        path = "shelllist/tools/lens/Cargo.toml"
+        self.put(path, '[package]\nname = "lens"\nversion = "0.1.0"\n[workspace]\n[dependencies]\nserde = "2"\n')
+        self.put("shelllist/tools/lens/Cargo.lock", 'version = 4\npackage = []\n')
+        self.policy["independentCrates"] = {path: "External tool, not a product dependency"}
+        return path
+
+    def test_independent_crate_has_separate_dependency_policy(self):
+        self.independent_crate()
+        self.assertEqual(self.errors(), [])
+
+    def test_independent_crate_requires_reason_and_present_manifest(self):
+        path = self.independent_crate()
+        self.policy["independentCrates"][path] = ""
+        self.rejects("undocumented independent crate")
+        (self.root / path).unlink()
+        self.rejects("stale independent crate")
+
+    def test_independent_crate_requires_standalone_workspace_and_lock(self):
+        path = self.independent_crate()
+        self.replace(path, '[workspace]\n', '')
+        self.rejects("empty standalone workspace")
+        (self.root / path).with_name("Cargo.lock").unlink()
+        self.rejects("own a separate lockfile")
+
+    def test_independent_crate_cannot_also_be_product(self):
+        path = self.independent_crate()
+        self.policy["manifests"].append(path)
+        self.policy["locks"].append(str(Path(path).with_name("Cargo.lock")))
+        self.rejects("also a product manifest")
+        self.rejects("own a separate lockfile")
+
+    def test_independent_crate_does_not_hide_nested_crates(self):
+        self.independent_crate()
+        self.put("shelllist/tools/lens/nested/Cargo.toml", '[package]\nname = "nested"\n')
+        self.put("shelllist/tools/lens/nested/Cargo.lock", 'version = 4\npackage = []\n')
+        self.rejects("manifest inventory changed")
+        self.rejects("lock inventory changed")
+
+    def test_product_cannot_depend_on_independent_crate(self):
+        self.independent_crate()
+        path = self.manifests[0]
+        self.put(path, (self.root / path).read_text() + 'lens = { path = "../../tools/lens" }\n')
+        self.rejects("uncaptured path dependency shelllist/tools/lens/Cargo.toml")
+
     def test_msrv(self):
         self.replace(self.manifests[0], '1.85', '1.96')
         self.rejects("MSRV exceeds")

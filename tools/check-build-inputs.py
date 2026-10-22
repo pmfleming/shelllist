@@ -67,6 +67,24 @@ def audit(policy, sources):
             if "Cargo.toml" in files:
                 relative = (Path(directory) / "Cargo.toml").relative_to(root)
                 manifests[f"{repo}/{relative}"] = toml(root / relative)
+    # Standalone development tools have their own dependency policy. Exempt
+    # exact crate/lock pairs, never whole trees: new nested crates still fail
+    # inventory checks, and product path dependencies cannot resolve to them.
+    for path, reason in policy.get("independentCrates", {}).items():
+        require(isinstance(reason, str) and bool(reason.strip()),
+                f"{path}: undocumented independent crate")
+        require(path not in policy["manifests"], f"{path}: independent crate is also a product manifest")
+        manifest = manifests.pop(path, None)
+        require(manifest is not None, f"{path}: stale independent crate")
+        if manifest is None:
+            continue
+        require("package" in manifest and manifest.get("workspace") == {},
+                f"{path}: independent crate must declare an empty standalone workspace")
+        lock = str(Path(path).with_name("Cargo.lock"))
+        require(lock in discovered_locks and lock not in policy["locks"]
+                and lock not in policy.get("nonOwningLocks", {}),
+                f"{path}: independent crate must own a separate lockfile")
+        discovered_locks.discard(lock)
     require(set(manifests) == set(policy["manifests"]),
             f"manifest inventory changed: {sorted(set(manifests) ^ set(policy['manifests']))}")
     for path, reason in policy.get("nonOwningLocks", {}).items():

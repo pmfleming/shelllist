@@ -52,6 +52,9 @@
     "shelllist/rust/shelllist-search/Cargo.lock",
     "shelllist/rust/shelllist-timezone-assets/Cargo.lock"
   ],
+  "independentCrates": {
+    "shelllist/tools/performance-lens/Cargo.toml": "Standalone external measurement CLI with an empty workspace and its own Cargo.lock; not a production package or dependency. Validated separately using the locked commands in tools/performance-lens/README.md."
+  },
   "nonOwningLocks": {
     "clip-daemon/vendor/shelllist-search/Cargo.lock": "Ignored local library-test artifact; clip-daemon/Cargo.lock owns this path dependency. Not captured or consumed by product Nix builds."
   },
