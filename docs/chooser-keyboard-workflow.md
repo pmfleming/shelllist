@@ -1069,8 +1069,10 @@ acknowledgement, failure and stale-context guards.
 Signal readings are passive row/detail information, never fields or commands.
 Live connected-link readings can replace discovery readings without changing
 selection, focus or an active field draft. Cached fallback readings stay dimmed.
-BR/EDR connected RSSI is shown in relative dB, not as a fabricated percentage or
-absolute-strength bars; LE/discovery readings retain the existing percentage.
+Bars come from bt-daemon's `signal_level` for both RSSI units. BR/EDR connected
+RSSI is labelled Good/Fair/Weak with its relative dB in the detail label, never a
+fabricated percentage; LE/discovery readings retain the existing percentage. Rows
+without a reading show "—" and hide the meter while keeping its column.
 These updates add no Tab stops or keyboard behavior.
 
 ## Submitted Bluetooth profile changes

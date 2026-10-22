@@ -10,12 +10,10 @@ Ui.ResultRow {
 
     readonly property var device: resultData.payload || ({})
     readonly property bool hasSignal: BluetoothFlow.hasSignal(device)
-    readonly property bool relativeSignal: BluetoothFlow.hasRelativeSignal(device)
-    readonly property int signalStrength: hasSignal ? Math.max(0, Math.min(100, Math.round(Number(device.signal_strength) || 0))) : 0
     readonly property int signalLevel: BluetoothFlow.signalLevel(device)
     readonly property bool signalLive: !!device.signal_live
     accessibleName: resultData.title + ". " + resultData.subtitle + ". Signal: " + BluetoothFlow.signalLabel(device)
-    readonly property color signalColor: !hasSignal || relativeSignal ? Ui.Theme.mutedText : (signalStrength >= 67 ? Ui.Theme.active : (signalStrength >= 34 ? Ui.Theme.warning : Ui.Theme.danger))
+    readonly property color signalColor: [Ui.Theme.mutedText, Ui.Theme.danger, Ui.Theme.warning, Ui.Theme.active][signalLevel]
 
     Ui.ThemeText {
         objectName: "bluetoothSignalValue"
@@ -36,7 +34,8 @@ Ui.ResultRow {
         Layout.preferredHeight: row.scaled(20)
         level: row.signalLevel
         iconColor: row.signalColor
-        opacity: row.relativeSignal ? 0 : (row.signalLive ? 1 : 0.58)
+        // No reading: keep the column width but draw no empty meter.
+        opacity: row.hasSignal ? (row.signalLive ? 1 : 0.58) : 0
     }
 
     leadingIcon: resultData.icon || "󰂯"

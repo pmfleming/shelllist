@@ -28,6 +28,7 @@ interface Device {
     rssi?: number | null;
     rssi_kind?: string;
     signal_strength?: number | null;
+    signal_level?: number | null;
     signal_live?: boolean;
     policy?: unknown;
     fast_pair?: { multipoint?: { enabled?: boolean } } | null;
@@ -320,27 +321,35 @@ function hasRelativeSignal(device: Device) {
     return device.rssi_kind === "bredr-relative" && typeof device.rssi === "number" && Number.isFinite(device.rssi);
 }
 
+// bt-daemon owns the bar thresholds for both RSSI units; 0 means no reading.
+function signalLevel(device: Device) {
+    const level = Number(device.signal_level);
+    return Number.isInteger(level) ? Math.max(0, Math.min(3, level)) : 0;
+}
+
 function hasSignal(device: Device) {
-    return hasRelativeSignal(device) || (device.signal_strength !== null && device.signal_strength !== undefined);
+    return signalLevel(device) > 0;
+}
+
+function signalQuality(device: Device) {
+    return ["", "Weak", "Fair", "Good"][signalLevel(device)];
 }
 
 function signalValue(device: Device) {
+    if (!hasSignal(device))
+        return "—";
+    // Relative BR/EDR RSSI has no absolute percentage; show its quality instead.
     if (hasRelativeSignal(device))
-        return device.rssi + " dB";
-    return hasSignal(device) ? Math.max(0, Math.min(100, Math.round(Number(device.signal_strength) || 0))) + "%" : "—";
-}
-
-function signalLevel(device: Device) {
-    if (!hasSignal(device) || hasRelativeSignal(device))
-        return 0; // Relative BR/EDR RSSI is not an absolute strength/bar scale.
-    const strength = Math.max(0, Math.min(100, Number(device.signal_strength) || 0));
-    return strength >= 67 ? 3 : (strength >= 34 ? 2 : 1);
+        return signalQuality(device);
+    return Math.max(0, Math.min(100, Math.round(Number(device.signal_strength) || 0))) + "%";
 }
 
 function signalLabel(device: Device) {
     if (!hasSignal(device)) return "Unavailable";
     const suffix = device.signal_live ? "" : " · cached";
-    return signalValue(device) + (hasRelativeSignal(device) ? " relative to receive range" : "") + suffix;
+    if (hasRelativeSignal(device))
+        return signalQuality(device) + " · " + device.rssi + " dB relative to receive range" + suffix;
+    return signalValue(device) + suffix;
 }
 
 function deviceScore(device: Device) {
