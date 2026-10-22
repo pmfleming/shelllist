@@ -76,3 +76,33 @@ observer and schema make these diagnostic measurements, not an application A/B
 verdict. Local artifacts: `/tmp/shelllist-perf-rollout/observer-captures/` and
 `diagnostic-captures/`. Existing incoming build-input and README edits were not
 included in these implementation commits.
+
+## Held procfs descriptor investigation
+
+The owned-child regression verifies real `stat`, `status`, `io` descriptors and a
+pidfd through exec-in-place and reaped exit. On this kernel all three held reads
+returned ESRCH (errno 3) after exit. However, they remained readable after exec,
+with unchanged PID/start ticks, and the pidfd was not signalled. The existing
+executable identity fence correctly rejected the exec. A pidfd therefore cannot
+replace the executable/UID checks. The test never kills an external process.
+
+A release probe alternated 1,000 three-file reads with the same pre/post identity
+fences, three times. Reopening: **45.969, 46.266, 45.908 ms**. Retained descriptors:
+**37.313, 37.157, 37.092 ms**. This isolates file access, not the entire collector
+or PSS/GPU costs; the probe also reads stat separately from the identity fences,
+unlike the production collector's existing stat reuse.
+
+Decision: retain production identity checks and do not add a retained-fd cache
+for this roughly 9 microsecond/sample opportunity (~0.03% of one core for eight
+processes at 4 Hz). It would add descriptor ownership, exec handling and teardown
+complexity for a much smaller benefit than the deployed watcher and history
+changes. A future design must budget at least four retained fds/process (three
+files plus pidfd: 256 at the current 64-process limit), preserve identity across
+exec/UID changes, and retain explicit errors on missing procfs files.
+
+The framework's independent real-bus investigation is documented in
+`daemon-framework/docs/proxy-performance.md`: fresh method-only proxies added no
+match-rule round trips, and three paired release runs showed no consistent gain
+from caching. No transport or payload-format change was justified. These two
+investigations complete the conditional lower-priority work, rather than adding
+unproven micro-optimisations.

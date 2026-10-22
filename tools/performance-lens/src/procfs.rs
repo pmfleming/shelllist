@@ -212,6 +212,10 @@ pub fn counters(id: &Identity, heavy: bool) -> Result<BTreeMap<String, Counter>>
 }
 
 #[cfg(test)]
+#[path = "procfs_descriptor_tests.rs"]
+mod descriptor_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]
