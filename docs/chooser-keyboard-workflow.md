@@ -516,7 +516,11 @@ selected-app deletion, while a card's Delete targets only its stable record ID.
 Popup sender actions/replies retain their existing acknowledgement and lifecycle
 guards. Popup decks fan on pointer hover, outside panel field traversal; their
 individual close commands await native removal. The daemon owns the bounded
-reading lease, queued arrivals and popup-only timeout pause (see notifications.md). The notification backend consumes a completion's request identity and
+reading lease, queued arrivals and popup-only timeout pause (see notifications.md).
+A content-free screen-sharing toast offers explicit snooze commands without
+stealing keyboard focus. Its bell entry reopens those choices; they are commands,
+not panel fields. Rust owns sharing detection, session fencing and suppression;
+manual DND preferences are independent. The notification backend consumes a completion's request identity and
 checks its domain generation before flushing queued observations or acknowledging
 any domain. Duplicate/obsolete replies cannot publish, and cancellation replies
 cannot clear unrelated errors or apply snapshots. Scoped catalog, policy and
@@ -1235,12 +1239,35 @@ editor rather than discarding its draft. `tst_wifi_operations.qml` exercises the
 eye clicks, repeated reveal, pending reads and no-write boundaries, and verifies
 that the removed header command and Alt+U shortcut remain unavailable.
 
-Remember network defaults on for each new connection intent. The disconnected
-network's profile card, password/hidden/enterprise forms and Qrca's scanned-network
-confirmation expose an explicit opt-out. Opt-out creates a volatile,
-non-autoconnecting profile without updating an existing saved identity; it does
-not delete an earlier saved network (use Forget for that). SecretAgent requests
-marked NOT_SAVED never offer saving. A system-owned SecretAgent request keeps
+Remember network is visible on both connected and disconnected networks. In the
+profile card it reflects the selected profile's acknowledged native retention,
+not a per-selection default: on retains details, off deletes them on disconnect
+(or immediately if already disconnected). Turning it back on before disconnect
+cancels retirement and explicitly saves the profile and available credentials.
+NetworkManager owns retirement even when Shelllist closes; QML never watches for
+Disconnect to issue a delayed Forget. Only the selected profile is affected;
+shared certificate/key files and other profiles are not deleted. Active networks
+target the actual active profile rather than an arbitrary compatible saved one.
+Auto-connect and persistent profile edits are unavailable while retention is off.
+Missing native retention metadata leaves the visible toggle unavailable rather
+than guessing whether an active profile is safe to modify.
+
+An unsaved network starts off in the profile card. Turning it on selects saving
+for the next connection; this non-secret intention survives result browsing until
+a profile is observed. It does not create a profile before credentials/connection
+settings are available. Toggles use ordinary shared immediate switch activation;
+arrival with Tab never toggles. Explanations appear only in the existing status
+bar when switched, with success/deletion wording only after backend confirmation.
+Pending requests disable conflicting writes, failures preserve acknowledged state,
+and refresh/reconnect never replays an uncertain retention change.
+`tst_wifi_operations.qml` covers actual Enter/pointer routes, active/inactive
+visibility, acknowledgement/failure, Auto-connect guards and unsaved intentions.
+
+Password/hidden/enterprise forms and Qrca's scanned-network confirmation retain
+an explicit opt-out for their new connection intent. That opt-out creates a
+separate volatile, non-autoconnecting profile without changing another saved
+identity; unlike the profile-card retention setting it does not delete the
+original. SecretAgent requests marked NOT_SAVED never offer saving. A system-owned SecretAgent request keeps
 Remember checked and unavailable: omitting a deferred save cannot prevent NM
 from persisting its reply. One-time use requires cancelling and starting a separate
 temporary connection; the saved profile and its password remain unchanged. An old

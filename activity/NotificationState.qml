@@ -18,6 +18,8 @@ Item {
     property int dndDurationMinutes: 30
     property bool dndPending: false
     property string dndError: ""
+    property bool sharingPending: false
+    property string sharingError: ""
     property bool settingsPending: false
     property string settingsError: ""
     readonly property var settings: notifications.settings || null
@@ -131,6 +133,17 @@ Item {
         setDraft(identity, text);
         setReplyState(identity, true, "");
         return backend.reply(record.id, value);
+    }
+    function snoozeSharing(minutes: int): bool {
+        if (!nativeAvailable || sharingPending || !notifications.sharing?.active) return false;
+        sharingPending = true;
+        sharingError = "";
+        return backend.snoozeSharing(notifications.sharing.generation, minutes);
+    }
+    function finishSharing(value: var, error: string): void {
+        sharingError = error;
+        sharingPending = false;
+        if (!error) applySummary(value);
     }
     function setSettings(patch: var): bool {
         if (!nativeAvailable || !settings || settingsPending) return false;

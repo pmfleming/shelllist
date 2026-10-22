@@ -115,6 +115,13 @@ function batteryTone(battery) {
 }
 function notificationsModule(state) {
     const dnd = !!state.notifications?.dnd, count = state.notifications?.count || 0;
+    const sharing = state.notifications?.sharing;
+    if (sharing?.active) {
+        return statusModule("notifications", "󰂛", "Screen sharing detected. Choose notification snooze duration.", {
+            primary: "notifications-sharing", secondary: "notifications", middle: "notifications-dnd",
+            tone: sharing.prompt ? "warning" : "muted"
+        });
+    }
     const urgent = (state.notificationActive?.notifications || []).some(item => item.urgency === "critical" || Number(item.urgency) >= 2);
     return statusModule("notifications", dnd ? "󰂛" : count ? "" : "󰂚", "Notifications: " + count + (dnd ? ". Do not disturb" : "") + (urgent ? ". Urgent" : ""), {
         primary: "notifications", secondary: "activity", middle: "notifications-dnd",

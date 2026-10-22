@@ -29,6 +29,9 @@ Io.BarDaemonBackend {
     function queryCenter(params: var, context: var): bool {
         return request("center", Api.methods.notificationsQueryCenter, params, {center: context});
     }
+    function snoozeSharing(generation: double, minutes: int): bool {
+        return request("sharing", "notifications.snoozeSharing", {generation: generation, minutes: minutes}, {sharingGeneration: generation});
+    }
     function setSettings(patch: var): bool {
         return request("settings", "notifications.setSettings", patch, {});
     }
@@ -111,6 +114,11 @@ Io.BarDaemonBackend {
         // Scoped readers/settings/consent own their result, including errors.
         // They must not fall through to generic snapshot or error publication.
         switch (context.kind) {
+        case "sharing": {
+            const failure = error || (data.notifications?.sharing?.generation !== context.sharingGeneration ? qsTr("Screen-sharing acknowledgement changed") : "");
+            store.finishSharing(context.eventVersion === store.eventVersion ? data.notifications : null, failure);
+            return;
+        }
         case "context-action": {
             const failure = error || (typeof data.copied !== "boolean" ? qsTr("Notification action outcome unconfirmed") : "");
             store.finishOperation(context.operationKey);

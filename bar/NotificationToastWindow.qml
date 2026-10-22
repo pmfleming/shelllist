@@ -11,8 +11,12 @@ BarOverlayWindow {
 
     readonly property string targetScreenName: targetScreen ? targetScreen.name : ""
     readonly property var toastGroups: controller.visibleToastGroups(targetScreenName)
+    readonly property bool showSharingPrompt: !!controller.notifications.sharing?.active
+        && !!controller.notificationState?.nativeAvailable
+        && (controller.notifications.sharing?.prompt === true || controller.sharingPromptOpen)
+        && targetScreenName === (controller.workspaces.focused_monitor || "")
     focusedScreenOnly: false
-    visible: toastGroups.length > 0
+    visible: toastGroups.length > 0 || showSharingPrompt
     implicitWidth: 414
     implicitHeight: Math.min(640, targetScreen ? targetScreen.height - 100 : 640)
     mask: Region {
@@ -57,6 +61,11 @@ BarOverlayWindow {
             id: toastColumn
             width: viewport.width
             spacing: Ui.Theme.spacingSm
+            NotificationSharingPrompt {
+                width: toastColumn.width
+                controller: window.controller
+                visible: window.showSharingPrompt
+            }
             Repeater {
                 model: Core.SerializedListModel {
                     rows: window.toastGroups.map(deck => ({key: deck.key, payload: deck}))

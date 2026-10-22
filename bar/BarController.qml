@@ -1,7 +1,6 @@
 import Quickshell
 import Quickshell.Services.SystemTray
 import QtQuick
-import Shelllist.Ui as Ui
 import Shelllist.Wifi as Wifi
 import Shelllist.Bluetooth as Bluetooth
 import Shelllist.Activity as Activity
@@ -95,6 +94,8 @@ Item {
             abbreviation: "",
             utc_offset_seconds: 0
         })
+    property bool sharingPromptOpen: false
+    onNotificationsChanged: if (!notifications.sharing?.active) sharingPromptOpen = false
     property bool osdVisible: false
     property var osd: ({
             kind: "",
@@ -277,6 +278,10 @@ Item {
         }, now);
     }
     function triggerModuleAction(action: string): bool {
+        if (action === "notifications-sharing") {
+            sharingPromptOpen = !sharingPromptOpen;
+            return true;
+        }
         if (["wifi", "bluetooth", "displays", "battery", "activity"].includes(action)) {
             openSurface(action);
             return true;

@@ -25,6 +25,33 @@ DaemonTestCase {
             }
         }
     }
+    Component { id: promptFactory; Bar.NotificationSharingPrompt { width: 390 } }
+    function test_sharingPromptCapturesSessionAndWaitsForAcknowledgement() {
+        const deck = createTemporaryObject(factory, testCase, {group: {key: "chat", records: [record(1)]}});
+        deck.visible = false;
+        const state = deck.controller.notificationState;
+        const summary = {available: true, backend: "native", sharing: {active: true, available: true, prompt: true, generation: 7}};
+        state.notifications = summary;
+        const prompt = createTemporaryObject(promptFactory, testCase, {controller: deck.controller});
+        verify(prompt);
+        verify(waitForRendering(prompt));
+        const choice = findChild(prompt, "notificationSharingSnooze15");
+        mouseClick(choice.button);
+        const call = calls.filter(c => c.method === "notifications.snoozeSharing").pop();
+        verify(call);
+        compare(call.params, {generation: 7, minutes: 15});
+        verify(state.sharingPending && state.notifications.sharing.prompt);
+        const id = Object.keys(state.backend.requests).find(id => id.startsWith("sharing-"));
+        const height = prompt.implicitHeight;
+        state.backend.finish(id, {}, "Sharing session changed", "");
+        compare(state.sharingError, "Sharing session changed");
+        compare(prompt.implicitHeight, height, "Feedback does not grow the prompt");
+        verify(!state.sharingPending);
+        mouseClick(choice.button);
+        const next = Object.keys(state.backend.requests).find(id => id.startsWith("sharing-"));
+        state.backend.finish(next, {notifications: Object.assign({}, summary, {sharing: {active: true, prompt: false, generation: 7}})}, "", "");
+        compare(state.notifications.sharing.prompt, false);
+    }
     function record(id) {
         return {id: id, created_unix_ms: id * 1000, updated_unix_ms: id * 1000,
             summary: "Message " + id, app_name: "Chat", body: "Body", actions: [], hints: {}, toast_visible: true};

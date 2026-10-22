@@ -155,6 +155,31 @@ codes already present in notification history or erase filesystem backups.
 `clip-daemon` tests include an isolated native Wayland server for expiry/source
 ownership and capture-marker exclusion. The real desktop is not modified by tests.
 
+## Screen sharing and presentation privacy
+
+A Rust PipeWire observer recognizes `Video/Source` nodes with the Screen role,
+plus the known Hyprland/wlr portal source names. Camera/audio nodes do not trigger
+it. On detection, all popup decks are suppressed immediately, including DND-bypass
+apps; collection and existing DND preferences remain unchanged. The bell signals
+attention and a content-free prompt offers 15 minutes, 1 hour or until sharing
+ends. The same choices can be reopened from the bell during sharing. Prompt
+commands capture the sharing generation and wait for acknowledgement.
+
+Until a choice is made, suppression lasts until sharing ends. Explicit timed
+snooze expires even if sharing continues; until-end snooze waits for an observed
+end. Observer loss is unknown, not an end: an existing until-end guard stays in
+place while the observer reconnects. Suppressed messages are not replayed when
+sharing ends. The prompt contains no notification bodies and never changes DND.
+
+Detection covers advertised PipeWire/portal screen sources, not arbitrary legacy
+capture, hardware capture or applications that publish no identifying metadata.
+There is necessarily a detection interval; this is not a guarantee that no pixel
+can be captured before observation. Use manual DND before unrecognized sharing.
+Native tests cover policy, stale sessions, observer loss, bypass suppression and
+no replay; Qt tests cover actual snooze buttons and acknowledgement/error handling.
+Live calls, compositor masks and screen-sharing provider coverage remain manual
+deployment checks.
+
 ## Icon identity
 
 The daemon captures desktop-file `Icon=` independently of content image hints and

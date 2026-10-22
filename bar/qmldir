@@ -27,6 +27,7 @@ internal MediaPlaybackCard MediaPlaybackCard.qml
 MediaControls 1.0 MediaControls.qml
 NotificationToastCard 1.0 NotificationToastCard.qml
 NotificationToastStack 1.0 NotificationToastStack.qml
+NotificationSharingPrompt 1.0 NotificationSharingPrompt.qml
 NotificationToastWindow 1.0 NotificationToastWindow.qml
 WorkspaceButton 1.0 WorkspaceButton.qml
 WorkspaceStrip 1.0 WorkspaceStrip.qml
