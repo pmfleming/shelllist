@@ -75,6 +75,98 @@ DaemonTestCase {
         compare(calls.slice(-1)[0].method, "wifi.disconnect");
         verify(c.actionInFlight);
     }
+    function retentionNetwork(panel, active, remember) {
+        const profile = remember === null ? null : {path: "/profile/cafe", id: "Cafe", remember: remember, autoconnect: true};
+        panel.controller.applyNetworks([{key: "cafe", ssid: "Cafe", active: active, strength: 70,
+            security: "Open", capabilities: {can_connect: true, can_toggle_autoconnect: true},
+            primary_profile: profile}], true, {});
+    }
+    function test_rememberVisibleAndAcknowledgedForActiveAndInactiveNetworks_data() {
+        return [{tag: "connected", active: true}, {tag: "disconnected", active: false}];
+    }
+    function test_rememberVisibleAndAcknowledgedForActiveAndInactiveNetworks(data) {
+        const panel = makePanel();
+        openNetwork(panel, data.active);
+        retentionNetwork(panel, data.active, true);
+        const c = panel.controller;
+        const toggle = findChild(panel, "wifiRememberNetwork");
+        tryVerify(() => toggle && toggle.visible && toggle.enabled && toggle.checked);
+        panel.page.listItem.focusList();
+        keyClick(Qt.Key_Tab);
+        compare(panel.page.detailsNavigation.currentTarget, toggle);
+        verify(panel.page.detailsNavigation.browsing);
+        keyClick(Qt.Key_Return);
+        const request = calls.filter(call => call.method === "wifi.profile.operation" && call.params.operation === "set-remember");
+        compare(request.length, 1);
+        compare(request[0].params, {operation: "set-remember", path: "/profile/cafe", enabled: false});
+        verify(toggle.checked, "dispatch cannot acknowledge deletion or retention");
+        verify(!toggle.enabled);
+        verify(!c.status.includes("deleted"));
+        mouseClick(toggle);
+        compare(calls.filter(call => call.params.operation === "set-remember").length, 1);
+        const message = data.active ? "Network details will be deleted when you disconnect."
+            : "Saved network details deleted. Future connections won't be remembered.";
+        c.backend.acceptSharedResponse("profile", {protocol: "nm-api", version: 2, ok: true,
+            data: {result: {status: "ok", message: message}}}, "");
+        compare(c.status, message);
+        c.setBackgroundStatus("Scan complete");
+        compare(c.status, message, "background reads cannot erase the toggle explanation immediately");
+        retentionNetwork(panel, data.active, data.active ? false : null);
+        tryCompare(toggle, "checked", false);
+        verify(toggle.visible);
+        const auto = c.detailActions.find(action => action.id === "autoconnect");
+        verify(!auto.enabled);
+        verify(!c.actions.autoconnectEnabled(c.detailAp));
+        c.backend.pending = ({});
+        if (data.active) {
+            mouseClick(toggle);
+            compare(calls.slice(-1)[0].params, {operation: "set-remember", path: "/profile/cafe", enabled: true});
+            verify(!toggle.checked);
+            c.backend.acceptSharedResponse("profile", {protocol: "nm-api", version: 2, ok: true,
+                data: {result: {status: "ok", message: "Network details saved for future connections."}}}, "");
+            retentionNetwork(panel, true, true);
+            tryCompare(toggle, "checked", true);
+        }
+    }
+    function test_rememberFailureAndLegacySnapshotsNeverPromiseDeletion() {
+        const panel = makePanel();
+        openNetwork(panel, true);
+        retentionNetwork(panel, true, true);
+        const c = panel.controller;
+        const toggle = findChild(panel, "wifiRememberNetwork");
+        tryVerify(() => toggle && toggle.enabled);
+        mouseClick(toggle);
+        c.backend.acceptSharedResponse("profile", null, "permission denied");
+        verify(toggle.checked);
+        verify(c.status.includes("permission denied"));
+        verify(!c.status.includes("deleted"));
+        verify(toggle.enabled, "failure permits explicit retry, not automatic replay");
+        compare(calls.filter(call => call.params.operation === "set-remember").length, 1);
+        retentionNetwork(panel, true, undefined);
+        tryVerify(() => toggle.visible && !toggle.enabled);
+    }
+    function test_unsavedRememberIntentSurvivesBrowsingAndControlsNextConnect() {
+        const panel = makePanel();
+        openNetwork(panel, false);
+        const c = panel.controller;
+        const toggle = findChild(panel, "wifiRememberNetwork");
+        tryVerify(() => toggle && toggle.enabled && !toggle.checked);
+        mouseClick(toggle);
+        verify(toggle.checked);
+        compare(c.status, "Network details will be saved for future connections.");
+        verify(!calls.some(call => call.params.operation === "set-remember"));
+        c.applyNetworks([{key: "other", ssid: "Other", active: false, capabilities: {can_connect: true}}], true, {});
+        verify(!c.connection.rememberNetwork);
+        retentionNetwork(panel, false, null);
+        tryCompare(toggle, "checked", true);
+        compare(c.connection.targetRequest(c.detailAp).remember, true);
+        mouseClick(toggle);
+        verify(c.status.includes("won't be saved"));
+        compare(c.connection.targetRequest(c.detailAp).remember, false);
+        retentionNetwork(panel, false, true);
+        retentionNetwork(panel, false, null);
+        verify(!toggle.checked, "deleted profiles cannot inherit an old pre-connect opt-in");
+    }
     function savedNetwork(panel) {
         openNetwork(panel, false);
         panel.controller.applyNetworks([{key: "cafe", ssid: "Cafe", active: false, strength: 70,

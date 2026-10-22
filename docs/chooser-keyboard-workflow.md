@@ -1248,6 +1248,8 @@ NetworkManager owns retirement even when Shelllist closes; QML never watches for
 Disconnect to issue a delayed Forget. Only the selected profile is affected;
 shared certificate/key files and other profiles are not deleted. Active networks
 target the actual active profile rather than an arbitrary compatible saved one.
+Changing retention never disconnects or reconnects the current link. The separate
+Forget command keeps its existing confirmation and immediate-disconnect semantics.
 Auto-connect and persistent profile edits are unavailable while retention is off.
 Missing native retention metadata leaves the visible toggle unavailable rather
 than guessing whether an active profile is safe to modify.

@@ -131,6 +131,7 @@
             "randomized_mac": true,
             "send_hostname": false
           },
+          "remember": true,
           "ssid": "Example",
           "ssid_bytes": [
             69,
@@ -153,6 +154,7 @@
               "randomized_mac": true,
               "send_hostname": false
             },
+            "remember": true,
             "ssid": "Example",
             "ssid_bytes": [
               69,
@@ -548,6 +550,7 @@
               "randomized_mac": true,
               "send_hostname": false
             },
+            "remember": true,
             "ssid": "Example",
             "ssid_bytes": [
               69,
@@ -570,6 +573,7 @@
                 "randomized_mac": true,
                 "send_hostname": false
               },
+              "remember": true,
               "ssid": "Example",
               "ssid_bytes": [
                 69,
@@ -617,6 +621,7 @@
             "randomized_mac": true,
             "send_hostname": false
           },
+          "remember": true,
           "ssid": "Example",
           "ssid_bytes": [
             69,

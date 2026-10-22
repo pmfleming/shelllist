@@ -15,7 +15,7 @@ Item {
     }
     function autoconnectEnabled(ap) {
         const profile = profileFor(ap);
-        return !!(profile && profile.autoconnect);
+        return !!(profile && profile.remember !== false && profile.autoconnect);
     }
     function randomizedMacEnabled(ap) {
         return !!Presentation.privacyFor(profileFor(ap)).randomized_mac;
@@ -24,7 +24,8 @@ Item {
         return Presentation.privacyFor(profileFor(ap)).send_hostname !== false;
     }
     function canProfileAction(ap, capability) {
-        return !controller.actionInFlight && !!profileFor(ap) && capabilities(ap)[capability] === true;
+        return !controller.actionInFlight && !!profileFor(ap)
+            && profileFor(ap).remember !== false && capabilities(ap)[capability] === true;
     }
     function canForget(ap) {
         return !controller.actionInFlight && (controller.isActive(ap) || capabilities(ap).can_forget === true);
@@ -79,6 +80,8 @@ Item {
         }
     }
     function toggleAutoconnect(ap) {
+        if (!canProfileAction(ap, "can_toggle_autoconnect"))
+            return false;
         return runProfileAction(ap, function (profile) {
             const enabled = !profile.autoconnect;
             controller.status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + profile.id + "…";

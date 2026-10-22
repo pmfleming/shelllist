@@ -15,12 +15,11 @@ DetailColumnCard {
     ToggleRow {
         objectName: "wifiRememberNetwork"
         Layout.fillWidth: true
-        visible: !card.controller.detailAp?.active
-        enabled: !card.controller.actionInFlight
+        enabled: card.controller.connection.canSetRemember
         title: qsTr("Remember network")
         showSubtitle: false
         checked: card.controller.connection.rememberNetwork
-        onClicked: card.controller.connection.rememberNetwork = !checked
+        onClicked: card.controller.connection.setRemember(!checked)
     }
 
     ActionToggleList {

@@ -318,7 +318,7 @@ Io.DaemonBackend {
     function handleProfile(envelope) {
         const result = Api.apiData(envelope, "result") || ({});
         logForgetResult(result);
-        controller.status = result.message || "Saved profile updated";
+        controller.setHeldStatus(result.message || "Saved profile updated", 6000);
         controller.invalidateShareAvailabilityCache();
         controller.refresh();
     }

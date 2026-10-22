@@ -434,6 +434,7 @@ ProviderChooserController {
         networksLoaded = true;
         networksError = "";
         visibleNetworks = networks || [];
+        connection.observeProfiles(visibleNetworks);
         if (snapshot)
             networkSnapshot = snapshot;
         replaceProviderResults(wifiProvider.resultsFor(visibleNetworks), resetSelection);

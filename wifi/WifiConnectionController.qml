@@ -21,9 +21,14 @@ Item {
     property string recoveryRequestId: ""
     property int recoveryFailures: 0
     property bool cancellationRequested: false
-    property bool rememberNetwork: true
-    readonly property string rememberKey: controller.detailAp?.key || ""
-    onRememberKeyChanged: rememberNetwork = true
+    // Only unsaved connection intentions are local. Existing profiles always
+    // reflect NM's acknowledged retention, including pending deletion.
+    property var rememberChoices: ({})
+    readonly property bool rememberNetwork: rememberFor(controller.detailAp)
+    readonly property bool canSetRemember: !controller.actionInFlight && !!controller.detailAp?.key
+        && (controller.profileFor(controller.detailAp)
+            ? typeof controller.profileFor(controller.detailAp).remember === "boolean"
+            : !controller.detailAp.active)
     readonly property bool running: backend.connectStarting || requestId.length > 0
 
     function activate() {
@@ -48,6 +53,37 @@ Item {
     }
     function keyFor(ap) {
         return ap && ap.key ? ap.key : "";
+    }
+    function rememberFor(ap) {
+        const profile = controller.profileFor(ap);
+        if (profile)
+            return profile.remember !== false;
+        return rememberChoices[keyFor(ap)] === true;
+    }
+    function setRemember(enabled) {
+        if (!canSetRemember)
+            return false;
+        const ap = controller.detailAp;
+        const profile = controller.profileFor(ap);
+        if (profile) {
+            controller.status = "Updating network retention…";
+            return backend.profile({operation: "set-remember", path: profile.path, enabled: enabled});
+        }
+        const choices = Object.assign({}, rememberChoices);
+        choices[keyFor(ap)] = enabled;
+        rememberChoices = choices;
+        controller.setHeldStatus(enabled
+            ? "Network details will be saved for future connections."
+            : "Network details won't be saved. Future connections won't be remembered.", 6000);
+        return true;
+    }
+    function observeProfiles(networks) {
+        const choices = Object.assign({}, rememberChoices);
+        for (const ap of networks) {
+            if (controller.profileFor(ap))
+                delete choices[keyFor(ap)];
+        }
+        rememberChoices = choices;
     }
     function isConnecting(ap) {
         return running && networkKey.length > 0 && keyFor(ap) === networkKey;
@@ -132,7 +168,7 @@ Item {
         };
         if (handlers[promptKind]) {
             handlers[promptKind]();
-            prompt.saveSecret = keyFor(ap) === rememberKey ? rememberNetwork : true;
+            prompt.saveSecret = rememberFor(ap);
             return true;
         }
         if (ap && ap.capabilities && ap.capabilities.can_connect)
@@ -153,7 +189,7 @@ Item {
         } : {
             target: ap
         };
-        request.remember = remember === undefined ? (keyFor(ap) === rememberKey ? rememberNetwork : true) : remember !== false;
+        request.remember = remember === undefined ? rememberFor(ap) : remember !== false;
         if (password !== undefined && password !== null)
             request.password = password;
         if (enterpriseIdentity)
