@@ -17,15 +17,10 @@ ColumnLayout {
     spacing: Math.round(Ui.Theme.spacingMd * uiScale)
     visible: desktopActions.length > 0
 
-    Ui.SectionLabel {
-        objectName: "applicationActionsHeading"
-        text: qsTr("Application actions · %1").arg(actions.desktopActions.length)
-    }
-
     Ui.DetailColumnCard {
+        objectName: "applicationActionsCard"
+        title: qsTr("Application actions · %1").arg(actions.desktopActions.length)
         Layout.fillWidth: true
-        contentPadding: 0
-        verticalContentPadding: 0
         contentSpacing: 0
         color: Ui.Theme.surfaceContainer
         clip: true
@@ -48,8 +43,6 @@ ColumnLayout {
                 Ui.LabeledAction {
                     objectName: "desktopAction-" + actionRow.modelData.id
                     Layout.fillWidth: true
-                    Layout.leftMargin: Math.round(Ui.Theme.spacingLg * actions.uiScale)
-                    Layout.rightMargin: Math.round(Ui.Theme.spacingSm * actions.uiScale)
                     Layout.topMargin: Math.round(Ui.Theme.spacingSm * actions.uiScale)
                     Layout.bottomMargin: Math.round(Ui.Theme.spacingSm * actions.uiScale)
                     uiScale: actions.uiScale

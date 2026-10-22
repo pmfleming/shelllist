@@ -47,8 +47,6 @@ ColumnLayout {
         id: grid
         columns: 3
         Layout.fillWidth: true
-        Layout.leftMargin: Math.round(Ui.Theme.spacingLg * instanceRow.uiScale)
-        Layout.rightMargin: Math.round(Ui.Theme.spacingLg * instanceRow.uiScale)
         Layout.topMargin: Math.round(Ui.Theme.spacingMd * instanceRow.uiScale)
         Layout.bottomMargin: Math.round(Ui.Theme.spacingMd * instanceRow.uiScale)
         columnSpacing: Math.round(Ui.Theme.spacingSm * instanceRow.uiScale)

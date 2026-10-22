@@ -32,15 +32,10 @@ ColumnLayout {
     spacing: Math.round(Ui.Theme.spacingMd * uiScale)
     visible: instances.length > 0
 
-    Ui.SectionLabel {
-        objectName: "applicationWindowsHeading"
-        text: qsTr("Open windows · %1").arg(list.instances.length)
-    }
-
     Ui.DetailColumnCard {
+        objectName: "applicationWindowsCard"
+        title: qsTr("Open windows · %1").arg(list.instances.length)
         Layout.fillWidth: true
-        contentPadding: 0
-        verticalContentPadding: 0
         contentSpacing: 0
         color: Ui.Theme.surfaceContainer
         clip: true

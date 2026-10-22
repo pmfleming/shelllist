@@ -597,7 +597,9 @@ application journey opens Settings through the real panel; the separate page-cyc
 and page-replacement matrix is retired.
 
 Application window and desktop-action groups use passive shared `DetailColumnCard`
-containers and remain information/commands only, not editable fields. Each
+containers, with their headings/counts inside each card rather than external labels.
+Shared card padding owns the horizontal inset for headings and rows. They remain
+information/commands only, not editable fields. Each
 `ApplicationWindowRow` owns its command scope and stable window ID; its list owns
 shared column measurements, not command routing by row index. Tab uses the
 page's non-highlighted scrolling fallback; PageUp/

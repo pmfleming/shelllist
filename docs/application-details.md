@@ -11,6 +11,9 @@ revision. The screenshot's browser is an example, not an application-specific la
   open-window count, not-running state or shortcut behavior in the subtitle.
 - Group **Open windows** in one opaque Surface Container with 16px corners and
   subtle separators, rather than individually outlined selection-like cards.
+  Its heading and count sit inside the card using shared `DetailColumnCard.title`
+  and card padding, not an external section label. Rows reuse that horizontal
+  inset instead of adding a second gutter.
   Use one compact row: workspace capsule, full title, optional focus-success
   check, then direct Focus/Close commands. Single-line rows are 56px at scale 1 (plus
   separators); long titles and named workspaces wrap without clipping.
@@ -28,8 +31,9 @@ revision. The screenshot's browser is an example, not an application-specific la
 - Remove per-window CPU/memory readouts from this page; the existing Resources
   page retains telemetry, attribution and history. Do not infer window-level
   attribution or invent warnings from aggregate values.
-- Group desktop-defined actions under **Application actions**, preserving each
-  localized name and identifier. Resolve supplied desktop icon assets; use a
+- Group desktop-defined actions under **Application actions**, with its heading
+  and count inside the same shared card composition as Open windows, preserving
+  each localized name and identifier. Resolve supplied desktop icon assets; use a
   known Material symbol or neutral `open_in_new` fallback when absent. Do not
   classify actions by localized labels, executable name or browser assumptions.
   Shared `ActionButton`/`LabeledAction` accept an optional `iconSource`, retaining
@@ -79,7 +83,9 @@ lifecycle are unchanged; no optimistic removal or fictional undo is introduced.
 The real `tests/test-native-application.py` journey owns search, settings storage
 failure/retry and launch outcomes. `tests/qml/tst_application_actions.qml` retains
 Close observation/focus restoration, reopened-panel fencing and owned read-only
-status recovery, including malformed replies. Shared controls own input semantics.
+status recovery, including malformed replies. It also checks in-card section
+headings, passive keyboard traversal and the desktop-action pointer route.
+Shared controls own input semantics.
 Per-page geometry, label and command permutations are retired; see the
 [current ownership and coverage tradeoffs](../tests/test-reduction-owners.md).
 

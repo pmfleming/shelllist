@@ -37,12 +37,14 @@ DaemonTestCase {
             instances: windows.map(w => ({id: w, title: w, workspace_id: "1"})),
             desktop_actions: [], category: "shell"};
     }
-    function makePanel() {
+    function makePanel(desktopActions) {
         const panel = createTemporaryObject(surfaceComponent, testCase);
         verify(panel !== null);
         const c = panel.controller;
         c.activateUiState("1");
-        c.replaceProviderResults([application("Alpha", ["w1", "w2"]), application("Beta", ["w3"])].map(a => c.provider.resultFor(a)), true);
+        const alpha = application("Alpha", ["w1", "w2"]);
+        alpha.desktop_actions = desktopActions || [];
+        c.replaceProviderResults([alpha, application("Beta", ["w3"])].map(a => c.provider.resultFor(a)), true);
         tryVerify(() => c.hasSelection && panel.listItem !== null);
         c.select(c.filteredResults.findIndex(r => r.id === "Alpha"));
         tryCompare(c.selectedResult, "id", "Alpha");
@@ -87,6 +89,37 @@ DaemonTestCase {
         const label = findChild(panel.listItem, "feedbackText");
         verify(label !== null && label.visible);
         tryCompare(label, "text", message);
+    }
+    function test_sectionHeadingsStayInsideCardsAndOutsideFieldTraversal() {
+        const panel = makePanel([{id: "new-private", name: "New Private Window"}]);
+        expand(panel);
+        for (const entry of [
+            {card: "applicationWindowsCard", title: "Open windows · 2", content: "windowRow-w1"},
+            {card: "applicationActionsCard", title: "Application actions · 1", content: "desktopAction-new-private"}
+        ]) {
+            const card = findChild(panel, entry.card);
+            verify(card !== null && card.visible);
+            const heading = findChild(card, "sectionHeadingText");
+            compare(heading.text, entry.title);
+            const position = heading.mapToItem(card, 0, 0);
+            verify(position.x > 0 && position.y > 0, "heading uses the card inset");
+            verify(position.x + heading.width <= card.width);
+            verify(position.y + heading.height < card.height);
+            const content = findChild(card, entry.content);
+            verify(content.mapToItem(card, 0, 0).y >= position.y + heading.height);
+        }
+        keyClick(Qt.Key_Tab);
+        compare(panel.detailsNavigation.availableFields().length, 0, "headings remain passive");
+        compare(panel.detailsNavigation.currentTarget.objectName, "applicationPage");
+        keyClick(Qt.Key_PageDown);
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 0);
+        const action = findChild(panel, "desktopAction-new-private");
+        findChild(panel, "applicationPage").revealItem(action);
+        waitForRendering(panel);
+        mouseClick(action.button);
+        const call = lastCall(Api.methods.execute);
+        compare(call.params.action, "desktop-action");
+        compare(call.params.desktop_action_id, "new-private");
     }
     function test_close_usesNativeObservationAndRestoresCommandFocus() {
         const panel = makePanel();
