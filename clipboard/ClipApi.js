@@ -33,6 +33,7 @@ var methods = {
     captureScreenshot: Protocol.methods["clipboard.capture.screenshot"],
     captureInteractive: Protocol.methods["clipboard.capture.interactive"],
     selectionPublishText: Protocol.methods["clipboard.selection.publishText"],
+    selectionPublishSensitive: Protocol.methods["clipboard.selection.publishSensitive"],
     selectionPublishFiles: Protocol.methods["clipboard.selection.publishFiles"],
     settingsGet: Protocol.methods["clipboard.settings.get"],
     settingsUpdate: Protocol.methods["clipboard.settings.update"],
