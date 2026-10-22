@@ -7,6 +7,7 @@ ColumnLayout {
     property string title: ""
     property string helpText: ""
     property bool helpOpen: false
+    property FeedbackSource helpFeedback: null
     property string helpObjectName: "sectionHeadingHelp"
     spacing: Theme.spacingSm
 
@@ -23,8 +24,10 @@ ColumnLayout {
             font.weight: Theme.groupHeadingWeight
             wrapMode: Text.Wrap
         }
-        FlatIconButton {
+        FeedbackButton {
             objectName: heading.helpObjectName
+            feedback: heading.helpFeedback
+            feedbackText: heading.helpText
             visible: heading.helpText.length > 0
             Layout.preferredWidth: Theme.formActionSize
             Layout.preferredHeight: Theme.formActionSize
@@ -32,12 +35,12 @@ ColumnLayout {
             icon: heading.helpOpen ? "expand_less" : "help_outline"
             accessibleName: qsTr("Help: %1").arg(heading.title)
             Accessible.description: heading.helpText
-            onClicked: heading.helpOpen = !heading.helpOpen
+            onClicked: if (!heading.helpFeedback) heading.helpOpen = !heading.helpOpen
         }
     }
     InlineStatus {
         Layout.fillWidth: true
-        visible: heading.helpOpen && text.length > 0
+        visible: !heading.helpFeedback && heading.helpOpen && text.length > 0
         text: heading.helpText
     }
 }

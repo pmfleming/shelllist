@@ -6,6 +6,7 @@ Rectangle {
 
     property string title: ""
     property string helpText: ""
+    property alias helpFeedback: heading.helpFeedback
     property var entries: null
     readonly property real headingHeight: title.length > 0 ? heading.implicitHeight : 0
     // Horizontal padding must not depend on height: wrapped content can own

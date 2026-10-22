@@ -109,8 +109,8 @@ have separate feedback and cannot replace history or logs. Transport/validation
 failures retain the last good overview; worker-declared missing evidence stays
 unknown.
 
-The Now overview provides four concise domain summaries with explicit navigation
-commands. Domain pages use shared wrapping label/value composition rather than a
+The Now overview provides four passive domain summaries without jump arrows;
+use the existing detail tabs to browse them. Domain pages use shared wrapping label/value composition rather than a
 stack of unrelated cards. The AI inventory shows installed → latest-known pairs,
 comparison and check time together; each tool's Help and Copy retain complete
 source, timestamps, holds and diagnostics. Its successful-check time is not an
@@ -128,9 +128,35 @@ Freshness is separate from execution and deployment:
   stale and packaging-rebuild states remain distinct. A newer version proves
   availability, not an exact number of releases behind. Adapter evidence is
   optional so older installed workers still render honestly.
-- **Applications** has no authoritative installed/latest inventory yet. The tab
-  explicitly says comparison is not reported; a successful system build is not
-  proof that every application is current.
+- **Applications** shows only names, **Local / Latest** version columns and an
+  release-status icon. Local means declared package metadata from the active
+  generation's `etc/shelllist/application-inventory.json`, not a running-binary
+  probe. Latest uses cached upstream release evidence from the worker's separate
+  `check-applications` job, never a copied local version or Nix target. Explicit
+  sources currently support GitHub stable releases, Chrome Stable (Linux) and
+  VS Code Stable (Linux x64). Unsupported/unqueried sources remain a dash. Failed
+  or expired checks retain last-known versions with warning/history icons;
+  clicking the icon explains the state in the fixed status bar. Full source,
+  check time and failure diagnostics remain accessible. Heading Help uses the
+  same shared `FeedbackButton` / `FeedbackSource` route with concise guidance,
+  not an expanding paragraph. A new click replaces the previous explanation;
+  leaving the page or replacing evidence clears it. Both commands remain in
+  Alt+J, outside field traversal. Scope and bounded coverage remain accessible,
+  without visible per-row scope/check-time metadata or a coverage footer.
+  The host builds this schema-v1 manifest from `environment.systemPackages` and
+  Home Manager `home.packages`; versionless wrappers remain unknown. This covers
+  declared packages (including CLI tools), not dependency closures, independently
+  installed profiles/Flatpaks or later vendor-tool replacements. Home declarations
+  do not prove a user's activation succeeded. Upstream versions are observed
+  independently; update/install availability is not inferred from string equality
+  or numeric subtraction. Missing/old worker or generation support is explicitly
+  unavailable, not an empty successful inventory. Up to 512 sorted, deduplicated
+  entries render with the actual total in accessibility; malformed refreshes
+  retain prior evidence. `tst_updates.qml` covers pointer/command disclosure,
+  fixed card height, passive traversal and unavailable/malformed evidence.
+  Native synthetic light/dark and minimum-size captures live under
+  `target/update-panel-implementation/captures/`; they are not live deployment
+  or latest-release acquisition evidence.
 - **System** shows booted, active, next-boot and candidate paths independently.
   Staging is not running, and deployment evidence is not an upstream comparison.
   Exact release distance needs a comparable authoritative release catalogue and
@@ -207,7 +233,7 @@ runs over 90 days without deleting the manual producer's files.
 Overview invokes only `/run/current-system/sw/bin/update-worker status --json`,
 without a shell or sudo. `BAR_DAEMON_UPDATE_WORKER` may select another absolute
 installed executable, never a request-supplied command. The report is capped at
-256 KiB with two readers, a five-second process deadline and six-second total
+1 MiB with two readers, a five-second process deadline and six-second total
 budget. The matching worker has a four-second report deadline so cancellation
 cleans up its own nested process groups. Read failures do not run update jobs.
 
@@ -272,7 +298,18 @@ evidence, not an acknowledgement or an exhaustive diagnosis of the whole machine
 ## Coordinated deployment and rollback
 
 Build and deploy the corresponding **update-daemon, bar-daemon and shelllist**
-revisions together. Install the Shelllist application package, not just its QML
+revisions together, including the host's `modules/application-inventory.nix`.
+The inventory only becomes available after activating a generation containing
+that manifest; an old generation cannot acquire retrospective package metadata.
+The same host module declares explicit release sources and the hourly
+`nixos-update-application-releases` timer (first check ten minutes after boot).
+It runs the finite metadata-only `check-applications` worker command; six-hour
+successful-cache reuse, one-hour failure backoff, source deduplication and bounded
+requests are backend-owned. No service was started by the implementation/tests.
+Unsupported packages need a reviewed source mapping, not a UI guess. Deployment
+must include the worker, manifest/timer, bar-daemon and UI before real values can
+appear; panel Refresh remains a cache read, not a check trigger.
+Install the Shelllist application package, not just its QML
 configuration, so the desktop entry and icon are available. Restart the desktop
 backend/UI after installation. No live deployment is performed by source tests.
 
@@ -339,6 +376,11 @@ A blank tray inspector alone does not establish whether history exists.
 - Native tab/settings regressions cover pointer gear toggling, independent Now/run
   tabs, Ctrl+Tab, editable-only browsing, Enter save/Escape discard, draft discard
   on context switches, older worker evidence and full plain-text tool Help/Copy.
+  Application inventory tests cover actual read-only tab/scroll keys, known and
+  unknown versions, partial counts, malformed-refresh retention and missing manifests.
+  Worker and native projection tests cover bounded files/rows, symlinked NixOS etc
+  entries, deduplication, scope and rejection. Host Nix checks cover manifest
+  generation.
 - `tests/manual/tst_update_review.qml` captures the actual production panel using
   recording transports: nine pages in dark/light at 1040×720 and 976×600. Run it
   with `tests/run-qmlquality-tests.sh -input tests/manual/tst_update_review.qml`

@@ -4,6 +4,7 @@ AddressListField 1.0 AddressListField.qml
 IpValidation 1.0 IpValidation.js
 singleton IpCodec 1.0 IpCodec.qml
 SectionHeading 1.0 SectionHeading.qml
+FeedbackButton 1.0 FeedbackButton.qml
 InlineStatus 1.0 InlineStatus.qml
 singleton Theme 1.0 Theme.qml
 MaterialPalette 1.0 MaterialPalette.qml

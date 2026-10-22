@@ -9,6 +9,7 @@ Column {
     required property UpdateController controller
     readonly property var overview: controller.overview
     readonly property var git: overview ? overview.git || null : null
+    readonly property var applications: overview ? overview.applications || null : null
     spacing: Ui.Theme.cardGap
     Ui.DetailColumnCard {
         property bool informationOnly: true
@@ -20,7 +21,7 @@ Column {
             model: [
                 {key: "git", label: qsTr("Local Git"), value: Presentation.gitSummary(page.git), detail: page.git && page.git.available ? qsTr("Configuration repository · cached local tracking ref") : qsTr("No repository evidence available")},
                 {key: "ai", label: qsTr("AI tools"), value: Presentation.toolsSummary(page.overview ? page.overview.tools : []), detail: qsTr("Managed vendor tools · per-tool source and check time")},
-                {key: "applications", label: qsTr("Applications"), value: qsTr("Application comparison not reported"), detail: qsTr("Managed package inventory is not provided by this worker")},
+                {key: "applications", label: qsTr("Applications"), value: page.applications && page.applications.available ? qsTr("%1 packages · active generation").arg(page.applications.total) : qsTr("Application inventory not reported"), detail: qsTr("Package metadata from the active NixOS generation; system and Home Manager declarations only")},
                 {key: "system", label: qsTr("System"), value: Presentation.systemSummary(page.overview, page.controller.currentState), detail: qsTr("Booted, active and next boot remain separate")}
             ]
             Ui.FieldRow {
@@ -36,13 +37,6 @@ Column {
                     textFormat: Text.PlainText
                     Accessible.name: area.modelData.label + ": " + text
                     Accessible.description: area.modelData.detail
-                }
-                accessories: Ui.FlatIconButton {
-                    sizeRole: "secondary"
-                    uiScale: Ui.Theme.expandedSecondaryActionScale
-                    icon: "arrow_forward"
-                    accessibleName: qsTr("Inspect %1").arg(area.modelData.label)
-                    onClicked: page.controller.selectDetailsTab(area.modelData.key)
                 }
             }
         }
@@ -66,14 +60,8 @@ Column {
             {label: qsTr("Path"), value: page.git.path || qsTr("Not reported")}
         ]
     }
-    Ui.DetailRows {
-        objectName: "updateApplicationsOverview"
+    UpdateApplications {
         visible: page.controller.detailsTab === "applications"
-        title: qsTr("Managed applications")
-        rows: [
-            {label: qsTr("Comparison"), value: qsTr("Application comparison not reported")},
-            {label: qsTr("Coverage"), value: qsTr("The worker does not publish an installed/available package inventory")},
-            {label: qsTr("Latest release"), value: qsTr("Unknown — configured package targets and upstream latest require separate evidence")}
-        ]
+        controller: page.controller
     }
 }

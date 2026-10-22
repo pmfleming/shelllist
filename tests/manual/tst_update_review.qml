@@ -94,6 +94,11 @@ Tests.DaemonTestCase {
             baseline: {valid: true, approved_at: 1792575000, revision: "9ba7c24", reasons: [], error: null},
             tools: ["Tool A", "Tool B", "Tool C", "Tool D", "Tool E"].map((name, index) => ({name: name, installed_version: "1.2.3", phase: index === 1 ? "failed" : "current", last_successful_check: 1792575300, last_activation: 1792500000, error: index === 1 ? "Verification failed" : null,
                 freshness: {latest_version: index < 2 ? "1.3.0" : "1.2.3", comparison: index < 2 ? "newer" : "current", source: "https://vendor.example/releases/stable", stale: false, held: false, hold_since: null, hold_reason: null, origin: "vendor", published_at: null}})),
+            applications: {available: true, active_system: "/nix/store/aaaaaaaaaaaaaaaa-nixos-system-host-26.05.312", observed_at: 1792575900, total: 12, error: null,
+                packages: ["browser", "editor", "image-editor", "media-player", "terminal", "versionless-wrapper"].map((name, index) => ({name: name, scope: index < 4 ? "system" : "user:example", version: index === 5 ? null : "1.2.3",
+                    release: index > 3 ? null : {version: index === 3 ? null : "1.3.0", source: "https://api.github.com/repos/example/" + name + "/releases/latest",
+                        checked_at: index === 3 ? null : 1792575000, attempted_at: index === 3 ? null : 1792575900,
+                        stale: index > 0, error: index === 2 ? "HTTP 429: rate limited" : null}}))},
             timers: [{unit: "nixos-update-delayed.timer", next_at: 1792580000, last_at: 1792574000}], timers_error: null,
             git: {available: true, path: "/home/example/Projects/nixos-config", branch: "main", revision: "6c31a9e".repeat(5), upstream: "origin/main", ahead: 0, behind: 4, dirty: true, shallow: false, observed_at: 1792575900, target_observed_at: null, error: null}
         }});
@@ -102,6 +107,16 @@ Tests.DaemonTestCase {
         for (const page of ["overview", "git", "ai", "applications", "system"]) {
             root.controller.selectDetailsTab(page);
             capture(root, data.tag + "-" + page);
+            if (page === "applications") {
+                const inventory = findChild(root, "updateApplicationsOverview");
+                const height = inventory.height;
+                mouseClick(findChild(inventory, "sectionHeadingHelp"));
+                compare(inventory.height, height);
+                capture(root, data.tag + "-applications-help");
+                mouseClick(findChild(findChild(inventory, "updateApplication:system:browser"), "updateApplicationStatus"));
+                compare(inventory.height, height);
+                capture(root, data.tag + "-applications-status");
+            }
         }
         root.controller.openSettings("");
         capture(root, data.tag + "-settings");

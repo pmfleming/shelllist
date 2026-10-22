@@ -892,6 +892,7 @@ DaemonTestCase {
         verify(root.controller.detailTabs.every(tab => Icons.name(tab.icon) === tab.icon));
         verify(findChild(root, "updateArea:applications").modelData.value.includes("not reported"));
         verify(findChild(root, "updateArea:git").modelData.value.includes("Diverged"));
+        verify(!root.content.detailsNavigation.contentCommands.some(command => command.accessibleName.startsWith("Inspect ")));
         const reads = calls.length;
         showPage(root, "git");
         const git = findChild(root, "updateGitOverview");
@@ -950,6 +951,123 @@ DaemonTestCase {
         compare(root.controller.overviewError, "");
         compare(root.controller.overview.git, undefined, "older worker omits the optional evidence");
         verify(Presentation.toolFreshness(root.controller.overview.tools[0]).includes("not reported"));
+    }
+    function test_applicationInventoryIsReadOnlyAndRejectsMalformedRefresh(): void {
+        const root = fixture();
+        reply(latest(), []);
+        const value = overviewValue();
+        value.applications = {available: true, active_system: "/nix/store/active-system", observed_at: 390,
+            total: 3, error: null, packages: [
+                {name: "editor", scope: "system", version: "1.2.3"},
+                {name: "local-tool", scope: "user:test", version: null}
+            ]};
+        overviewReply(latestOverview(), value);
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        verify(findChild(root, "updateArea:applications").modelData.value.includes("3 packages · active generation"));
+        const reads = calls.length;
+        showPage(root, "applications");
+        const inventory = findChild(root, "updateApplicationsOverview");
+        verify(inventory.visible);
+        const editor = findChild(inventory, "updateApplication:system:editor");
+        const versionless = findChild(inventory, "updateApplication:user:test:local-tool");
+        compare(findChild(editor, "updateApplicationLocal").text, "1.2.3");
+        compare(findChild(versionless, "updateApplicationLocal").text, "—");
+        compare(findChild(editor, "updateApplicationLatest").text, "—");
+        const feedback = findChild(root.content.listItem, "feedbackText");
+        const explanation = findChild(inventory, "updateApplicationExplanation");
+        compare(explanation.text, "");
+        const height = inventory.height;
+        mouseClick(findChild(inventory, "sectionHeadingHelp"));
+        tryCompare(explanation, "text", inventory.helpText);
+        tryVerify(() => feedback.text.includes("latest known upstream releases"));
+        compare(inventory.height, height, "Help uses the status bar, never a growing row");
+        mouseClick(findChild(editor, "updateApplicationStatus"));
+        tryCompare(feedback, "text", "editor: no release source configured.");
+        mouseClick(findChild(versionless, "updateApplicationStatus"));
+        tryCompare(feedback, "text", "local-tool: no release source configured.");
+        compare(inventory.height, height);
+        showPage(root, "system");
+        compare(explanation.text, "");
+        showPage(root, "applications");
+        keyClick(Qt.Key_Tab);
+        compare(root.content.detailsNavigation.highlightedControl, null);
+        const commands = root.content.detailsNavigation.contentCommands.filter(item => !item.accessKey || item.includeInCommandMenu);
+        const statusIndex = commands.findIndex(item => item.accessibleName === "Version status: editor");
+        verify(statusIndex >= 0);
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        tryVerify(() => root.content.detailsNavigation.commandMenuOpen);
+        for (let i = 0; i < statusIndex; ++i) keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Return);
+        tryCompare(feedback, "text", "editor: no release source configured.");
+        compare(root.content.detailsNavigation.highlightedControl, null);
+        keyClick(Qt.Key_PageDown);
+        compare(calls.length, reads, "reading and scrolling inventory cannot check or install packages");
+        root.controller.requestOverview();
+        const invalid = JSON.parse(JSON.stringify(value));
+        invalid.applications.packages[0].version = 123;
+        overviewReply(latestOverview(), invalid);
+        compare(root.controller.overviewError, "Invalid update overview reply");
+        compare(findChild(inventory, "updateApplication:system:editor").modelData.version, "1.2.3");
+        root.controller.requestOverview();
+        const unavailable = overviewValue();
+        unavailable.applications = {available: false, active_system: null, observed_at: null, total: 0,
+            packages: [], error: "Active generation has no application inventory"};
+        overviewReply(latestOverview(), unavailable);
+        compare(findChild(inventory, "updateApplicationUnavailable").text, unavailable.applications.error);
+        compare(findChild(inventory, "updateApplication:system:editor"), null);
+        compare(explanation.text, "");
+        mouseClick(findChild(inventory, "sectionHeadingHelp"));
+        verify(explanation.text.length > 0);
+        root.controller.deactivateUi();
+        compare(explanation.text, "");
+    }
+    function test_applicationReleaseVersionsKeepStaleAndUnsupportedEvidenceDistinct(): void {
+        const root = fixture();
+        reply(latest(), []);
+        const value = overviewValue();
+        const release = {version: "2.0", source: "https://api.github.com/repos/example/editor/releases/latest",
+            checked_at: 390, attempted_at: 390, stale: false, error: null};
+        value.applications = {available: true, active_system: "/nix/store/active-system", observed_at: 400,
+            total: 3, error: null, packages: [
+                {name: "editor", scope: "system", version: "1.0", release: release},
+                {name: "stale", scope: "system", version: "1.0", release: Object.assign({}, release, {stale: true, error: "HTTP 429", attempted_at: 400})},
+                {name: "unchecked", scope: "system", version: null, release: Object.assign({}, release, {version: null, checked_at: null, attempted_at: null, stale: true})}
+            ]};
+        overviewReply(latestOverview(), value);
+        root.controller.openDetails();
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        showPage(root, "applications");
+        const reads = calls.length;
+        const inventory = findChild(root, "updateApplicationsOverview");
+        const editor = findChild(inventory, "updateApplication:system:editor");
+        const stale = findChild(inventory, "updateApplication:system:stale");
+        const unchecked = findChild(inventory, "updateApplication:system:unchecked");
+        compare(findChild(editor, "updateApplicationLocal").text, "1.0");
+        compare(findChild(editor, "updateApplicationLatest").text, "2.0");
+        compare(findChild(stale, "updateApplicationLatest").text, "2.0");
+        compare(findChild(unchecked, "updateApplicationLatest").text, "—");
+        const feedback = findChild(root.content.listItem, "feedbackText");
+        mouseClick(findChild(editor, "updateApplicationStatus"));
+        tryCompare(feedback, "text", "editor: latest release 2.0.");
+        mouseClick(findChild(stale, "updateApplicationStatus"));
+        tryCompare(feedback, "text", "stale: last known 2.0; check failed.");
+        compare(findChild(stale, "updateApplicationStatus").icon, "warning");
+        mouseClick(findChild(unchecked, "updateApplicationStatus"));
+        tryCompare(feedback, "text", "unchecked: latest release not checked.");
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Tab);
+        compare(root.content.detailsNavigation.highlightedControl, null);
+        compare(calls.length, reads, "version disclosure cannot request a network check or update");
+        for (const patch of [{version: 123}, {checked_at: null}, {source: "file:///tmp/version"}, {error: "failed", stale: false}]) {
+            root.controller.requestOverview();
+            const invalid = JSON.parse(JSON.stringify(value));
+            invalid.applications.packages[0].release = Object.assign({}, release, patch);
+            overviewReply(latestOverview(), invalid);
+            compare(root.controller.overviewError, "Invalid update overview reply");
+            compare(findChild(editor, "updateApplicationLatest").text, "2.0");
+        }
     }
     function test_globalSettingsSurvivePrunedSelectionButExactLinksOpenTheRun(): void {
         const root = fixture();

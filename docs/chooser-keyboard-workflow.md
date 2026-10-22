@@ -625,7 +625,19 @@ contract and Qt interaction coverage.
 
 Updates uses the shared ProviderChooserSurface and a real native Tray entry.
 Home Manager's Super+U opens it directly (`updatesShortcut`, nullable); the
-existing Super+Shift+U / update-logs route remains. Tray discovery starts with
+existing Super+Shift+U / update-logs route remains.
+Updates' Applications tab displays read-only Local / Latest version columns.
+Local is active-generation declared package metadata; Latest uses cached upstream
+release evidence and stays unknown when none is supplied. Failed/expired checks
+retain a last-known version with a warning/history icon; its explicit command
+explains the state without checking or installing anything. Scope and coverage remain accessible, without
+per-row metadata or jump arrows. Heading Help and unknown-status icon commands
+use shared `FeedbackButton` / `FeedbackSource` to replace one concise explanation
+in the fixed status bar, never grow a row. They remain named Alt+J commands, not
+editable stops; changing page/evidence or closing clears the explanation.
+Package rows remain passive: Tab uses the shared scrolling fallback and
+PageUp/PageDown scroll without checking, evaluating or installing packages.
+Tray discovery starts with
 the resident bar, while the chooser/application content remains lazy.
 Up/Down browse the pinned Now result and recorded runs; Enter/Right inspect
 without executing an update. Now is a separate current-state page, remains visible

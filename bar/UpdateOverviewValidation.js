@@ -25,6 +25,27 @@ function valid(value) {
                 || typeof git.dirty !== "boolean" || typeof git.shallow !== "boolean"
                 || ![git.ahead, git.behind].every(n => n === null || (Number.isSafeInteger(n) && n >= 0 && n <= 4294967295)))) return false;
     }
+    const apps = value.applications;
+    if (apps !== undefined && apps !== null) {
+        const field = (s, max) => typeof s === "string" && s.length > 0 && s.length <= max && !/[\x00-\x1f\x7f-\x9f]/.test(s);
+        const release = r => r === undefined || r === null || (!!r
+            && field(r.source, 512) && r.source.startsWith("https://")
+            && (r.version === null || field(r.version, 80))
+            && time(r.checked_at) && time(r.attempted_at)
+            && (r.version === null) === (r.checked_at === null)
+            && (r.checked_at === null || r.attempted_at !== null)
+            && typeof r.stale === "boolean"
+            && (r.error === null || (typeof r.error === "string" && r.error.length <= 512))
+            && (r.stale || (r.version !== null && r.error === null)));
+        if (!apps || typeof apps.available !== "boolean" || !text(apps.error)
+                || !time(apps.observed_at) || !text(apps.active_system)
+                || !Array.isArray(apps.packages) || apps.packages.length > 512
+                || !Number.isSafeInteger(apps.total) || apps.total < apps.packages.length || apps.total > 4096
+                || (apps.available && (apps.observed_at === null || !field(apps.active_system, 512)))
+                || (!apps.available && (apps.total !== 0 || apps.packages.length !== 0))
+                || !apps.packages.every(p => !!p && field(p.name, 160) && field(p.scope, 80)
+                    && (p.version === null || field(p.version, 80)) && release(p.release))) return false;
+    }
     const freshness = f => f === undefined || f === null || (!!f
         && [f.latest_version, f.source, f.published_at, f.origin, f.hold_reason].every(text)
         && [f.stale, f.held].every(flag) && time(f.hold_since)
