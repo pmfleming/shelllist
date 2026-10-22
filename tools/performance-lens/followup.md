@@ -106,3 +106,24 @@ match-rule round trips, and three paired release runs showed no consistent gain
 from caching. No transport or payload-format change was justified. These two
 investigations complete the conditional lower-priority work, rather than adding
 unproven micro-optimisations.
+
+## Final validation and rollout boundary
+
+Ordinary release tests passed for the lens (37 unit + 11 CLI), framework workspace,
+and all five framework consumers: app-daemon, bar-daemon, bt-daemon, clip-daemon
+and nm-daemon. The changed Rust projects (lens, framework, app, bar) also passed
+all-target Clippy with warnings denied and formatting checks. Private-bus,
+watch-registration, shutdown/save, legacy-artifact and corrupted-artifact tests
+are included. The opt-in release probes above were run separately without builds.
+Native/hardware/systemd opt-in fixtures and full Nix package/system checks were
+not run. Clip's consumer suite used its documented development environment and
+scoped upstream bootstrap exception, not the bar environment.
+
+Only the original bar watcher fix was verified in the already-deployed system.
+The new history/framework and recovery-hardening commits are source changes,
+not newly activated service packages. No full system switch, application restart,
+or live history migration was performed. Deploy through the normal coordinated
+framework/consumer build workflow, retain rollback packages, then remeasure live
+app-daemon across multiple saves; fixture savings are not deployment evidence.
+Concurrent unrelated Shelllist UI/build-input and bar overview edits were left
+untouched and excluded from these commits.

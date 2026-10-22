@@ -1,5 +1,9 @@
 # Shelllist performance lens
 
+See [the performance follow-up](followup.md) for current thread accounting,
+cgroup/scheduler options, compact schema 2, and validation results. It supersedes
+the original task-pairing and raw-format descriptions below.
+
 A standalone **Rust** Linux CLI for the real Shelllist process. It lives here but
 is not a Shelllist library, runtime feature, Cargo workspace member, or production
 build dependency. No JavaScript, Python, web server, application instrumentation,
