@@ -101,12 +101,17 @@ DaemonTestCase {
             verify(card !== null && card.visible);
             const heading = findChild(card, "sectionHeadingText");
             compare(heading.text, entry.title);
-            const position = heading.mapToItem(card, 0, 0);
-            verify(position.x > 0 && position.y > 0, "heading uses the card inset");
-            verify(position.x + heading.width <= card.width);
-            verify(position.y + heading.height < card.height);
             const content = findChild(card, entry.content);
-            verify(content.mapToItem(card, 0, 0).y >= position.y + heading.height);
+            verify(content !== null);
+            // Nested layouts/positioners can need another polish pass after
+            // the first rendered frame. Wait for the geometry, not a delay.
+            tryVerify(() => {
+                const position = heading.mapToItem(card, 0, 0);
+                return position.x > 0 && position.y > 0
+                    && position.x + heading.width <= card.width
+                    && position.y + heading.height < card.height
+                    && content.mapToItem(card, 0, 0).y >= position.y + heading.height;
+            }, 5000, entry.card + ": inset heading must precede content inside the card");
         }
         keyClick(Qt.Key_Tab);
         compare(panel.detailsNavigation.availableFields().length, 0, "headings remain passive");
