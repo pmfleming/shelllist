@@ -105,6 +105,7 @@ pub fn summarize(manifest: &Manifest, samples: &[Sample], events: &[Event]) -> S
             let (cpu, cpu_seconds) = integral("cpu_percent");
             let (read, read_s) = integral("read_bytes_per_second");
             let (write, write_s) = integral("write_bytes_per_second");
+            let (unattributed, unattributed_s) = integral("unattributed_thread_cpu_percent");
             ResourceSummary {
                 label,
                 phase,
@@ -124,6 +125,8 @@ pub fn summarize(manifest: &Manifest, samples: &[Sample], events: &[Event]) -> S
                 io_write_observed_bytes: write,
                 io_read_covered_s: read_s,
                 io_write_covered_s: write_s,
+                unattributed_thread_cpu_percent: unattributed.map(|n| n / unattributed_s),
+                unattributed_thread_covered_s: unattributed_s,
             }
         })
         .collect();
@@ -182,7 +185,7 @@ fn evidence_limits(
     if manifest.settings["include_threads"] != true {
         limits.push("Thread CPU localization was not requested. Use --include-threads at main sampling cadence for a separate diagnostic capture; this adds observer cost.".into());
     } else {
-        limits.push("Thread localization is a bounded snapshot (1024 tasks/process). Short-lived tasks may be missed; names can change or repeat, and task CPU is not summed into process totals. At least two same-phase observations of the same task identity are needed. See the manifest for cadence.".into());
+        limits.push("Thread localization is a bounded snapshot (1024 tasks/process). Short-lived tasks may be missed; names can change or repeat, and task CPU is not summed into process totals. Rates pair same-phase identities or zero-baseline tasks proven born since the previous snapshot. Births and exits entirely between snapshots remain invisible by name. See the manifest for cadence.".into());
         let unpaired = threads
             .iter()
             .filter(|t| t.phase != "initial-settle" && t.cpu_percent_one_core.is_none())
@@ -416,6 +419,42 @@ pub fn write(
         }
         html.push_str("</table>");
     }
+    html.push_str("<h3>Unattributed thread CPU</h3><p>Process CPU change minus observed thread CPU changes. Includes exited tasks, missed reads and sampling skew; not an exact exited-task counter. Negative residuals are unavailable, not clamped to zero.</p><table><tr><th>Scope / phase</th><th>% one core</th><th>Covered seconds</th></tr>");
+    for r in summary
+        .resources
+        .iter()
+        .filter(|r| r.phase != "initial-settle" && r.unattributed_thread_cpu_percent.is_some())
+    {
+        let _ = write!(
+            html,
+            "<tr><td>{} / {}</td><td>{}</td><td>{:.3}</td></tr>",
+            escape(&r.label),
+            escape(&r.phase),
+            number(r.unattributed_thread_cpu_percent),
+            r.unattributed_thread_covered_s
+        );
+    }
+    html.push_str("</table><h3>Observed new threads by name</h3><p>Only births proven after a preceding same-phase snapshot. Names are diagnostic labels; completely unobserved threads cannot be counted.</p><table><tr><th>Scope / phase / name</th><th>New identities</th></tr>");
+    let mut births = BTreeMap::<_, usize>::new();
+    for t in summary
+        .threads
+        .iter()
+        .filter(|t| t.phase != "initial-settle" && t.born_during_capture)
+    {
+        *births
+            .entry((&t.label, &t.phase, &t.last_name))
+            .or_default() += 1;
+    }
+    for ((label, phase, name), count) in births {
+        let _ = write!(
+            html,
+            "<tr><td>{} / {} / {}</td><td>{count}</td></tr>",
+            escape(label),
+            escape(phase),
+            escape(name)
+        );
+    }
+    html.push_str("</table>");
     let mut unpaired: Vec<_> = summary
         .threads
         .iter()

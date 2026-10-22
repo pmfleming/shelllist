@@ -168,6 +168,21 @@ pub fn raw(path: &Path, manifest: &Manifest) -> Result<(Vec<Sample>, Vec<Event>)
                     t.cpu_percent.value.is_some() == t.interval_s.is_some(),
                     "task CPU missing interval"
                 );
+                ensure!(
+                    t.cpu_delta_ticks.is_none_or(|delta| delta <= t.cpu_ticks),
+                    "task delta exceeds lifetime CPU"
+                );
+                ensure!(
+                    !t.born_since_previous
+                        || (t.cpu_delta_ticks == Some(t.cpu_ticks) && t.interval_s.is_some()),
+                    "invalid newborn task baseline"
+                );
+                ensure!(
+                    snapshot
+                        .elapsed_s
+                        .is_none_or(|end| end.is_finite() && end >= t.elapsed_s),
+                    "invalid task snapshot endpoint"
+                );
             }
         }
         for c in s.counters.values() {

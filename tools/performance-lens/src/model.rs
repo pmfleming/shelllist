@@ -96,12 +96,22 @@ pub struct ThreadSample {
     pub name: String,
     pub elapsed_s: f64,
     pub cpu_ticks: u64,
+    #[serde(default)]
+    pub cpu_delta_ticks: Option<u64>,
+    #[serde(default)]
+    pub born_since_previous: bool,
     pub interval_s: Option<f64>,
     pub cpu_percent: Metric,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ThreadSnapshot {
+    /// End of enumeration, on the same monotonic clock as task timestamps.
+    #[serde(default)]
+    pub elapsed_s: Option<f64>,
+    /// CLOCK_BOOTTIME ticks, used only to prove a task was born after this snapshot.
+    #[serde(default)]
+    pub boot_ticks: Option<u64>,
     pub tasks: Vec<ThreadSample>,
     pub unavailable_tasks: usize,
     pub error: Option<String>,
@@ -175,6 +185,10 @@ pub struct ResourceSummary {
     pub io_write_observed_bytes: Option<f64>,
     pub io_read_covered_s: f64,
     pub io_write_covered_s: f64,
+    #[serde(default)]
+    pub unattributed_thread_cpu_percent: Option<f64>,
+    #[serde(default)]
+    pub unattributed_thread_covered_s: f64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -194,6 +208,8 @@ pub struct ThreadSummary {
     pub last_name: String,
     pub observations: usize,
     pub max_observed_cpu_ticks: u64,
+    #[serde(default)]
+    pub born_during_capture: bool,
     pub covered_s: f64,
     pub cpu_percent_one_core: Option<f64>,
 }

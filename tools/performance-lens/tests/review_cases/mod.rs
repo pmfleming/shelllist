@@ -268,6 +268,10 @@ fn task_churn_is_visible_between_expensive_detail_samples() {
             >= 2
     );
     assert!(tasks.iter().all(|t| t["covered_s"].as_f64().unwrap() < 1.0));
+    assert!(tasks.iter().any(|t| t["born_during_capture"] == true));
+    let html = fs::read_to_string(run.join("report.html")).unwrap();
+    assert!(html.contains("Unattributed thread CPU"));
+    assert!(html.contains("Observed new threads by name"));
     assert_eq!(
         json(&run.join("manifest.json"))["settings"]["thread_cadence"],
         "base"

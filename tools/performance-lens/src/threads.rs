@@ -44,6 +44,8 @@ fn collect_at(root: &Path, start: Instant) -> ThreadSnapshot {
                     name: name.into(),
                     elapsed_s,
                     cpu_ticks: stat.cpu_ticks,
+                    cpu_delta_ticks: None,
+                    born_since_previous: false,
                     interval_s: None,
                     cpu_percent: Metric::missing(
                         "% one core",
@@ -67,31 +69,96 @@ fn collect_at(root: &Path, start: Instant) -> ThreadSnapshot {
     if let Err(e) = result {
         snapshot.error = Some(format!("task enumeration unavailable: {e:#}"));
     }
+    snapshot.elapsed_s = Some(start.elapsed().as_secs_f64());
+    snapshot.boot_ticks = boot_ticks();
     snapshot
+}
+
+fn boot_ticks() -> Option<u64> {
+    let mut time: libc::timespec = unsafe { std::mem::zeroed() };
+    if unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut time) } != 0 {
+        return None;
+    }
+    let ticks = procfs::ticks_per_second().ok()?;
+    Some(time.tv_sec as u64 * ticks + time.tv_nsec as u64 * ticks / 1_000_000_000)
 }
 
 /// Caller fences process identity and phase generation before supplying the prior sample.
 pub fn derive(now: &mut ThreadSnapshot, previous: Option<&ThreadSnapshot>, ticks: u64) {
+    let prior_snapshot = previous;
     let previous: BTreeMap<_, _> = previous
         .into_iter()
         .flat_map(|s| &s.tasks)
         .map(|t| ((t.tid, t.start_ticks), t))
         .collect();
     for task in &mut now.tasks {
-        let value = previous.get(&(task.tid, task.start_ticks)).and_then(|old| {
-            let dt = task.elapsed_s - old.elapsed_s;
-            let delta = task.cpu_ticks.checked_sub(old.cpu_ticks)?;
-            (dt > 0.0 && ticks > 0).then_some((delta as f64 * 100.0 / ticks as f64 / dt, dt))
+        task.born_since_previous = false;
+        let baseline = previous
+            .get(&(task.tid, task.start_ticks))
+            .map(|old| (old.cpu_ticks, old.elapsed_s))
+            .or_else(|| {
+                let old = prior_snapshot?;
+                // Strictly later than the prior clock tick: same-tick births
+                // are ambiguous. Never zero-baseline a merely missed older task.
+                if task.start_ticks > old.boot_ticks? && task.start_ticks <= now.boot_ticks? {
+                    task.born_since_previous = true;
+                    Some((0, old.elapsed_s?))
+                } else {
+                    None
+                }
+            });
+        let value = baseline.and_then(|(cpu, elapsed)| {
+            let dt = task.elapsed_s - elapsed;
+            let delta = task.cpu_ticks.checked_sub(cpu)?;
+            (dt > 0.0 && ticks > 0).then_some((delta, dt))
         });
+        task.cpu_delta_ticks = value.map(|(delta, _)| delta);
         task.interval_s = value.map(|(_, dt)| dt);
         task.cpu_percent = match value {
-            Some((v, _)) => Metric::new(v, "% one core", SOURCE),
+            Some((delta, dt)) => Metric::new(
+                delta as f64 * 100.0 / ticks as f64 / dt,
+                "% one core",
+                SOURCE,
+            ),
             None => Metric::missing(
                 "% one core",
                 SOURCE,
                 "first task observation, TID reuse, phase boundary, missing observation or counter reset",
             ),
         };
+    }
+}
+
+pub fn residual(now: &Sample, previous: Option<&Sample>, ticks: u64) -> Metric {
+    let value = (|| {
+        let old = previous?;
+        let tasks = now.threads.as_ref()?;
+        old.threads.as_ref()?;
+        let process_delta = now
+            .counters
+            .get("cpu_ticks")?
+            .value?
+            .checked_sub(old.counters.get("cpu_ticks")?.value?)?;
+        let attributed = tasks
+            .tasks
+            .iter()
+            .filter_map(|t| t.cpu_delta_ticks)
+            .try_fold(0u64, u64::checked_add)?;
+        let delta = process_delta.checked_sub(attributed)?;
+        let dt = now.elapsed_s - old.elapsed_s;
+        (dt > 0.0 && ticks > 0).then_some(delta as f64 * 100.0 / ticks as f64 / dt)
+    })();
+    match value {
+        Some(value) => Metric::new(
+            value,
+            "% one core",
+            "process CPU delta minus observed task deltas",
+        ),
+        None => Metric::missing(
+            "% one core",
+            "process CPU delta minus observed task deltas",
+            "no paired process/task snapshots, reset or negative residual from sampling skew",
+        ),
     }
 }
 
@@ -111,6 +178,7 @@ pub fn summarize(samples: &[Sample]) -> Vec<ThreadSummary> {
                             last_name: t.name.clone(),
                             observations: 0,
                             max_observed_cpu_ticks: 0,
+                            born_during_capture: false,
                             covered_s: 0.0,
                             cpu_percent_one_core: None,
                         },
@@ -119,6 +187,7 @@ pub fn summarize(samples: &[Sample]) -> Vec<ThreadSummary> {
                 });
             row.last_name.clone_from(&t.name);
             row.observations += 1;
+            row.born_during_capture |= t.born_since_previous;
             row.max_observed_cpu_ticks = row.max_observed_cpu_ticks.max(t.cpu_ticks);
             if let (Some(cpu), Some(dt)) = (t.cpu_percent.value, t.interval_s) {
                 row.covered_s += dt;
@@ -145,6 +214,8 @@ mod tests {
             name: "worker".into(),
             elapsed_s: 1.0,
             cpu_ticks: 10,
+            cpu_delta_ticks: None,
+            born_since_previous: false,
             interval_s: None,
             cpu_percent: Metric::missing("% one core", SOURCE, "first"),
         }
@@ -174,6 +245,30 @@ mod tests {
         derive(&mut now, Some(&ThreadSnapshot::default()), 100);
         assert!(now.tasks[0].cpu_percent.value.is_none());
     }
+    #[test]
+    fn births_are_zero_based_only_when_proven_after_the_previous_snapshot() {
+        let old = ThreadSnapshot {
+            elapsed_s: Some(1.0),
+            boot_ticks: Some(100),
+            ..Default::default()
+        };
+        let mut now = ThreadSnapshot {
+            tasks: vec![task()],
+            elapsed_s: Some(3.0),
+            boot_ticks: Some(300),
+            ..Default::default()
+        };
+        now.tasks[0].elapsed_s = 3.0;
+        for (birth, expected) in [(99, None), (100, None), (101, Some(5.0)), (301, None)] {
+            now.tasks[0].start_ticks = birth;
+            derive(&mut now, Some(&old), 100);
+            assert_eq!(now.tasks[0].cpu_percent.value, expected);
+            assert_eq!(now.tasks[0].born_since_previous, expected.is_some());
+        }
+        derive(&mut now, None, 100);
+        assert!(!now.tasks[0].born_since_previous);
+    }
+
     #[test]
     fn comm_parsing_and_weighted_summary_preserve_reused_task_identity() {
         let root = tempfile::tempdir().unwrap();
@@ -221,6 +316,36 @@ mod tests {
         assert_eq!(rows[0].cpu_percent_one_core, Some(37.5));
         assert_eq!(rows[0].observations, 2);
         assert_eq!(rows[1].cpu_percent_one_core, Some(25.0));
+    }
+
+    #[test]
+    fn process_residual_exposes_exited_work_without_clamping_sampling_skew() {
+        let target = crate::model::Target {
+            label: "fixture".into(),
+            identity: procfs::identity(std::process::id()).unwrap(),
+        };
+        let mut old = crate::sampler::collect(
+            &target,
+            0,
+            Instant::now(),
+            "capture",
+            false,
+            false,
+            &mut Default::default(),
+        );
+        old.elapsed_s = 1.0;
+        old.counters.get_mut("cpu_ticks").unwrap().value = Some(100);
+        old.threads = Some(ThreadSnapshot::default());
+        let mut now = old.clone();
+        now.elapsed_s = 2.0;
+        now.counters.get_mut("cpu_ticks").unwrap().value = Some(180);
+        let mut t = task();
+        t.cpu_delta_ticks = Some(30);
+        now.threads.as_mut().unwrap().tasks.push(t);
+        assert_eq!(residual(&now, Some(&old), 100).value, Some(50.0));
+        now.threads.as_mut().unwrap().tasks[0].cpu_delta_ticks = Some(90);
+        assert!(residual(&now, Some(&old), 100).value.is_none());
+        assert!(residual(&now, None, 100).value.is_none());
     }
 
     #[test]

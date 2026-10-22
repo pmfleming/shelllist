@@ -220,6 +220,12 @@ pub fn run(
             if let Some(snapshot) = &mut sample.threads {
                 threads::derive(snapshot, previous.and_then(|p| p.threads.as_ref()), ticks);
             }
+            if include_threads {
+                sample.rates.insert(
+                    "unattributed_thread_cpu_percent".into(),
+                    threads::residual(&sample, previous, ticks),
+                );
+            }
             if heavy {
                 let previous = heavy_prior.get(&target.identity.pid).filter(|p| {
                     p.phase_sequence == sample.phase_sequence

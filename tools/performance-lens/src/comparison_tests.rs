@@ -131,6 +131,7 @@ fn report_shows_unpaired_lifetime_counters_without_inventing_rates() {
         last_name: "<churning & task>".into(),
         observations: 1,
         max_observed_cpu_ticks: 80,
+        born_during_capture: false,
         covered_s: 0.0,
         cpu_percent_one_core: None,
     }];
