@@ -222,15 +222,13 @@ Item {
         return notificationState ? notificationState.replyNotification(notificationId, text) : false;
     }
     function visibleToastGroups(monitorName: string): var {
-        const active = notificationActive && Array.isArray(notificationActive.notifications) ? notificationActive.notifications : [];
-        const monitors = (workspaces.monitors || []).map(function (monitor) {
-            return monitor.name;
-        });
-        const focused = workspaces.focused_monitor || "";
-        const routed = active.filter(function (notification) {
-            return notification.toast_visible !== false && (!notifications.dnd || notification.dnd_bypass === true) && Ui.NotificationPresentation.notificationMonitor(notification, focused, monitors) === monitorName;
-        }).reverse();
-        return Ui.NotificationPresentation.groupRecords(routed).slice(0, 3);
+        if (!notificationActive.available)
+            return [];
+        return (notificationActive.toast_decks || []).filter(deck => deck.monitor === monitorName);
+    }
+
+    function setNotificationReading(monitor: string, reading: bool): bool {
+        return !!notificationState && notificationState.backend.setReading(monitor, reading);
     }
 
     function presentOsd(descriptor: var): void {

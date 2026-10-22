@@ -25,7 +25,23 @@ Rectangle {
     Accessible.name: notification.summary || notification.app_name || qsTr("Notification")
     Accessible.onPressAction: if (!removing) activate()
     property double nowMs: Date.now()
-    property bool removing: false
+    readonly property bool removing: !!replyState?.operations[recordKey]
+    readonly property bool hovered: cardHover.hovered
+
+    HoverHandler { id: cardHover }
+    Ui.FlatIconButton {
+        id: dismissButton
+        objectName: "notificationToastDismiss"
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: Ui.Theme.spacingSm
+        z: 2
+        icon: "close"
+        accessibleName: qsTr("Dismiss notification")
+        visible: card.hovered || activeFocus
+        enabled: !card.removing
+        onClicked: card.controller.dismissNotification(card.notification.id)
+    }
 
     signal breakoutRequested
 
@@ -68,12 +84,11 @@ Rectangle {
         drag.maximumX: card.width
         drag.threshold: 12
         onReleased: {
-            if (card.x > card.width * 0.3)
-                card.removing = true;
-            else
-                card.x = 0;
+            if (card.x > card.width * 0.3 && !card.removing)
+                card.controller.dismissNotification(card.notification.id);
+            card.x = 0;
         }
-        onClicked: if (card.x < 2)
+        onClicked: if (!card.removing && card.x < 2)
             card.activate()
     }
 
@@ -88,7 +103,7 @@ Rectangle {
         spacing: Ui.Theme.spacingSm
 
         Ui.DetailsHeader {
-            width: parent.width
+            width: parent.width - dismissButton.width
             uiScale: 1
             titlePixelSize: Ui.Theme.fontSizeLabel
             title: card.notification.summary || card.notification.app_name || qsTr("Notification")
@@ -103,15 +118,13 @@ Rectangle {
                 {id: "open", label: qsTr("Open notification"), icon: "open_in_new", visible: card.defaultAction !== null, presentation: {group: "primary"}},
                 {id: "breakout", label: qsTr("Show all %1 in notification center").arg(card.groupCount), icon: "unfold_more", visible: card.breakoutVisible, presentation: {group: "toolbar"}},
                 {id: "reply", label: qsTr("Reply"), icon: "reply", visible: card.replyAction !== null && !card.replyVisible, presentation: {group: "toolbar"}},
-                {id: "snooze", label: qsTr("Snooze for 15 minutes"), icon: "snooze", presentation: {group: "toolbar"}},
-                {id: "dismiss", label: qsTr("Dismiss"), icon: "close", presentation: {group: "toolbar"}}
+                {id: "snooze", label: qsTr("Snooze for 15 minutes"), icon: "snooze", presentation: {group: "toolbar"}}
             ]
             onActionTriggered: function(actionId) {
                 if (actionId === "open") card.activate();
                 else if (actionId === "breakout") card.breakoutRequested();
                 else if (actionId === "reply") card.replyOpen = true;
                 else if (actionId === "snooze") card.controller.snoozeNotification(card.notification.id, 15);
-                else if (actionId === "dismiss") card.removing = true;
             }
         }
         Ui.ThemeText {
@@ -155,7 +168,7 @@ Rectangle {
     // Remaining display time. The daemon owns expiry; this only reflects it.
     Rectangle {
         id: expiry
-        readonly property double expiresMs: Number(card.notification.expires_unix_ms || 0)
+        readonly property double expiresMs: Number(card.notification.toast_expires_unix_ms || 0)
         readonly property double totalMs: expiresMs - Number(card.notification.updated_unix_ms || card.notification.created_unix_ms || 0)
         readonly property bool timed: expiresMs > 0 && totalMs > 0
         property real fraction: 1
@@ -199,9 +212,4 @@ Rectangle {
     onReplyOpenChanged: if (replyOpen)
         Qt.callLater(replyRow.focusInput)
 
-    Ui.RemovalAnimation {
-        targetItem: card
-        removalRequested: card.removing
-        onRemovalFinished: card.controller.dismissNotification(card.notification.id)
-    }
 }

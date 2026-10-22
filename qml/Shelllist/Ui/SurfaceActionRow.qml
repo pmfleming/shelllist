@@ -132,7 +132,7 @@ Item {
                 objectName: row.actionObjectNamePrefix + modelData.id
                 sizeRole: "secondary"
                 uiScale: row.secondaryUiScale
-                activeFocusOnTab: row.tabFocusEnabled && enabled
+                activeFocusOnTab: row?.tabFocusEnabled === true && enabled
                 label: modelData.label || ""
                 icon: modelData.icon || "more_horiz"
                 accessKey: row.keyFor(modelData)

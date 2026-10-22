@@ -92,6 +92,27 @@ connection/timeouts; frontend owners fence late replies and request fresh reads
 on reconnection or revision/cursor invalidation. Exhausted failures stay explicit
 until a fresh read; permanent storage faults still require repair, not replay.
 
+## Popup decks
+
+The native `notification_active.toast_decks` projection owns application grouping,
+newest-first order, three-deck limits and arrival-time monitor routing. Shelllist
+renders keyed delegates; focus changes do not relocate existing cards. Hover fans
+a deck into a bounded scrollable surface with individual close commands. Close
+waits for native removal; it does not optimistically animate a card away. Cards
+share the deck's measured height, keeping close targets aligned as they compact.
+
+`notifications.setReading {monitor, reading}` renews a three-second native lease.
+Shelllist renews once per second while the pointer is over the toast surface.
+The lease freezes all deck insertions/reordering on that display, including other
+applications. New arrivals remain collected and appear after release. Popup-only
+timeouts pause; explicit sender protocol expiry, silence, DND and acknowledged
+removal remain authoritative. A crashed/disconnected UI cannot hold a deck forever.
+No read guard, timer policy or app grouping is implemented in TypeScript/Python.
+
+Native deck/expiry tests and `tst_notification_decks.qml` cover queueing, lease
+loss, unchanged protocol expiry, actual hover/close and stable delegate identity.
+Live compositor input-mask/multi-monitor testing remains a deployment gate.
+
 ## Icon identity
 
 The daemon captures desktop-file `Icon=` independently of content image hints and

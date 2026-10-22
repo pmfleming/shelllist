@@ -29,6 +29,11 @@ Io.BarDaemonBackend {
     function queryCenter(params: var, context: var): bool {
         return request("center", Api.methods.notificationsQueryCenter, params, {center: context});
     }
+    function setReading(monitor: string, reading: bool): bool {
+        if (Object.values(requests).some(context => context.kind === "reading" && context.monitor === monitor))
+            return false;
+        return request("reading", "notifications.setReading", {monitor: monitor, reading: reading}, {monitor: monitor});
+    }
     function setDnd(enabled: bool, until: var): bool {
         return request("dnd", Api.methods.notificationsSetDnd, {
             enabled: enabled,
@@ -98,6 +103,8 @@ Io.BarDaemonBackend {
         // Scoped readers/settings/consent own their result, including errors.
         // They must not fall through to generic snapshot or error publication.
         switch (context.kind) {
+        case "reading":
+            return; // Lease failure expires safely in Rust; never replay mutations.
         case "center":
             store.centerResponse(context.center, data.notification_center, error, errorCode);
             return;

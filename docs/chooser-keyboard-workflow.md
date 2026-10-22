@@ -511,7 +511,9 @@ The Message tab, its detail reader, reply editor and sender commands are removed
 from this center; there is no hidden tab to restore or navigate to. Alt+D remains
 selected-app deletion, while a card's Delete targets only its stable record ID.
 Popup sender actions/replies retain their existing acknowledgement and lifecycle
-guards. The notification backend consumes a completion's request identity and
+guards. Popup decks fan on pointer hover, outside panel field traversal; their
+individual close commands await native removal. The daemon owns the bounded
+reading lease, queued arrivals and popup-only timeout pause (see notifications.md). The notification backend consumes a completion's request identity and
 checks its domain generation before flushing queued observations or acknowledging
 any domain. Duplicate/obsolete replies cannot publish, and cancellation replies
 cannot clear unrelated errors or apply snapshots. Scoped catalog, policy and
