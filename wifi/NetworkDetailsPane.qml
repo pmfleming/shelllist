@@ -13,9 +13,6 @@ ActionDetailsPane {
     readonly property string connectionLabel: Presentation.connectionStateLabel(controller, ap)
     readonly property bool signInRequired: Presentation.connectivityRequiresSignIn(Presentation.activeConnectivity(controller))
     readonly property color connectionColor: signInRequired ? Theme.warning : Theme.active
-    readonly property real cardBudget: Math.max(420, bodyHeight - controlHeight - 3 * sectionSpacing - 2)
-    readonly property real connectionCardHeight: Math.max(220, Math.round(cardBudget * 0.44))
-    readonly property real networkCardHeight: Math.max(130, Math.round(cardBudget * 0.255))
 
     chooserController: controller
     uiScale: 1
@@ -77,8 +74,6 @@ ActionDetailsPane {
                 controller: pane.controller
                 accessPoint: pane.ap
                 sectionSpacing: pane.sectionSpacing
-                connectionCardHeight: pane.connectionCardHeight
-                networkCardHeight: pane.networkCardHeight
             }
             Loader {
                 id: advancedLoader

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Wifi as Wifi
+import Shelllist.Ui as Ui
 
 DaemonTestCase {
     id: testCase
@@ -50,6 +51,40 @@ DaemonTestCase {
         tryCompare(c, "detailsOpen", true);
         tryVerify(function () { return panel.page.detailsNavigation.commandButtons.some(function (button) { return button.accessKey === (active ? "D" : "C") && button.enabled; }); });
         panel.page.listItem.focusList();
+    }
+    function test_diagnosticCardsFitContentInsteadOfStretchingWithPanelHeight() {
+        const panel = makePanel();
+        openNetwork(panel, false);
+        let connectionCard = null;
+        let networkCard = null;
+        tryVerify(function () {
+            connectionCard = findChild(panel, "wifiConnectionCard");
+            networkCard = findChild(panel, "wifiNetworkDetailsCard");
+            return connectionCard && networkCard && connectionCard.implicitHeight > 0;
+        });
+        function checkContentSizing() {
+            verify(waitForPolish(panel.Window.window));
+            tryVerify(() => Math.abs(connectionCard.height - connectionCard.implicitHeight) < 1);
+            tryVerify(() => Math.abs(networkCard.height - networkCard.implicitHeight) < 1);
+            verify(Math.abs(networkCard.y - connectionCard.y - connectionCard.height - Ui.Theme.spacingMd) < 1,
+                "Network details follows Connection with only the shared card gap");
+        }
+        checkContentSizing();
+        const connectionHeight = connectionCard.height;
+        const networkHeight = networkCard.height;
+        panel.height = 1200;
+        checkContentSizing();
+        compare(connectionCard.height, connectionHeight, "a taller panel must not add blank space below telemetry");
+        compare(networkCard.height, networkHeight);
+        panel.height = 560;
+        checkContentSizing();
+        compare(connectionCard.height, connectionHeight, "a short viewport scrolls rather than shrinking text");
+        compare(connectionCard.entries.length, 8);
+        compare(networkCard.entries.length, 4);
+        panel.page.listItem.focusList();
+        keyClick(Qt.Key_Tab);
+        tryCompare(panel.page.detailsNavigation.currentTarget, "objectName", "wifiRememberNetwork");
+        compare(calls.length, 0, "resizing and browsing diagnostics never change network settings");
     }
     function test_keyboardRecoveryAndCancellationSurviveLinkBecomingActive() {
         const panel = makePanel();

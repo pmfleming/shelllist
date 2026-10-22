@@ -45,8 +45,6 @@ Tests.DaemonTestCase {
             controller: Wifi.WifiController { prompt: Wifi.WifiPromptController {} }
             accessPoint: ({ssid: "Review network", strength: 90, security: "wpa2", active: true})
             sectionSpacing: 12
-            connectionCardHeight: 260
-            networkCardHeight: 180
         }
     }
     Component {

@@ -875,6 +875,11 @@ continue history loading. Queued revision events are applied before accepting a
 page. `tst_notifications.qml` covers representative ordering/validation cases, actual
 search key delivery, cursor recovery and reply/viewport retention.
 
+Wi-Fi's Connection and Network details cards use shared content-sized heights,
+not a fraction of the panel height. Taller panels do not add blank space below
+telemetry; short panes retain readable values and use the existing detail scroll.
+These diagnostic cards remain passive and outside editable-field traversal.
+
 Wi-Fi busy guards apply to conflicting network mutations, not background reads
 or portal browser work. Search, result browsing, QR reading and requesting a
 refresh remain available during connection changes. A refresh requested during
