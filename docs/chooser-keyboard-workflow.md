@@ -476,8 +476,11 @@ identity; Reset app defaults (Alt+E) and Delete (Alt+D) are secondary circles be
 Reset is not a separate settings-content row. Result Enter still opens the list,
 never silently changes delivery. Silence suppresses interruptions, not collection. App controls use shared deferred
 popup/duration dropdowns and immediate grouping/DND-bypass switches; acknowledged
-policies persist across daemon restarts. Sound playback and retention-policy
-editors are not exposed without supporting backend capabilities.
+policies persist across daemon restarts. Sound playback is not exposed without supporting backend capabilities. Native
+global notification settings expose immediate countdown/verification-expiry
+switches and deferred expiry-seconds/history-days sliders only when acknowledged
+settings are available. Sliders retain Enter/Tab save, Escape discard and local
+drafts; retention is enforced in Rust, never by frontend timers.
 
 Notifications starts with up to three newest matching records, individually
 visible, followed by **Today / This week / This month / Older**, initially closed.

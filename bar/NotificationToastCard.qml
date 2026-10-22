@@ -172,7 +172,8 @@ Rectangle {
         readonly property double totalMs: expiresMs - Number(card.notification.updated_unix_ms || card.notification.created_unix_ms || 0)
         readonly property bool timed: expiresMs > 0 && totalMs > 0
         property real fraction: 1
-        visible: timed
+        objectName: "notificationToastCountdown"
+        visible: timed && card.controller.notifications.settings?.countdown !== false
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.leftMargin: card.radius

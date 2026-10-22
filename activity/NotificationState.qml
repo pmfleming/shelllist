@@ -18,6 +18,9 @@ Item {
     property int dndDurationMinutes: 30
     property bool dndPending: false
     property string dndError: ""
+    property bool settingsPending: false
+    property string settingsError: ""
+    readonly property var settings: notifications.settings || null
     property var dndRequest: null
     property var notifications: ({available: false, count: 0, dnd: false})
     property var notificationActive: ({available: false, notifications: []})
@@ -127,6 +130,17 @@ Item {
         setDraft(identity, text);
         setReplyState(identity, true, "");
         return backend.reply(record.id, value);
+    }
+    function setSettings(patch: var): bool {
+        if (!nativeAvailable || !settings || settingsPending) return false;
+        settingsPending = true;
+        settingsError = "";
+        return backend.setSettings(patch);
+    }
+    function finishSettings(value: var, error: string): void {
+        settingsPending = false;
+        settingsError = error;
+        if (!error) applySummary(value);
     }
     function setDndEnabled(enabled: bool): bool {
         if (dndPending) return false;

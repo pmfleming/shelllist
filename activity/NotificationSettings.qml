@@ -65,6 +65,53 @@ Column {
             }
         }
     }
+    Ui.ToggleRow {
+        objectName: "notificationCountdownSetting"
+        width: parent.width
+        title: qsTr("Countdown progress bar")
+        checked: settings.notificationState.settings?.countdown ?? true
+        interactive: settings.nativeAvailable && !!settings.notificationState.settings && !settings.notificationState.settingsPending
+        onClicked: settings.notificationState.setSettings({countdown: !checked})
+    }
+    Ui.ToggleRow {
+        objectName: "notificationCodeExpirySetting"
+        width: parent.width
+        title: qsTr("Expire copied verification codes")
+        subtitle: checked ? qsTr("Code copies never enter Shelllist clipboard history") : qsTr("Never expire; code copies still bypass clipboard history")
+        checked: (settings.notificationState.settings?.code_expiry_seconds || 0) > 0
+        interactive: settings.nativeAvailable && !!settings.notificationState.settings && !settings.notificationState.settingsPending
+        onClicked: settings.notificationState.setSettings({code_expiry_seconds: checked ? 0 : 60})
+    }
+    Ui.LabeledValueSlider {
+        objectName: "notificationCodeExpirySeconds"
+        width: parent.width
+        label: qsTr("Clear code after")
+        from: 10
+        to: 300
+        stepSize: 1
+        value: settings.notificationState.settings?.code_expiry_seconds || 60
+        valueText: qsTr("%1 s").arg(Math.round(value))
+        visible: (settings.notificationState.settings?.code_expiry_seconds || 0) > 0
+        enabled: settings.nativeAvailable && !settings.notificationState.settingsPending
+        onEdited: settings.notificationState.setSettings({code_expiry_seconds: Math.round(value)})
+    }
+    Ui.LabeledValueSlider {
+        objectName: "notificationHistoryDays"
+        width: parent.width
+        label: qsTr("Keep history")
+        from: 1
+        to: 30
+        stepSize: 1
+        value: settings.notificationState.settings?.history_days || 30
+        valueText: qsTr("%1 days").arg(Math.round(value))
+        enabled: settings.nativeAvailable && !!settings.notificationState.settings && !settings.notificationState.settingsPending
+        onEdited: settings.notificationState.setSettings({history_days: Math.round(value)})
+    }
+    Ui.FeedbackSource {
+        text: settings.notificationState.settingsError
+        summaryText: qsTr("Notification settings change failed")
+        tone: "error"
+    }
     Ui.FeedbackSource {
         text: settings.notificationState.dndError
         summaryText: qsTr("Do Not Disturb change failed")

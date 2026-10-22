@@ -22,6 +22,37 @@ DaemonTestCase {
         return {state: state, controller: controller, content: content};
     }
     function request(state, prefix) { return Object.keys(state.backend.requests).find(id => id.startsWith(prefix + "-")); }
+    function test_globalSettingsUseDeferredSliderTransactionsAndAcknowledgements() {
+        const {state, controller, content} = make();
+        const summary = {available: true, backend: "native", history_revision: 2, app_policies: {}, settings: {countdown: true, code_expiry_seconds: 60, history_days: 30}};
+        state.applySummary(summary);
+        controller.openSettings();
+        tryVerify(() => content.detailsNavigation.contentReady);
+        const days = findChild(content, "notificationHistoryDays");
+        verify(days);
+        const slider = findChild(days, "labeledValueSliderInput");
+        content.detailsNavigation.focusContent(true);
+        for (let i = 0; i < 12 && content.detailsNavigation.currentTarget !== days; ++i) keyClick(Qt.Key_Tab);
+        compare(content.detailsNavigation.currentTarget, days);
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Left);
+        compare(calls.filter(c => c.method === "notifications.setSettings").length, 0);
+        keyClick(Qt.Key_Escape);
+        compare(slider.value, 30);
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Left); keyClick(Qt.Key_Tab);
+        const saved = calls.filter(c => c.method === "notifications.setSettings");
+        compare(saved.length, 1);
+        compare(saved[0].params, {history_days: 29});
+        compare(state.settings.history_days, 30, "draft is not an acknowledgement");
+        verify(state.settingsPending);
+        state.backend.finish(request(state, "settings"), {notifications: Object.assign({}, summary, {history_revision: 3, settings: {countdown: true, code_expiry_seconds: 60, history_days: 29}})}, "", "");
+        compare(state.settings.history_days, 29);
+        verify(!state.settingsPending);
+        state.setSettings({countdown: false});
+        state.backend.finish(request(state, "settings"), {}, "Disk full", "");
+        compare(state.settings.countdown, true);
+        compare(state.settingsError, "Disk full");
+        content.destroy();
+    }
     function test_deleteFromUnselectedRowConfirmsNativeScopeAndNeverReplays() {
         const {state, controller, content} = make();
         tryVerify(() => findChild(content, "notificationDelete-named:Mail") !== null);

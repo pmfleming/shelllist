@@ -30,9 +30,20 @@ not replace the total. This presentation does not change app-row command scope.
   is reported, not automatically retried. App preferences survive deletion.
 - Global settings use the standard DND switch/duration field, confirmed Delete
   all command, and per-app override resets (including apps with no remaining
-  notifications). App sound playback, popup-body privacy and configurable retention
-  from the exploratory HTML are not exposed: those require separate capabilities.
-  This implementation adds no sound player or automatic history pruning.
+  notifications). Native global settings additionally expose countdown visibility,
+  copied-code expiry (Never by default, or 10–300 seconds) and history retention
+  (1–30 days, default 30). Switches save immediately; sliders use shared deferred
+  Enter/Tab save and Escape discard. Values publish after durable acknowledgement.
+  Sound playback and popup-body privacy are not configurable here.
+- `notifications.setSettings` accepts an optional-field patch, validated in Rust.
+  Settings and immediate age pruning commit atomically. Retention also runs at
+  startup, write boundaries and at most 60 seconds after an idle age boundary.
+  Age is measured from creation, not dismissal. Old disk copies are removed even
+  for still-live conversations, whose actions remain available in memory. The
+  existing bounded-count cap also applies. SQLite secure-delete is enabled, but
+  WAL/filesystem snapshots and backups are not guaranteed securely erased.
+  The verification-code setting becomes effective through the secure-copy backend;
+  expiry disabled never means permission to persist code copies.
 
 ## History, keyboard and rendering
 
