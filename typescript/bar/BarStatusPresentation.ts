@@ -16,7 +16,10 @@ interface NetworkStatus {
     network?: AccessPoint | null; device_iface?: string;
 }
 interface BluetoothSummary { powered?: boolean; allDevices?: {connected?: boolean}[] }
-interface NotificationSummary { count?: number; dnd?: boolean }
+interface NotificationSummary {
+    count?: number; dnd?: boolean;
+    sharing?: {active?: boolean; prompt?: boolean} | null;
+}
 interface TimezoneState { available?: boolean; abbreviation?: string; utc_offset_seconds?: number }
 interface StatusModule {
     id: string; key: string; text: string; compactText: string; tooltip: string;
@@ -126,6 +129,13 @@ function batteryTone(battery: Maybe<BatteryState>) {
 }
 function notificationsModule(state: StatusState) {
     const dnd = !!state.notifications?.dnd, count = state.notifications?.count || 0;
+    const sharing = state.notifications?.sharing;
+    if (sharing?.active) {
+        return statusModule("notifications", "󰂛", "Screen sharing detected. Choose notification snooze duration.", {
+            primary: "notifications-sharing", secondary: "notifications", middle: "notifications-dnd",
+            tone: sharing.prompt ? "warning" : "muted"
+        });
+    }
     const urgent = (state.notificationActive?.notifications || []).some(item => item.urgency === "critical" || Number(item.urgency) >= 2);
     return statusModule("notifications", dnd ? "󰂛" : count ? "" : "󰂚",
         "Notifications: " + count + (dnd ? ". Do not disturb" : "") + (urgent ? ". Urgent" : ""), {
