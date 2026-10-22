@@ -20,12 +20,14 @@ use std::{
 pub struct Control {
     pub stop: Arc<AtomicBool>,
     pub phase: Arc<Mutex<(String, u64)>>,
+    pub schema: Arc<Mutex<crate::encoding::SampleSchema>>,
 }
 impl Control {
     pub fn new(phase: &str) -> Self {
         Self {
             stop: Arc::new(AtomicBool::new(false)),
             phase: Arc::new(Mutex::new((phase.into(), 0))),
+            schema: Arc::new(Mutex::new(crate::encoding::SampleSchema::default())),
         }
     }
     pub fn phase(&self, value: &str) {
@@ -154,9 +156,12 @@ fn write_sample(
     encoded: &mut Vec<u8>,
     written: &mut u64,
     limit: u64,
+    schema: &mut crate::encoding::SampleSchema,
 ) -> Result<()> {
     encoded.clear();
-    serde_json::to_writer(&mut *encoded, sample)?;
+    let mut value = serde_json::to_value(sample)?;
+    schema.compact(&mut value)?;
+    serde_json::to_writer(&mut *encoded, &value)?;
     encoded.push(b'\n');
     if encoded.len() as u64 > limit.saturating_sub(*written) {
         file.flush()?;
@@ -200,6 +205,9 @@ pub fn run(
     let mut seq = 0;
     let mut written = 0;
     let mut encoded = Vec::new();
+    // Only the sampler owns the dictionary while collecting. Finalization reads
+    // it after joining, including on a partial/error exit.
+    let mut schema = control.schema.lock().unwrap();
     loop {
         if control.stop.load(Ordering::Relaxed) || INTERRUPTED.load(Ordering::Relaxed) {
             break;
@@ -278,6 +286,7 @@ pub fn run(
                 &mut encoded,
                 &mut written,
                 crate::artifacts::MAX_RAW_BYTES,
+                &mut schema,
             )?;
             seq += 1;
             if target.label == "ui-host" {
@@ -299,6 +308,7 @@ pub fn run(
                 &mut encoded,
                 &mut written,
                 crate::artifacts::MAX_RAW_BYTES,
+                &mut schema,
             )?;
             seq += 1;
             cgroup_prior.insert(target.label.clone(), sample);
@@ -334,15 +344,77 @@ mod tests {
         let mut output = Vec::new();
         let mut buffer = Vec::new();
         let mut written = 0;
-        let size = serde_json::to_vec(&sample).unwrap().len() as u64 + 1;
-        write_sample(&mut output, &sample, &mut buffer, &mut written, size + 1).unwrap();
+        let mut schema = crate::encoding::SampleSchema::default();
+        let mut value = serde_json::to_value(&sample).unwrap();
+        schema.compact(&mut value).unwrap();
+        let size = serde_json::to_vec(&value).unwrap().len() as u64 + 1;
+        write_sample(
+            &mut output,
+            &sample,
+            &mut buffer,
+            &mut written,
+            size + 1,
+            &mut schema,
+        )
+        .unwrap();
         assert_eq!(written, size);
-        assert!(write_sample(&mut output, &sample, &mut buffer, &mut written, size + 1).is_err());
+        assert!(
+            write_sample(
+                &mut output,
+                &sample,
+                &mut buffer,
+                &mut written,
+                size + 1,
+                &mut schema
+            )
+            .is_err()
+        );
         assert_eq!(output.len() as u64, size);
         assert_eq!(written, size);
         assert_eq!(output.last(), Some(&b'\n'));
-        let parsed: Sample = serde_json::from_slice(&output).unwrap();
+        let mut restored = serde_json::from_slice(&output).unwrap();
+        schema.expand(&mut restored).unwrap();
+        let parsed: Sample = serde_json::from_value(restored).unwrap();
         assert!(parsed.threads.is_some());
+    }
+
+    #[test]
+    fn one_hour_eight_process_profile_fits_the_raw_cap() {
+        let target = Target {
+            label: "related:app-daemon:123456".into(),
+            identity: procfs::identity(std::process::id()).unwrap(),
+        };
+        let mut sample = collect(
+            &target,
+            115_200,
+            Instant::now(),
+            "capture",
+            false,
+            TaskDetail::None,
+            &mut BTreeSet::new(),
+        );
+        sample.elapsed_s = 3600.0;
+        let mut old = sample.clone();
+        old.elapsed_s -= 0.25;
+        sample.interval_s = Some(0.25);
+        sample.rates = rates(&sample, Some(&old), 100);
+        let verbose_bytes = serde_json::to_vec(&sample).unwrap().len();
+        let mut output = Vec::new();
+        write_sample(
+            &mut output,
+            &sample,
+            &mut Vec::new(),
+            &mut 0,
+            crate::artifacts::MAX_RAW_BYTES,
+            &mut Default::default(),
+        )
+        .unwrap();
+        eprintln!(
+            "representative process row: verbose={verbose_bytes} compact={} projected_hour_bytes={}",
+            output.len(),
+            output.len() * 8 * 14401
+        );
+        assert!(output.len() as u64 * 8 * 14401 < crate::artifacts::MAX_RAW_BYTES);
     }
 
     #[test]

@@ -144,7 +144,7 @@ pub fn summarize(manifest: &Manifest, samples: &[Sample], events: &[Event]) -> S
     let threads = threads::summarize(samples);
     let evidence_limits = evidence_limits(manifest, attempted, &threads);
     Summary {
-        schema_version: SCHEMA,
+        schema_version: manifest.schema_version,
         run_id: manifest.run_id.clone(),
         raw_sha256: manifest.hashes.clone(),
         status: manifest.status.clone(),
@@ -290,6 +290,18 @@ pub fn write(
         escape(&manifest.status),
         escape(manifest.error.as_deref().unwrap_or(""))
     );
+    if let (Ok(metadata), Some(last)) = (path.join("samples.jsonl").metadata(), samples.last()) {
+        let elapsed = last.elapsed_s;
+        if elapsed > 0.0 && metadata.len() > 0 {
+            let bytes_per_second = metadata.len() as f64 / elapsed;
+            let projected_minutes = artifacts::MAX_RAW_BYTES as f64 / bytes_per_second / 60.0;
+            let _ = write!(
+                html,
+                "<section><h2>Capture capacity</h2><p>Raw samples: {} bytes. Observed encoded rate: {bytes_per_second:.1} bytes/s; the 128 MiB cap would allow approximately {projected_minutes:.1} minutes at this rate. This is an extrapolation, not a duration guarantee: task/GPU/cgroup payloads and unavailable fields vary. The one-hour duration limit remains separate.</p></section>",
+                metadata.len()
+            );
+        }
+    }
     html.push_str("<section><h2>Triage and evidence limits</h2><ul>");
     for limit in &summary.evidence_limits {
         let _ = write!(html, "<li>{}</li>", escape(limit));

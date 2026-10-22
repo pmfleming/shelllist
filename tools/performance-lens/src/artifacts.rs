@@ -95,6 +95,10 @@ pub fn raw_file(path: &Path) -> Result<File> {
 }
 
 fn read_lines<T: DeserializeOwned>(path: &Path) -> Result<Vec<T>> {
+    read_lines_decoded(path, |line| Ok(serde_json::from_str(line)?))
+}
+
+fn read_lines_decoded<T>(path: &Path, mut decode: impl FnMut(&str) -> Result<T>) -> Result<Vec<T>> {
     ensure!(
         fs::metadata(path)?.len() <= MAX_RAW_BYTES,
         "raw artifact exceeds 128 MiB"
@@ -113,7 +117,7 @@ fn read_lines<T: DeserializeOwned>(path: &Path) -> Result<Vec<T>> {
             path.display()
         );
         ensure!(!line.trim().is_empty(), "empty measurement row");
-        out.push(serde_json::from_str(&line).with_context(|| {
+        out.push(decode(&line).with_context(|| {
             format!("invalid JSONL row {} in {}", out.len() + 1, path.display())
         })?);
         ensure!(out.len() <= 500_000, "too many measurement rows");
@@ -122,7 +126,24 @@ fn read_lines<T: DeserializeOwned>(path: &Path) -> Result<Vec<T>> {
 }
 
 pub fn raw(path: &Path, manifest: &Manifest) -> Result<(Vec<Sample>, Vec<Event>)> {
-    let samples: Vec<Sample> = read_lines(&path.join("samples.jsonl"))?;
+    let samples: Vec<Sample> = if manifest.schema_version == 1 {
+        read_lines(&path.join("samples.jsonl"))?
+    } else {
+        ensure!(
+            manifest.schema_version == SCHEMA,
+            "unsupported sample schema"
+        );
+        let schema = manifest
+            .sample_schema
+            .as_ref()
+            .context("missing compact sample schema")?;
+        schema.validate()?;
+        read_lines_decoded(&path.join("samples.jsonl"), |line| {
+            let mut value = serde_json::from_str(line)?;
+            schema.expand(&mut value)?;
+            Ok(serde_json::from_value(value)?)
+        })?
+    };
     let events: Vec<Event> = read_lines(&path.join("events.jsonl"))?;
     let mut elapsed = 0.0;
     for (index, s) in samples.iter().enumerate() {
@@ -317,7 +338,7 @@ pub fn load(path: &Path) -> Result<(Manifest, Vec<Sample>, Vec<Event>)> {
     );
     let manifest: Manifest = serde_json::from_slice(&fs::read(manifest_path)?)?;
     ensure!(
-        manifest.schema_version == SCHEMA,
+        manifest.schema_version == 1 || manifest.schema_version == SCHEMA,
         "unsupported artifact schema"
     );
     ensure!(

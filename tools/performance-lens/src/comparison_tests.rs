@@ -18,6 +18,7 @@ fn target(label: &str, pid: u32) -> Target {
 fn manifest() -> Manifest {
     Manifest {
         schema_version: SCHEMA,
+        sample_schema: None,
         run_id: "fixture".into(),
         started_unix_ms: 0,
         finished_unix_ms: Some(1),
@@ -144,6 +145,28 @@ fn report_shows_unpaired_lifetime_counters_without_inventing_rates() {
     assert!(html.contains("&lt;churning &amp; task&gt;"));
     assert!(!html.contains("<churning & task>"));
     assert!(s.threads[0].cpu_percent_one_core.is_none());
+}
+
+#[test]
+fn legacy_schema_one_artifacts_still_regenerate_without_a_dictionary() {
+    let mut m = manifest();
+    m.schema_version = 1;
+    m.sample_schema = None;
+    m.status = "complete".into();
+    m.scenario = "capture".into();
+    let t = &m.targets[0];
+    let row = serde_json::json!({"sequence":0,"elapsed_s":1.0,"phase":"capture","phase_sequence":1,
+        "label":t.label,"pid":t.identity.pid,"start_ticks":t.identity.start_ticks,"interval_s":1.0,
+        "counters":{"cpu_ticks":{"value":7,"unit":"ticks","source":"proc/stat","reason":null}},
+        "rates":{"cpu_percent":{"value":1.0,"unit":"% one core","source":"proc delta: cpu_ticks","reason":null}},
+        "gpu":[],"gpu_reason":"unavailable","error":null,"collection_ms":0.1,"late_by_ms":0.0});
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join("samples.jsonl"), format!("{row}\n")).unwrap();
+    std::fs::write(dir.path().join("events.jsonl"), "").unwrap();
+    let summary = artifacts::finish(dir.path(), &mut m).unwrap();
+    assert_eq!(summary.schema_version, 1);
+    assert_eq!(summary.resources[0].cpu_percent_one_core, Some(1.0));
+    assert!(artifacts::load(dir.path()).is_ok());
 }
 
 #[test]

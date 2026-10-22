@@ -200,13 +200,13 @@ fn thread_capture_localizes_named_child_and_rejects_invalid_rehashed_intervals()
     );
     assert!(rows.iter().any(|s| {
         s["label"] == "ui-host"
-            && s["rates"]["observed_task_cpu_percent"]["value"]
+            && s["rates"]["observed_task_cpu_percent"][1]
                 .as_f64()
                 .is_some_and(|v| v > 0.0)
     }));
     assert!(rows.iter().any(|s| {
         s["label"] == "ui-host"
-            && s["rates"]["observed_task_voluntary_switches_per_second"]["value"]
+            && s["rates"]["observed_task_voluntary_switches_per_second"][1]
                 .as_f64()
                 .is_some_and(|v| v > 0.0)
     }));
@@ -218,7 +218,7 @@ fn thread_capture_localizes_named_child_and_rejects_invalid_rehashed_intervals()
     {
         if phases.insert(s["phase_sequence"].as_u64().unwrap()) {
             for t in s["threads"]["tasks"].as_array().unwrap() {
-                assert!(t["cpu_percent"]["value"].is_null());
+                assert!(t["cpu_percent"][1].is_null());
             }
         }
     }
@@ -298,7 +298,7 @@ fn task_churn_is_visible_between_expensive_detail_samples() {
 }
 
 #[test]
-fn cgroup_capture_keeps_service_totals_separate_and_regenerates() {
+fn cgroup_capture_regenerates_and_rejects_rehashed_unknown_metric_descriptors() {
     let load = Load::start();
     let root = tempfile::tempdir().unwrap();
     let run = capture_with(
@@ -328,7 +328,7 @@ fn cgroup_capture_keeps_service_totals_separate_and_regenerates() {
             .find(|s| s["cgroup"].is_string())
             .unwrap();
         assert_eq!(group["pid"], 0);
-        assert!(group["counters"]["cpu_usage_usec"].is_object());
+        assert!(group["counters"]["cpu_usage_usec"].is_array());
         assert!(group["counters"].get("rss_bytes").is_none());
         assert!(
             fs::read_to_string(run.join("report.html"))
@@ -347,6 +347,27 @@ fn cgroup_capture_keeps_service_totals_separate_and_regenerates() {
         "{}",
         String::from_utf8_lossy(&result.stderr)
     );
+    let mut rows: Vec<Value> = samples
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    rows[0]["counters"]["cpu_ticks"][0] = 99999.into();
+    let bytes = rows
+        .iter()
+        .map(|row| format!("{row}\n"))
+        .collect::<String>();
+    fs::write(run.join("samples.jsonl"), &bytes).unwrap();
+    let mut manifest = manifest;
+    manifest["hashes"]["samples.jsonl"] = format!("{:x}", Sha256::digest(bytes.as_bytes())).into();
+    write_json(&run.join("manifest.json"), &manifest);
+    let result = Command::new(BIN)
+        .arg("report")
+        .arg("--run")
+        .arg(&run)
+        .output()
+        .unwrap();
+    assert!(!result.status.success());
+    assert!(String::from_utf8_lossy(&result.stderr).contains("unknown metric descriptor"));
 }
 
 #[test]

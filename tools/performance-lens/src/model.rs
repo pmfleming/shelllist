@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-pub const SCHEMA: u32 = 1;
+pub const SCHEMA: u32 = 2;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Identity {
@@ -170,6 +170,8 @@ pub struct Event {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Manifest {
     pub schema_version: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sample_schema: Option<crate::encoding::SampleSchema>,
     pub run_id: String,
     pub started_unix_ms: u64,
     pub finished_unix_ms: Option<u64>,

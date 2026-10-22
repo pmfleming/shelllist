@@ -7,6 +7,7 @@ mod comparison;
 #[cfg(test)]
 mod comparison_tests;
 mod drm;
+mod encoding;
 mod ipc;
 mod model;
 mod procfs;
@@ -389,6 +390,7 @@ fn capture(
     };
     let mut manifest = Manifest {
         schema_version: SCHEMA,
+        sample_schema: Some(encoding::SampleSchema::default()),
         run_id: path.file_name().unwrap().to_string_lossy().into(),
         started_unix_ms: scenarios::unix_ms(),
         finished_unix_ms: None,
@@ -475,6 +477,13 @@ fn capture(
         .join()
         .map_err(|_| anyhow::anyhow!("sampler thread panicked"))
         .and_then(|r| r);
+    manifest.sample_schema = Some(
+        control
+            .schema
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone(),
+    );
     let mut errors = Vec::new();
     if let Err(e) = outcome {
         errors.push(format!("{e:#}"));
