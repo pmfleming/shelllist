@@ -9,11 +9,14 @@ use std::{collections::BTreeMap, fs, path::Path, time::Instant};
 pub const MAX_TASKS: usize = 1024;
 const SOURCE: &str = "proc/task/stat delta";
 
-pub fn collect(pid: u32, start: Instant) -> ThreadSnapshot {
-    collect_at(Path::new(&format!("/proc/{pid}/task")), start)
+pub fn collect(pid: u32, start: Instant, scheduler: bool) -> ThreadSnapshot {
+    collect_at(Path::new(&format!("/proc/{pid}/task")), start, scheduler)
 }
 
-fn collect_at(root: &Path, start: Instant) -> ThreadSnapshot {
+fn collect_at(root: &Path, start: Instant, scheduler: bool) -> ThreadSnapshot {
+    let wait_accounting = scheduler
+        && fs::read_to_string("/proc/sys/kernel/sched_schedstats")
+            .is_ok_and(|text| text.trim() == "1");
     let mut snapshot = ThreadSnapshot::default();
     let result = (|| -> Result<()> {
         let mut tids = Vec::new();
@@ -38,7 +41,22 @@ fn collect_at(root: &Path, start: Instant) -> ThreadSnapshot {
                     text.split_whitespace().next() == Some(tid.to_string().as_str()),
                     "task ID changed"
                 );
+                let scheduler = if scheduler {
+                    let extra =
+                        crate::scheduler::collect(&root.join(tid.to_string()), wait_accounting);
+                    let after = procfs::parse_stat(&fs::read_to_string(
+                        root.join(tid.to_string()).join("stat"),
+                    )?)?;
+                    ensure!(
+                        after.start_ticks == stat.start_ticks,
+                        "task replaced during scheduler reads"
+                    );
+                    Some(extra)
+                } else {
+                    None
+                };
                 Ok(ThreadSample {
+                    scheduler,
                     tid,
                     start_ticks: stat.start_ticks,
                     name: name.into(),
@@ -213,6 +231,7 @@ mod tests {
             start_ticks: 99,
             name: "worker".into(),
             elapsed_s: 1.0,
+            scheduler: None,
             cpu_ticks: 10,
             cpu_delta_ticks: None,
             born_since_previous: false,
@@ -283,7 +302,7 @@ mod tests {
             format!("7 (hot ) <&>) {}", fields.join(" ")),
         )
         .unwrap();
-        let snapshot = collect_at(root.path(), Instant::now());
+        let snapshot = collect_at(root.path(), Instant::now(), false);
         assert!(snapshot.error.is_none());
         assert_eq!(snapshot.tasks[0].name, "hot ) <&>");
         assert_eq!(snapshot.tasks[0].cpu_ticks, 30);
@@ -297,7 +316,7 @@ mod tests {
             Instant::now(),
             "capture",
             false,
-            false,
+            crate::sampler::TaskDetail::None,
             &mut Default::default(),
         );
         a.threads = Some(snapshot);
@@ -330,7 +349,7 @@ mod tests {
             Instant::now(),
             "capture",
             false,
-            false,
+            crate::sampler::TaskDetail::None,
             &mut Default::default(),
         );
         old.elapsed_s = 1.0;
@@ -352,18 +371,18 @@ mod tests {
     fn missing_tasks_and_enumeration_limits_are_explicit() {
         let root = tempfile::tempdir().unwrap();
         assert!(
-            collect_at(&root.path().join("absent"), Instant::now())
+            collect_at(&root.path().join("absent"), Instant::now(), false)
                 .error
                 .is_some()
         );
         fs::create_dir(root.path().join("1")).unwrap();
-        let sample = collect_at(root.path(), Instant::now());
+        let sample = collect_at(root.path(), Instant::now(), false);
         assert_eq!(sample.unavailable_tasks, 1);
         assert!(sample.error.is_some());
         for tid in 2..=MAX_TASKS + 1 {
             fs::create_dir(root.path().join(tid.to_string())).unwrap();
         }
-        let sample = collect_at(root.path(), Instant::now());
+        let sample = collect_at(root.path(), Instant::now(), false);
         assert!(sample.tasks.is_empty());
         assert!(sample.error.unwrap().contains("limit exceeded"));
     }

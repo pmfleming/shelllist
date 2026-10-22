@@ -97,6 +97,12 @@ impl GpuClient {
     }
 }
 
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct TaskScheduler {
+    pub counters: BTreeMap<String, Counter>,
+    pub deltas: BTreeMap<String, Counter>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ThreadSample {
     pub tid: u32,
@@ -110,6 +116,8 @@ pub struct ThreadSample {
     pub born_since_previous: bool,
     pub interval_s: Option<f64>,
     pub cpu_percent: Metric,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scheduler: Option<TaskScheduler>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]

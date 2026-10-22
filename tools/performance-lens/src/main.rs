@@ -15,6 +15,7 @@ mod sampler;
 #[cfg(test)]
 mod scenario_tests;
 mod scenarios;
+mod scheduler;
 mod target;
 mod threads;
 
@@ -117,6 +118,9 @@ struct Common {
     /// Opt-in per-thread CPU localization at main cadence (extra procfs cost; no stack profiling).
     #[arg(long)]
     include_threads: bool,
+    /// Per-thread nanosecond CPU, scheduler wait and context switches (not wakeups).
+    #[arg(long, requires = "include_threads")]
+    include_scheduler: bool,
     /// Also read cgroup v2 totals for selected process scopes (overlaps process accounting).
     #[arg(long)]
     include_cgroups: bool,
@@ -238,7 +242,7 @@ fn execute() -> Result<()> {
                 Instant::now(),
                 "doctor",
                 true,
-                false,
+                sampler::TaskDetail::None,
                 &mut BTreeSet::new(),
             );
             let ipc = if ipc_check {
@@ -396,7 +400,7 @@ fn capture(
         targets: targets.clone(),
         cgroups: cgroups.clone(),
         scenario: scenario.into(),
-        settings: json!({"interval_ms":interval,"heavy_interval_ms":detail_interval,"include_threads":common.include_threads,"include_cgroups":common.include_cgroups,"thread_cadence":common.include_threads.then_some("base"),"duration_s":duration.as_secs_f64(),"initial_settle_s":settle.as_secs_f64(),"surface":active.as_ref().map(|(_,s,_)|s),"trials":active.as_ref().map(|(_,_,n)|n),"timeout_ms":defaults.timeout_ms,"poll_ms":defaults.poll_ms,"between_trials_ms":defaults.between_trials_ms,"config_identity":config,"quickshell_path":active.as_ref().map(|(ipc,_,_)|&ipc.program),"command_path":if active.is_some(){"direct_pid_ipc"}else{"none"}}),
+        settings: json!({"interval_ms":interval,"heavy_interval_ms":detail_interval,"include_threads":common.include_threads,"include_scheduler":common.include_scheduler,"include_cgroups":common.include_cgroups,"thread_cadence":common.include_threads.then_some("base"),"duration_s":duration.as_secs_f64(),"initial_settle_s":settle.as_secs_f64(),"surface":active.as_ref().map(|(_,s,_)|s),"trials":active.as_ref().map(|(_,_,n)|n),"timeout_ms":defaults.timeout_ms,"poll_ms":defaults.poll_ms,"between_trials_ms":defaults.between_trials_ms,"config_identity":config,"quickshell_path":active.as_ref().map(|(ipc,_,_)|&ipc.program),"command_path":if active.is_some(){"direct_pid_ipc"}else{"none"}}),
         context: target::context(&common.context),
         warnings,
         hashes: BTreeMap::new(),
@@ -418,6 +422,7 @@ fn capture(
                 detail_interval: Duration::from_millis(detail_interval),
                 ticks,
                 include_threads: common.include_threads,
+                include_scheduler: common.include_scheduler,
                 cgroups,
             },
             thread_control,

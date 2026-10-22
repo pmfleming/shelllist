@@ -156,7 +156,12 @@ fn thread_capture_localizes_named_child_and_rejects_invalid_rehashed_intervals()
         root.path(),
         "synthetic task workload",
         "2600ms",
-        &["--include-threads", "--detail-ms", "1000"],
+        &[
+            "--include-threads",
+            "--include-scheduler",
+            "--detail-ms",
+            "1000",
+        ],
     );
     let summary = json(&run.join("summary.json"));
     let hot = summary["threads"]
@@ -193,6 +198,18 @@ fn thread_capture_localizes_named_child_and_rejects_invalid_rehashed_intervals()
         rows.iter().any(|s| s["gpu_reason"] == "not sampled at this cadence" && s.get("threads").is_some()),
         "opt-in task sampling must be independent of expensive detail cadence"
     );
+    assert!(rows.iter().any(|s| {
+        s["label"] == "ui-host"
+            && s["rates"]["observed_task_cpu_percent"]["value"]
+                .as_f64()
+                .is_some_and(|v| v > 0.0)
+    }));
+    assert!(rows.iter().any(|s| {
+        s["label"] == "ui-host"
+            && s["rates"]["observed_task_voluntary_switches_per_second"]["value"]
+                .as_f64()
+                .is_some_and(|v| v > 0.0)
+    }));
     // Every phase's first task observation is missing, not a zero CPU reading.
     let mut phases = std::collections::BTreeSet::new();
     for s in rows

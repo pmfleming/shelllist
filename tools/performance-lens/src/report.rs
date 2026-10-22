@@ -479,6 +479,37 @@ pub fn write(
         }
         html.push_str("</table>");
     }
+    if manifest.settings["include_scheduler"] == true {
+        html.push_str("<h3>Observed-task scheduler accounting</h3><p>Nanosecond runtime and run-queue wait from schedstat; voluntary/involuntary context switches summed across observed threads, NOT wakeups. Includes paired tasks and proven births, but excludes unobserved/exited work. This is not a replacement for complete process/cgroup CPU totals. Disabled scheduler wait accounting is unavailable, not zero.</p><table><tr><th>Scope / phase / metric</th><th>Average</th><th>Unit</th><th>Covered seconds</th></tr>");
+        let mut metrics = BTreeMap::<_, (f64, f64)>::new();
+        for s in samples {
+            for (key, rate) in s
+                .rates
+                .iter()
+                .filter(|(key, _)| key.starts_with("observed_task_"))
+            {
+                if let (Some(value), Some(dt)) = (rate.value, s.interval_s) {
+                    let entry = metrics
+                        .entry((&s.label, &s.phase, key, &rate.unit))
+                        .or_default();
+                    entry.0 += value * dt;
+                    entry.1 += dt;
+                }
+            }
+        }
+        for ((label, phase, key, unit), (integral, dt)) in metrics {
+            let _ = write!(
+                html,
+                "<tr><td>{} / {} / {}</td><td>{:.3}</td><td>{}</td><td>{dt:.3}</td></tr>",
+                escape(label),
+                escape(phase),
+                escape(key),
+                integral / dt,
+                escape(unit)
+            );
+        }
+        html.push_str("</table>");
+    }
     html.push_str("</section><section><h2>Memory</h2><p>MiB. Peaks are sampled, not allocator peaks; VmHWM in raw data is process-lifetime. RSS sums are not unique physical memory. Start/end below are first/last available observations, not proof of coverage at the exact phase boundary.</p><div class=\"table\"><table><tr><th>Scope / phase</th><th>RSS first</th><th>RSS last</th><th>RSS peak</th><th>PSS peak</th></tr>");
     for r in &summary.resources {
         let _ = write!(

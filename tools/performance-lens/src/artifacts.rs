@@ -197,7 +197,13 @@ pub fn raw(path: &Path, manifest: &Manifest) -> Result<(Vec<Sample>, Vec<Event>)
                 );
             }
         }
-        for c in s.counters.values() {
+        for c in s.counters.values().chain(
+            s.threads
+                .iter()
+                .flat_map(|snapshot| &snapshot.tasks)
+                .filter_map(|t| t.scheduler.as_ref())
+                .flat_map(|scheduler| scheduler.counters.values().chain(scheduler.deltas.values())),
+        ) {
             ensure!(
                 c.value.is_some() != c.reason.is_some(),
                 "counter must have either value or unavailable reason"
@@ -362,6 +368,9 @@ pub fn comparison_context(
         object.remove("config_identity");
         object.remove("quickshell_path");
         // Additive optional diagnostic: old captures did not collect tasks.
+        object
+            .entry("include_scheduler")
+            .or_insert(serde_json::json!(false));
         object
             .entry("include_cgroups")
             .or_insert(serde_json::json!(false));

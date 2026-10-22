@@ -75,16 +75,24 @@ pub fn rates(now: &Sample, previous: Option<&Sample>, ticks: u64) -> BTreeMap<St
     result
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum TaskDetail {
+    None,
+    Cpu,
+    Scheduler,
+}
+
 pub fn collect(
     target: &Target,
     sequence: u64,
     start: Instant,
     phase: &str,
     heavy: bool,
-    include_threads: bool,
+    task_detail: TaskDetail,
     seen_gpu: &mut BTreeSet<String>,
 ) -> Sample {
     let begin = Instant::now();
+    let include_threads = task_detail != TaskDetail::None;
     let mut sample = Sample {
         sequence,
         elapsed_s: start.elapsed().as_secs_f64(),
@@ -113,7 +121,11 @@ pub fn collect(
                 sample.gpu_reason = Some("not sampled at this cadence".into());
             }
             if include_threads {
-                sample.threads = Some(threads::collect(target.identity.pid, start));
+                sample.threads = Some(threads::collect(
+                    target.identity.pid,
+                    start,
+                    task_detail == TaskDetail::Scheduler,
+                ));
             }
             // Fence the extra DRM/task reads as well as counters().
             if heavy || include_threads {
@@ -160,6 +172,7 @@ pub struct Options {
     pub detail_interval: Duration,
     pub ticks: u64,
     pub include_threads: bool,
+    pub include_scheduler: bool,
     pub cgroups: Vec<crate::model::CgroupTarget>,
 }
 
@@ -175,6 +188,7 @@ pub fn run(
         detail_interval,
         ticks,
         include_threads,
+        include_scheduler,
         cgroups,
     } = options;
     let mut file = BufWriter::new(file);
@@ -208,7 +222,13 @@ pub fn run(
                 start,
                 &phase,
                 heavy,
-                include_threads,
+                if include_scheduler {
+                    TaskDetail::Scheduler
+                } else if include_threads {
+                    TaskDetail::Cpu
+                } else {
+                    TaskDetail::None
+                },
                 &mut seen_gpu,
             );
             sample.phase_sequence = generation;
@@ -223,12 +243,18 @@ pub fn run(
             sample.rates = rates(&sample, previous, ticks);
             if let Some(snapshot) = &mut sample.threads {
                 threads::derive(snapshot, previous.and_then(|p| p.threads.as_ref()), ticks);
+                if include_scheduler {
+                    crate::scheduler::derive(snapshot, previous.and_then(|p| p.threads.as_ref()));
+                }
             }
             if include_threads {
                 sample.rates.insert(
                     "unattributed_thread_cpu_percent".into(),
                     threads::residual(&sample, previous, ticks),
                 );
+            }
+            if include_scheduler {
+                crate::scheduler::aggregate(&mut sample);
             }
             if heavy {
                 let previous = heavy_prior.get(&target.identity.pid).filter(|p| {
@@ -302,7 +328,7 @@ mod tests {
             Instant::now(),
             "capture",
             false,
-            true,
+            TaskDetail::Cpu,
             &mut BTreeSet::new(),
         );
         let mut output = Vec::new();
@@ -334,7 +360,7 @@ mod tests {
                 start,
                 "probe",
                 false,
-                false,
+                TaskDetail::None,
                 &mut BTreeSet::new(),
             );
             assert!(sample.error.is_none());
@@ -358,7 +384,7 @@ mod tests {
             Instant::now(),
             "idle",
             false,
-            false,
+            TaskDetail::None,
             &mut BTreeSet::new(),
         );
         a.elapsed_s = 0.0;
