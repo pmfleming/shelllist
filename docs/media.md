@@ -37,6 +37,13 @@ editable controls and daemon acknowledgement/capability guards.
   remaining numbers; reported playback rate is a passive `1×`-style value. No help
   paragraphs, playback captions or permanent shortcut legend inside the panel.
   Accessible names retain status, content kind and timing scope. Errors remain text.
+  Playing rows animate three equalizer bars through shared `PlaybackIndicator`,
+  independently of selection, only while the panel is active, the row is in its
+  viewport and the backend is connected. Pausing, stopping, hiding/closing or
+  scrolling out of view stops the animations; reduced motion keeps a static
+  equalizer. This is decorative playback motion, not measured audio levels.
+  Shared UI owns the proportional stroke geometry and staggered animation timing;
+  the icon's Theme-sized footprint stays fixed and adds no input/focus target.
 - Progress is read-only and never seeks. Unknown/invalid duration or position uses
   `—:—` with no track. Valid position is clamped to duration. Playing snapshots may
   extrapolate at the reported rate for at most five seconds after observation;
@@ -130,7 +137,10 @@ has configurable Super+Shift+M; this desktop's Lua config deliberately uses Supe
 
 ## Tests
 
-- `tst_system_choosers.qml`: native media-mode draft/save/discard and acknowledged
+- `tst_system_choosers.qml`: actual animated bar changes, playback/panel/viewport
+  suspension, reduced-motion and connection-loss gates, fixed footprint, passive
+  navigation and zero playback writes during animation. Historical coverage also
+  included native media-mode draft/save/discard and acknowledged
   preferences, selected-player Enter, busy/capability and removed-player guards,
   direct previous-track commands, and no implicit playback from inspection.
 - `tst_media_chip.qml`: separate opener/transport routes and retained controls on

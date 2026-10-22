@@ -102,6 +102,9 @@ Ui.ProviderChooserSurface {
             objectName: "systemResult:" + resultData.id
             listPane: pane
             rowHeight: pane.delegateHeight
+            readonly property bool inViewport: !!ListView.view
+                && y + height > ListView.view.contentY
+                && y < ListView.view.contentY + ListView.view.height
             readonly property SystemTrayItem trayItem: content.controller.kind === "tray" ? content.controller.uniqueTrayItem(resultData.id) : null
             leadingIcon: resultData.icon || "󰀻"
             leadingIconSource: trayItem ? trayItem.icon : content.applicationIconSource(resultData)
@@ -110,13 +113,12 @@ Ui.ProviderChooserSurface {
                 title: row.resultData.title
                 subtitle: row.resultData.subtitle
             }
-            Ui.GlyphLabel {
+            Ui.PlaybackIndicator {
                 objectName: "mediaSessionState"
                 visible: content.controller.kind === "media"
                 glyph: row.resultData.metadata.stateIcon || ""
-                color: row.resultData.metadata.stateIcon === "equalizer" ? Ui.Theme.active : Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.iconSize
-                Accessible.ignored: true
+                active: content.controller.uiActive && !content.controller.uiSuspending
+                    && !!content.controller.barController?.backend.ready && row.inViewport
             }
         }
     }

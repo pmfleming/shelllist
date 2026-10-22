@@ -4,6 +4,7 @@ import Quickshell
 import Shelllist.Bar as Bar
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
+import "imports/Quickshell" as QuickshellFixture
 import "imports/Quickshell/Services/SystemTray" as TrayFixture
 import "../../qml/Shelllist/Bar/BarApi.js" as BarApi
 
@@ -33,8 +34,9 @@ DaemonTestCase {
     Component { id: residentFactory; Bar.BarController { surfaceRegistry: null } }
     Component { id: lateTrayFactory; Bar.SystemChooserController { kind: "tray" } }
     property int previousScheme
-    function init(): void { calls = []; failOnWarning(/.*/); previousScheme = Ui.Theme.previewColorScheme; }
-    function cleanup(): void { clientReady = true; TrayFixture.SystemTray.items.values = []; Quickshell.themeIcons = {}; Ui.Theme.previewColorScheme = previousScheme; }
+    property var previousEnvironment
+    function init(): void { calls = []; failOnWarning(/.*/); previousScheme = Ui.Theme.previewColorScheme; previousEnvironment = QuickshellFixture.Quickshell.environment; }
+    function cleanup(): void { clientReady = true; TrayFixture.SystemTray.items.values = []; Quickshell.themeIcons = {}; Ui.Theme.previewColorScheme = previousScheme; QuickshellFixture.Quickshell.environment = previousEnvironment; }
     function acknowledge(fixture, call, data): void {
         Io.DaemonSessions.sessions[fixture.desktop.backend.daemonName].client.response(call.id, {protocol: BarApi.protocol, version: BarApi.version, ok: true, data: data || {}}, "", call.route);
     }
@@ -47,6 +49,103 @@ DaemonTestCase {
         calls = [];
         compare(root.desktop.backend.pendingCount, 0, JSON.stringify(root.desktop.backend.pending));
         return root;
+    }
+    function mediaPlayer(id, status) {
+        return {id: id, identity: id, title: id, playback_status: status,
+            can_control: true, can_play: true, can_pause: true, control_mode: "automatic"};
+    }
+    function mediaIndicator(root, id) {
+        const row = findChild(root.content, "systemResult:" + id);
+        return row ? findChild(row, "mediaSessionState") : null;
+    }
+    function test_playingIndicatorFollowsPlaybackAndPanelLifetime_data() {
+        return [{tag: "animated", motion: true}, {tag: "reduced-motion", motion: false}];
+    }
+    function test_playingIndicatorFollowsPlaybackAndPanelLifetime(data): void {
+        QuickshellFixture.Quickshell.environment = Object.assign({}, previousEnvironment, {SHELLLIST_NO_ANIMATIONS: data.motion ? "0" : "1"});
+        const root = fixture();
+        function publish(status) {
+            root.desktop.media = {players: [mediaPlayer("playing", status), mediaPlayer("paused", "Paused")],
+                active_player: "playing", pinned_player: ""};
+        }
+        publish("Playing");
+        root.chooser.activateUi("");
+        tryVerify(() => mediaIndicator(root, "playing") !== null);
+        const indicator = mediaIndicator(root, "playing");
+        const bar = findChild(indicator, "playbackBar0");
+        const animation = findChild(bar, "playbackBarAnimation");
+        tryCompare(indicator, "animating", data.motion);
+        compare(animation.running, data.motion);
+        verify(!mediaIndicator(root, "paused").animating);
+        const width = indicator.width;
+        const height = indicator.height;
+        const initialLevel = bar.level;
+        if (data.motion)
+            tryVerify(() => Math.abs(bar.level - initialLevel) > 0.05, 1000, "actual native animation advances the bars");
+        else {
+            wait(120);
+            compare(bar.level, initialLevel);
+        }
+        compare(indicator.width, width);
+        compare(indicator.height, height);
+        mouseClick(findChild(root.content, "systemResult:paused"));
+        compare(root.chooser.selectedPlayer.id, "paused");
+        compare(indicator.animating, data.motion, "playing rows animate independently of selection");
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        keyClick(Qt.Key_Tab);
+        tryVerify(() => root.content.detailsNavigation.currentTarget !== null);
+        verify(root.content.detailsNavigation.currentTarget !== indicator, "status remains passive, never an editable stop");
+        verify(!indicator.activeFocusOnTab);
+
+        publish("Paused");
+        tryCompare(indicator, "glyph", "pause");
+        verify(!animation.running);
+        publish("Stopped");
+        tryCompare(indicator, "glyph", "stop");
+        verify(!indicator.animating);
+        publish("Playing");
+        tryCompare(indicator, "animating", data.motion);
+        root.chooser.deactivateUi();
+        tryCompare(animation, "running", false);
+        const stoppedLevel = bar.level;
+        wait(120);
+        compare(bar.level, stoppedLevel, "closing the panel stops animation work, not just its paint");
+        root.chooser.activateUi("");
+        tryCompare(indicator, "animating", data.motion);
+        root.content.visible = false;
+        tryCompare(animation, "running", false);
+        root.content.visible = true;
+        tryCompare(indicator, "animating", data.motion);
+        QuickshellFixture.Quickshell.environment = Object.assign({}, previousEnvironment, {SHELLLIST_NO_ANIMATIONS: "1"});
+        tryCompare(animation, "running", false);
+        compare(bar.height, indicator.height * bar.restLevel, "reduced motion retains a static equalizer");
+        QuickshellFixture.Quickshell.environment = Object.assign({}, previousEnvironment, {SHELLLIST_NO_ANIMATIONS: "0"});
+        tryCompare(indicator, "animating", true);
+        clientReady = false;
+        tryCompare(indicator, "animating", false);
+        compare(calls.length, 0, "presentation and browsing must not send playback or preference writes");
+    }
+    function test_playingIndicatorStopsOutsideTheListViewport(): void {
+        QuickshellFixture.Quickshell.environment = Object.assign({}, previousEnvironment, {SHELLLIST_NO_ANIMATIONS: "0"});
+        const root = fixture();
+        root.desktop.media = {players: Array.from({length: 20}, (_, i) => mediaPlayer("player-" + i, "Playing")),
+            active_player: "player-0", pinned_player: ""};
+        root.chooser.activateUi("");
+        tryVerify(() => mediaIndicator(root, "player-0") !== null);
+        const indicator = mediaIndicator(root, "player-0");
+        const list = findChild(root.content, "resultListView");
+        // Retain the offscreen delegate so the test proves suspension rather
+        // than merely relying on ListView destroying it.
+        list.cacheBuffer = 10000;
+        tryVerify(() => list.contentHeight > list.height && indicator.animating);
+        wait(0);
+        list.contentY = list.contentHeight - list.height;
+        tryCompare(indicator, "animating", false);
+        verify(!findChild(findChild(indicator, "playbackBar0"), "playbackBarAnimation").running);
+        list.contentY = list.originY;
+        tryCompare(indicator, "animating", true);
+        compare(calls.length, 0);
     }
     function test_audioBrowseDoesNotMuteAndOnlyAcknowledgementUpdatesState(): void {
         const root = fixture();

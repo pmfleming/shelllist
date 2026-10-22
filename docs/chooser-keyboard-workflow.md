@@ -725,8 +725,13 @@ Enter/Tab saves the control-mode draft; acknowledged mode chooses track/seek
 controls on the compact bar only. The panel exposes Previous, Next, Rewind 30s
 and Forward 30s directly, with independent capability guards and no transport
 More menu. Shared header sizing may omit disabled commands only as a last resort.
-Playback state uses icons and timing uses numbers, with full accessible descriptions;
-there is no persistent shortcut legend or instructional footer. The shared list
+Playback state uses icons and timing uses numbers, with full accessible descriptions.
+Playing result rows use the shared passive `PlaybackIndicator`: three animated
+bars only while the Media panel is active, the row is in view, the backend is
+ready and reduced motion is off. Paused/stopped icons remain static; closing or
+hiding the panel stops animation work. This is a playback cue, not measured audio
+levels, and adds no focus target or transport request.
+There is no persistent shortcut legend or instructional footer. The shared list
 status bar remains visible with a media icon and player count (matching/total while
 filtering); loading, pending operations, unavailable service and errors take
 precedence. It is passive, retains fixed geometry and adds no focus stops.
