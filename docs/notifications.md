@@ -124,6 +124,37 @@ Native deck/expiry tests and `tst_notification_decks.qml` cover queueing, lease
 loss, unchanged protocol expiry, actual hover/close and stable delegate identity.
 Live compositor input-mask/multi-monitor testing remains a deployment gate.
 
+## Contextual popup commands and sensitive copies
+
+Rust projects `context_actions` using conservative, unambiguous extraction: numeric
+4–8 digit verification codes with explicit code context, international phone
+numbers, a single HTTP(S) URL, and HTTPS meeting URLs on exact supported meeting
+hosts (Google Meet, Zoom, Teams and Jitsi). Multiple candidate values are not
+guessed; credential-bearing URLs and non-web schemes are rejected. Native sender
+actions remain separate, including inline Reply and sender-owned Mark as read.
+The first three sender commands are directly visible; additional commands retain
+the named application-action menu. Code detection is deliberately not universal.
+
+`notifications.contextAction` captures id, creation and update timestamps plus an
+opaque command key. The daemon revalidates the current record and derives its
+own target; QML never supplies a link or extracted code. Explicit link commands
+hand off to the desktop portal (not a claim that a meeting connected). Card click
+uses the sender default action, otherwise asks app-daemon to activate the desktop
+identity; missing identity opens the notification center instead of guessing.
+
+Code/number copies use clip-daemon's `clipboard.selection.publishSensitive`.
+This is a bounded, memory-only Wayland source, with privacy MIME markers and no
+ordinary publisher fallback, history insert or temporary file. Copy code applies
+the saved expiry; Copy number has no timer. Only acknowledged clipboard ownership
+shows a checkmark. A replacement cannot inherit an earlier copy acknowledgement.
+Expiry drops that source's connection, never clears a seat's current selection;
+a newer copy therefore survives an earlier timer. Daemon exit ends ownership.
+External clipboard managers may ignore privacy markers. This does **not** redact
+codes already present in notification history or erase filesystem backups.
+
+`clip-daemon` tests include an isolated native Wayland server for expiry/source
+ownership and capture-marker exclusion. The real desktop is not modified by tests.
+
 ## Icon identity
 
 The daemon captures desktop-file `Icon=` independently of content image hints and

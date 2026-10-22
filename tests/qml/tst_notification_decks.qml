@@ -54,6 +54,31 @@ DaemonTestCase {
         mouseMove(testCase, 490, 640);
         tryCompare(deck, "expanded", false);
     }
+    function test_contextCopyUsesCapturedIdentityAndChecksOnlyAfterAcknowledgement() {
+        const n = Object.assign(record(1), {context_actions: [{key: "copy-code", label: "Copy code", icon: "content_copy"}]});
+        const deck = createTemporaryObject(factory, testCase, {group: {key: "chat", records: [n]}});
+        const state = deck.controller.notificationState;
+        state.notifications = {available: true, backend: "native"};
+        state.notificationActive = {available: true, notifications: [n]};
+        const card = findChild(deck, "notificationDeckCard1");
+        const action = findChild(card, "notificationContext-copy-code");
+        verify(action);
+        tryVerify(() => deck.cardHeight > 0 && action.button.width > 0);
+        verify(waitForRendering(deck));
+        mouseClick(action.button);
+        tryVerify(() => calls.some(c => c.method === "notifications.contextAction"));
+        const call = calls.filter(c => c.method === "notifications.contextAction").pop();
+        compare(call.params, {id: 1, created_unix_ms: 1000, updated_unix_ms: 1000, key: "copy-code"});
+        verify(action.icon !== "check");
+        const pending = Object.keys(state.backend.requests).find(id => id.startsWith("context-action-"));
+        state.backend.finish(pending, {copied: true}, "", "");
+        compare(action.icon, "check");
+        const replacement = Object.assign({}, n, {updated_unix_ms: 2000});
+        deck.group = {key: "chat", records: [replacement]};
+        compare(card.copiedAction, "");
+        state.contextActionFinished("1:1000", 1000, "copy-code", true, "");
+        compare(card.copiedAction, "", "late copy acknowledgement cannot mark a replacement");
+    }
     function test_nativeProjectionOwnsRoutingAndOrder() {
         const deck = createTemporaryObject(factory, testCase, {group: {key: "chat", records: [record(1)]}});
         deck.controller.notificationActive = {available: true, toast_decks: [{key: "chat", monitor: "DP-1", records: [record(1)]}]};

@@ -41,6 +41,7 @@ Item {
     property NotificationBackend backend: notificationBackend
     signal centerResponse(var context, var value, string error, string code)
     signal collectionChanged
+    signal contextActionFinished(string recordKey, double updated, string key, bool copied, string error)
 
     function equal(left: var, right: var): bool { return JSON.stringify(left) === JSON.stringify(right); }
     function applySummary(value: var): void {
@@ -233,6 +234,9 @@ Item {
     }
     onUiActiveChanged: if (!uiActive) cancelDelete()
 
+    function contextAction(record: var, key: string): bool {
+        return isLive(record) && beginOperation(record.id) && backend.contextAction(record, key);
+    }
     function dismissNotification(id: int): bool { return beginOperation(id) && backend.dismiss(id); }
     function clearNotifications(): bool { return backend.clear(); }
     function clearNotificationGroup(key: string): bool { return backend.clearGroup(key); }

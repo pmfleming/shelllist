@@ -78,6 +78,11 @@ Io.BarDaemonBackend {
             activation_token: null
         }, {operationKey: store.keyFor(id)});
     }
+    function contextAction(record: var, key: string): bool {
+        return request("context-action", "notifications.contextAction", {
+            id: record.id, created_unix_ms: record.created_unix_ms, updated_unix_ms: record.updated_unix_ms, key: key
+        }, {operationKey: store.keyFor(record), updated: record.updated_unix_ms, actionKey: key});
+    }
     function reply(id: int, text: string): bool {
         return request("reply", Api.methods.notificationsReply, {
             id: id,
@@ -106,6 +111,13 @@ Io.BarDaemonBackend {
         // Scoped readers/settings/consent own their result, including errors.
         // They must not fall through to generic snapshot or error publication.
         switch (context.kind) {
+        case "context-action": {
+            const failure = error || (typeof data.copied !== "boolean" ? qsTr("Notification action outcome unconfirmed") : "");
+            store.finishOperation(context.operationKey);
+            store.lastError = failure;
+            store.contextActionFinished(context.operationKey, context.updated, context.actionKey, !failure && data.copied === true, failure);
+            return;
+        }
         case "settings": {
             const settings = data.notifications?.settings;
             const valid = settings && typeof settings.countdown === "boolean"

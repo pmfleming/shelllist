@@ -20,6 +20,18 @@ Rectangle {
     readonly property var replyStatus: replyState ? replyState.replies[recordKey] || ({}) : ({})
     readonly property string draft: replyState ? String(replyState.drafts[recordKey] || "") : ""
     property bool replyOpen: false
+    property string copiedAction: ""
+    property string actionError: ""
+    readonly property string recordVersion: recordKey + ":" + notification.updated_unix_ms
+    onRecordVersionChanged: { copiedAction = ""; actionError = ""; }
+    Connections {
+        target: card.replyState
+        function onContextActionFinished(recordKey: string, updated: double, key: string, copied: bool, error: string): void {
+            if (recordKey !== card.recordKey || updated !== card.notification.updated_unix_ms) return;
+            card.copiedAction = copied ? key : "";
+            card.actionError = error;
+        }
+    }
     readonly property bool replyVisible: replyAction !== null && (replyOpen || draft.length > 0 || replyStatus.pending === true || String(replyStatus.error || "").length > 0)
     Accessible.role: Accessible.Button
     Accessible.name: notification.summary || notification.app_name || qsTr("Notification")
@@ -48,6 +60,8 @@ Rectangle {
     function activate(): void {
         if (defaultAction)
             controller.invokeNotificationAction(notification.id, defaultAction.key);
+        else if (notification.hints?.desktop_entry && replyState)
+            replyState.contextAction(notification, "focus");
         else
             controller.openNotificationCenter(Ui.NotificationPresentation.groupKey(notification));
     }
@@ -139,9 +153,33 @@ Rectangle {
             font.pixelSize: Ui.Theme.fontSizeSmall
         }
 
+        Repeater {
+            model: card.actions.slice(0, 3)
+            Ui.LabeledAction {
+                required property var modelData
+                width: bodyColumn.width
+                label: modelData.label
+                icon: "touch_app"
+                enabled: !card.removing
+                onClicked: card.controller.invokeNotificationAction(card.notification.id, modelData.key)
+            }
+        }
+        Repeater {
+            model: card.notification.context_actions || []
+            Ui.LabeledAction {
+                required property var modelData
+                objectName: "notificationContext-" + modelData.key
+                width: bodyColumn.width
+                label: modelData.label
+                accessibleName: label + (card.actionError ? ": " + card.actionError : card.copiedAction === modelData.key ? qsTr(" — Copied") : "")
+                icon: card.copiedAction === modelData.key ? "check" : modelData.icon
+                enabled: !card.removing && !!card.replyState
+                onClicked: card.replyState.contextAction(card.notification, modelData.key)
+            }
+        }
         Ui.NotificationActionList {
             width: parent.width
-            actions: card.actions
+            actions: card.actions.slice(3)
             enabled: !card.removing
             onTriggered: function (actionKey) {
                 card.controller.invokeNotificationAction(card.notification.id, actionKey);
