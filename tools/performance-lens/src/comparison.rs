@@ -78,6 +78,46 @@ pub fn scopes(a: &Manifest, b: &Manifest, sa: &Summary, sb: &Summary) -> Scopes 
             }
         }
     }
+    // Cgroup scope paths are part of comparison_context. Their member PIDs are
+    // intentionally not paired: the kernel accounts the entire service lifetime.
+    for group in &a.cgroups {
+        let candidate = b
+            .cgroups
+            .iter()
+            .find(|g| g.label == group.label && g.path == group.path);
+        result.provenance.push(json!({"scope":group.label,"baseline":group,"candidate":candidate,"accounting":"hierarchical cgroup v2; overlaps process scopes"}));
+        if candidate.is_none() {
+            result
+                .unpaired
+                .push(json!({"scope":group.label,"reason":"cgroup absent or path changed"}));
+            continue;
+        }
+        let phases: BTreeSet<_> = sa
+            .resources
+            .iter()
+            .chain(&sb.resources)
+            .filter(|r| r.label == group.label)
+            .map(|r| &r.phase)
+            .collect();
+        for phase in phases {
+            let left = sa
+                .resources
+                .iter()
+                .find(|r| r.label == group.label && &r.phase == phase);
+            let right = sb
+                .resources
+                .iter()
+                .find(|r| r.label == group.label && &r.phase == phase);
+            for (name, av, bv, ac, bc) in resource_values(left, right) {
+                let mut row = delta(&format!("{} / {phase} / {name}", group.label), av, bv);
+                row["scope"] = json!(group.label);
+                row["phase"] = json!(phase);
+                row["baseline_covered_s"] = json!(ac);
+                row["candidate_covered_s"] = json!(bc);
+                result.deltas.push(row);
+            }
+        }
+    }
     result
 }
 
@@ -88,7 +128,7 @@ type ResourceValue = (
     Option<f64>,
     Option<f64>,
 );
-fn resource_values(a: Option<&ResourceSummary>, b: Option<&ResourceSummary>) -> [ResourceValue; 5] {
+fn resource_values(a: Option<&ResourceSummary>, b: Option<&ResourceSummary>) -> [ResourceValue; 6] {
     [
         (
             "cpu_percent",
@@ -108,6 +148,13 @@ fn resource_values(a: Option<&ResourceSummary>, b: Option<&ResourceSummary>) -> 
             "pss_peak_bytes",
             a.and_then(|r| r.pss_sampled_peak_bytes).map(|n| n as f64),
             b.and_then(|r| r.pss_sampled_peak_bytes).map(|n| n as f64),
+            None,
+            None,
+        ),
+        (
+            "cgroup_memory_peak_bytes",
+            a.and_then(|r| r.cgroup_memory_peak_bytes).map(|n| n as f64),
+            b.and_then(|r| r.cgroup_memory_peak_bytes).map(|n| n as f64),
             None,
             None,
         ),

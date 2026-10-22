@@ -1,4 +1,5 @@
 mod artifacts;
+mod cgroup;
 mod command;
 #[cfg(test)]
 mod command_tests;
@@ -116,6 +117,9 @@ struct Common {
     /// Opt-in per-thread CPU localization at main cadence (extra procfs cost; no stack profiling).
     #[arg(long)]
     include_threads: bool,
+    /// Also read cgroup v2 totals for selected process scopes (overlaps process accounting).
+    #[arg(long)]
+    include_cgroups: bool,
     /// Parent for unique run directories; defaults to this tool's runs/ directory.
     #[arg(long)]
     output_dir: Option<PathBuf>,
@@ -346,6 +350,11 @@ fn capture(
             "target changed during setup"
         );
     }
+    let cgroups = if common.include_cgroups {
+        cgroup::discover(&targets, &mut warnings)
+    } else {
+        vec![]
+    };
     let config = match &active {
         Some((ipc, _, _)) => Some(target::config_identity(&ipc.instance.config_path)?),
         None => common
@@ -385,8 +394,9 @@ fn capture(
         lens_sha256: procfs::hash_file(&std::env::current_exe()?)?,
         ticks_per_second: ticks,
         targets: targets.clone(),
+        cgroups: cgroups.clone(),
         scenario: scenario.into(),
-        settings: json!({"interval_ms":interval,"heavy_interval_ms":detail_interval,"include_threads":common.include_threads,"thread_cadence":common.include_threads.then_some("base"),"duration_s":duration.as_secs_f64(),"initial_settle_s":settle.as_secs_f64(),"surface":active.as_ref().map(|(_,s,_)|s),"trials":active.as_ref().map(|(_,_,n)|n),"timeout_ms":defaults.timeout_ms,"poll_ms":defaults.poll_ms,"between_trials_ms":defaults.between_trials_ms,"config_identity":config,"quickshell_path":active.as_ref().map(|(ipc,_,_)|&ipc.program),"command_path":if active.is_some(){"direct_pid_ipc"}else{"none"}}),
+        settings: json!({"interval_ms":interval,"heavy_interval_ms":detail_interval,"include_threads":common.include_threads,"include_cgroups":common.include_cgroups,"thread_cadence":common.include_threads.then_some("base"),"duration_s":duration.as_secs_f64(),"initial_settle_s":settle.as_secs_f64(),"surface":active.as_ref().map(|(_,s,_)|s),"trials":active.as_ref().map(|(_,_,n)|n),"timeout_ms":defaults.timeout_ms,"poll_ms":defaults.poll_ms,"between_trials_ms":defaults.between_trials_ms,"config_identity":config,"quickshell_path":active.as_ref().map(|(ipc,_,_)|&ipc.program),"command_path":if active.is_some(){"direct_pid_ipc"}else{"none"}}),
         context: target::context(&common.context),
         warnings,
         hashes: BTreeMap::new(),
@@ -408,6 +418,7 @@ fn capture(
                 detail_interval: Duration::from_millis(detail_interval),
                 ticks,
                 include_threads: common.include_threads,
+                cgroups,
             },
             thread_control,
         );

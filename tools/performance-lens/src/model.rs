@@ -20,6 +20,14 @@ pub struct Target {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CgroupTarget {
+    pub label: String,
+    pub path: String,
+    pub device: u64,
+    pub inode: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Counter {
     pub value: Option<u64>,
     pub unit: String,
@@ -127,6 +135,8 @@ pub struct Sample {
     pub label: String,
     pub pid: u32,
     pub start_ticks: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cgroup: Option<String>,
     pub interval_s: Option<f64>,
     pub counters: BTreeMap<String, Counter>,
     pub rates: BTreeMap<String, Metric>,
@@ -161,6 +171,8 @@ pub struct Manifest {
     pub lens_sha256: String,
     pub ticks_per_second: u64,
     pub targets: Vec<Target>,
+    #[serde(default)]
+    pub cgroups: Vec<CgroupTarget>,
     pub scenario: String,
     pub settings: serde_json::Value,
     pub context: BTreeMap<String, String>,
@@ -181,6 +193,8 @@ pub struct ResourceSummary {
     pub rss_end_bytes: Option<u64>,
     pub rss_sampled_peak_bytes: Option<u64>,
     pub pss_sampled_peak_bytes: Option<u64>,
+    #[serde(default)]
+    pub cgroup_memory_peak_bytes: Option<u64>,
     pub io_read_observed_bytes: Option<f64>,
     pub io_write_observed_bytes: Option<f64>,
     pub io_read_covered_s: f64,

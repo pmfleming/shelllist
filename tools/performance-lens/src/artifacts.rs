@@ -132,9 +132,21 @@ pub fn raw(path: &Path, manifest: &Manifest) -> Result<(Vec<Sample>, Vec<Event>)
         );
         elapsed = s.elapsed_s;
         ensure!(
-            manifest.targets.iter().any(|t| t.label == s.label
-                && t.identity.pid == s.pid
-                && t.identity.start_ticks == s.start_ticks),
+            if let Some(path) = &s.cgroup {
+                s.pid == 0
+                    && s.start_ticks == 0
+                    && s.threads.is_none()
+                    && manifest
+                        .cgroups
+                        .iter()
+                        .any(|g| g.label == s.label && &g.path == path)
+            } else {
+                manifest.targets.iter().any(|t| {
+                    t.label == s.label
+                        && t.identity.pid == s.pid
+                        && t.identity.start_ticks == s.start_ticks
+                })
+            },
             "sample target absent from manifest"
         );
         ensure!(
@@ -351,6 +363,9 @@ pub fn comparison_context(
         object.remove("quickshell_path");
         // Additive optional diagnostic: old captures did not collect tasks.
         object
+            .entry("include_cgroups")
+            .or_insert(serde_json::json!(false));
+        object
             .entry("include_threads")
             .or_insert(serde_json::json!(false));
         let cadence = if object["include_threads"] == true {
@@ -377,5 +392,12 @@ pub fn comparison_context(
         .collect();
     roles.sort();
     result.insert("process_scopes".into(), roles.join(","));
+    let mut groups: Vec<_> = manifest
+        .cgroups
+        .iter()
+        .map(|g| format!("{}:{}", g.label, g.path))
+        .collect();
+    groups.sort();
+    result.insert("cgroup_scopes".into(), groups.join(","));
     result
 }

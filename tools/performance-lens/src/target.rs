@@ -95,6 +95,7 @@ pub fn targets(
         ensure!(
             label != "ui-host"
                 && label != "lens-observer"
+                && !label.starts_with("cgroup:")
                 && !label.starts_with("related:")
                 && !label.starts_with("ui-service-member:"),
             "reserved process label; choose a stable custom name such as bar"

@@ -26,6 +26,7 @@ fn manifest() -> Manifest {
         lens_version: "test".into(),
         lens_sha256: "lens".into(),
         ticks_per_second: 100,
+        cgroups: vec![],
         targets: vec![
             target("ui-host", 10),
             target("related:bar-daemon:20", 20),

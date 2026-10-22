@@ -93,6 +93,7 @@ pub fn collect(
         label: target.label.clone(),
         pid: target.identity.pid,
         start_ticks: target.identity.start_ticks,
+        cgroup: None,
         interval_s: None,
         counters: BTreeMap::new(),
         rates: BTreeMap::new(),
@@ -159,6 +160,7 @@ pub struct Options {
     pub detail_interval: Duration,
     pub ticks: u64,
     pub include_threads: bool,
+    pub cgroups: Vec<crate::model::CgroupTarget>,
 }
 
 pub fn run(
@@ -173,10 +175,12 @@ pub fn run(
         detail_interval,
         ticks,
         include_threads,
+        cgroups,
     } = options;
     let mut file = BufWriter::new(file);
     let mut prior = BTreeMap::<u32, Sample>::new();
     let mut heavy_prior = BTreeMap::<u32, Sample>::new();
+    let mut cgroup_prior = BTreeMap::<String, Sample>::new();
     let mut due = start;
     let mut heavy_due = start;
     let mut seq = 0;
@@ -257,6 +261,21 @@ pub fn run(
                 }
             }
             prior.insert(target.identity.pid, sample);
+        }
+        for target in &cgroups {
+            let (phase, generation) = control.phase.lock().unwrap().clone();
+            let mut sample = crate::cgroup::collect(target, seq, start, &phase, generation);
+            sample.late_by_ms = now.saturating_duration_since(due).as_secs_f64() * 1000.0;
+            crate::cgroup::derive(&mut sample, cgroup_prior.get(&target.label));
+            write_sample(
+                &mut file,
+                &sample,
+                &mut encoded,
+                &mut written,
+                crate::artifacts::MAX_RAW_BYTES,
+            )?;
+            seq += 1;
+            cgroup_prior.insert(target.label.clone(), sample);
         }
         file.flush()?;
         due += interval;

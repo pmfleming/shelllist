@@ -121,6 +121,7 @@ pub fn summarize(manifest: &Manifest, samples: &[Sample], events: &[Event]) -> S
                 rss_end_bytes: rss.last().copied(),
                 rss_sampled_peak_bytes: rss.iter().max().copied(),
                 pss_sampled_peak_bytes: pss.iter().max().copied(),
+                cgroup_memory_peak_bytes: counter("memory_current_bytes").into_iter().max(),
                 io_read_observed_bytes: read,
                 io_write_observed_bytes: write,
                 io_read_covered_s: read_s,
@@ -494,6 +495,44 @@ pub fn write(
     html.push_str("</table></div>");
     for t in &manifest.targets {
         html.push_str(&chart(samples, &t.label, "rss_bytes", 1048576.0));
+    }
+    if !manifest.cgroups.is_empty() {
+        html.push_str("</section><section><h2>Cgroup v2 service accounting</h2><p>Includes short-lived descendants without membership enumeration. Hierarchical totals overlap process scopes and other cgroups: never sum them. Memory is charged memory (including cache/kernel), not RSS; I/O is block-device accounting, not process write attribution. Missing controllers remain unavailable. Cgroup replacement breaks coverage.</p><table><tr><th>Scope / phase</th><th>Charged memory sampled peak MiB</th></tr>");
+        for r in summary
+            .resources
+            .iter()
+            .filter(|r| r.label.starts_with("cgroup:"))
+        {
+            let _ = write!(
+                html,
+                "<tr><td>{} / {}</td><td>{}</td></tr>",
+                escape(&r.label),
+                escape(&r.phase),
+                mib(r.cgroup_memory_peak_bytes)
+            );
+        }
+        html.push_str("</table><h3>Pressure stall information</h3><p>Delta of kernel some/full total stall time divided by covered wall time. Not CPU utilization or summed task wait.</p><table><tr><th>Scope / phase / counter</th><th>% stalled wall time</th><th>Covered seconds</th></tr>");
+        let mut pressure = BTreeMap::<_, (f64, f64)>::new();
+        for s in samples.iter().filter(|s| s.cgroup.is_some()) {
+            for (key, rate) in s.rates.iter().filter(|(key, _)| key.starts_with("psi.")) {
+                if let (Some(value), Some(dt)) = (rate.value, s.interval_s) {
+                    let entry = pressure.entry((&s.label, &s.phase, key)).or_default();
+                    entry.0 += value * dt;
+                    entry.1 += dt;
+                }
+            }
+        }
+        for ((label, phase, key), (integral, dt)) in pressure {
+            let _ = write!(
+                html,
+                "<tr><td>{} / {} / {}</td><td>{:.3}</td><td>{dt:.3}</td></tr>",
+                escape(label),
+                escape(phase),
+                escape(key),
+                integral / dt
+            );
+        }
+        html.push_str("</table>");
     }
     html.push_str("</section><section><h2>I/O</h2><p>Storage-accounted observed byte deltas over valid intervals only. Gaps and phase boundaries are excluded. Not syscall character traffic, network usage, durable writes or disk latency. Raw rchar/wchar and fault counters remain separate.</p><div class=\"table\"><table><tr><th>Scope / phase</th><th>Read bytes</th><th>Read covered s</th><th>Write bytes</th><th>Write covered s</th></tr>");
     for r in &summary.resources {
