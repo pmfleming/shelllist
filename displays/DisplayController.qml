@@ -63,8 +63,9 @@ Ui.ProviderChooserController {
     readonly property bool canSetPolicy: canChange && !dockingApplying && !dirty && dockingPreferenceKnown
     readonly property var focusState: displayPolicyState.focus || ({available: false})
     readonly property bool canSetFocus: canChange && !dirty && !!focusState.available
-    readonly property string validationError: Model.validate(draft, outputs) || Model.arrangementError(draft, baselineDraft)
-    readonly property bool canPreview: canEdit && !layoutDragging && !discardPrompt && dirty && validationError.length === 0
+    // Preview is an explicit validation request, not admission to hardware writes.
+    // Rust validates/normalizes the entire draft before creating a durable trial.
+    readonly property bool canPreview: canEdit && !layoutDragging && !discardPrompt && dirty
     readonly property var placementReferences: Model.placementReferences(draft, selectedName)
     readonly property bool canArrange: canEdit && !discardPrompt && !layoutDragging && !!selectedDraft && Model.isIndependent(selectedDraft) && placementReferences.length > 0
     readonly property var placementChoices: ["left", "above", "below", "right"].map(side => Model.placement(draft, selectedName, referenceName, side))
@@ -79,7 +80,7 @@ Ui.ProviderChooserController {
         return !o.disabled;
     }).length
     readonly property int secondsLeft: trial ? Math.max(0, Math.ceil(trial.expires_at - clock / 1000)) : 0
-    readonly property string statusMessage: displayPolicyError || displayPolicyState.error || (!stateReady ? qsTr("Connecting…") : !displayPolicyState.available ? qsTr("Enable services.bar-daemon.displays.enable to manage displays") : stale ? qsTr("Displays changed · reload the layout") : dirty && validationError ? validationError : displayPolicyState.status === "settling" ? qsTr("Waiting for external display…") : dockingApplying ? qsTr("Applying docking preference…") : "")
+    readonly property string statusMessage: displayPolicyError || displayPolicyState.error || (!stateReady ? qsTr("Connecting…") : !displayPolicyState.available ? qsTr("Enable services.bar-daemon.displays.enable to manage displays") : stale ? qsTr("Displays changed · reload the layout") : displayPolicyState.status === "settling" ? qsTr("Waiting for external display…") : dockingApplying ? qsTr("Applying docking preference…") : "")
 
     navigationPrimaryEnabled: false
     provider: displayProvider
@@ -177,7 +178,7 @@ Ui.ProviderChooserController {
     function preview(): bool {
         return displayLayoutAction("preview", {
             baseline: baselineToken,
-            outputs: Model.payload(draft)
+            outputs: draft
         });
     }
     function canToggleEnabled(name: string): bool {

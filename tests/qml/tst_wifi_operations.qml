@@ -52,6 +52,21 @@ DaemonTestCase {
         tryVerify(function () { return panel.page.detailsNavigation.commandButtons.some(function (button) { return button.accessKey === (active ? "D" : "C") && button.enabled; }); });
         panel.page.listItem.focusList();
     }
+    function test_healthFeedbackUsesOnlyTheNativeRecommendationAndMessage() {
+        const c = makePanel().controller;
+        c.status = "Connection outcome";
+        c.health.handleEvent({event:"changed", data:{health:{notification_recommended:false, state_name:"failed", reason:{name:"no-secrets"}, message:"suppressed"}}});
+        compare(c.status, "Connection outcome");
+        c.health.handleEvent({event:"changed", data:{health:{notification_recommended:true, state_name:"failed", reason:{name:"no-secrets"}}}});
+        compare(c.status, "Connection outcome", "missing native copy never invokes a local reason table");
+        const event = {event:"changed", data:{health:{notification_recommended:true, message:"Native health feedback"}}};
+        c.health.handleEvent(event);
+        compare(c.status, "Native health feedback");
+        c.status = "Another observation";
+        c.health.handleEvent(event);
+        compare(c.status, "Native health feedback", "the frontend has no second wall-clock deduplicator");
+        compare(calls.length, 0);
+    }
     function test_diagnosticCardsFitContentInsteadOfStretchingWithPanelHeight() {
         const panel = makePanel();
         openNetwork(panel, false);

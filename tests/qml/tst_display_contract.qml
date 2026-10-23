@@ -79,6 +79,24 @@ DaemonTestCase {
         verify(!controller.canChange);
         return call;
     }
+    function test_nativeDraftRejectionPreservesRawInputUntilExplicitRetry() {
+        const controller = make();
+        controller.edit("eDP-1", "scale", "");
+        compare(effects(controller).length, 0, "local field save does not apply displays");
+        verify(controller.preview());
+        const call = lastCall(controller, "displayLayout.preview");
+        compare(call.params, fixture().invalidDraft.params);
+        reply(call, fixture().invalidDraft.reply);
+        verify(!controller.actionInFlight && controller.canEdit);
+        compare(controller.draft[0].scale, "", "empty is not silently coerced to zero");
+        verify(controller.dirty && controller.displayPolicyError.length > 0);
+        compare(controller.trial, null);
+        wait(0);
+        compare(effects(controller).length, 1, "validation failure never retries automatically");
+        controller.edit("eDP-1", "scale", 1.5);
+        verify(controller.preview());
+        compare(effects(controller).length, 2);
+    }
     function test_explicitCloseRevertsOnceButLostRevertIsNotReplayed() {
         const controller = make();
         const preview = start(controller, "displayLayout.preview");

@@ -267,10 +267,12 @@ payload. Keep moon masking, sun-arc progress and localized labels in QML.
 
 ## Corrections made in this audit
 
-- `wifi/NetworkHealth.js::isFailure` now consumes only the daemon's explicit
-  boolean `notification_recommended`. Removed the second terminal-state/reason
-  classifier and legacy `unexpected` inference. Status-line deduplication and
-  readable fallback text remain UI presentation.
+- At this audit checkpoint, `wifi/NetworkHealth.js::isFailure` consumed only
+  the daemon's explicit boolean `notification_recommended`; the second
+  terminal-state/reason classifier and legacy `unexpected` inference were removed.
+  The subsequent [native domain migration](rust-frontend-boundary.md#native-domain-policy-partial-second-migration)
+  also moved per-consumer deduplication/connection suppression into nm-daemon and
+  removed the frontend module and fallback text. QML renders native copy only.
 - Regression tests cover future daemon-classified states and missing/malformed
   recommendations as well as quiet successful/lifecycle transitions.
 - `tests/check-sibling-boundary.sh` now checks the candidate `daemon-framework`,

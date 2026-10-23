@@ -20,8 +20,10 @@ Io.BarDaemonBackend {
         return snapshotRequest(nextRequestId("battery-snapshot"), null);
     }
 
+    property string latestHistoryRequest: ""
     function history(): bool {
-        return callSequenced("battery-history", BatteryApi.methods.history, {});
+        latestHistoryRequest = nextRequestId("battery-history");
+        return call(latestHistoryRequest, BatteryApi.methods.history, {hours: controller.historyHours});
     }
 
     function setThresholds(batteryId: string, startPercent: int, endPercent: int): bool {
@@ -170,6 +172,8 @@ Io.BarDaemonBackend {
             controller.operationFinished(id);
     }
     function finish(id: string, envelope: var, transportError: string): void {
+        if (requestKind(id) === "battery-history" && id !== latestHistoryRequest)
+            return;
         const error = responseError(envelope, transportError, isBackgroundRequest(id) ? "Battery refresh failed" : "Battery operation failed");
         if (error.length > 0) {
             rejectRequest(id, error);

@@ -120,6 +120,11 @@ Ui.ChooserController {
     property string viewTab: "overview"
     property int selectedDeviceIndex: 0
     readonly property BatterySettings settings: batterySettings
+    property int historyHours: 6
+    function requestHistory(hours: int): void {
+        historyHours = hours;
+        if (uiActive) backend.history();
+    }
     property var batteryHistory: ({
             points: [],
             last_charge_timestamp_ms: 0,
@@ -220,7 +225,7 @@ Ui.ChooserController {
             });
         const changes = Flow.historyChanges(nextBattery, batteryHistory);
         battery = nextBattery;
-        if (uiActive && changes.history)
+        if (uiActive && (changes.history || (nextBattery.history?.current_point?.timestamp_ms !== batteryHistory.current_point?.timestamp_ms)))
             backend.history();
         if (uiActive && changes.charge)
             requestEnergyPeriod("last-charge", true);

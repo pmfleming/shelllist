@@ -12,13 +12,13 @@ Rectangle {
     required property var history
     required property var battery
     property string range: "6"
+    signal rangeRequested(int hours)
     readonly property var forecast: battery.forecast || ({
             limit: null,
             target: 100,
             seconds: 0
         })
     readonly property string estimateText: History.forecastLabel(battery)
-    readonly property var points: History.windowPoints(history.points || [], Number(range), (battery.history || {}).current_point || history.current_point)
     readonly property bool powerAvailable: battery.available && battery.power_available === true && History.nonnegative(battery.power_watts)
     readonly property bool exceptionalState: !battery.available || ["charging-inhibited", "calibrating", "pending-charge", "pending-discharge"].includes(battery.state)
 
@@ -123,7 +123,7 @@ Rectangle {
                 ]
                 value: card.range
                 onSelected: function (value) {
-                    card.range = value;
+                    card.rangeRequested(Number(value));
                 }
             }
         }
@@ -131,7 +131,7 @@ Rectangle {
         BatteryHistoryGraph {
             id: graph
             objectName: "batteryTimelineGraph"
-            points: card.points
+            chartData: card.history.chart || ({})
             forecast: card.forecast
             currentPercentage: card.battery.available && History.nonnegative(card.battery.percentage) && card.battery.percentage <= 100 ? card.battery.percentage : -1
             lineColor: card.battery.warning ? Ui.Theme.warning : Ui.Theme.batteryCharge

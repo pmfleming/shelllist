@@ -1039,8 +1039,12 @@ runner; no new skips or discovery exclusions were added.
 ## Display preview baselines
 
 A display draft captures the daemon's opaque baseline. Preview submits that
-baseline with the draft; the daemon rejects stale geometry, modes, topology or
-policy before any persistent trial or compositor write. Missing baseline support
+baseline with the raw draft; Rust normalizes numeric editor buffers and rejects
+invalid numbers, new independent-output overlaps, stale geometry, modes, topology
+or policy before any persistent trial or compositor write. Preview is available
+for changed drafts, not a frontend declaration of validity: rejection retains the
+raw values for correction and explicit retry. No validation request is sent while
+editing. Existing unchanged observed overlaps remain permissible. Missing baseline support
 disables editing. Local stale hints remain conservative presentation guards, not
 authority. Rejection preserves the draft for explicit reload; no automatic replay.
 
@@ -1366,6 +1370,15 @@ requires the matching terminal event, and transport failure never replays a
 connection. A failure to observe completion directs the user to Wi-Fi settings;
 receiving the request is not connection success.
 
+## Native network-health feedback
+
+`nm-daemon` owns health classification, connection-outcome suppression and the
+three-second per-consumer duplicate window, using monotonic time. Its recommendation
+and message are the only health feedback rendered by QML; there is no second reason
+table, fallback notification or wall-clock suppression timer. Connection and
+credential acknowledgement/retry guards remain separate and unchanged. Health
+telemetry adds neither commands nor editable stops.
+
 ## Native Wi-Fi prompt descriptors
 
 Hidden-network fields, defaults, security mappings and conditional required fields
@@ -1474,7 +1487,12 @@ Hover shows the nearest measurement;
 clicking either track enters the existing pointer-only inspection, with arrows
 and Escape inside that mode. Neither track joins Tab traversal or adds an entry
 command. The shared Range field retains deferred Enter/Tab save and Escape
-discard. Battery history presentation, signed-power and Canvas/inspection
+discard. Saving requests `battery.history` with 6, 24 or 168 observed hours; Rust
+owns windowing, metric validity, live-point inclusion and discontinuities. QML
+paints the returned segments and performs pointer inspection only. A superseded
+range reply cannot replace the newest chart. Native range key transactions and
+reply ordering are covered in `tst_battery_presentation` and `tst_battery_contract`.
+Battery history presentation, signed-power and Canvas/inspection
 matrices are retired; shared field tests are not a claim of that removed consumer
 coverage. Native safety policy, authorization and restoration tests remain.
 

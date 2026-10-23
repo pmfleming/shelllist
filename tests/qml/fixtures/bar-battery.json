@@ -2281,6 +2281,40 @@
     "data": {
       "history": {
         "active_duration_ms": 900000,
+        "chart": {
+          "percentage": {
+            "activeDurationMs": 0,
+            "breaks": [],
+            "hasActiveTimeline": true,
+            "maximum": 100.0,
+            "segments": [
+              [
+                {
+                  "charging": false,
+                  "timestamp_ms": 1768464930000,
+                  "value": 80.0,
+                  "x": 0.5
+                }
+              ]
+            ]
+          },
+          "power": {
+            "activeDurationMs": 0,
+            "breaks": [],
+            "hasActiveTimeline": true,
+            "maximum": 8.2,
+            "segments": [
+              [
+                {
+                  "charging": false,
+                  "timestamp_ms": 1768464930000,
+                  "value": 8.2,
+                  "x": 0.5
+                }
+              ]
+            ]
+          }
+        },
         "current_point": {
           "active_time_ms": 930000,
           "charging": false,
@@ -2301,6 +2335,7 @@
           "observedMs": 0,
           "totalWh": -0.0
         },
+        "hours": 6,
         "last_charge_timestamp_ms": 1768464000000,
         "latest_timestamp_ms": 1768464900000,
         "points": [],
@@ -4817,6 +4852,38 @@
             "same_profile": true
           }
         },
+        "theme": {
+          "error": "#ba1a1a",
+          "errorContainer": "#ffdad6",
+          "onError": "#ffffff",
+          "onErrorContainer": "#93000a",
+          "onPrimary": "#ffffff",
+          "onPrimaryContainer": "#4d3d75",
+          "onSecondary": "#ffffff",
+          "onSecondaryContainer": "#4a4458",
+          "onSuccess": "#ffffff",
+          "onSurface": "#1d1b20",
+          "onSurfaceVariant": "#49454e",
+          "onTertiary": "#ffffff",
+          "onTertiaryContainer": "#633b48",
+          "onWarning": "#ffffff",
+          "outline": "#7a757f",
+          "outlineVariant": "#cac4cf",
+          "primary": "#65558f",
+          "primaryContainer": "#e9ddff",
+          "secondary": "#625b71",
+          "secondaryContainer": "#e8def8",
+          "success": "#3c6839",
+          "surface": "#fdf7ff",
+          "surfaceContainer": "#f2ecf4",
+          "surfaceContainerHigh": "#ece6ee",
+          "surfaceContainerHighest": "#e6e0e9",
+          "surfaceContainerLow": "#f8f2fa",
+          "surfaceContainerLowest": "#ffffff",
+          "tertiary": "#7e5260",
+          "tertiaryContainer": "#ffd9e3",
+          "warning": "#78590c"
+        },
         "timezone": {
           "abbreviation": "",
           "available": false,
@@ -4853,5 +4920,214 @@
     "ok": true,
     "protocol": "bar-api",
     "version": 2
+  },
+  "windows": {
+    "168": {
+      "data": {
+        "history": {
+          "active_duration_ms": 900000,
+          "chart": {
+            "percentage": {
+              "activeDurationMs": 0,
+              "breaks": [],
+              "hasActiveTimeline": true,
+              "maximum": 100.0,
+              "segments": [
+                [
+                  {
+                    "charging": false,
+                    "timestamp_ms": 1768464930000,
+                    "value": 80.0,
+                    "x": 0.5
+                  }
+                ]
+              ]
+            },
+            "power": {
+              "activeDurationMs": 0,
+              "breaks": [],
+              "hasActiveTimeline": true,
+              "maximum": 8.2,
+              "segments": [
+                [
+                  {
+                    "charging": false,
+                    "timestamp_ms": 1768464930000,
+                    "value": 8.2,
+                    "x": 0.5
+                  }
+                ]
+              ]
+            }
+          },
+          "current_point": {
+            "active_time_ms": 930000,
+            "charging": false,
+            "continuous": true,
+            "mode": "discharging",
+            "percentage": 80,
+            "plugged": false,
+            "power_valid": true,
+            "power_watts": 8.2,
+            "time_to_full_seconds": null,
+            "timestamp_ms": 1768464930000
+          },
+          "energy": {
+            "activeDurationMs": 0,
+            "bars": [],
+            "intervalMs": 900000,
+            "maximum": 0.0,
+            "observedMs": 0,
+            "totalWh": -0.0
+          },
+          "hours": 168,
+          "last_charge_timestamp_ms": 1768464000000,
+          "latest_timestamp_ms": 1768464900000,
+          "points": [],
+          "retention_days": 7
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "24": {
+      "data": {
+        "history": {
+          "active_duration_ms": 900000,
+          "chart": {
+            "percentage": {
+              "activeDurationMs": 0,
+              "breaks": [],
+              "hasActiveTimeline": true,
+              "maximum": 100.0,
+              "segments": [
+                [
+                  {
+                    "charging": false,
+                    "timestamp_ms": 1768464930000,
+                    "value": 80.0,
+                    "x": 0.5
+                  }
+                ]
+              ]
+            },
+            "power": {
+              "activeDurationMs": 0,
+              "breaks": [],
+              "hasActiveTimeline": true,
+              "maximum": 8.2,
+              "segments": [
+                [
+                  {
+                    "charging": false,
+                    "timestamp_ms": 1768464930000,
+                    "value": 8.2,
+                    "x": 0.5
+                  }
+                ]
+              ]
+            }
+          },
+          "current_point": {
+            "active_time_ms": 930000,
+            "charging": false,
+            "continuous": true,
+            "mode": "discharging",
+            "percentage": 80,
+            "plugged": false,
+            "power_valid": true,
+            "power_watts": 8.2,
+            "time_to_full_seconds": null,
+            "timestamp_ms": 1768464930000
+          },
+          "energy": {
+            "activeDurationMs": 0,
+            "bars": [],
+            "intervalMs": 900000,
+            "maximum": 0.0,
+            "observedMs": 0,
+            "totalWh": -0.0
+          },
+          "hours": 24,
+          "last_charge_timestamp_ms": 1768464000000,
+          "latest_timestamp_ms": 1768464900000,
+          "points": [],
+          "retention_days": 7
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "6": {
+      "data": {
+        "history": {
+          "active_duration_ms": 900000,
+          "chart": {
+            "percentage": {
+              "activeDurationMs": 0,
+              "breaks": [],
+              "hasActiveTimeline": true,
+              "maximum": 100.0,
+              "segments": [
+                [
+                  {
+                    "charging": false,
+                    "timestamp_ms": 1768464930000,
+                    "value": 80.0,
+                    "x": 0.5
+                  }
+                ]
+              ]
+            },
+            "power": {
+              "activeDurationMs": 0,
+              "breaks": [],
+              "hasActiveTimeline": true,
+              "maximum": 8.2,
+              "segments": [
+                [
+                  {
+                    "charging": false,
+                    "timestamp_ms": 1768464930000,
+                    "value": 8.2,
+                    "x": 0.5
+                  }
+                ]
+              ]
+            }
+          },
+          "current_point": {
+            "active_time_ms": 930000,
+            "charging": false,
+            "continuous": true,
+            "mode": "discharging",
+            "percentage": 80,
+            "plugged": false,
+            "power_valid": true,
+            "power_watts": 8.2,
+            "time_to_full_seconds": null,
+            "timestamp_ms": 1768464930000
+          },
+          "energy": {
+            "activeDurationMs": 0,
+            "bars": [],
+            "intervalMs": 900000,
+            "maximum": 0.0,
+            "observedMs": 0,
+            "totalWh": -0.0
+          },
+          "hours": 6,
+          "last_charge_timestamp_ms": 1768464000000,
+          "latest_timestamp_ms": 1768464900000,
+          "points": [],
+          "retention_days": 7
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    }
   }
 }

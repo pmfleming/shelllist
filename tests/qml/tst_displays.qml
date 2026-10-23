@@ -81,7 +81,7 @@ DaemonTestCase {
         tryVerify(() => power()?.enabled);
         keyClick(Qt.Key_E, Qt.AltModifier);
         verify(c.selectedDraft.enabled);
-        verify(!c.canPreview && c.validationError.includes("overlaps"));
+        verify(c.canPreview, "draft validity is decided by Rust on explicit Preview; editing never writes");
         keyClick(Qt.Key_R, Qt.AltModifier);
         verify(c.canPreview, "placing the enabled laptop beside the external display clears the overlap");
         verify(c.selectedDraft.x > 0);
@@ -149,8 +149,8 @@ DaemonTestCase {
         compare(calls[0].method, "displayLayout.preview");
         compare(calls[0].params.outputs[1].scale, 2);
         compare(calls[0].params.baseline, "opaque-native-baseline");
-        verify(!("modes" in calls[0].params.outputs[1]));
-        verify(!("internal" in calls[0].params.outputs[1]));
+        verify("modes" in calls[0].params.outputs[1], "raw draft reaches the native normalizer without frontend payload policy");
+        verify("internal" in calls[0].params.outputs[1]);
         const pending = displayState();
         pending.policy.prefer_external = false;
         pending.outputs[1].x = 1600;

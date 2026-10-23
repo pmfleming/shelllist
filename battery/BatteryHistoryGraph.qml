@@ -9,7 +9,7 @@ import "BatteryPresentation.js" as Presentation
 Item {
     id: graph
 
-    required property var points
+    required property var chartData
     property var forecast: ({limit: null, target: 100, seconds: 0})
     property real currentPercentage: -1
     property color lineColor: Ui.Theme.batteryCharge
@@ -23,8 +23,9 @@ Item {
     // gutter/time axis. Text uses Theme roles and never becomes a field stop.
     readonly property int graphHeight: 310
     readonly property real axisInset: Math.max(38, tickMetrics.advanceWidth("+" + powerMaximum.toFixed(0)) + Ui.Theme.spacingSm)
-    readonly property var series: History.series(points, "percentage", 100, false)
-    readonly property var powerSeries: History.series(points, "power_watts", 0, false)
+    readonly property var emptySeries: ({segments: [], breaks: [], maximum: 1, activeDurationMs: 0, hasActiveTimeline: false})
+    readonly property var series: chartData.percentage || emptySeries
+    readonly property var powerSeries: chartData.power || emptySeries
     readonly property real powerMaximum: Math.max(10, Math.ceil(powerSeries.maximum / 10) * 10)
     readonly property real historyFraction: forecast.seconds > 0 ? Math.max(60000, series.activeDurationMs) / (Math.max(60000, series.activeDurationMs) + forecast.seconds * 1000) : 1
     readonly property real cursorPosition: inspecting ? inspectionPosition : hoverPosition

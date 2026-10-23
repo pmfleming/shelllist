@@ -81,62 +81,11 @@ function topology(outputs) {
 function fingerprint(outputs) {
     return JSON.stringify(outputs.map(o => [o.name, o.id, o.current_mode, o.scale, o.transform || 0, o.x || 0, o.y || 0, !!o.disabled, mirrorSource(o), modes(o)]));
 }
-function payload(draft) {
-    return draft.map(function (d) {
-        return {
-            name: d.name,
-            mode: d.mode,
-            x: Number(d.x),
-            y: Number(d.y),
-            scale: Number(d.scale),
-            transform: Number(d.transform),
-            enabled: d.enabled,
-            mirror_of: d.mirror_of || ""
-        };
-    });
-}
 function number(value) {
     return String(value).trim().length > 0 && Number.isFinite(Number(value));
 }
 function inRange(value, minimum, maximum, whole) {
     return number(value) && Number(value) >= minimum && Number(value) <= maximum && (!whole || Number.isInteger(Number(value)));
-}
-function validateOutput(d, output, draft) {
-    if (!inRange(d.x, -32768, 32768, true) || !inRange(d.y, -32768, 32768, true))
-        return "Position must be a whole number between −32768 and 32768";
-    if (!inRange(d.scale, 0.5, 4, false))
-        return "Scale must be between 50% and 400%";
-    if (!inRange(d.transform, 0, 7, true))
-        return "Choose a supported rotation";
-    if (typeof d.enabled !== "boolean")
-        return "Choose whether this display is enabled";
-    if (d.mirror_of !== undefined && typeof d.mirror_of !== "string")
-        return "Choose a supported mirror source";
-    const source = d.mirror_of || "";
-    if (source && (!draft.some(v => v.name === source) || source === d.name))
-        return "Choose a different supported display to mirror";
-    if (d.enabled && source && !draft.some(v => v.name === source && isIndependent(v)))
-        return "Mirror source must be an enabled extended display";
-    if (!modeInfo(output, d.mode))
-        return "Choose an advertised display mode";
-    return "";
-}
-function validate(draft, outputs) {
-    if (!draft.length || draft.length > 16)
-        return "Connect between one and sixteen supported displays";
-    if (draft.length !== outputs.length)
-        return "Displays changed · reload the layout";
-    const seen = [];
-    for (const d of draft) {
-        const output = outputs.find(v => v.name === d.name);
-        if (!output || seen.includes(d.name))
-            return "Displays changed · reload the layout";
-        seen.push(d.name);
-        const error = validateOutput(d, output, draft);
-        if (error)
-            return error;
-    }
-    return draft.some(isIndependent) ? "" : "Keep at least one independent display enabled";
 }
 function rect(output) {
     const m = modeInfo(output) || {
@@ -224,23 +173,6 @@ function placement(values, name, referenceName, side) {
             candidate.error = "Would overlap " + collision.name;
     }
     return candidate;
-}
-// Keep observed layouts intact; only changed geometry must pass the new overlap
-// guard. This also catches mode/scale/rotation changes after a valid placement.
-function arrangementError(values, baseline) {
-    const independent = values.filter(isIndependent);
-    for (let i = 0; i < independent.length; ++i) {
-        for (let j = i + 1; j < independent.length; ++j) {
-            const a = independent[i], b = independent[j];
-            if (!overlaps(placementRect(a), placementRect(b)))
-                continue;
-            const oldA = baseline.find(o => o.name === a.name && isIndependent(o));
-            const oldB = baseline.find(o => o.name === b.name && isIndependent(o));
-            if (!oldA || !oldB || JSON.stringify(placementRect(a)) !== JSON.stringify(placementRect(oldA)) || JSON.stringify(placementRect(b)) !== JSON.stringify(placementRect(oldB)))
-                return a.name + " overlaps " + b.name + " · arrange displays before previewing";
-        }
-    }
-    return "";
 }
 // Hit-test edge segments, not the old tile's free coordinates. Hysteresis keeps
 // the current side stable near corners; distant/outside drops have no target.

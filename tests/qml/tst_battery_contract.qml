@@ -59,6 +59,21 @@ DaemonTestCase {
         const call = lastCall(c, method); compare(call.method === "battery.operation.start" ? call.params.params : call.params, params);
         verify(c.backend.isPending(call.route.localId)); return call;
     }
+    function test_lateHistoryRangeCannotReplaceTheLatestNativeChart() {
+        const c = make("battery.setThresholds");
+        c.requestHistory(24);
+        const older = lastCall(c, "battery.history");
+        c.requestHistory(168);
+        const newer = lastCall(c, "battery.history");
+        compare(older.params, {hours:24});
+        compare(newer.params, {hours:168});
+        reply(newer, fixture().windows["168"]);
+        compare(c.batteryHistory, fixture().windows["168"].data.history);
+        reply(older, fixture().windows["24"]);
+        compare(c.batteryHistory, fixture().windows["168"].data.history);
+        compare(c.historyHours, 168);
+        compare(effects(c).length, 0);
+    }
     function test_noReplay_data() {
         return [["battery.setThresholds", false], ["battery.setThresholds", true],
             ["battery.setAlertPolicy", false], ["battery.setAlertPolicy", true]]

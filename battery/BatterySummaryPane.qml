@@ -63,6 +63,8 @@ Column {
         objectName: "batteryHistoryCard"
         history: pane.controller.batteryHistory
         battery: pane.battery
+        range: String(pane.controller.historyHours)
+        onRangeRequested: hours => pane.controller.requestHistory(hours)
     }
 
     Ui.DetailColumnCard {

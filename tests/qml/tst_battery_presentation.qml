@@ -80,6 +80,23 @@ DaemonTestCase {
             data: {operation: {id: "settings-test", state: "finished", response: envelope}}};
         Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id, envelope, "", call.route);
     }
+    function test_historyRangeIsADeferredReadNotAPerKeyRequest() {
+        const panel = make();
+        browse(panel, "batteryHistoryRange");
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right);
+        compare(panel.controller.historyHours, 6);
+        compare(settingCalls("battery.history").length, 0);
+        keyClick(Qt.Key_Escape);
+        compare(panel.controller.historyHours, 6);
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right); keyClick(Qt.Key_Return);
+        compare(panel.controller.historyHours, 24);
+        compare(settingCalls("battery.history").length, 1);
+        compare(settingCalls("battery.history")[0].params, {hours: 24});
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right); keyClick(Qt.Key_Tab);
+        compare(panel.controller.historyHours, 168);
+        compare(settingCalls("battery.history").length, 2);
+        compare(settingCalls("battery.history")[1].params, {hours: 168});
+    }
     function test_thresholdAndAlertAcknowledgementsStayIndependent() {
         const panel = make("care");
         const settings = panel.controller.settings;

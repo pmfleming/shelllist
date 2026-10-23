@@ -840,6 +840,44 @@
       "version": 2
     }
   },
+  "invalidDraft": {
+    "params": {
+      "baseline": "baseline-initial",
+      "outputs": [
+        {
+          "enabled": true,
+          "height": 1200,
+          "internal": true,
+          "mirror_of": "",
+          "mode": "1920x1200@60.00Hz",
+          "modes": [
+            {
+              "height": 1200,
+              "id": "1920x1200@60.00Hz",
+              "rate": 60.0,
+              "size": "1920x1200",
+              "width": 1920
+            }
+          ],
+          "name": "eDP-1",
+          "scale": "",
+          "transform": 0,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        }
+      ]
+    },
+    "reply": {
+      "error": {
+        "code": "display-layout-failed",
+        "message": "Display numeric field is empty"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    }
+  },
   "replies": {
     "displayFocus.reset": {
       "failed": {
@@ -1177,11 +1215,23 @@
         "outputs": [
           {
             "enabled": true,
+            "height": 1200,
+            "internal": true,
             "mirror_of": "",
             "mode": "1920x1200@60.00Hz",
+            "modes": [
+              {
+                "height": 1200,
+                "id": "1920x1200@60.00Hz",
+                "rate": 60.0,
+                "size": "1920x1200",
+                "width": 1920
+              }
+            ],
             "name": "eDP-1",
             "scale": 2.0,
             "transform": 0,
+            "width": 1920,
             "x": 0,
             "y": 0
           }
@@ -1856,6 +1906,38 @@
               "same_profile": true
             }
           },
+          "theme": {
+            "error": "#ba1a1a",
+            "errorContainer": "#ffdad6",
+            "onError": "#ffffff",
+            "onErrorContainer": "#93000a",
+            "onPrimary": "#ffffff",
+            "onPrimaryContainer": "#4d3d75",
+            "onSecondary": "#ffffff",
+            "onSecondaryContainer": "#4a4458",
+            "onSuccess": "#ffffff",
+            "onSurface": "#1d1b20",
+            "onSurfaceVariant": "#49454e",
+            "onTertiary": "#ffffff",
+            "onTertiaryContainer": "#633b48",
+            "onWarning": "#ffffff",
+            "outline": "#7a757f",
+            "outlineVariant": "#cac4cf",
+            "primary": "#65558f",
+            "primaryContainer": "#e9ddff",
+            "secondary": "#625b71",
+            "secondaryContainer": "#e8def8",
+            "success": "#3c6839",
+            "surface": "#fdf7ff",
+            "surfaceContainer": "#f2ecf4",
+            "surfaceContainerHigh": "#ece6ee",
+            "surfaceContainerHighest": "#e6e0e9",
+            "surfaceContainerLow": "#f8f2fa",
+            "surfaceContainerLowest": "#ffffff",
+            "tertiary": "#7e5260",
+            "tertiaryContainer": "#ffd9e3",
+            "warning": "#78590c"
+          },
           "timezone": {
             "abbreviation": "",
             "available": false,
@@ -2225,6 +2307,38 @@
               "same_profile": true
             }
           },
+          "theme": {
+            "error": "#ba1a1a",
+            "errorContainer": "#ffdad6",
+            "onError": "#ffffff",
+            "onErrorContainer": "#93000a",
+            "onPrimary": "#ffffff",
+            "onPrimaryContainer": "#4d3d75",
+            "onSecondary": "#ffffff",
+            "onSecondaryContainer": "#4a4458",
+            "onSuccess": "#ffffff",
+            "onSurface": "#1d1b20",
+            "onSurfaceVariant": "#49454e",
+            "onTertiary": "#ffffff",
+            "onTertiaryContainer": "#633b48",
+            "onWarning": "#ffffff",
+            "outline": "#7a757f",
+            "outlineVariant": "#cac4cf",
+            "primary": "#65558f",
+            "primaryContainer": "#e9ddff",
+            "secondary": "#625b71",
+            "secondaryContainer": "#e8def8",
+            "success": "#3c6839",
+            "surface": "#fdf7ff",
+            "surfaceContainer": "#f2ecf4",
+            "surfaceContainerHigh": "#ece6ee",
+            "surfaceContainerHighest": "#e6e0e9",
+            "surfaceContainerLow": "#f8f2fa",
+            "surfaceContainerLowest": "#ffffff",
+            "tertiary": "#7e5260",
+            "tertiaryContainer": "#ffd9e3",
+            "warning": "#78590c"
+          },
           "timezone": {
             "abbreviation": "",
             "available": false,
@@ -2591,6 +2705,38 @@
               },
               "same_profile": true
             }
+          },
+          "theme": {
+            "error": "#ba1a1a",
+            "errorContainer": "#ffdad6",
+            "onError": "#ffffff",
+            "onErrorContainer": "#93000a",
+            "onPrimary": "#ffffff",
+            "onPrimaryContainer": "#4d3d75",
+            "onSecondary": "#ffffff",
+            "onSecondaryContainer": "#4a4458",
+            "onSuccess": "#ffffff",
+            "onSurface": "#1d1b20",
+            "onSurfaceVariant": "#49454e",
+            "onTertiary": "#ffffff",
+            "onTertiaryContainer": "#633b48",
+            "onWarning": "#ffffff",
+            "outline": "#7a757f",
+            "outlineVariant": "#cac4cf",
+            "primary": "#65558f",
+            "primaryContainer": "#e9ddff",
+            "secondary": "#625b71",
+            "secondaryContainer": "#e8def8",
+            "success": "#3c6839",
+            "surface": "#fdf7ff",
+            "surfaceContainer": "#f2ecf4",
+            "surfaceContainerHigh": "#ece6ee",
+            "surfaceContainerHighest": "#e6e0e9",
+            "surfaceContainerLow": "#f8f2fa",
+            "surfaceContainerLowest": "#ffffff",
+            "tertiary": "#7e5260",
+            "tertiaryContainer": "#ffd9e3",
+            "warning": "#78590c"
           },
           "timezone": {
             "abbreviation": "",
@@ -2961,6 +3107,38 @@
               "same_profile": true
             }
           },
+          "theme": {
+            "error": "#ba1a1a",
+            "errorContainer": "#ffdad6",
+            "onError": "#ffffff",
+            "onErrorContainer": "#93000a",
+            "onPrimary": "#ffffff",
+            "onPrimaryContainer": "#4d3d75",
+            "onSecondary": "#ffffff",
+            "onSecondaryContainer": "#4a4458",
+            "onSuccess": "#ffffff",
+            "onSurface": "#1d1b20",
+            "onSurfaceVariant": "#49454e",
+            "onTertiary": "#ffffff",
+            "onTertiaryContainer": "#633b48",
+            "onWarning": "#ffffff",
+            "outline": "#7a757f",
+            "outlineVariant": "#cac4cf",
+            "primary": "#65558f",
+            "primaryContainer": "#e9ddff",
+            "secondary": "#625b71",
+            "secondaryContainer": "#e8def8",
+            "success": "#3c6839",
+            "surface": "#fdf7ff",
+            "surfaceContainer": "#f2ecf4",
+            "surfaceContainerHigh": "#ece6ee",
+            "surfaceContainerHighest": "#e6e0e9",
+            "surfaceContainerLow": "#f8f2fa",
+            "surfaceContainerLowest": "#ffffff",
+            "tertiary": "#7e5260",
+            "tertiaryContainer": "#ffd9e3",
+            "warning": "#78590c"
+          },
           "timezone": {
             "abbreviation": "",
             "available": false,
@@ -3329,6 +3507,38 @@
               },
               "same_profile": true
             }
+          },
+          "theme": {
+            "error": "#ba1a1a",
+            "errorContainer": "#ffdad6",
+            "onError": "#ffffff",
+            "onErrorContainer": "#93000a",
+            "onPrimary": "#ffffff",
+            "onPrimaryContainer": "#4d3d75",
+            "onSecondary": "#ffffff",
+            "onSecondaryContainer": "#4a4458",
+            "onSuccess": "#ffffff",
+            "onSurface": "#1d1b20",
+            "onSurfaceVariant": "#49454e",
+            "onTertiary": "#ffffff",
+            "onTertiaryContainer": "#633b48",
+            "onWarning": "#ffffff",
+            "outline": "#7a757f",
+            "outlineVariant": "#cac4cf",
+            "primary": "#65558f",
+            "primaryContainer": "#e9ddff",
+            "secondary": "#625b71",
+            "secondaryContainer": "#e8def8",
+            "success": "#3c6839",
+            "surface": "#fdf7ff",
+            "surfaceContainer": "#f2ecf4",
+            "surfaceContainerHigh": "#ece6ee",
+            "surfaceContainerHighest": "#e6e0e9",
+            "surfaceContainerLow": "#f8f2fa",
+            "surfaceContainerLowest": "#ffffff",
+            "tertiary": "#7e5260",
+            "tertiaryContainer": "#ffd9e3",
+            "warning": "#78590c"
           },
           "timezone": {
             "abbreviation": "",
@@ -3730,6 +3940,38 @@
               "same_profile": true
             }
           },
+          "theme": {
+            "error": "#ba1a1a",
+            "errorContainer": "#ffdad6",
+            "onError": "#ffffff",
+            "onErrorContainer": "#93000a",
+            "onPrimary": "#ffffff",
+            "onPrimaryContainer": "#4d3d75",
+            "onSecondary": "#ffffff",
+            "onSecondaryContainer": "#4a4458",
+            "onSuccess": "#ffffff",
+            "onSurface": "#1d1b20",
+            "onSurfaceVariant": "#49454e",
+            "onTertiary": "#ffffff",
+            "onTertiaryContainer": "#633b48",
+            "onWarning": "#ffffff",
+            "outline": "#7a757f",
+            "outlineVariant": "#cac4cf",
+            "primary": "#65558f",
+            "primaryContainer": "#e9ddff",
+            "secondary": "#625b71",
+            "secondaryContainer": "#e8def8",
+            "success": "#3c6839",
+            "surface": "#fdf7ff",
+            "surfaceContainer": "#f2ecf4",
+            "surfaceContainerHigh": "#ece6ee",
+            "surfaceContainerHighest": "#e6e0e9",
+            "surfaceContainerLow": "#f8f2fa",
+            "surfaceContainerLowest": "#ffffff",
+            "tertiary": "#7e5260",
+            "tertiaryContainer": "#ffd9e3",
+            "warning": "#78590c"
+          },
           "timezone": {
             "abbreviation": "",
             "available": false,
@@ -4098,6 +4340,38 @@
               },
               "same_profile": true
             }
+          },
+          "theme": {
+            "error": "#ba1a1a",
+            "errorContainer": "#ffdad6",
+            "onError": "#ffffff",
+            "onErrorContainer": "#93000a",
+            "onPrimary": "#ffffff",
+            "onPrimaryContainer": "#4d3d75",
+            "onSecondary": "#ffffff",
+            "onSecondaryContainer": "#4a4458",
+            "onSuccess": "#ffffff",
+            "onSurface": "#1d1b20",
+            "onSurfaceVariant": "#49454e",
+            "onTertiary": "#ffffff",
+            "onTertiaryContainer": "#633b48",
+            "onWarning": "#ffffff",
+            "outline": "#7a757f",
+            "outlineVariant": "#cac4cf",
+            "primary": "#65558f",
+            "primaryContainer": "#e9ddff",
+            "secondary": "#625b71",
+            "secondaryContainer": "#e8def8",
+            "success": "#3c6839",
+            "surface": "#fdf7ff",
+            "surfaceContainer": "#f2ecf4",
+            "surfaceContainerHigh": "#ece6ee",
+            "surfaceContainerHighest": "#e6e0e9",
+            "surfaceContainerLow": "#f8f2fa",
+            "surfaceContainerLowest": "#ffffff",
+            "tertiary": "#7e5260",
+            "tertiaryContainer": "#ffd9e3",
+            "warning": "#78590c"
           },
           "timezone": {
             "abbreviation": "",

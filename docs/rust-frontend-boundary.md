@@ -52,7 +52,56 @@ require explicit consent and never hide an unowned panel. Cold readiness is only
 reported when actually observed; latest search/model values are not fabricated
 as per-open metrics. See [commands and measurement limits](../tools/performance-lens/README.md).
 
-## Validation checkpoint
+## Native domain policy: partial second migration
+
+This follow-up spans `shelllist`, `bar-daemon` and `nm-daemon`:
+
+- `bar-daemon/src/battery/history_chart.rs` projects observed-time windows, valid
+  zero versus missing power, discontinuities and newer live observations.
+  `battery.history({hours: 6 | 24 | 168})` adds `hours` and `chart` to the existing
+  response; omitted hours defaults to six. QML keeps painting, formatting and
+  pointer inspection. Enter/Tab saves the range and requests a read; Escape
+  discards without requesting. Superseded replies cannot publish.
+- `bar-daemon/src/display_policy/layout/draft.rs` decodes raw preview drafts,
+  rejecting empty/nonfinite/fractional integer buffers and unknown fields. Only
+  known presentation metadata is ignored; the native output catalog remains
+  authoritative. New independent-output overlaps are rejected before persistence
+  or compositor writes; unchanged observed overlaps and actual mirrors remain
+  supported. `DisplayModel.js` no longer owns draft validation or wire payload
+  construction. It retains local draft/map geometry and placement affordances.
+  Explicit Preview is now the validation boundary, not a promise of acceptance;
+  rejected raw drafts survive for correction and explicit retry. Baseline, trial,
+  last-display, confirmation and rollback guards remain native.
+- `nm-daemon/src/daemon_runtime/health_feedback.rs` moves the remaining health
+  feedback suppression into native per-consumer fan-out: active owned connections
+  and a monotonic three-second duplicate window. Owner loss retires that state.
+  Existing native classification/correlation stays in place. QML renders only
+  the recommended native message; `wifi/NetworkHealth.js` is removed.
+
+**Not migrated in this pass:** BluetoothFlow scan/rescan/request policy,
+WifiPromptPolicy enterprise/secret/validation policy, UpdateValidation and
+Model.js provider-schema validation. Their existing checks remain intact; this
+is not completion of the entire domain-boundary request. In particular,
+malformed-reply checks must move to protocol-owned schemas, not be deleted.
+
+Second-migration checks: 267 Qt passes, zero failures, one existing renderer
+skip; strict QML lint, generated-binding/contract checks and both changed native
+crates' all-target Clippy checks pass. Bar library:
+206 passes and three existing ignored tests. NM library: 88 passes and three
+existing ignored tests. Added evidence covers native projection and draft
+rejection, zero writes/trials on overlap rejection, health owner isolation,
+actual range keys, late range replies and retained failed display drafts.
+No numeric UI-role overrides were added. Producer fixtures were refreshed,
+including the previously stale Shelllist copy of the bar contract.
+
+Root `nix develop` could not build its performance-lens dependency: CLI tests
+`descriptive_compare_requires_matching_context` and
+`changed_scopes_preserve_all_other_comparison_guards` failed. Qt checks used the
+available runner; native checks used the sibling daemon dev shells. Full Nix
+packaging, live health feedback and physical display/battery acceptance remain
+unverified. No services, hardware settings or deployments were changed.
+
+## First-migration validation checkpoint
 
 - Native QML suite: 263 passes, no failures, one existing renderer skip; strict
   qmllint and generated-contract checks pass.
