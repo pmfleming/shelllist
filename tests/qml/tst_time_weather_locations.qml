@@ -32,6 +32,7 @@ DaemonTestCase {
         const p=place(current && name==="Current location" ? "Dublin" : name,home?"Europe/Amsterdam":name==="Tokyo"?"Asia/Tokyo":"Europe/Dublin");
         return {id:id,label:name,city:p.name,home:home,current:current,removable:!home&&!current,
             timezone:p.timezone,utc_offset_seconds:home?7200:name==="Tokyo"?32400:3600,abbreviation:home?"CEST":name==="Tokyo"?"JST":"IST",
+            clock_display:{time:"12:34",date:"Native date",offset:"Native offset"},
             has_coordinates:true,latitude:p.latitude,longitude:p.longitude,has_weather:false,place:p};
     }
     function rows(atHome) {
@@ -56,6 +57,30 @@ DaemonTestCase {
     function select(s,id) {s.owner.selectionModel.selectedIndex=s.owner.filteredCities.findIndex(c=>c.id===id);}
     function mutations() {return calls.filter(c=>["locations.add","locations.remove","location.setManual","location.returnToAutomatic"].includes(c.method));}
     function reply(s,id,data) {s.locations.finish(id,{protocol:"bar-api",version:2,ok:true,data:data},"");}
+    function test_nativeClockUpdatesKeepTheCityDelegateAndOpenDraft() {
+        const s=start(false);openDetails(s);
+        const row=findChild(s.view,"timeWeatherLocation::weather:home");
+        verify(row!==null);
+        const clock=findChild(s.view,"locationClockTime");
+        compare(clock.text,"12:34");
+        s.view.listItem.focusList();keyClick(Qt.Key_L,Qt.AltModifier);
+        tryCompare(s.locations,"pickerMode","manual");
+        const query=s.locations.query;
+        wait(200); // Let any picker-opening read settle before observing the clock update.
+        const requestCount=calls.length;
+        const updated=JSON.parse(JSON.stringify(s.owner.activity));
+        updated.locations[0].clock_display={time:"12:35",date:"Next native date",offset:"Native offset"};
+        s.owner.activity=updated;
+        tryCompare(clock,"text","12:35");
+        compare(findChild(s.view,"timeWeatherLocation::weather:home"),row,"native clock changes use shared keyed updates, never recreate the row");
+        compare(s.owner.selectedCity.id,"weather:home");
+        compare(s.locations.pickerMode,"manual");
+        compare(s.locations.query,query);
+        compare(calls.length,requestCount,"clock publication does not request another read or mutation");
+        compare(mutations().length,0);
+        keyClick(Qt.Key_Escape);
+        tryCompare(s.locations,"pickerMode","");
+    }
     function test_manualPrimaryAcknowledgementAndNoDuplicateSubmit() {
         const s=start(false);openDetails(s);
         mouseClick(findChild(s.view,"detailAction:manual"));tryCompare(s.locations,"pickerMode","manual");

@@ -1,5 +1,4 @@
 import QtQuick
-import "MaterialIcons.js" as MaterialIcons
 
 Text {
     required property string glyph

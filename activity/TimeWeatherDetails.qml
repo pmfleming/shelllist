@@ -2,14 +2,12 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import "WeatherVisuals.js" as Visuals
 
 Ui.ActionDetailsPane {
     id: pane
     objectName: "timeWeatherDetails"
 
     required property TimeWeatherController controller
-    required property date now
     readonly property var city: controller.selectedCity
 
     chooserController: controller
@@ -17,7 +15,7 @@ Ui.ActionDetailsPane {
     icon: city.home ? "home" : city.current ? "my_location" : "location_on"
     iconColor: Ui.Theme.accent
     title: city.label || "City"
-    subtitle: Visuals.locationSubtitle(city)
+    subtitle: WeatherVisuals.locationSubtitle(city)
     actions: controller.detailActions
 
     Ui.TabbedDetailsStack {
@@ -50,7 +48,6 @@ Ui.ActionDetailsPane {
                     viewMemory: pane.controller.viewMemory
                     memoryTab: "time"
                     city: pane.city
-                    now: pane.now
                 }
             }
         }
@@ -69,7 +66,6 @@ Ui.ActionDetailsPane {
             viewMemory: pane.controller.viewMemory
             memoryTab: "weather"
             controller: pane.controller
-            now: pane.now
             showLocationRail: false
         }
     }

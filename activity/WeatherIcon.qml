@@ -1,12 +1,11 @@
 import QtQuick
-import "WeatherVisuals.js" as Visuals
 
 Image {
-    property int conditionCode: -1
+    property var conditionCode: -1
     property bool daytime: true
     property string description: ""
 
-    source: Qt.resolvedUrl("assets/weather/" + Visuals.iconName(conditionCode, daytime) + ".svg")
+    source: Qt.resolvedUrl("assets/weather/" + WeatherVisuals.iconName(conditionCode, daytime) + ".svg")
     fillMode: Image.PreserveAspectFit
     smooth: true
     mipmap: true

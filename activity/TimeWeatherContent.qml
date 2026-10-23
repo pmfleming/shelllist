@@ -7,7 +7,6 @@ Ui.ProviderChooserSurface {
     id: content
 
     required property TimeWeatherController controller
-    readonly property alias now: liveClock.now
 
     chooserController: controller
     feedbackScope: content
@@ -77,13 +76,11 @@ Ui.ProviderChooserSurface {
     listComponent: Component {
         TimeWeatherListPane {
             controller: content.controller
-            nowMs: content.now.getTime()
         }
     }
     detailsComponent: Component {
         TimeWeatherDetails {
             controller: content.controller
-            now: content.now
             uiScale: content.uiScale
         }
     }
@@ -97,9 +94,4 @@ Ui.ProviderChooserSurface {
         tone: "warning"
     }
 
-    Ui.LiveClock {
-        id: liveClock
-        active: content.controller.uiActive
-        alignToMinute: true
-    }
 }

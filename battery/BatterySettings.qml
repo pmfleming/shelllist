@@ -1,6 +1,6 @@
 import QtQuick
 import "BatteryFlow.js" as Flow
-import "BatteryPresentation.js" as Presentation
+import "BatteryFeedback.js" as Presentation
 
 // Saved field drafts and their acknowledgement fences, not field-local editors.
 // Suspend/critical protection and interactive operation ownership stay outside.
@@ -39,8 +39,8 @@ Item {
     // Only a newer user revision or an explicit flush can retry uncertainty.
     property int thresholdFailedRevision: -1
     property int alertFailedRevision: -1
-    readonly property bool thresholdDraftValid: Presentation.thresholdRangeValid(draftStartPercent, draftEndPercent)
-    readonly property bool alertDraftValid: Presentation.alertRangeValid(alertDraft.warning_percent, alertDraft.critical_percent)
+    readonly property bool thresholdDraftValid: Flow.thresholdRangeValid(draftStartPercent, draftEndPercent)
+    readonly property bool alertDraftValid: Flow.alertRangeValid(alertDraft.warning_percent, alertDraft.critical_percent)
     readonly property bool operationActive: thresholdOperationActive || alertOperationActive
     readonly property string error: thresholdSaveError || alertSaveError
     readonly property string thresholdSaveStatus: Presentation.saveStatus(thresholdDraftValid, "Choose a valid range", thresholdOperationActive, thresholdSaveError, thresholdDraftDirty)
@@ -125,13 +125,13 @@ Item {
         scheduleThresholdSave(immediate);
     }
     function updateStartPercent(value: int, dragging: bool): void {
-        if (!Presentation.thresholdRangeValid(value, draftEndPercent)) return;
+        if (!Flow.thresholdRangeValid(value, draftEndPercent)) return;
         thresholdEditing = dragging;
         draftStartPercent = value;
         markThresholdChanged(false);
     }
     function updateEndPercent(value: int, dragging: bool): void {
-        if (!Presentation.thresholdRangeValid(draftStartPercent, value)) return;
+        if (!Flow.thresholdRangeValid(draftStartPercent, value)) return;
         thresholdEditing = dragging;
         draftEndPercent = value;
         markThresholdChanged(false);

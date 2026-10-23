@@ -7,7 +7,6 @@ Rectangle {
     id: locationRail
     required property var locations
     required property string selectedId
-    required property date now
     signal selected(string locationId)
 
     function revealSelectedLocation(): void {
@@ -56,7 +55,6 @@ Rectangle {
                     width: Math.min(220, Math.max(174, (locationRail.width - Ui.Theme.spacingSm * 4) / 3))
                     height: locationRow.height
                     selectedId: locationRail.selectedId
-                    now: locationRail.now
                     onSelected: function (locationId) {
                         locationRail.selected(locationId);
                     }

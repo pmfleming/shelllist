@@ -2,13 +2,10 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import "WeatherVisuals.js" as Visuals
 
 WeatherForecastCard {
     id: forecast
     readonly property var days: (weather.daily || []).slice(0, 7)
-    readonly property real minimum: Visuals.collectionMinimum(days, "low_c")
-    readonly property real maximum: Visuals.collectionMaximum(days, "high_c")
     height: days.length > 0 ? 43 + days.length * 43 : 150
     hasData: days.length > 0
     emptyText: qsTr("No daily forecast")
@@ -42,7 +39,7 @@ WeatherForecastCard {
                     anchors.leftMargin: Ui.Theme.spacingMd
                     anchors.verticalCenter: parent.verticalCenter
                     width: 43
-                    text: Visuals.localDay(dayRow.modelData.date_unix_ms, Number(forecast.weather.utc_offset_seconds || 0))
+                    text: dayRow.modelData.display?.day || "—"
                     font.pixelSize: Ui.Theme.fontSizeSmall
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
@@ -52,7 +49,7 @@ WeatherForecastCard {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 36
                     height: 36
-                    conditionCode: Visuals.conditionCode(dayRow.modelData.condition_code)
+                    conditionCode: dayRow.modelData.condition_code ?? -1
                     daytime: true
                     description: dayRow.modelData.condition || ""
                 }
@@ -70,7 +67,7 @@ WeatherForecastCard {
                     anchors.leftMargin: 123
                     anchors.verticalCenter: parent.verticalCenter
                     width: 39
-                    text: Visuals.numberLabel(dayRow.modelData.precipitation_probability, "%")
+                    text: dayRow.modelData.display?.precipitation || "—"
                     color: Ui.Theme.accent
                     font.pixelSize: Ui.Theme.metadataSize
                 }
@@ -78,7 +75,7 @@ WeatherForecastCard {
                     anchors.right: temperatureRange.left
                     anchors.rightMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
-                    text: Visuals.numberLabel(dayRow.modelData.low_c, "°")
+                    text: dayRow.modelData.display?.low || "—"
                     color: Ui.Theme.mutedText
                     font.pixelSize: Ui.Theme.fontSizeSmall
                 }
@@ -97,9 +94,8 @@ WeatherForecastCard {
                         border.color: Ui.Theme.border
                     }
                     Rectangle {
-                        readonly property real span: Math.max(1, forecast.maximum - forecast.minimum)
-                        x: (Number(dayRow.modelData.low_c || 0) - forecast.minimum) / span * parent.width
-                        width: Math.max(8, (Number(dayRow.modelData.high_c || 0) - Number(dayRow.modelData.low_c || 0)) / span * parent.width)
+                        x: (dayRow.modelData.display?.low_fraction || 0) * parent.width
+                        width: Math.max(8, (dayRow.modelData.display?.span_fraction || 0) * parent.width)
                         height: parent.height
                         radius: height / 2
                         color: Ui.Theme.accent
@@ -109,7 +105,7 @@ WeatherForecastCard {
                     anchors.left: temperatureRange.right
                     anchors.leftMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
-                    text: Visuals.numberLabel(dayRow.modelData.high_c, "°")
+                    text: dayRow.modelData.display?.high || "—"
                     font.pixelSize: Ui.Theme.fontSizeSmall
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }

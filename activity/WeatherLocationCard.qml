@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import "WeatherVisuals.js" as Visuals
 
 Ui.PointerActionControl {
     id: locationCard
@@ -10,7 +9,6 @@ Ui.PointerActionControl {
 
     required property var modelData
     required property string selectedId
-    required property date now
     signal selected(string locationId)
 
     activeFocusOnTab: true
@@ -40,7 +38,7 @@ Ui.PointerActionControl {
         anchors.top: parent.top
         anchors.rightMargin: 9
         anchors.topMargin: 7
-        text: (locationCard.modelData.home ? "⌂  " : "") + Visuals.weatherTime(locationCard.now.getTime(), locationCard.modelData)
+        text: (locationCard.modelData.home ? "⌂  " : "") + (locationCard.modelData.display?.time || "—")
         color: locationCard.modelData.home ? Ui.Theme.accent : Ui.Theme.subtleText
         font.pixelSize: Ui.Theme.metadataSize
     }
@@ -52,7 +50,7 @@ Ui.PointerActionControl {
         anchors.bottomMargin: 5
         width: 53
         height: 53
-        conditionCode: Visuals.conditionCode(locationCard.modelData.condition_code)
+        conditionCode: locationCard.modelData.condition_code ?? -1
         daytime: locationCard.modelData.is_day !== false
         description: locationCard.modelData.condition || ""
     }
@@ -62,7 +60,7 @@ Ui.PointerActionControl {
         anchors.leftMargin: 68
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: 12
-        text: Visuals.numberLabel(locationCard.modelData.temperature_c, "°")
+        text: locationCard.modelData.display?.temperature || "—"
         font.pixelSize: Ui.Theme.heroReadingSize
     }
 
@@ -74,7 +72,7 @@ Ui.PointerActionControl {
         spacing: 1
         Ui.ThemeText {
             anchors.right: parent.right
-            text: Visuals.numberLabel(locationCard.modelData.high_c, "°") + "  " + Visuals.numberLabel(locationCard.modelData.low_c, "°")
+            text: (locationCard.modelData.display?.high || "—") + "  " + (locationCard.modelData.display?.low || "—")
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.metadataSize
         }
@@ -88,7 +86,7 @@ Ui.PointerActionControl {
                 fillMode: Image.PreserveAspectFit
             }
             Ui.ThemeText {
-                text: Visuals.numberLabel(locationCard.modelData.precipitation_probability, "%")
+                text: locationCard.modelData.display?.precipitation || "—"
                 color: Ui.Theme.accent
                 font.pixelSize: Ui.Theme.metadataSize
             }

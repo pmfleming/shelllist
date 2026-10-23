@@ -1,7 +1,6 @@
 import QtQuick
 import Shelllist.Ui as Ui
 import Shelllist.Core as Core
-import "WeatherVisuals.js" as Visuals
 
 ActivityController {
     id: controller
@@ -39,7 +38,7 @@ ActivityController {
     }
     screenshotStartMessage: "Capturing Time & Weather window…"
     rangeQueriesEnabled: false
-    readonly property var cities: (activity.locations || []).filter(city => !city.current || city.home || Visuals.hasLocationClock(city)).sort(compareCities)
+    readonly property var cities: (activity.locations || []).filter(city => !city.current || city.home || WeatherVisuals.hasLocationClock(city)).sort(compareCities)
     readonly property var filteredCities: filterCities(cities, filterText)
     readonly property alias cityModel: cityListModel
     readonly property var selectedCity: filteredCities.length > 0 ? filteredCities[Math.max(0, Math.min(citySelection.selectedIndex, filteredCities.length - 1))] : ({})
@@ -69,14 +68,7 @@ ActivityController {
     function rebuildCityModel(): void {
         const selectedId = retainedCityId;
         rebuildingCities = true;
-        cityListModel.clear();
-        filteredCities.forEach(function (city) {
-            cityListModel.append({
-                resultData: {
-                    payload: city
-                }
-            });
-        });
+        cityListModel.values = filteredCities.map(city => ({key: "time-weather::" + city.id, payload: city}));
         const retained = filteredCities.findIndex(function (city) {
             return city.id === selectedId;
         });
@@ -153,8 +145,7 @@ ActivityController {
         rebuildCityModel();
     }
 
-    ListModel {
+    Core.KeyedListModel {
         id: cityListModel
-        dynamicRoles: true
     }
 }

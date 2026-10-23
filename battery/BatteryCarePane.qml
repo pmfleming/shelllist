@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
-import "BatteryPresentation.js" as Presentation
+import "BatteryFeedback.js" as Presentation
 
 Column {
     id: pane
@@ -89,19 +89,19 @@ Column {
                 },
                 {
                     label: "Energy now",
-                    value: pane.device.energy_now_wh === null || pane.device.energy_now_wh === undefined ? "Unknown" : Number(pane.device.energy_now_wh).toFixed(1) + " Wh"
+                    value: pane.device.display?.energy_now || qsTr("Unknown")
                 },
                 {
                     label: "Full capacity",
-                    value: pane.device.energy_full_wh === null || pane.device.energy_full_wh === undefined ? "Unknown" : Number(pane.device.energy_full_wh).toFixed(1) + " Wh"
+                    value: pane.device.display?.energy_full || qsTr("Unknown")
                 },
                 {
                     label: "Design capacity",
-                    value: pane.device.energy_full_design_wh === null || pane.device.energy_full_design_wh === undefined ? "Unknown" : Number(pane.device.energy_full_design_wh).toFixed(1) + " Wh"
+                    value: pane.device.display?.energy_design || qsTr("Unknown")
                 },
                 {
                     label: "Desired range",
-                    value: Presentation.desiredRange(pane.protection)
+                    value: pane.device.display?.desired_range || qsTr("Not configured")
                 },
                 {
                     label: "Kernel device",

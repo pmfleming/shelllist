@@ -42,6 +42,12 @@
             "devices": [
               {
                 "cycles": 101,
+                "display": {
+                  "desired_range": "75–80%",
+                  "energy_design": "52.5 Wh",
+                  "energy_full": "44.8 Wh",
+                  "energy_now": "35.8 Wh"
+                },
                 "energy_full_design_wh": 52.5,
                 "energy_full_wh": 44.75,
                 "energy_now_wh": 35.8,
@@ -80,9 +86,14 @@
                 "voltage_volts": 15.48
               }
             ],
+            "display": {
+              "percentage": "80%",
+              "power": "8.2 W"
+            },
             "error": null,
             "forecast": {
               "approximate": true,
+              "duration_label": "4h 0m",
               "estimating": false,
               "limit": 80,
               "percentage": 80,
@@ -196,6 +207,12 @@
             "devices": [
               {
                 "cycles": 101,
+                "display": {
+                  "desired_range": "75–80%",
+                  "energy_design": "52.5 Wh",
+                  "energy_full": "44.8 Wh",
+                  "energy_now": "35.8 Wh"
+                },
                 "energy_full_design_wh": 52.5,
                 "energy_full_wh": 44.75,
                 "energy_now_wh": 35.8,
@@ -234,9 +251,14 @@
                 "voltage_volts": 15.48
               }
             ],
+            "display": {
+              "percentage": "80%",
+              "power": "8.2 W"
+            },
             "error": null,
             "forecast": {
               "approximate": true,
+              "duration_label": "4h 0m",
               "estimating": false,
               "limit": 80,
               "percentage": 80,
@@ -366,6 +388,12 @@
             "devices": [
               {
                 "cycles": 101,
+                "display": {
+                  "desired_range": "75–80%",
+                  "energy_design": "52.5 Wh",
+                  "energy_full": "44.8 Wh",
+                  "energy_now": "35.8 Wh"
+                },
                 "energy_full_design_wh": 52.5,
                 "energy_full_wh": 44.75,
                 "energy_now_wh": 35.8,
@@ -404,9 +432,14 @@
                 "voltage_volts": 15.48
               }
             ],
+            "display": {
+              "percentage": "80%",
+              "power": "8.2 W"
+            },
             "error": null,
             "forecast": {
               "approximate": true,
+              "duration_label": "4h 0m",
               "estimating": false,
               "limit": 80,
               "percentage": 80,
@@ -550,6 +583,12 @@
             "devices": [
               {
                 "cycles": 101,
+                "display": {
+                  "desired_range": "75–80%",
+                  "energy_design": "52.5 Wh",
+                  "energy_full": "44.8 Wh",
+                  "energy_now": "35.8 Wh"
+                },
                 "energy_full_design_wh": 52.5,
                 "energy_full_wh": 44.75,
                 "energy_now_wh": 35.8,
@@ -588,9 +627,14 @@
                 "voltage_volts": 15.48
               }
             ],
+            "display": {
+              "percentage": "80%",
+              "power": "8.2 W"
+            },
             "error": null,
             "forecast": {
               "approximate": true,
+              "duration_label": "4h 0m",
               "estimating": false,
               "limit": 80,
               "percentage": 80,
@@ -727,6 +771,12 @@
             "devices": [
               {
                 "cycles": 101,
+                "display": {
+                  "desired_range": "75–80%",
+                  "energy_design": "52.5 Wh",
+                  "energy_full": "44.8 Wh",
+                  "energy_now": "35.8 Wh"
+                },
                 "energy_full_design_wh": 52.5,
                 "energy_full_wh": 44.75,
                 "energy_now_wh": 35.8,
@@ -765,9 +815,14 @@
                 "voltage_volts": 15.48
               }
             ],
+            "display": {
+              "percentage": "80%",
+              "power": "8.2 W"
+            },
             "error": null,
             "forecast": {
               "approximate": true,
+              "duration_label": "4h 0m",
               "estimating": false,
               "limit": 80,
               "percentage": 80,
@@ -881,6 +936,12 @@
             "devices": [
               {
                 "cycles": 101,
+                "display": {
+                  "desired_range": "60–80%",
+                  "energy_design": "52.5 Wh",
+                  "energy_full": "44.8 Wh",
+                  "energy_now": "35.8 Wh"
+                },
                 "energy_full_design_wh": 52.5,
                 "energy_full_wh": 44.75,
                 "energy_now_wh": 35.8,
@@ -919,9 +980,14 @@
                 "voltage_volts": 15.48
               }
             ],
+            "display": {
+              "percentage": "80%",
+              "power": "8.2 W"
+            },
             "error": null,
             "forecast": {
               "approximate": true,
+              "duration_label": "4h 0m",
               "estimating": false,
               "limit": 80,
               "percentage": 80,
@@ -1054,6 +1120,12 @@
             "devices": [
               {
                 "cycles": 101,
+                "display": {
+                  "desired_range": "60–80%",
+                  "energy_design": "52.5 Wh",
+                  "energy_full": "44.8 Wh",
+                  "energy_now": "35.8 Wh"
+                },
                 "energy_full_design_wh": 52.5,
                 "energy_full_wh": 44.75,
                 "energy_now_wh": 35.8,
@@ -1092,9 +1164,14 @@
                 "voltage_volts": 15.48
               }
             ],
+            "display": {
+              "percentage": "80%",
+              "power": "8.2 W"
+            },
             "error": null,
             "forecast": {
               "approximate": true,
+              "duration_label": "4h 0m",
               "estimating": false,
               "limit": 80,
               "percentage": 80,
@@ -1214,6 +1291,12 @@
             "devices": [
               {
                 "cycles": 101,
+                "display": {
+                  "desired_range": "60–80%",
+                  "energy_design": "52.5 Wh",
+                  "energy_full": "44.8 Wh",
+                  "energy_now": "35.8 Wh"
+                },
                 "energy_full_design_wh": 52.5,
                 "energy_full_wh": 44.75,
                 "energy_now_wh": 35.8,
@@ -1252,9 +1335,14 @@
                 "voltage_volts": 15.48
               }
             ],
+            "display": {
+              "percentage": "80%",
+              "power": "8.2 W"
+            },
             "error": null,
             "forecast": {
               "approximate": true,
+              "duration_label": "4h 0m",
               "estimating": false,
               "limit": 80,
               "percentage": 80,
@@ -1386,6 +1474,12 @@
             "devices": [
               {
                 "cycles": 101,
+                "display": {
+                  "desired_range": "60–80%",
+                  "energy_design": "52.5 Wh",
+                  "energy_full": "44.8 Wh",
+                  "energy_now": "35.8 Wh"
+                },
                 "energy_full_design_wh": 52.5,
                 "energy_full_wh": 44.75,
                 "energy_now_wh": 35.8,
@@ -1424,9 +1518,14 @@
                 "voltage_volts": 15.48
               }
             ],
+            "display": {
+              "percentage": "80%",
+              "power": "8.2 W"
+            },
             "error": null,
             "forecast": {
               "approximate": true,
+              "duration_label": "4h 0m",
               "estimating": false,
               "limit": 80,
               "percentage": 80,
@@ -1568,6 +1667,12 @@
             "devices": [
               {
                 "cycles": 101,
+                "display": {
+                  "desired_range": "75–80%",
+                  "energy_design": "52.5 Wh",
+                  "energy_full": "44.8 Wh",
+                  "energy_now": "35.8 Wh"
+                },
                 "energy_full_design_wh": 52.5,
                 "energy_full_wh": 44.75,
                 "energy_now_wh": 35.8,
@@ -1606,9 +1711,14 @@
                 "voltage_volts": 15.48
               }
             ],
+            "display": {
+              "percentage": "80%",
+              "power": "8.2 W"
+            },
             "error": null,
             "forecast": {
               "approximate": true,
+              "duration_label": "4h 0m",
               "estimating": false,
               "limit": 80,
               "percentage": 80,
@@ -1713,6 +1823,12 @@
         "devices": [
           {
             "cycles": 101,
+            "display": {
+              "desired_range": "75–80%",
+              "energy_design": "52.5 Wh",
+              "energy_full": "44.8 Wh",
+              "energy_now": "35.8 Wh"
+            },
             "energy_full_design_wh": 52.5,
             "energy_full_wh": 44.75,
             "energy_now_wh": 35.8,
@@ -1751,9 +1867,14 @@
             "voltage_volts": 15.48
           }
         ],
+        "display": {
+          "percentage": "80%",
+          "power": "8.2 W"
+        },
         "error": null,
         "forecast": {
           "approximate": true,
+          "duration_label": "4h 0m",
           "estimating": false,
           "limit": 80,
           "percentage": 80,
@@ -1856,6 +1977,12 @@
         "devices": [
           {
             "cycles": 101,
+            "display": {
+              "desired_range": "75–80%",
+              "energy_design": "52.5 Wh",
+              "energy_full": "44.8 Wh",
+              "energy_now": "35.8 Wh"
+            },
             "energy_full_design_wh": 52.5,
             "energy_full_wh": 44.75,
             "energy_now_wh": 35.8,
@@ -1894,9 +2021,14 @@
             "voltage_volts": 15.48
           }
         ],
+        "display": {
+          "percentage": "80%",
+          "power": "8.2 W"
+        },
         "error": null,
         "forecast": {
           "approximate": true,
+          "duration_label": "4h 0m",
           "estimating": false,
           "limit": 80,
           "percentage": 80,
@@ -1999,6 +2131,12 @@
         "devices": [
           {
             "cycles": 101,
+            "display": {
+              "desired_range": "75–80%",
+              "energy_design": "52.5 Wh",
+              "energy_full": "44.8 Wh",
+              "energy_now": "35.8 Wh"
+            },
             "energy_full_design_wh": 52.5,
             "energy_full_wh": 44.75,
             "energy_now_wh": 35.8,
@@ -2037,9 +2175,14 @@
             "voltage_volts": 15.48
           }
         ],
+        "display": {
+          "percentage": "80%",
+          "power": "8.2 W"
+        },
         "error": null,
         "forecast": {
           "approximate": true,
+          "duration_label": "4h 0m",
           "estimating": false,
           "limit": 80,
           "percentage": 80,
@@ -2142,6 +2285,12 @@
         "devices": [
           {
             "cycles": 101,
+            "display": {
+              "desired_range": "75–80%",
+              "energy_design": "52.5 Wh",
+              "energy_full": "44.8 Wh",
+              "energy_now": "35.8 Wh"
+            },
             "energy_full_design_wh": 52.5,
             "energy_full_wh": 44.75,
             "energy_now_wh": 35.8,
@@ -2180,9 +2329,14 @@
             "voltage_volts": 15.48
           }
         ],
+        "display": {
+          "percentage": "80%",
+          "power": "8.2 W"
+        },
         "error": null,
         "forecast": {
           "approximate": true,
+          "duration_label": "4h 0m",
           "estimating": false,
           "limit": 80,
           "percentage": 80,
@@ -2284,34 +2438,50 @@
         "chart": {
           "percentage": {
             "activeDurationMs": 0,
+            "axisMaximum": 100.0,
             "breaks": [],
+            "durationLabel": "Estimating",
             "hasActiveTimeline": true,
             "maximum": 100.0,
             "segments": [
               [
                 {
                   "charging": false,
+                  "label": "80%",
                   "timestamp_ms": 1768464930000,
                   "value": 80.0,
                   "x": 0.5
                 }
               ]
+            ],
+            "tickLabels": [
+              "+100",
+              "0",
+              "−100"
             ]
           },
           "power": {
             "activeDurationMs": 0,
+            "axisMaximum": 10.0,
             "breaks": [],
+            "durationLabel": "Estimating",
             "hasActiveTimeline": true,
             "maximum": 8.2,
             "segments": [
               [
                 {
                   "charging": false,
+                  "label": "8.2 W",
                   "timestamp_ms": 1768464930000,
                   "value": 8.2,
                   "x": 0.5
                 }
               ]
+            ],
+            "tickLabels": [
+              "+10",
+              "0",
+              "−10"
             ]
           }
         },
@@ -2443,6 +2613,12 @@
                   "devices": [
                     {
                       "cycles": 101,
+                      "display": {
+                        "desired_range": "75–80%",
+                        "energy_design": "52.5 Wh",
+                        "energy_full": "44.8 Wh",
+                        "energy_now": "35.8 Wh"
+                      },
                       "energy_full_design_wh": 52.5,
                       "energy_full_wh": 44.75,
                       "energy_now_wh": 35.8,
@@ -2481,9 +2657,14 @@
                       "voltage_volts": 15.48
                     }
                   ],
+                  "display": {
+                    "percentage": "80%",
+                    "power": "8.2 W"
+                  },
                   "error": null,
                   "forecast": {
                     "approximate": true,
+                    "duration_label": "4h 0m",
                     "estimating": false,
                     "limit": 80,
                     "percentage": 80,
@@ -2623,6 +2804,12 @@
                   "devices": [
                     {
                       "cycles": 101,
+                      "display": {
+                        "desired_range": "75–80%",
+                        "energy_design": "52.5 Wh",
+                        "energy_full": "44.8 Wh",
+                        "energy_now": "35.8 Wh"
+                      },
                       "energy_full_design_wh": 52.5,
                       "energy_full_wh": 44.75,
                       "energy_now_wh": 35.8,
@@ -2661,9 +2848,14 @@
                       "voltage_volts": 15.48
                     }
                   ],
+                  "display": {
+                    "percentage": "80%",
+                    "power": "8.2 W"
+                  },
                   "error": null,
                   "forecast": {
                     "approximate": true,
+                    "duration_label": "4h 0m",
                     "estimating": false,
                     "limit": 80,
                     "percentage": 80,
@@ -2829,6 +3021,12 @@
                   "devices": [
                     {
                       "cycles": 101,
+                      "display": {
+                        "desired_range": "75–80%",
+                        "energy_design": "52.5 Wh",
+                        "energy_full": "44.8 Wh",
+                        "energy_now": "35.8 Wh"
+                      },
                       "energy_full_design_wh": 52.5,
                       "energy_full_wh": 44.75,
                       "energy_now_wh": 35.8,
@@ -2867,9 +3065,14 @@
                       "voltage_volts": 15.48
                     }
                   ],
+                  "display": {
+                    "percentage": "80%",
+                    "power": "8.2 W"
+                  },
                   "error": null,
                   "forecast": {
                     "approximate": true,
+                    "duration_label": "4h 0m",
                     "estimating": false,
                     "limit": 80,
                     "percentage": 80,
@@ -3059,6 +3262,12 @@
                   "devices": [
                     {
                       "cycles": 101,
+                      "display": {
+                        "desired_range": "75–80%",
+                        "energy_design": "52.5 Wh",
+                        "energy_full": "44.8 Wh",
+                        "energy_now": "35.8 Wh"
+                      },
                       "energy_full_design_wh": 52.5,
                       "energy_full_wh": 44.75,
                       "energy_now_wh": 35.8,
@@ -3097,9 +3306,14 @@
                       "voltage_volts": 15.48
                     }
                   ],
+                  "display": {
+                    "percentage": "80%",
+                    "power": "8.2 W"
+                  },
                   "error": null,
                   "forecast": {
                     "approximate": true,
+                    "duration_label": "4h 0m",
                     "estimating": false,
                     "limit": 80,
                     "percentage": 80,
@@ -3283,6 +3497,12 @@
                   "devices": [
                     {
                       "cycles": 101,
+                      "display": {
+                        "desired_range": "75–80%",
+                        "energy_design": "52.5 Wh",
+                        "energy_full": "44.8 Wh",
+                        "energy_now": "35.8 Wh"
+                      },
                       "energy_full_design_wh": 52.5,
                       "energy_full_wh": 44.75,
                       "energy_now_wh": 35.8,
@@ -3321,9 +3541,14 @@
                       "voltage_volts": 15.48
                     }
                   ],
+                  "display": {
+                    "percentage": "80%",
+                    "power": "8.2 W"
+                  },
                   "error": null,
                   "forecast": {
                     "approximate": true,
+                    "duration_label": "4h 0m",
                     "estimating": false,
                     "limit": 80,
                     "percentage": 80,
@@ -3463,6 +3688,12 @@
                   "devices": [
                     {
                       "cycles": 101,
+                      "display": {
+                        "desired_range": "60–80%",
+                        "energy_design": "52.5 Wh",
+                        "energy_full": "44.8 Wh",
+                        "energy_now": "35.8 Wh"
+                      },
                       "energy_full_design_wh": 52.5,
                       "energy_full_wh": 44.75,
                       "energy_now_wh": 35.8,
@@ -3501,9 +3732,14 @@
                       "voltage_volts": 15.48
                     }
                   ],
+                  "display": {
+                    "percentage": "80%",
+                    "power": "8.2 W"
+                  },
                   "error": null,
                   "forecast": {
                     "approximate": true,
+                    "duration_label": "4h 0m",
                     "estimating": false,
                     "limit": 80,
                     "percentage": 80,
@@ -3669,6 +3905,12 @@
                   "devices": [
                     {
                       "cycles": 101,
+                      "display": {
+                        "desired_range": "60–80%",
+                        "energy_design": "52.5 Wh",
+                        "energy_full": "44.8 Wh",
+                        "energy_now": "35.8 Wh"
+                      },
                       "energy_full_design_wh": 52.5,
                       "energy_full_wh": 44.75,
                       "energy_now_wh": 35.8,
@@ -3707,9 +3949,14 @@
                       "voltage_volts": 15.48
                     }
                   ],
+                  "display": {
+                    "percentage": "80%",
+                    "power": "8.2 W"
+                  },
                   "error": null,
                   "forecast": {
                     "approximate": true,
+                    "duration_label": "4h 0m",
                     "estimating": false,
                     "limit": 80,
                     "percentage": 80,
@@ -3855,6 +4102,12 @@
                   "devices": [
                     {
                       "cycles": 101,
+                      "display": {
+                        "desired_range": "60–80%",
+                        "energy_design": "52.5 Wh",
+                        "energy_full": "44.8 Wh",
+                        "energy_now": "35.8 Wh"
+                      },
                       "energy_full_design_wh": 52.5,
                       "energy_full_wh": 44.75,
                       "energy_now_wh": 35.8,
@@ -3893,9 +4146,14 @@
                       "voltage_volts": 15.48
                     }
                   ],
+                  "display": {
+                    "percentage": "80%",
+                    "power": "8.2 W"
+                  },
                   "error": null,
                   "forecast": {
                     "approximate": true,
+                    "duration_label": "4h 0m",
                     "estimating": false,
                     "limit": 80,
                     "percentage": 80,
@@ -4061,6 +4319,12 @@
                   "devices": [
                     {
                       "cycles": 101,
+                      "display": {
+                        "desired_range": "60–80%",
+                        "energy_design": "52.5 Wh",
+                        "energy_full": "44.8 Wh",
+                        "energy_now": "35.8 Wh"
+                      },
                       "energy_full_design_wh": 52.5,
                       "energy_full_wh": 44.75,
                       "energy_now_wh": 35.8,
@@ -4099,9 +4363,14 @@
                       "voltage_volts": 15.48
                     }
                   ],
+                  "display": {
+                    "percentage": "80%",
+                    "power": "8.2 W"
+                  },
                   "error": null,
                   "forecast": {
                     "approximate": true,
+                    "duration_label": "4h 0m",
                     "estimating": false,
                     "limit": 80,
                     "percentage": 80,
@@ -4291,6 +4560,12 @@
                   "devices": [
                     {
                       "cycles": 101,
+                      "display": {
+                        "desired_range": "75–80%",
+                        "energy_design": "52.5 Wh",
+                        "energy_full": "44.8 Wh",
+                        "energy_now": "35.8 Wh"
+                      },
                       "energy_full_design_wh": 52.5,
                       "energy_full_wh": 44.75,
                       "energy_now_wh": 35.8,
@@ -4329,9 +4604,14 @@
                       "voltage_volts": 15.48
                     }
                   ],
+                  "display": {
+                    "percentage": "80%",
+                    "power": "8.2 W"
+                  },
                   "error": null,
                   "forecast": {
                     "approximate": true,
+                    "duration_label": "4h 0m",
                     "estimating": false,
                     "limit": 80,
                     "percentage": 80,
@@ -4520,6 +4800,7 @@
             "condition": "",
             "condition_code": 0,
             "daily": [],
+            "display": null,
             "error": null,
             "high_c": 0.0,
             "home": false,
@@ -4568,6 +4849,12 @@
           "devices": [
             {
               "cycles": 101,
+              "display": {
+                "desired_range": "75–80%",
+                "energy_design": "52.5 Wh",
+                "energy_full": "44.8 Wh",
+                "energy_now": "35.8 Wh"
+              },
               "energy_full_design_wh": 52.5,
               "energy_full_wh": 44.75,
               "energy_now_wh": 35.8,
@@ -4606,9 +4893,14 @@
               "voltage_volts": 15.48
             }
           ],
+          "display": {
+            "percentage": "80%",
+            "power": "8.2 W"
+          },
           "error": null,
           "forecast": {
             "approximate": true,
+            "duration_label": "4h 0m",
             "estimating": false,
             "limit": 80,
             "percentage": 80,
@@ -4929,34 +5221,50 @@
           "chart": {
             "percentage": {
               "activeDurationMs": 0,
+              "axisMaximum": 100.0,
               "breaks": [],
+              "durationLabel": "Estimating",
               "hasActiveTimeline": true,
               "maximum": 100.0,
               "segments": [
                 [
                   {
                     "charging": false,
+                    "label": "80%",
                     "timestamp_ms": 1768464930000,
                     "value": 80.0,
                     "x": 0.5
                   }
                 ]
+              ],
+              "tickLabels": [
+                "+100",
+                "0",
+                "−100"
               ]
             },
             "power": {
               "activeDurationMs": 0,
+              "axisMaximum": 10.0,
               "breaks": [],
+              "durationLabel": "Estimating",
               "hasActiveTimeline": true,
               "maximum": 8.2,
               "segments": [
                 [
                   {
                     "charging": false,
+                    "label": "8.2 W",
                     "timestamp_ms": 1768464930000,
                     "value": 8.2,
                     "x": 0.5
                   }
                 ]
+              ],
+              "tickLabels": [
+                "+10",
+                "0",
+                "−10"
               ]
             }
           },
@@ -4998,34 +5306,50 @@
           "chart": {
             "percentage": {
               "activeDurationMs": 0,
+              "axisMaximum": 100.0,
               "breaks": [],
+              "durationLabel": "Estimating",
               "hasActiveTimeline": true,
               "maximum": 100.0,
               "segments": [
                 [
                   {
                     "charging": false,
+                    "label": "80%",
                     "timestamp_ms": 1768464930000,
                     "value": 80.0,
                     "x": 0.5
                   }
                 ]
+              ],
+              "tickLabels": [
+                "+100",
+                "0",
+                "−100"
               ]
             },
             "power": {
               "activeDurationMs": 0,
+              "axisMaximum": 10.0,
               "breaks": [],
+              "durationLabel": "Estimating",
               "hasActiveTimeline": true,
               "maximum": 8.2,
               "segments": [
                 [
                   {
                     "charging": false,
+                    "label": "8.2 W",
                     "timestamp_ms": 1768464930000,
                     "value": 8.2,
                     "x": 0.5
                   }
                 ]
+              ],
+              "tickLabels": [
+                "+10",
+                "0",
+                "−10"
               ]
             }
           },
@@ -5067,34 +5391,50 @@
           "chart": {
             "percentage": {
               "activeDurationMs": 0,
+              "axisMaximum": 100.0,
               "breaks": [],
+              "durationLabel": "Estimating",
               "hasActiveTimeline": true,
               "maximum": 100.0,
               "segments": [
                 [
                   {
                     "charging": false,
+                    "label": "80%",
                     "timestamp_ms": 1768464930000,
                     "value": 80.0,
                     "x": 0.5
                   }
                 ]
+              ],
+              "tickLabels": [
+                "+100",
+                "0",
+                "−100"
               ]
             },
             "power": {
               "activeDurationMs": 0,
+              "axisMaximum": 10.0,
               "breaks": [],
+              "durationLabel": "Estimating",
               "hasActiveTimeline": true,
               "maximum": 8.2,
               "segments": [
                 [
                   {
                     "charging": false,
+                    "label": "8.2 W",
                     "timestamp_ms": 1768464930000,
                     "value": 8.2,
                     "x": 0.5
                   }
                 ]
+              ],
+              "tickLabels": [
+                "+10",
+                "0",
+                "−10"
               ]
             }
           },

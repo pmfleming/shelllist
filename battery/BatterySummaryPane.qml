@@ -4,7 +4,7 @@ import Quickshell
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
-import "BatteryPresentation.js" as Presentation
+import "BatteryFeedback.js" as Presentation
 
 Column {
     id: pane
@@ -105,7 +105,7 @@ Column {
 
         Ui.ThemeText {
             Layout.fillWidth: true
-            text: pane.controller.energyError || pane.controller.energyOverview.total_energy_mwh === undefined ? qsTr("Unavailable") : Presentation.energy(pane.controller.energyOverview.total_energy_mwh)
+            text: pane.controller.energyError || pane.controller.energyOverview.total_energy_mwh === undefined ? qsTr("Unavailable") : (pane.controller.energyOverview.total_energy_label || qsTr("Unavailable"))
             font.pixelSize: Ui.Theme.formValueSize
             Accessible.name: qsTr("Estimated attributed energy: %1. Confidence: %2").arg(text).arg(pane.controller.energyOverview.energy_confidence || "low")
         }
@@ -181,7 +181,7 @@ Column {
                     }
 
                     Ui.ThemeText {
-                        text: Presentation.energy(energyRow.modelData.energy_mwh)
+                        text: energyRow.modelData.energy_label || qsTr("Unavailable")
                         color: Ui.Theme.accent
                         font.pixelSize: Ui.Theme.metadataSize
                         font.weight: Ui.Theme.fontWeightDemiBold

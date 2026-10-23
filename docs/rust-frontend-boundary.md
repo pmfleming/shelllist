@@ -101,6 +101,55 @@ available runner; native checks used the sibling daemon dev shells. Full Nix
 packaging, live health feedback and physical display/battery acceptance remain
 unverified. No services, hardware settings or deployments were changed.
 
+## Presentation data migration
+
+The named presentation-table families now have readonly QML singleton data:
+`BatteryPresentation.qml`, `WeatherVisuals.qml`, `BluetoothGlyphs.qml`,
+`WifiIcons.qml` and `Ui/MaterialIcons.qml`. Their JS table modules and the weather
+TypeScript source/generation entry are removed. Unknown keys cannot resolve
+inherited object members. Wi-Fi uses native `security_class`, without a second
+flags/security-string classifier; Bluetooth's native snapshot now includes
+`icon_id`, with its old metadata precedence tested in Rust. Missing classifications
+use generic/unknown artwork, not frontend inference.
+
+- Bar's battery projections supply forecast/history duration labels, plot-axis
+  labels, inspected readings, percentages, watts, battery Wh and protection-range
+  labels. App-daemon's energy overview supplies `energy_label` and
+  `total_energy_label`, preserving unavailable versus valid zero.
+- Bar's activity projection supplies weather units, compass labels, future-hour
+  selection, normalized chart ranges, daylight duration/fraction, sun progress,
+  location accuracy units and IANA-derived `clock_display` time/date/offset labels.
+  A minute-aligned native publication loop is independent of forecast I/O and
+  retains existing source errors. Shared keyed city updates preserve delegates,
+  selection and open picker drafts; no frontend clock timer or polling is added.
+  Missing display metadata stays unknown; disconnected views retain the last
+  native reading rather than extrapolating it.
+- Framework `fixed_decimal` preserves the former decimal-label rounding,
+  including exact ties and binary values such as 2.55, without adding a dependency.
+  QML retains pixel placement, gradients and the lunar-disc paint silhouette of a
+  native phase, not numerical measurement/astronomical estimates.
+
+`BatteryFeedback.js` contains remaining local pending/error text composition;
+existing draft admission checks remain in `BatteryFlow.js`. Those guards and all
+save/discard, acknowledgement, retry, authorization and hardware safety behavior
+are unchanged. This is the named presentation-family migration, not a claim that
+unrelated Media/Updates/Application presentation adapters or the pending domain
+policies above have all been ported.
+
+Producer fixtures and generated app contracts change additively with these native
+fields. Ship the matching framework, bar/app/Bluetooth daemons and QML together.
+No additional typography, spacing or radius overrides were introduced; moved
+143/66px forecast geometry and the lunar silhouette remain owned by their existing
+chart components, with unchanged dimensions. Native Qt tests cover asset fallbacks,
+verbatim native labels, missing projections and clock updates during an open city
+picker. Validation: **273 Qt passes, zero failures, one existing renderer skip**;
+bar library **213 passes**, app library **41 passes**, Bluetooth library **65
+passes**, framework core/generator **13 passes**. Existing native ignored probes
+remain unchanged. All changed Rust crates pass all-target Clippy; QML lint,
+TypeScript generation checks, producer fixtures and generated-contract checks pass.
+Full sibling Nix packaging and live desktop/hardware acceptance remain separate
+gates; no deployment or service changes are performed by this migration.
+
 ## First-migration validation checkpoint
 
 - Native QML suite: 263 passes, no failures, one existing renderer skip; strict

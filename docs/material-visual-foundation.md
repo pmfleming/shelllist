@@ -10,7 +10,7 @@ Noto fallback and JetBrainsMono Nerd Font. Common semantic glyphs map to Materia
 symbols; specialized unmapped glyphs deliberately retain the Nerd Font rather
 than acquiring an invented meaning. `SHELLLIST_FONT` still overrides typography;
 `SHELLLIST_ICON_FONT` controls the specialist fallback. Existing symbol mappings
-are in `Ui/MaterialIcons.js`.
+are in the readonly `Ui/MaterialIcons.qml` singleton.
 
 Command buttons and detail tabs are visually icon-only; their full accessible
 names remain. Commands use fixed circles, including prompts and confirmations.

@@ -7,7 +7,6 @@ Ui.DetailFlickable {
     id: pane
 
     required property ActivityController controller
-    required property date now
     property bool showLocationRail: true
     readonly property var weather: controller.selectedWeather
 
@@ -16,7 +15,6 @@ Ui.DetailFlickable {
         height: visible ? 108 : 0
         locations: pane.controller.weatherLocations
         selectedId: pane.weather.id || ""
-        now: pane.now
         onSelected: function (locationId) {
             pane.controller.selectWeatherLocation(locationId);
         }
@@ -39,7 +37,6 @@ Ui.DetailFlickable {
         weather: pane.weather
         updating: pane.controller.activity.syncing
         active: pane.controller.uiActive
-        now: pane.now
     }
 
     WeatherDailyForecast {

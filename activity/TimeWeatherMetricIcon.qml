@@ -1,6 +1,5 @@
 import QtQuick
 import Shelllist.Ui as Ui
-import "WeatherVisuals.js" as Visuals
 
 Canvas {
     required property bool daylight
@@ -28,6 +27,13 @@ Canvas {
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
 
+    // Pixel silhouette of a daemon-supplied phase, not a lunar estimate.
+    function moonLitBounds(phaseFraction: real, y: real): var {
+        const limb = Math.sqrt(Math.max(0, 1 - y * y));
+        const phase = ((phaseFraction % 1) + 1) % 1;
+        const terminator = Math.cos(2 * Math.PI * phase) * limb;
+        return phase < 0.5 ? {left: terminator, right: limb} : {left: -limb, right: -terminator};
+    }
     onPaint: {
         const context = getContext("2d");
         context.clearRect(0, 0, width, height);
@@ -79,7 +85,7 @@ Canvas {
             const steps = 64;
             for (let step = 0; step <= steps; ++step) {
                 const y = -1 + 2 * step / steps;
-                const bounds = Visuals.moonLitBounds(fraction, y);
+                const bounds = moonLitBounds(fraction, y);
                 if (step === 0)
                     context.moveTo(bounds.right * radius, y * radius);
                 else
@@ -87,7 +93,7 @@ Canvas {
             }
             for (let step = steps; step >= 0; --step) {
                 const y = -1 + 2 * step / steps;
-                context.lineTo(Visuals.moonLitBounds(fraction, y).left * radius, y * radius);
+                context.lineTo(moonLitBounds(fraction, y).left * radius, y * radius);
             }
             context.closePath();
             context.fillStyle = String(moonColor);

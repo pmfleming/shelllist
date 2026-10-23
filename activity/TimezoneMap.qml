@@ -2,12 +2,12 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import "WeatherVisuals.js" as Visuals
 
 Rectangle {
     id: map
 
-    required property date now
+    property string clockLabel: "—"
+    property string offsetLabel: ""
     property int offsetSeconds: 0
     property bool clockAvailable: true
     property real latitude: 0
@@ -24,7 +24,7 @@ Rectangle {
     border.color: Ui.Theme.border
     clip: true
     Accessible.role: Accessible.Graphic
-    Accessible.name: (clockAvailable ? "World map of geographic timezone areas. All regions at " + Visuals.utcOffset(offsetSeconds) + " are highlighted, local time " + Visuals.localTime(now.getTime(), offsetSeconds) : "World map. Timezone unavailable") + (hasCoordinates ? ". Location marked on the map" : "")
+    Accessible.name: (clockAvailable ? "World map of geographic timezone areas. All regions at " + offsetLabel + " are highlighted, local time " + clockLabel : "World map. Timezone unavailable") + (hasCoordinates ? ". Location marked on the map" : "")
 
     Item {
         id: mapViewport

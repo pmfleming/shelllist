@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "BatteryHistory.js" as History
-import "BatteryPresentation.js" as Presentation
 
 Item {
     id: graph
@@ -12,6 +11,7 @@ Item {
     required property var chartData
     property var forecast: ({limit: null, target: 100, seconds: 0})
     property real currentPercentage: -1
+    property string currentPercentageLabel: ""
     property color lineColor: Ui.Theme.batteryCharge
     readonly property color chargingColor: Ui.Theme.batteryCharging
     readonly property color dischargingColor: Ui.Theme.batteryDischarging
@@ -22,20 +22,20 @@ Item {
     // Battery-owned plot geometry: two equal-height tracks, with one shared
     // gutter/time axis. Text uses Theme roles and never becomes a field stop.
     readonly property int graphHeight: 310
-    readonly property real axisInset: Math.max(38, tickMetrics.advanceWidth("+" + powerMaximum.toFixed(0)) + Ui.Theme.spacingSm)
+    readonly property real axisInset: Math.max(38, tickMetrics.advanceWidth(powerSeries.tickLabels?.[0] || "+10") + Ui.Theme.spacingSm)
     readonly property var emptySeries: ({segments: [], breaks: [], maximum: 1, activeDurationMs: 0, hasActiveTimeline: false})
     readonly property var series: chartData.percentage || emptySeries
     readonly property var powerSeries: chartData.power || emptySeries
-    readonly property real powerMaximum: Math.max(10, Math.ceil(powerSeries.maximum / 10) * 10)
+    readonly property real powerMaximum: powerSeries.axisMaximum || 10
     readonly property real historyFraction: forecast.seconds > 0 ? Math.max(60000, series.activeDurationMs) / (Math.max(60000, series.activeDurationMs) + forecast.seconds * 1000) : 1
     readonly property real cursorPosition: inspecting ? inspectionPosition : hoverPosition
     readonly property real historicalPosition: cursorPosition / historyFraction
     readonly property var inspectedSample: historicalPosition >= 0 && historicalPosition <= 1 ? History.nearestSample(series.segments, historicalPosition) : null
     readonly property var inspectedPower: historicalPosition >= 0 && historicalPosition <= 1 ? History.nearestSample(powerSeries.segments, historicalPosition) : null
-    readonly property string inspectionReading: (inspectedSample ? inspectedSample.value + "%" : qsTr("No charge sample"))
-        + (inspectedPower ? " · " + inspectedPower.value.toFixed(1) + " W " + (inspectedPower.value === 0 ? qsTr("· no flow") : inspectedPower.charging ? qsTr("in") : qsTr("out")) : qsTr(" · No power measurement"))
+    readonly property string inspectionReading: (inspectedSample ? inspectedSample.label || qsTr("No charge sample") : qsTr("No charge sample"))
+        + (inspectedPower ? " · " + (inspectedPower.label || qsTr("No power measurement")) + " " + (inspectedPower.value === 0 ? qsTr("· no flow") : inspectedPower.charging ? qsTr("in") : qsTr("out")) : qsTr(" · No power measurement"))
     readonly property string inspectionText: historicalPosition > 1
-        ? qsTr("Estimated · ~%1 %2").arg(Presentation.duration(forecast.seconds)).arg(forecast.target === 0 ? qsTr("to empty") : qsTr("to %1%").arg(forecast.target))
+        ? qsTr("Estimated · ~%1 %2").arg((forecast.duration_label || qsTr("Estimating"))).arg(forecast.target === 0 ? qsTr("to empty") : qsTr("to %1%").arg(forecast.target))
         : (inspectedSample ? new Date(inspectedSample.timestamp_ms).toLocaleString() + " · " : "")
             + inspectionReading + (inspectedPower ? qsTr(" · nearest measurement") : "")
     readonly property string inspectionSummary: historicalPosition > 1 ? inspectionText
@@ -130,7 +130,7 @@ Item {
             font.pixelSize: Ui.Theme.fontSizeBody
         }
         Ui.ThemeText {
-            text: graph.currentPercentage >= 0 && graph.currentPercentage <= 100 ? qsTr("%1% now").arg(Math.round(graph.currentPercentage)) : qsTr("Unavailable")
+            text: graph.currentPercentage >= 0 && graph.currentPercentage <= 100 ? qsTr("%1 now").arg(graph.currentPercentageLabel) : qsTr("Unavailable")
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.metadataSize
         }
@@ -265,10 +265,11 @@ Item {
         model: [1, 0, -1]
         delegate: Ui.ThemeText {
             required property real modelData
+            required property int index
             width: graph.axisInset - Ui.Theme.spacingSm
             horizontalAlignment: Text.AlignRight
             y: powerChart.y + powerChart.height / 2 - modelData * (powerChart.height / 2 - 3) - height / 2
-            text: (modelData > 0 ? "+" : modelData < 0 ? "−" : "") + Math.abs(graph.powerMaximum * modelData).toFixed(0)
+            text: graph.powerSeries.tickLabels?.[index] || ""
             color: Ui.Theme.subtleText
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
@@ -342,7 +343,7 @@ Item {
         anchors.bottom: parent.bottom
         width: Math.max(0, graph.historyFraction * chart.width - nowLabel.implicitWidth - Ui.Theme.spacingSm)
         elide: Text.ElideRight
-        text: graph.series.activeDurationMs > 0 ? "−" + Presentation.duration(graph.series.activeDurationMs / 1000) : ""
+        text: graph.series.activeDurationMs > 0 ? "−" + (graph.series.durationLabel || "") : ""
         color: Ui.Theme.subtleText
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
@@ -361,7 +362,7 @@ Item {
         visible: graph.forecast.seconds > 0 && x > nowLabel.x + nowLabel.width + Ui.Theme.spacingSm
         anchors.right: chart.right
         anchors.bottom: parent.bottom
-        text: qsTr("+%1 estimated").arg(Presentation.duration(graph.forecast.seconds))
+        text: qsTr("+%1 estimated").arg((graph.forecast.duration_label || qsTr("Estimating")))
         color: Ui.Theme.subtleText
         font.pixelSize: Ui.Theme.fontSizeCaption
     }

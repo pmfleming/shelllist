@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui
-import "WifiIcons.js" as WifiIcons
 import "WifiPresentation.js" as Presentation
 
 ChooserListPane {

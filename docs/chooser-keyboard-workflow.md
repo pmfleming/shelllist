@@ -1446,12 +1446,15 @@ select another row, create editable stops, or publish settings. Shared label/hea
 composition retains full accessible text when the subtitle elides. Passive
 metadata/theme/navigation matrices are retired; retained location tests focus
 on acknowledged manual selection and protected removal.
-List and detail times share a single view-owned clock: activation refreshes it
-immediately, then it refreshes at minute boundaries while active. Clock updates
-are passive and local; they do not rebuild selection, add stops or issue reads.
-City clock metadata is computed from IANA zones independently of forecasts. A
-weather failure does not disable a known clock; a missing/invalid zone is
-unavailable, never guessed as UTC. Unavailable time/date and map highlights stay
+List and detail times bind to the same native `clock_display` labels. The daemon
+publishes minute-aligned clock projections independently of provider I/O; the
+view has no offset arithmetic, date formatter or clock timer. Shared keyed list
+updates retain city delegates, selection and open picker drafts. Clock updates
+add no stops or frontend requests. IANA conversion (including DST), location
+accuracy units, weather units, forecast windows/ranges and daylight durations
+are native projections. A weather failure does not disable a known clock; a
+missing/invalid zone or missing projection is unavailable, never guessed as UTC.
+Disconnected views retain the last native reading rather than extrapolating it. Unavailable time/date and map highlights stay
 passive, retain location identity and do not introduce editable stops or requests.
 
 ## Native domain projections
@@ -1473,6 +1476,14 @@ retains its session, arrow editing and Enter/Tab save / Escape discard behavior;
 its circles are not independent commands or switches. The saved selection dot
 is distinct from the draft's tonal highlight. Bottom pages retain shared
 icon-only tabs and full accessible names.
+
+Presentation labels and icon/colour asset tables are readonly QML singleton data.
+Battery durations, energy/power units, history-axis labels and weather/clock
+calculations come from native projections, with no JS/TS calculation fallback.
+Only pixel layout and paint geometry remain local, including the lunar-disc
+silhouette of a daemon-supplied phase. Missing display metadata stays unknown.
+Existing field-local validation, acknowledgement, retry and safety guards are
+unchanged; passive labels and asset lookups never become editable stops.
 
 Battery history uses two aligned passive tracks: charge in percent above signed
 battery power in watts. Dusty blue identifies charge (semantic warning colour

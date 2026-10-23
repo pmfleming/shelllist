@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import "WeatherVisuals.js" as Visuals
 
 Rectangle {
     id: hero
@@ -10,7 +9,8 @@ Rectangle {
     property bool updating: false
     property bool active: true
     readonly property bool hasReading: weather.temperature_c !== undefined && weather.temperature_c !== null && Number.isFinite(Number(weather.temperature_c))
-    readonly property var heroColors: Visuals.heroColors(Visuals.conditionCode(weather.condition_code), weather.is_day !== false)
+    readonly property var display: weather.display || ({})
+    readonly property var heroColors: Object.prototype.hasOwnProperty.call(WeatherVisuals.heroColors, display.palette) ? WeatherVisuals.heroColors[display.palette] : WeatherVisuals.heroColors.clear
     readonly property bool compact: width < 420
     width: parent.width
     height: 192
@@ -55,7 +55,7 @@ Rectangle {
             id: updated
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: Number(hero.weather.updated_unix_ms || 0) > 0 ? "↻ " + Visuals.weatherTime(hero.weather.updated_unix_ms, hero.weather) : ""
+            text: Number(hero.weather.updated_unix_ms || 0) > 0 ? "↻ " + (hero.display.updated || "—") : ""
             color: Ui.Theme.weatherHeroMutedText
             font.pixelSize: Ui.Theme.metadataSize
         }
@@ -79,7 +79,7 @@ Rectangle {
         id: candidateTemperature
         font.family: Ui.Theme.fontFamily
         font.pixelSize: hero.compact ? Ui.Theme.heroWeatherCompactSize : Ui.Theme.heroWeatherSize
-        text: Visuals.numberLabel(hero.weather.temperature_c, "°")
+        text: hero.display.temperature || "—"
     }
 
     Item {
@@ -97,7 +97,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width: hero.compact ? 72 : 112
             height: Math.min(width, parent.height)
-            conditionCode: Visuals.conditionCode(hero.weather.condition_code)
+            conditionCode: hero.weather.condition_code ?? -1
             daytime: hero.weather.is_day !== false
             description: hero.weather.condition || ""
         }
@@ -129,7 +129,7 @@ Rectangle {
                 id: currentTemperature
                 objectName: "weatherCurrentTemperature"
                 anchors.right: parent.right
-                text: Visuals.numberLabel(hero.weather.temperature_c, "°")
+                text: hero.display.temperature || "—"
                 color: Ui.Theme.weatherHeroTemperature
                 // Increase the hero only when the unchanged content region fits.
                 // Keep room for condition text and the existing high/low line.
@@ -140,7 +140,7 @@ Rectangle {
             Ui.ThemeText {
                 id: dailyRange
                 anchors.right: parent.right
-                text: "↑ " + Visuals.numberLabel(hero.weather.high_c, "°") + "   ↓ " + Visuals.numberLabel(hero.weather.low_c, "°")
+                text: "↑ " + (hero.display.high || "—") + "   ↓ " + (hero.display.low || "—")
                 color: Ui.Theme.weatherHeroSecondaryText
                 font.pixelSize: Ui.Theme.fontSizeSmall
             }
@@ -162,17 +162,17 @@ Rectangle {
                 {
                     icon: "thermometer",
                     label: qsTr("Feels like"),
-                    value: Visuals.numberLabel(hero.weather.apparent_temperature_c, "°")
+                    value: hero.display.apparent_temperature || "—"
                 },
                 {
                     icon: "raindrop",
                     label: qsTr("Rain chance"),
-                    value: Visuals.numberLabel(hero.weather.precipitation_probability, "%")
+                    value: hero.display.precipitation || "—"
                 },
                 {
                     icon: "wind",
                     label: qsTr("Wind"),
-                    value: Visuals.windCompass(hero.weather.wind_direction_degrees) + " " + Visuals.numberLabel(hero.weather.wind_speed_kmh, " km/h")
+                    value: hero.display.wind || "—"
                 }
             ]
             delegate: Item {

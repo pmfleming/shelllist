@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
-import "BatteryPresentation.js" as Presentation
 
 Column {
     id: pane
@@ -51,8 +50,8 @@ Column {
                     required property var modelData
                     objectName: "batteryHardwareAction-" + modelData.name
                     Layout.fillWidth: true
-                    icons: [Presentation.actionIcon(modelData.name)]
-                    title: Presentation.actionName(modelData.name)
+                    icons: [BatteryPresentation.lookup(BatteryPresentation.actionIcons, modelData.name, "tune")]
+                    title: BatteryPresentation.lookup(BatteryPresentation.actionNames, modelData.name, modelData.name)
                     subtitle: modelData.name === "trickle_charge" ? qsTr("Charging behaviour · not a charge limit") : (modelData.description || "")
                     checked: !!modelData.enabled
                     interactive: pane.controller.powerProfile.available && !pane.controller.actionInFlight

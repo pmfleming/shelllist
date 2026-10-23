@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
-import "BatteryPresentation.js" as Presentation
+import "BatteryFeedback.js" as Presentation
 
 Column {
     id: pane
@@ -135,19 +135,19 @@ Column {
                         id: "once", icon: "battery_charging_full", accessKey: "O",
                         label: pane.protection.charge_once_active ? qsTr("Charging to 100%") : qsTr("Charge to 100% once"),
                         enabled: !!pane.battery.plugged && !pane.protection.charge_once_active && !pane.controller.batteryOperationActive && !pane.settings.thresholdOperationActive && pane.controller.protectionSupported && !pane.controller.actionInFlight,
-                        presentation: {group: "toolbar", iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(Presentation.profileTint("power-saver")), 0.35)}
+                        presentation: {group: "toolbar", iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(BatteryPresentation.profiles["power-saver"].tint), 0.35)}
                     },
                     {
                         id: "pause", icon: pane.controller.chargingInhibited ? "play_arrow" : "pause", accessKey: "P",
                         label: pane.controller.chargingInhibited ? qsTr("Resume charging") : qsTr("Pause charging"),
                         enabled: pane.controller.inhibitionSupported && (!pane.controller.batteryOperationActive || pane.controller.chargingInhibited) && !pane.settings.thresholdOperationActive && !pane.controller.actionInFlight,
-                        presentation: {group: "toolbar", iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(Presentation.profileTint("performance")), 0.35)}
+                        presentation: {group: "toolbar", iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(BatteryPresentation.profiles.performance.tint), 0.35)}
                     },
                     {
                         id: "calibrate", icon: pane.controller.calibrating ? "cancel" : "autorenew", accessKey: "C",
                         label: pane.controller.calibrating ? qsTr("Cancel calibration") : qsTr("Calibrate battery"),
                         enabled: pane.controller.calibrationSupported && (pane.controller.calibrating || !!pane.battery.plugged) && (!pane.controller.batteryOperationActive || pane.controller.calibrating) && !pane.settings.thresholdOperationActive && !pane.controller.actionInFlight,
-                        presentation: {group: "toolbar", iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(Presentation.profileTint("balanced")), 0.35)}
+                        presentation: {group: "toolbar", iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(BatteryPresentation.profiles.balanced.tint), 0.35)}
                     }
                 ]
                 onTriggered: function (actionId) {

@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 import "BluetoothBattery.js" as BluetoothBattery
-import "BluetoothGlyphs.js" as BluetoothGlyphs
 
 Item {
     id: root

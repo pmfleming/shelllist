@@ -7,7 +7,6 @@ import "../../clipboard/ClipApi.js" as ClipApi
 import "../../bar/BarProtocol.generated.js" as Contract
 import "../../bar/UpdatePresentation.js" as Presentation
 import "../../bar/UpdateHistory.js" as History
-import "../../qml/Shelllist/Ui/MaterialIcons.js" as Icons
 
 DaemonTestCase {
     id: testCase
@@ -68,7 +67,7 @@ DaemonTestCase {
         wait(20);
     }
     function test_filtersUseSharedFieldsBehindSearchGearAndDateSearchUsesNativeKeys(): void {
-        verify(["layers", "filter_alt", "unfold_less", "unfold_more"].every(icon => Icons.name(icon) === icon));
+        verify(["layers", "filter_alt", "unfold_less", "unfold_more"].every(icon => Ui.MaterialIcons.name(icon) === icon));
         const root = fixture();
         reply(latest(), historyRuns(50));
         root.content.listItem.focusList();
@@ -470,7 +469,7 @@ DaemonTestCase {
         const outcomes = ["activated", "staged", "ready", "running", "queued", "current", "blocked", "failed", "partial", "interrupted", "available", "skipped", "approved", "completed"];
         const icons = outcomes.map(Presentation.outcomeIcon);
         compare(new Set(icons).size, outcomes.length);
-        verify(icons.every(icon => Icons.name(icon) !== ""));
+        verify(icons.every(icon => Ui.MaterialIcons.name(icon) !== ""));
         compare(Presentation.outcomeIcon("new-outcome"), "history");
         compare(Presentation.label("ai-tools-stale"), "AI tools stale check");
         compare(Presentation.label("manual-rebuild"), "Manual system rebuild");
@@ -921,7 +920,7 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         tryVerify(() => root.content.detailsNavigation.contentReady);
         compare(root.controller.detailsTab, "overview");
-        verify(root.controller.detailTabs.every(tab => Icons.name(tab.icon) === tab.icon));
+        verify(root.controller.detailTabs.every(tab => Ui.MaterialIcons.name(tab.icon) === tab.icon));
         verify(findChild(root, "updateArea:applications").modelData.value.includes("not reported"));
         verify(findChild(root, "updateArea:git").modelData.value.includes("Diverged"));
         verify(!root.content.detailsNavigation.contentCommands.some(command => command.accessibleName.startsWith("Inspect ")));

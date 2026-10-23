@@ -2,19 +2,14 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import "WeatherVisuals.js" as Visuals
 
 WeatherForecastCard {
     id: hourlyCard
-    required property date now
-    readonly property var points: Visuals.futureHours(weather.hourly || [], now.getTime())
-    readonly property real minimum: Visuals.collectionMinimum(points, "temperature_c")
-    readonly property real maximum: Visuals.collectionMaximum(points, "temperature_c")
+    readonly property var points: (weather.display?.hour_indices || []).map(index => weather.hourly[index])
     onPointsChanged: hourlyChart.requestPaint()
-    onMinimumChanged: hourlyChart.requestPaint()
-    onMaximumChanged: hourlyChart.requestPaint()
-    function hourY(value: var): real {
-        return Visuals.temperatureY(value, minimum, maximum);
+    // Pixel geometry only; native projection owns the normalized data range.
+    function hourY(point: var): real {
+        return 143 - (point.display?.temperature_fraction || 0) * 66;
     }
     height: 232
     label: qsTr("Next 12 hours")
@@ -45,7 +40,7 @@ WeatherForecastCard {
             }
 
             const vertices = points.map((point, index) => ({
-                x: index * slot + slot / 2, y: hourlyCard.hourY(point.temperature_c)
+                x: index * slot + slot / 2, y: hourlyCard.hourY(point)
             }));
             context.strokeStyle = String(Ui.Theme.accent);
             context.lineWidth = 2.5;
@@ -75,21 +70,21 @@ WeatherForecastCard {
                 y: 18
                 width: 38
                 height: 38
-                conditionCode: Visuals.conditionCode(hourPoint.modelData.condition_code)
+                conditionCode: hourPoint.modelData.condition_code ?? -1
                 daytime: hourPoint.modelData.is_day !== false
                 description: hourPoint.modelData.condition || ""
             }
             Ui.ThemeText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: hourlyCard.hourY(hourPoint.modelData.temperature_c) - 20
-                text: Visuals.numberLabel(hourPoint.modelData.temperature_c, "°")
+                y: hourlyCard.hourY(hourPoint.modelData) - 20
+                text: hourPoint.modelData.display?.temperature || "—"
                 font.pixelSize: Ui.Theme.metadataSize
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
             Ui.ThemeText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: 184
-                text: Number(hourPoint.modelData.precipitation_probability || 0) > 0 ? Visuals.numberLabel(hourPoint.modelData.precipitation_probability, "%") : ""
+                text: Number(hourPoint.modelData.precipitation_probability || 0) > 0 ? (hourPoint.modelData.display?.precipitation || "—") : ""
                 color: Ui.Theme.accent
                 font.pixelSize: Ui.Theme.metadataSize
             }
@@ -97,7 +92,7 @@ WeatherForecastCard {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 7
-                text: Visuals.weatherTime(hourPoint.modelData.time_unix_ms, hourlyCard.weather)
+                text: hourPoint.modelData.display?.time || "—"
                 color: Ui.Theme.subtleText
                 font.pixelSize: Ui.Theme.metadataSize
             }

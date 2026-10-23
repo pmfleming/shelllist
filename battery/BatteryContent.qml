@@ -96,7 +96,7 @@ Ui.PanelSurface {
             }
 
             Ui.ThemeText {
-                text: content.battery.available ? Math.round(Number(content.battery.percentage) || 0) + "%" : "Unavailable"
+                text: content.battery.available ? content.battery.display?.percentage || qsTr("Unavailable") : qsTr("Unavailable")
                 color: content.battery.critical ? Ui.Theme.danger : (content.battery.warning ? Ui.Theme.warning : Ui.Theme.accent)
                 font.pixelSize: Ui.Theme.fontSizeDisplay
                 font.weight: Ui.Theme.fontWeightBold

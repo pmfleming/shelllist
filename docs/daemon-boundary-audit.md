@@ -201,8 +201,9 @@ owns samples, operating modes, observation continuity and retention.
 
 **Target:** return bounded energy bins/totals, observed duration and a typed
 forecast with validity/target/limit information. Retain sample-to-pixel mapping,
-shared hover, line/fill painting and duration formatting in QML. Do not replace
-this with daemon-supplied pixel coordinates or keep a JS calculation fallback.
+shared hover and line/fill painting in QML. The subsequent presentation migration
+also moved unit and duration formatting to native projections. Do not replace
+pixel geometry with daemon-supplied coordinates or keep a JS calculation fallback.
 
 **Acceptance:** move the current energy/forecast policy tests to Rust and cover
 suspend/restart gaps, mode transitions, invalid samples, zero/full charge and
@@ -256,14 +257,18 @@ statistical implementations.
 
 **Implemented after audit:** timestamped approximate lunar metadata is published
 with activity, independently of weather. Weather carries optional, local-date and
-IANA-offset-validated solar-noon estimates. QML retains only labels, masking and
-sun-arc progress; missing metadata remains unavailable. Original finding follows.
+IANA-offset-validated solar-noon estimates. The subsequent presentation migration
+also moved sun/daylight progress, durations, units and clock formatting into Rust.
+`activity/WeatherVisuals.qml` now holds readonly asset/colour maps; the JS/TS module
+is removed. QML retains fixed label tables and pixel/paint geometry, including moon
+masking; missing metadata remains unavailable. Original finding follows.
 
-`activity/WeatherVisuals.js::moonPhase` derives lunar phase/illumination from an
+Historical evidence (removed): `activity/WeatherVisuals.js::moonPhase` derived lunar phase/illumination from an
 epoch and fixed period. `TimeWeatherTimePane.qml` estimates solar noon from the
 midpoint of sunrise/sunset. These are data estimates rather than pixel geometry.
 Move their values and approximation/availability semantics to the activity/weather
-payload. Keep moon masking, sun-arc progress and localized labels in QML.
+payload. Keep moon masking and localized fixed labels in QML, not astronomical
+estimates or measurement formatting. See the [presentation migration](rust-frontend-boundary.md#presentation-data-migration).
 
 ## Corrections made in this audit
 
@@ -275,10 +280,11 @@ payload. Keep moon masking, sun-arc progress and localized labels in QML.
   removed the frontend module and fallback text. QML renders native copy only.
 - Regression tests cover future daemon-classified states and missing/malformed
   recommendations as well as quiet successful/lifecycle transitions.
-- `tests/check-sibling-boundary.sh` now checks the candidate `daemon-framework`,
-  verifies app-daemon's vendored framework matches it, and avoids writing release
-  locks while testing. Previously it could validate candidates against an older
-  bridge and miss a coordinated-deployment mismatch.
+- `tests/check-sibling-boundary.sh` now delegates to the framework's sibling-aware
+  local build graph, rather than comparing vendored copies or falling back to
+  historical locks. It avoids writing release locks while testing. Previously it
+  could validate candidates against an older bridge and miss a coordinated
+  deployment mismatch.
 - Updated boundary guidance so it does not describe domain policy as belonging
   in frontend controllers or in the generic bridge.
 

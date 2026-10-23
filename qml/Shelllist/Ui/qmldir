@@ -9,7 +9,7 @@ InlineStatus 1.0 InlineStatus.qml
 singleton Theme 1.0 Theme.qml
 MaterialPalette 1.0 MaterialPalette.qml
 singleton ThemeDefaults 1.0 ThemeDefaults.qml
-MaterialIcons 1.0 MaterialIcons.js
+singleton MaterialIcons 1.0 MaterialIcons.qml
 ThemeText 1.0 ThemeText.qml
 ActionControl 1.0 ActionControl.qml
 PointerActionControl 1.0 PointerActionControl.qml

@@ -1,9 +1,5 @@
 [
   {
-    "source": "typescript/activity/WeatherVisuals.ts",
-    "output": "activity/WeatherVisuals.js"
-  },
-  {
     "source": "typescript/ui/IpValidation.ts",
     "output": "qml/Shelllist/Ui/IpValidation.js"
   },

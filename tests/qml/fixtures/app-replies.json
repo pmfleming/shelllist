@@ -6,6 +6,7 @@
         "energy_confidence": "",
         "energy_source": "",
         "since_ms": 0,
+        "total_energy_label": "",
         "total_energy_mwh": 0.0,
         "until_ms": 0
       }

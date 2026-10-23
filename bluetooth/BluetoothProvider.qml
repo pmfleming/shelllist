@@ -1,7 +1,6 @@
 import Shelllist.Core as Core
 import "BluetoothBattery.js" as BluetoothBattery
 import "BluetoothFlow.js" as BluetoothFlow
-import "BluetoothGlyphs.js" as BluetoothGlyphs
 import "BluetoothNoiseControl.js" as NoiseControl
 
 Core.Provider {

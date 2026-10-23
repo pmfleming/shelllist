@@ -1,4 +1,5 @@
 module Shelllist.Activity
+singleton WeatherVisuals 1.0 WeatherVisuals.qml
 internal ActivityAgendaPane ActivityAgendaPane.qml
 internal ActivityGlancePane ActivityGlancePane.qml
 internal GlanceScheduleCard GlanceScheduleCard.qml

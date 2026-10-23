@@ -3,7 +3,7 @@ import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "BatteryApi.js" as BatteryApi
 import "BatteryFlow.js" as Flow
-import "BatteryPresentation.js" as Presentation
+import "BatteryFeedback.js" as Presentation
 
 Ui.ChooserController {
     id: controller
@@ -175,7 +175,7 @@ Ui.ChooserController {
         return {
             value: profile.name,
             label: labels[profile.name] || profile.name,
-            icon: Presentation.profileIcon(profile.name),
+            icon: BatteryPresentation.lookup(BatteryPresentation.profiles, profile.name, {}).icon || "",
             iconColor: Ui.Theme.batteryControlColors[profile.name] || Ui.Theme.text,
             selectedIconColor: Ui.Theme.batteryControlColors[profile.name] || Ui.Theme.selectedText
         };
@@ -184,7 +184,7 @@ Ui.ChooserController {
         return {
             value: name,
             label: Presentation.profileName(name),
-            icon: Presentation.profileIcon(name),
+            icon: BatteryPresentation.lookup(BatteryPresentation.profiles, name, {}).icon || "",
             enabled: powerProfile.available && profileOptions.some(function (option) {
                 return option.value === name;
             })

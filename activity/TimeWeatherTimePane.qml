@@ -2,23 +2,19 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import "WeatherVisuals.js" as Visuals
 
 Ui.DetailFlickable {
     id: pane
 
     required property var city
-    required property date now
 
     readonly property var weather: city.weather || ({})
-    readonly property bool clockAvailable: Visuals.hasLocationClock(city)
+    readonly property bool clockAvailable: WeatherVisuals.hasLocationClock(city)
+    readonly property var display: weather.display || ({})
     readonly property int offsetSeconds: clockAvailable ? city.utc_offset_seconds : 0
-    readonly property double sunrise: Number(weather.sunrise_unix_ms || 0)
-    readonly property double sunset: Number(weather.sunset_unix_ms || 0)
-    readonly property bool hasSunTimes: sunrise > 0 && sunset > sunrise
+    readonly property bool hasSunTimes: display.sun_available === true
     readonly property var solarNoonMetadata: weather.solar_noon || null
-    readonly property double solarNoon: solarNoonMetadata ? Number(solarNoonMetadata.unix_ms) : 0
-    readonly property real sunProgress: hasSunTimes ? Math.max(0, Math.min(1, (now.getTime() - sunrise) / (sunset - sunrise))) : 0
+    readonly property real sunProgress: display.sun_progress || 0
     readonly property var moon: city.lunar || null
 
     readonly property var moonNames: ({
@@ -33,11 +29,7 @@ Ui.DetailFlickable {
         })
 
     function moonName(phase: string): string {
-        return moonNames[phase] || qsTr("Unavailable");
-    }
-
-    function time(value: var): string {
-        return clockAvailable && Number(value || 0) > 0 ? Visuals.localTime(value, offsetSeconds) : "—";
+        return Object.prototype.hasOwnProperty.call(moonNames, phase) ? moonNames[phase] : qsTr("Unavailable");
     }
 
     onSunProgressChanged: sunCanvas.requestPaint()
@@ -93,17 +85,17 @@ Ui.DetailFlickable {
 
             Ui.ThemeText {
                 objectName: "locationClockTime"
-                text: pane.clockAvailable ? Visuals.localTime(pane.now.getTime(), pane.offsetSeconds) : "—"
+                text: pane.clockAvailable ? pane.city.clock_display.time : "—"
                 font.pixelSize: Ui.Theme.heroClockSize
             }
             Ui.ThemeText {
                 objectName: "locationClockDate"
-                text: pane.clockAvailable ? Visuals.localDate(pane.now.getTime(), pane.offsetSeconds) : "—"
+                text: pane.clockAvailable ? (pane.city.clock_display.date || "—") : "—"
                 color: Ui.Theme.mutedText
             }
             Ui.ThemeText {
                 objectName: "locationClockZone"
-                text: pane.clockAvailable ? (pane.city.abbreviation ? pane.city.abbreviation + "  ·  " : "") + Visuals.utcOffset(pane.offsetSeconds) : qsTr("Timezone unavailable")
+                text: pane.clockAvailable ? (pane.city.abbreviation ? pane.city.abbreviation + "  ·  " : "") + (pane.city.clock_display.offset || "") : qsTr("Timezone unavailable")
                 color: Ui.Theme.accent
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 font.weight: Ui.Theme.fontWeightDemiBold
@@ -123,8 +115,8 @@ Ui.DetailFlickable {
                     {
                         daylight: true,
                         label: "Day length",
-                        value: pane.hasSunTimes ? Visuals.duration((pane.sunset - pane.sunrise) / 1000) : "—",
-                        fraction: Visuals.daylightFraction(pane.sunrise, pane.sunset),
+                        value: pane.display.daylight || "—",
+                        fraction: pane.display.daylight_fraction || 0,
                         available: pane.hasSunTimes,
                         detail: pane.hasSunTimes ? "of 24 hours" : "Sun times unavailable"
                     },
@@ -256,17 +248,17 @@ Ui.DetailFlickable {
                 model: [
                     {
                         label: "Rise",
-                        value: pane.time(pane.sunrise),
+                        value: pane.display.sunrise || "—",
                         icon: "󰖜"
                     },
                     {
                         label: qsTr("Approx. solar noon"),
-                        value: pane.solarNoonMetadata ? Visuals.localTime(pane.solarNoon, pane.solarNoonMetadata.utc_offset_seconds) : "—",
+                        value: pane.display.solar_noon || "—",
                         icon: "󰖙"
                     },
                     {
                         label: "Set",
-                        value: pane.time(pane.sunset),
+                        value: pane.display.sunset || "—",
                         icon: "󰖛"
                     }
                 ]
@@ -327,7 +319,7 @@ Ui.DetailFlickable {
             anchors.top: parent.top
             anchors.rightMargin: Ui.Theme.spacingMd
             anchors.topMargin: 37
-            text: pane.clockAvailable ? Visuals.utcOffset(pane.offsetSeconds) : qsTr("Timezone unavailable")
+            text: pane.clockAvailable ? (pane.city.clock_display.offset || "") : qsTr("Timezone unavailable")
             color: Ui.Theme.accent
             font.weight: Ui.Theme.fontWeightDemiBold
         }
@@ -343,7 +335,8 @@ Ui.DetailFlickable {
             anchors.rightMargin: Ui.Theme.spacingMd
             anchors.topMargin: 74
             anchors.bottomMargin: Ui.Theme.spacingMd
-            now: pane.now
+            clockLabel: pane.city.clock_display?.time || "—"
+            offsetLabel: pane.city.clock_display?.offset || ""
             offsetSeconds: pane.offsetSeconds
             regionIds: pane.city.timezone_region_ids || []
             latitude: Number(pane.city.latitude || 0)

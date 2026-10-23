@@ -1,5 +1,17 @@
 .pragma library
 
+// Existing draft admission guards; these are not presentation/unit formatting.
+function thresholdRangeValid(startPercent, endPercent) {
+    const start = Number(startPercent);
+    const end = Number(endPercent);
+    return Number.isInteger(start) && Number.isInteger(end) && start >= 0 && start < end && end <= 100;
+}
+function alertRangeValid(warningPercent, criticalPercent) {
+    const warning = Number(warningPercent);
+    const critical = Number(criticalPercent);
+    return Number.isInteger(warning) && Number.isInteger(critical) && critical >= 0 && critical <= warning && warning <= 100;
+}
+
 function selection(state, requestedIndex, requestedId) {
     const battery = state || ({});
     const devices = Array.isArray(battery.devices) ? battery.devices : [];

@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
-import "BatteryPresentation.js" as Presentation
+import "BatteryFeedback.js" as Presentation
 
 Ui.DetailColumnCard {
     id: pane

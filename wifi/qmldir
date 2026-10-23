@@ -1,4 +1,5 @@
 module Shelllist.Wifi
+singleton WifiIcons 1.0 WifiIcons.qml
 WifiBackend 1.0 WifiBackend.qml
 WifiProvider 1.0 WifiProvider.qml
 internal ShareAvailabilityController ShareAvailabilityController.qml

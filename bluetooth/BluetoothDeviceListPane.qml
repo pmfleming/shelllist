@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import "BluetoothGlyphs.js" as BluetoothGlyphs
 
 Ui.ChooserListPane {
     id: pane

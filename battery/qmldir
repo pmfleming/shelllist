@@ -1,4 +1,5 @@
 module Shelllist.Battery
+singleton BatteryPresentation 1.0 BatteryPresentation.qml
 internal BatteryInteractiveOperations BatteryInteractiveOperations.qml
 internal BatterySettings BatterySettings.qml
 internal BatteryIconValue BatteryIconValue.qml

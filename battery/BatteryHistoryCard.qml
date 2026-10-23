@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "BatteryHistory.js" as History
-import "BatteryPresentation.js" as Presentation
 
 Rectangle {
     id: card
@@ -68,7 +67,7 @@ Rectangle {
                     objectName: "batteryForecastTarget"
                     Layout.fillWidth: true
                     visible: card.battery.available
-                    text: card.forecast.seconds > 0 ? "~" + Presentation.duration(card.forecast.seconds) + " " + card.estimateText : card.estimateText
+                    text: card.forecast.seconds > 0 ? "~" + (card.forecast.duration_label || qsTr("Estimating")) + " " + card.estimateText : card.estimateText
                     color: Ui.Theme.mutedText
                     font.pixelSize: Ui.Theme.metadataSize
                     wrapMode: Text.WordWrap
@@ -81,7 +80,7 @@ Rectangle {
 
                 Ui.ThemeText {
                     objectName: "batteryHistoryPower"
-                    text: card.powerAvailable ? card.battery.power_watts.toFixed(1) + " W" : "— W"
+                    text: card.powerAvailable ? (card.battery.display?.power || "— W") : "— W"
                     color: !card.powerAvailable || card.battery.power_watts === 0 ? Ui.Theme.mutedText : card.battery.charging ? Ui.Theme.batteryCharging : Ui.Theme.batteryDischarging
                     font.pixelSize: Ui.Theme.fontSizeLabel
                     font.weight: Ui.Theme.fontWeightDemiBold
@@ -97,7 +96,7 @@ Rectangle {
         }
 
         Ui.FeedbackSource {
-            text: card.exceptionalState ? Presentation.stateLabel(card.battery) : ""
+            text: !card.battery.available ? qsTr("Unavailable") : card.exceptionalState ? BatteryPresentation.lookup(BatteryPresentation.stateLabels, card.battery.state || "", qsTr("Unavailable")) : ""
             summaryText: text
         }
         Ui.FormField {
@@ -134,6 +133,7 @@ Rectangle {
             chartData: card.history.chart || ({})
             forecast: card.forecast
             currentPercentage: card.battery.available && History.nonnegative(card.battery.percentage) && card.battery.percentage <= 100 ? card.battery.percentage : -1
+            currentPercentageLabel: card.battery.display?.percentage || qsTr("Unavailable")
             lineColor: card.battery.warning ? Ui.Theme.warning : Ui.Theme.batteryCharge
         }
 

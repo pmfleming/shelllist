@@ -1,32 +1,19 @@
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
-import "WeatherVisuals.js" as Visuals
 
 Ui.ResultRow {
     id: row
 
     required property var resultData
-    required property double nowMs
     readonly property var city: resultData.payload || ({})
-    readonly property bool clockAvailable: Visuals.hasLocationClock(city)
+    readonly property bool clockAvailable: WeatherVisuals.hasLocationClock(city)
+    readonly property var display: weather.display || ({})
     readonly property var weather: city.weather || ({})
     readonly property bool hasWeather: !!city.has_weather && !!weather.available
 
     objectName: "timeWeatherLocation::" + String(city.id || "")
-    accessibleName: city.label + (city.home ? qsTr(". Home") : "") + (city.current && !city.home ? qsTr(". Current location") : "") + ". " + Visuals.locationSubtitle(city) + ". " + (hasWeather ? weather.condition + ", " + temperature(weather.temperature_c) + ", " + percentage(weather.precipitation_probability) + " chance of rain" : "No weather") + ". " + localTime()
-
-    function temperature(value: var): string {
-        const number = Number(value);
-        return Number.isFinite(number) ? Math.round(number) + "°" : "—";
-    }
-    function percentage(value: var): string {
-        const number = Number(value);
-        return Number.isFinite(number) ? Math.round(number) + "%" : "—";
-    }
-    function localTime(): string {
-        return clockAvailable ? Visuals.localTime(nowMs, city.utc_offset_seconds) : "—";
-    }
+    accessibleName: city.label + (city.home ? qsTr(". Home") : "") + (city.current && !city.home ? qsTr(". Current location") : "") + ". " + WeatherVisuals.locationSubtitle(city) + ". " + (hasWeather ? weather.condition + ", " + (display.temperature || "—") + ", " + (display.precipitation || "—") + " chance of rain" : "No weather") + ". " + (city.clock_display?.time || "—")
 
     leadingIcon: city.home ? "home" : city.current ? "my_location" : "location_on"
     leadingIconColor: city.home ? Ui.Theme.accent : Ui.Theme.mutedText
@@ -34,7 +21,7 @@ Ui.ResultRow {
     Ui.ResultLabel {
         Layout.fillWidth: true
         title: row.city.label || "Location"
-        subtitle: Visuals.locationSubtitle(row.city)
+        subtitle: WeatherVisuals.locationSubtitle(row.city)
         titleWeight: row.city.home ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
         uiScale: row.uiScale
     }
@@ -60,7 +47,7 @@ Ui.ResultRow {
                     anchors.centerIn: parent
                     width: row.scaled(28)
                     height: width
-                    conditionCode: Number(row.weather.condition_code || 0)
+                    conditionCode: row.weather.condition_code ?? -1
                     daytime: row.weather.is_day !== false
                     description: row.weather.condition || ""
                 }
@@ -81,7 +68,7 @@ Ui.ResultRow {
                 }
                 Ui.ThemeText {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: row.percentage(row.weather.precipitation_probability)
+                    text: row.display.precipitation || "—"
                     color: Ui.Theme.mutedText
                     font.pixelSize: Ui.Theme.metadataSize
                 }
@@ -107,7 +94,7 @@ Ui.ResultRow {
                 id: currentTemperature
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: row.temperature(row.weather.temperature_c)
+                text: row.display.temperature || "—"
                 font.pixelSize: row.scaled(Ui.Theme.fontSizeHeading)
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
@@ -115,7 +102,7 @@ Ui.ResultRow {
                 id: temperatureRange
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: row.temperature(row.weather.high_c) + " " + row.temperature(row.weather.low_c)
+                text: (row.display.high || "—") + " " + (row.display.low || "—")
                 color: Ui.Theme.mutedText
                 font.pixelSize: Ui.Theme.metadataSize
             }
@@ -130,14 +117,14 @@ Ui.ResultRow {
         Ui.ThemeText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            text: row.localTime()
+            text: row.city.clock_display?.time || "—"
             font.pixelSize: row.scaled(Ui.Theme.fontSizeHeading)
             font.weight: Ui.Theme.fontWeightDemiBold
         }
         Ui.ThemeText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            text: row.clockAvailable ? row.city.abbreviation || Visuals.utcOffset(row.city.utc_offset_seconds) : "—"
+            text: row.clockAvailable ? row.city.abbreviation || row.city.clock_display?.offset : "—"
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.metadataSize
         }
