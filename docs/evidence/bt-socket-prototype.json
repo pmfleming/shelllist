@@ -1,0 +1,139 @@
+{
+  "bridge": {
+    "n": 2000,
+    "p50_ns": 522164,
+    "p99_ns": 953326
+  },
+  "bridge_executable": "/home/laufan/Projects/bt-daemon/target/debug/bt-daemon",
+  "driver_debug_assertions": true,
+  "memory_bytes": {
+    "bridge_process": {
+      "Private_Clean": 17489920,
+      "Private_Dirty": 1740800,
+      "Pss": 19447808,
+      "Rss": 22413312
+    },
+    "harness_after_both_paths": {
+      "Private_Clean": 0,
+      "Private_Dirty": 16060416,
+      "Pss": 16282624,
+      "Rss": 19308544
+    },
+    "harness_before_clients": {
+      "Private_Clean": 0,
+      "Private_Dirty": 13873152,
+      "Pss": 14115840,
+      "Rss": 17121280
+    }
+  },
+  "memory_scope": "sequential Quickshell probe process groups after 50 snapshot replies with one fake adapter; excludes daemon harness; summed RSS is not unique physical memory",
+  "quickshell": {
+    "blocked": {
+      "passed": true,
+      "server_completed": true,
+      "stderr": "",
+      "stdout": "  INFO: Launching config: \"/home/laufan/Projects/shelllist/tests/e2e/unix-jsonl.qml\"\n  INFO: Shell ID: \"f32889845d020ffc2909ae8dd75aceff\" Path ID \"f32889845d020ffc2909ae8dd75aceff\"\n  INFO: Saving logs to \"/tmp/nix-shell.uKfDso/.tmp0KF94R/quickshell/by-id/rc2qnngdnt/log.qslog\"\n  INFO qml: shelllist transport starting daemon=bt-daemon\n  INFO qml: shelllist transport started daemon=bt-daemon socket=true\n  INFO: Configuration Loaded\n  WARN qml: shelllist transport retry scheduled daemon=bt-daemon delay_ms=100 attempt=1\n  INFO qml: shelllist transport starting daemon=bt-daemon\n  INFO qml: shelllist transport started daemon=bt-daemon socket=true\n DEBUG qml: SOCKET_PROBE_PASS blocked\n"
+    },
+    "bluetooth": {
+      "passed": true,
+      "stderr": "",
+      "stdout": "  INFO: Launching config: \"/home/laufan/Projects/shelllist/tests/e2e/unix-jsonl.qml\"\n  INFO: Shell ID: \"f32889845d020ffc2909ae8dd75aceff\" Path ID \"f32889845d020ffc2909ae8dd75aceff\"\n  INFO: Saving logs to \"/tmp/nix-shell.uKfDso/.tmp0KF94R/quickshell/by-id/vc2qongdnt/log.qslog\"\n  INFO qml: shelllist transport starting daemon=bt-daemon\n  INFO qml: shelllist transport started daemon=bt-daemon socket=true\n  INFO: Configuration Loaded\n DEBUG qml: SOCKET_PROBE_PASS bluetooth\n"
+    },
+    "fragmented": {
+      "passed": true,
+      "server_completed": true,
+      "stderr": "",
+      "stdout": "  INFO: Launching config: \"/home/laufan/Projects/shelllist/tests/e2e/unix-jsonl.qml\"\n  INFO: Shell ID: \"f32889845d020ffc2909ae8dd75aceff\" Path ID \"f32889845d020ffc2909ae8dd75aceff\"\n  INFO: Saving logs to \"/tmp/nix-shell.uKfDso/.tmp0KF94R/quickshell/by-id/kc2qmngdnt/log.qslog\"\n  INFO qml: shelllist transport starting daemon=bt-daemon\n  INFO qml: shelllist transport started daemon=bt-daemon socket=true\n  INFO: Configuration Loaded\n DEBUG qml: SOCKET_PROBE_PASS fragmented\n"
+    },
+    "large": {
+      "passed": true,
+      "server_completed": true,
+      "stderr": "",
+      "stdout": "  INFO: Launching config: \"/home/laufan/Projects/shelllist/tests/e2e/unix-jsonl.qml\"\n  INFO: Shell ID: \"f32889845d020ffc2909ae8dd75aceff\" Path ID \"f32889845d020ffc2909ae8dd75aceff\"\n  INFO: Saving logs to \"/tmp/nix-shell.uKfDso/.tmp0KF94R/quickshell/by-id/oc2qnngdnt/log.qslog\"\n  INFO qml: shelllist transport starting daemon=bt-daemon\n  INFO qml: shelllist transport started daemon=bt-daemon socket=true\n  INFO: Configuration Loaded\n DEBUG qml: SOCKET_PROBE_PASS large\n"
+    },
+    "memory-bridge": {
+      "passed": true,
+      "process_group": {
+        "processes": [
+          {
+            "bytes": {
+              "Private_Clean": 536576,
+              "Private_Dirty": 9424896,
+              "Pss": 31262720,
+              "Rss": 58372096
+            },
+            "comm": ".quickshell-wra",
+            "pid": 1216122
+          },
+          {
+            "bytes": {
+              "Private_Clean": 17489920,
+              "Private_Dirty": 1736704,
+              "Pss": 19433472,
+              "Rss": 22409216
+            },
+            "comm": "bt-daemon",
+            "pid": 1216125
+          }
+        ],
+        "total_bytes": {
+          "Private_Clean": 18026496,
+          "Private_Dirty": 11161600,
+          "Pss": 50696192,
+          "Rss": 80781312
+        }
+      },
+      "stderr": "",
+      "stdout": "  INFO: Launching config: \"/home/laufan/Projects/shelllist/tests/e2e/unix-jsonl.qml\"\n  INFO: Shell ID: \"f32889845d020ffc2909ae8dd75aceff\" Path ID \"f32889845d020ffc2909ae8dd75aceff\"\n  INFO: Saving logs to \"/tmp/nix-shell.uKfDso/.tmp0KF94R/quickshell/by-id/6d2qongdnt/log.qslog\"\n  INFO qml: shelllist transport starting daemon=bt-daemon\n  INFO: Configuration Loaded\n  INFO qml: shelllist transport started daemon=bt-daemon socket=false\n DEBUG qml: SOCKET_PROBE_PASS memory-bridge\n"
+    },
+    "memory-direct": {
+      "passed": true,
+      "process_group": {
+        "processes": [
+          {
+            "bytes": {
+              "Private_Clean": 536576,
+              "Private_Dirty": 9412608,
+              "Pss": 31261696,
+              "Rss": 58359808
+            },
+            "comm": ".quickshell-wra",
+            "pid": 1216117
+          }
+        ],
+        "total_bytes": {
+          "Private_Clean": 536576,
+          "Private_Dirty": 9412608,
+          "Pss": 31261696,
+          "Rss": 58359808
+        }
+      },
+      "stderr": "",
+      "stdout": "  INFO: Launching config: \"/home/laufan/Projects/shelllist/tests/e2e/unix-jsonl.qml\"\n  INFO: Shell ID: \"f32889845d020ffc2909ae8dd75aceff\" Path ID \"f32889845d020ffc2909ae8dd75aceff\"\n  INFO: Saving logs to \"/tmp/nix-shell.uKfDso/.tmp0KF94R/quickshell/by-id/1d2qongdnt/log.qslog\"\n  INFO qml: shelllist transport starting daemon=bt-daemon\n  INFO qml: shelllist transport started daemon=bt-daemon socket=true\n  INFO: Configuration Loaded\n DEBUG qml: SOCKET_PROBE_PASS memory-direct\n"
+    },
+    "restart": {
+      "passed": true,
+      "service_recreated": true,
+      "stderr": "",
+      "stdout": "  INFO: Launching config: \"/home/laufan/Projects/shelllist/tests/e2e/unix-jsonl.qml\"\n  INFO: Shell ID: \"f32889845d020ffc2909ae8dd75aceff\" Path ID \"f32889845d020ffc2909ae8dd75aceff\"\n  INFO: Saving logs to \"/tmp/nix-shell.uKfDso/.tmp0KF94R/quickshell/by-id/yc2qongdnt/log.qslog\"\n  INFO qml: shelllist transport starting daemon=bt-daemon\n  INFO qml: shelllist transport started daemon=bt-daemon socket=true\n  INFO: Configuration Loaded\n  WARN quickshell.io.socket: Socket error for Socket(0x7fffefd7f940) QLocalSocket::PeerClosedError\n  WARN quickshell.io.socket: Socket error for Socket(0x7fffefd800c0, name = \"daemonNativeSocket\") QLocalSocket::PeerClosedError\n ERROR qml: shelllist transport exited daemon=bt-daemon detail=Unix socket error 1\n  WARN qml: shelllist transport retry scheduled daemon=bt-daemon delay_ms=100 attempt=1\n  INFO qml: shelllist transport starting daemon=bt-daemon\n  INFO qml: shelllist transport started daemon=bt-daemon socket=true\n DEBUG qml: SOCKET_PROBE_PASS restart\n"
+    }
+  },
+  "quickshell_executable": "/nix/store/nm6wrf4gprrxlri8nr16kcmixpkk8hrf-quickshell-0.3.0/bin/quickshell",
+  "quickshell_version": "Quickshell 0.3.0 (revision tag-v0.3.0, distributed by Nixpkgs)\n",
+  "restart_scope": "service object, listener and D-Bus connection recreated inside the same test process; not an OS-process kill or live service restart",
+  "scope": "isolated fake Bluetooth backend; real shared dispatcher, socket, D-Bus and bridge; sequential cached empty-snapshot requests; latency uses same Rust driver, not UI-frame latency",
+  "sha256": {
+    "bridge_binary": "1a66611cd38320c6ce5aaae0764db11f931a10d185f809c814b51e9bb9136fc7",
+    "qml_probe": "764a4b3307d7495424fd2a24a552b95f0154c7e5ba01990d310a253561e714ec",
+    "quickshell_launcher": "5ff1892ae380a2630a79e1caf3cfbc111309bfc878cd79415aeaeab7d020c980",
+    "shared_client": "3d97dc104c0503e0f3038f86ea0aca1636bb4c54fb4f1fe819e057695eb6fdeb",
+    "socket_adapter": "9a19677578d487fba4e535dccc895d9c48ef0ea0ea686bba2b42f6d83a15eb72",
+    "test_executable": "551f0803e016a20ba1bcea65b01d008f7d7a5303eac7af9eafc4888cd391815a"
+  },
+  "socket": {
+    "n": 2000,
+    "p50_ns": 185339,
+    "p99_ns": 307710
+  },
+  "warmup_per_path": 100
+}

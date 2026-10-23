@@ -22,6 +22,17 @@ The old jq/shell contract gates are removed, not retained as weaker parallel che
 regression vectors against actual QML objects in Qt; Nix's full QML suite includes
 them. Neither check starts a real daemon or changes hardware.
 
+## Native Unix socket prototype
+
+[`docs/unix-socket-migration.md`](../docs/unix-socket-migration.md) records the
+explicit Rust-driven Quickshell experiment and checked evidence. The Bluetooth
+ignored test launches `tests/e2e/unix-jsonl.qml` with real Socket/Process plugins,
+a private bus/runtime and an in-memory producer. It covers native UTF-8/large-line
+parsing, bounded blocked writes, no replay, service recreation and comparative
+RPC latency/process-group memory. Do not launch it against live services.
+`tests/qml/tst_daemon_socket.qml` separately owns deterministic adapter regressions;
+its mock transport is not native backpressure or performance evidence.
+
 ## Panel standardization acceptance
 
 `docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,

@@ -26,6 +26,37 @@ TestCase {
             }
         }
     }
+    Component {
+        id: eagerFactory
+        Io.JsonlDaemonClient {
+            active: true
+            daemonName: "bt-daemon"
+            useSocket: true
+            socketPath: "/isolated/bt-daemon.sock"
+            streams: []
+            automaticSubscribe: false
+            recoverProtocolErrors: true
+        }
+    }
+    function test_declarativeStartupWaitsForAllBindings() {
+        const client = createTemporaryObject(eagerFactory, testCase) as Io.JsonlDaemonClient;
+        verify(client !== null);
+        verify(client.componentReady);
+        verify(client.ready);
+        compare(findChild(client, "daemonBridgeProcess").commands.length, 0);
+    }
+    function test_recoveryDestroysSocketBeforeBackoffWithoutReplaying() {
+        const f = fixture();
+        f.client.initialRetryInterval = 1;
+        f.client.maximumRetryInterval = 1;
+        f.client.call("effect", "effect.once", {});
+        f.client.recover("injected invalid generation");
+        verify(!f.transport.running);
+        compare(f.transport.pendingBytes, 0);
+        tryCompare(f.client, "ready", true);
+        compare(f.transport.endpoint.writes.length, 0);
+        compare(f.client.failures, 1);
+    }
     function fixture() {
         const client = createTemporaryObject(factory, testCase);
         verify(client !== null);
@@ -58,11 +89,13 @@ TestCase {
         f.transport.maximumCalls = 1;
         f.transport.maximumControls = 1;
         f.client.call("effect", "effect.once", {});
+        f.transport.maximumPendingBytes = f.transport.pendingBytes;
         let rejected = false;
         try { f.client.call("overflow", "effect.once", {}); } catch (error) { rejected = true; }
         verify(rejected);
         f.client.cancel("cancel", "owned-operation");
         compare(f.transport.endpoint.writes.length, 2);
+        verify(f.transport.pendingControlBytes > 0, "controls retain bytes even when call budget is full");
         rejected = false;
         try { f.client.cancel("cancel-two", "owned-operation"); } catch (error) { rejected = true; }
         verify(rejected);
@@ -72,6 +105,7 @@ TestCase {
         tryCompare(f.client, "failures", 1);
         tryCompare(f.client, "ready", true);
         compare(f.transport.pendingBytes, 0);
+        compare(f.transport.pendingControlBytes, 0);
         compare(f.transport.endpoint.writes.length, 0, "failed-generation effects are not replayed");
     }
     function test_closeDrainsRepliesAndReopenQueuesForFreshGeneration() {
@@ -91,6 +125,28 @@ TestCase {
         compare(f.client.failures, 0);
         compare(f.transport.endpoint.writes.length, 1);
         compare(JSON.parse(f.transport.endpoint.writes[0]).id, "new");
+    }
+    function test_controlByteBudgetIsBoundedSeparately() {
+        const f = fixture();
+        f.transport.maximumPendingControlBytes = 1;
+        let rejected = false;
+        try { f.client.cancel("cancel", "operation"); } catch (error) { rejected = true; }
+        verify(rejected);
+        compare(f.transport.pendingControlBytes, 0);
+        compare(f.transport.endpoint.writes.length, 0);
+        f.client.call("read", "bluetooth.snapshot", {});
+        compare(f.transport.pendingCalls, 1);
+    }
+    function test_malformedCorrelationCannotReleaseCreditAndKeepSocketOpen() {
+        const ids = [["effect"], {}, null, 1, ""];
+        for (const id of ids) {
+            const f = fixture();
+            f.client.recoverProtocolErrors = false;
+            f.client.call("effect", "effect.once", {});
+            f.transport.endpoint.deliver(JSON.stringify({kind: "response", id: id, ok: true, response: {ok: true}}));
+            verify(!f.transport.running);
+            tryCompare(f.client, "failures", 1);
+        }
     }
     function test_byteBudgetMalformedReplyAndDeadlineFailClosed() {
         const f = fixture();

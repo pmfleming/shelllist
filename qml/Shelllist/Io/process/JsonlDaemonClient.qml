@@ -10,6 +10,7 @@ Item {
     required property var streams
     required property bool active
     property bool ready
+    property bool componentReady: false
     property bool automaticSubscribe: true
     required property bool recoverProtocolErrors
     property var queuedLines: []
@@ -34,7 +35,7 @@ Item {
     signal transportFailed(string message)
 
     function start() {
-        if (!active || lifecycle !== "stopped" || transportBackend.running || retryTimer.running)
+        if (!componentReady || !active || lifecycle !== "stopped" || transportBackend.running || retryTimer.running)
             return;
         lifecycle = "starting";
         transportBackend.stdinEnabled = true;
@@ -59,7 +60,7 @@ Item {
         queuedLines = [];
     }
 
-    function stop() {
+    function stop(failureMessage) {
         retryTimer.stop();
         clearQueue();
         if (lifecycle === "stopped")
@@ -71,7 +72,10 @@ Item {
         // subscriptions/operations. Keep delivering those replies, but queue
         // new requests for a replacement rather than writing to closing stdin.
         // Only failed generations fence stdout in recover().
-        transportBackend.stdinEnabled = false;
+        if (useSocket && failureMessage)
+            socketTransport.abort(failureMessage);
+        else
+            transportBackend.stdinEnabled = false;
     }
 
     function call(id, method, params, route) {
@@ -174,7 +178,7 @@ Item {
         retiring = true;
         transportFailed(message);
         try {
-            stop();
+            stop(message);
         } finally {
             ready = false;
             scheduleRetry();
@@ -275,7 +279,10 @@ Item {
         }
     }
 
-    Component.onCompleted: start()
+    Component.onCompleted: {
+        componentReady = true;
+        start();
+    }
     onActiveChanged: {
         if (active) {
             start();

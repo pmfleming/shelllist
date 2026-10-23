@@ -14,9 +14,11 @@ QtObject {
     property var endpoint: null
     property var pending: Object.create(null)
     property int pendingBytes: 0
+    property int pendingControlBytes: 0
     property int pendingCalls: 0
     property int pendingControls: 0
     property int maximumPendingBytes: 4 * 1024 * 1024
+    property int maximumPendingControlBytes: 64 * 1024
     property int maximumCalls: 64
     property int maximumControls: 16
     property int acknowledgementTimeout: 35000
@@ -53,10 +55,12 @@ QtObject {
         record.timer.stop();
         record.timer.destroy();
         pendingBytes -= record.bytes;
-        if (record.control)
+        if (record.control) {
+            pendingControlBytes -= record.bytes;
             pendingControls--;
-        else
+        } else {
             pendingCalls--;
+        }
         delete pending[id];
     }
 
@@ -93,21 +97,25 @@ QtObject {
         const message = JSON.parse(line);
         if (!message.id || message.id === shutdownId || pending[message.id])
             throw new Error("invalid or duplicate pending request id; request was not sent");
-        const control = message.op === "cancel" || message.op === "release";
+        const control = message.op === "subscribe" || message.op === "cancel" || message.op === "release";
         // UTF-8 needs at most three bytes per UTF-16 code unit. Reserving until
         // acknowledgement bounds Qt's otherwise opaque write buffer, including
         // bytes already in the kernel. No partial-write guessing or replay.
         const bytes = line.length * 3;
-        if (pendingBytes + bytes > maximumPendingBytes
+        const laneBytes = control ? pendingControlBytes : pendingBytes - pendingControlBytes;
+        const laneLimit = control ? maximumPendingControlBytes : maximumPendingBytes;
+        if (laneBytes + bytes > laneLimit
                 || (control ? pendingControls >= maximumControls : pendingCalls >= maximumCalls))
             throw new Error("socket request capacity exceeded; request was not sent");
         const timer = requestDeadline.createObject(transport) as Timer;
         pending[message.id] = {bytes: bytes, control: control, timer: timer};
         pendingBytes += bytes;
-        if (control)
+        if (control) {
+            pendingControlBytes += bytes;
             pendingControls++;
-        else
+        } else {
             pendingCalls++;
+        }
         timer.start();
         endpoint.write(line);
     }
@@ -125,6 +133,10 @@ QtObject {
             return;
         }
         if (message.kind === "response") {
+            if (typeof message.id !== "string" || !message.id || typeof message.ok !== "boolean") {
+                finish(1, "Invalid socket response correlation");
+                return;
+            }
             if (stopping && message.id === shutdownId && message.ok && message.response && message.response.shutdown) {
                 finish(0, "");
                 return;
@@ -132,6 +144,10 @@ QtObject {
             forget(message.id);
         }
         messageReceived(message);
+    }
+
+    function abort(message) {
+        finish(1, message || "Socket generation retired");
     }
 
     function requestStop() {
