@@ -207,16 +207,13 @@ Item {
         return profile.length > 0 && backend.setPowerProfile(profile);
     }
     function dismissNotification(notificationId: int): bool {
-        return notificationState ? notificationState.dismissNotification(notificationId) : backend.dismissNotification(notificationId);
-    }
-    function clearNotificationGroup(groupKey: string): bool {
-        return notificationState ? notificationState.clearNotificationGroup(groupKey) : backend.clearNotificationGroup(groupKey);
+        return !!notificationState && notificationState.dismissNotification(notificationId);
     }
     function snoozeNotification(notificationId: int, minutes: int): bool {
-        return notificationState ? notificationState.snoozeNotification(notificationId, minutes) : backend.snoozeNotification(notificationId, Date.now() + minutes * 60 * 1000);
+        return !!notificationState && notificationState.snoozeNotification(notificationId, minutes);
     }
     function invokeNotificationAction(notificationId: int, actionKey: string): bool {
-        return notificationState ? notificationState.invokeNotificationAction(notificationId, actionKey) : backend.invokeNotificationAction(notificationId, actionKey);
+        return !!notificationState && notificationState.invokeNotificationAction(notificationId, actionKey);
     }
     readonly property Activity.NotificationState notificationState: surfaceRegistry ? surfaceRegistry.notificationState : null
     function replyNotification(notificationId: var, text: string): bool {

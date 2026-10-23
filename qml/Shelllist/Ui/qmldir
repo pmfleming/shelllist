@@ -98,7 +98,6 @@ ResultLabel 1.0 ResultLabel.qml
 ResultListFrame 1.0 ResultListFrame.qml
 ResultNavigation 1.0 ResultNavigation.qml
 ResultRow 1.0 ResultRow.qml
-RemovalAnimation 1.0 RemovalAnimation.qml
 SectionLabel 1.0 SectionLabel.qml
 SaveStatusLabel 1.0 SaveStatusLabel.qml
 ScrollableListView 1.0 list/ScrollableListView.qml

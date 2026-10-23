@@ -193,13 +193,6 @@ function laneOverview(state, name, nowMs) {
         operation: job ? label(job.operation) : "", error: job && job.error ? job.error : ""};
 }
 
-function nowSummary(state, nowMs) {
-    return ["system", "ai-tools", "ai-tools-stale"].map(name => {
-        const lane = laneOverview(state, name, nowMs);
-        return lane.title + ": " + lane.status;
-    }).join(" · ");
-}
-
 function issueLabel(issue, nowMs) {
     return qsTr("Failed %1").arg(timeLabel(issue.failed_at, nowMs)) + " · "
         + (issue.recovered_at ? qsTr("recovered %1").arg(timeLabel(issue.recovered_at, nowMs)) : qsTr("No later recovery in retained history"));

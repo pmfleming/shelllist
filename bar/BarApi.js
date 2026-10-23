@@ -13,11 +13,7 @@ var methods = {
     audioSetInputMuted: Protocol.methods["audio.setInputMuted"],
     brightnessAdjust: Protocol.methods["brightness.adjust"],
     powerProfileSet: Protocol.methods["powerProfile.set"],
-    notificationsToggleDnd: Protocol.methods["notifications.toggleDnd"],
-    notificationsDismiss: Protocol.methods["notifications.dismiss"],
-    notificationsClearGroup: Protocol.methods["notifications.clearGroup"],
-    notificationsSnooze: Protocol.methods["notifications.snooze"],
-    notificationsInvokeAction: Protocol.methods["notifications.invokeAction"]
+    notificationsToggleDnd: Protocol.methods["notifications.toggleDnd"]
 };
 
 var streams = {

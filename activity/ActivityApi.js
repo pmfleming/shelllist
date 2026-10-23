@@ -27,8 +27,6 @@ var methods = {
     notificationsDelete: Protocol.methods["notifications.delete"],
     notificationsQueryCenter: Protocol.methods["notifications.queryCenter"],
     notificationsDismiss: Protocol.methods["notifications.dismiss"],
-    notificationsClear: Protocol.methods["notifications.clear"],
-    notificationsClearGroup: Protocol.methods["notifications.clearGroup"],
     notificationsSnooze: Protocol.methods["notifications.snooze"],
     notificationsInvokeAction: Protocol.methods["notifications.invokeAction"],
     notificationsReply: Protocol.methods["notifications.reply"]

@@ -131,20 +131,6 @@ function historySegments(points, metric, start, end) {
     }
     return segments;
 }
-function missingIntervals(segments, start, end) {
-    const gaps = [];
-    let cursor = start;
-    for (const segment of segments) {
-        for (const interval of segment) {
-            if (interval.start > cursor)
-                gaps.push({ start: cursor, end: interval.start });
-            cursor = Math.max(cursor, interval.end);
-        }
-    }
-    if (cursor < end)
-        gaps.push({ start: cursor, end });
-    return gaps;
-}
 function rangeEnergyConfidence(summary) {
     return ["low", "medium", "high"].includes(String(summary?.energy_confidence)) ? String(summary?.energy_confidence) : "unknown";
 }

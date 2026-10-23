@@ -4,7 +4,7 @@ import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "BarProtocol.generated.js" as Contract
 import "UpdatePresentation.js" as Presentation
-import "UpdateOverviewValidation.js" as OverviewValidation
+import "UpdateValidation.js" as Validation
 import "UpdateHistory.js" as History
 
 Ui.ProviderChooserController {
@@ -238,26 +238,6 @@ Ui.ProviderChooserController {
         sendHistoryPage();
         return true;
     }
-    function validEntry(entry: var): bool {
-        const optionalText = value => value === null || typeof value === "string";
-        const time = value => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
-        return !!entry && entry.schema_version === 1 && typeof entry.lane === "string" && !!entry.job
-            && /^[A-Za-z0-9][A-Za-z0-9-]{0,159}$/.test(entry.job.id || "")
-            && [entry.title, entry.outcome, entry.job.operation, entry.job.phase, entry.job.status].every(value => typeof value === "string")
-            && time(entry.job.started_at) && (entry.job.finished_at === null || time(entry.job.finished_at))
-            && (entry.job.exit_code === null || Number.isSafeInteger(entry.job.exit_code))
-            && optionalText(entry.job.error) && Array.isArray(entry.components) && entry.components.length <= 32
-            && (entry.failed_stage === undefined || optionalText(entry.failed_stage))
-            && (entry.deployed === undefined || entry.deployed === null || typeof entry.deployed === "boolean")
-            && (entry.issues === undefined || (Array.isArray(entry.issues) && entry.issues.length <= 33
-                && entry.issues.every(issue => !!issue && (issue.component === null || (Number.isSafeInteger(issue.component) && issue.component >= 0 && issue.component < entry.components.length))
-                    && time(issue.failed_at) && (issue.recovered_at === null || (time(issue.recovered_at) && issue.recovered_at > issue.failed_at))
-                    && (issue.recovered_run_id === null || /^[A-Za-z0-9][A-Za-z0-9-]{0,159}$/.test(issue.recovered_run_id))
-                    && (issue.recovered_at === null) === (issue.recovered_run_id === null))))
-            && entry.components.every(part => !!part && typeof part.name === "string" && typeof part.phase === "string"
-                && typeof part.changed === "boolean" && optionalText(part.before) && optionalText(part.after) && optionalText(part.error)
-                && (part.incident === undefined || part.incident === null || (typeof part.incident === "string" && part.incident.trim().length > 0 && part.incident.length <= 2048 && !/[\u0000-\u001f\u007f]/.test(part.incident))));
-    }
     function finish(id: string, envelope: var, transportError: string): void {
         // Dispatch only nonempty, owned identities; each reader retires itself.
         if (!uiActive || !id) return;
@@ -274,7 +254,7 @@ Ui.ProviderChooserController {
         overviewError = backend.responseError(envelope, transportError, qsTr("Update overview unavailable"));
         if (overviewError) return;
         const value = envelope.data ? envelope.data.overview : null;
-        if (!OverviewValidation.valid(value)) { overviewError = qsTr("Invalid update overview reply"); return; }
+        if (!Validation.overview(value)) { overviewError = qsTr("Invalid update overview reply"); return; }
         overview = value;
     }
     function finishLog(envelope: var, transportError: string): void {
@@ -291,15 +271,6 @@ Ui.ProviderChooserController {
         retireHistory();
         errorText = message;
     }
-    function validHistoryPage(page: var): bool {
-        return !!page && Array.isArray(page.entries) && page.entries.length <= 100
-            && typeof page.available === "boolean" && typeof page.revision === "string"
-            && (page.cursor === null || typeof page.cursor === "string")
-            && Number.isSafeInteger(page.total) && page.total >= page.entries.length && page.total <= 4096
-            && (page.error === null || typeof page.error === "string") && typeof page.coverage === "string"
-            && (page.retain_through === undefined || (Number.isSafeInteger(page.retain_through) && page.retain_through >= 0 && page.retain_through <= page.total))
-            && page.entries.every(entry => validEntry(entry));
-    }
     function finishHistory(envelope: var, transportError: string): void {
         if (!historyWindow || historyWindow.key !== queryKey) return;
         ownedRequest = "";
@@ -309,7 +280,7 @@ Ui.ProviderChooserController {
             failHistory(failure); return;
         }
         const page = envelope.data ? envelope.data.history : null;
-        if (!validHistoryPage(page)) {
+        if (!Validation.historyPage(page)) {
             failHistory(qsTr("Invalid update history reply")); return;
         }
         if (!page.available) {

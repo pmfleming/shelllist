@@ -521,8 +521,12 @@ The Message tab, its detail reader, reply editor and sender commands are removed
 from this center; there is no hidden tab to restore or navigate to. Alt+D remains
 selected-app deletion, while a card's Delete targets only its stable record ID.
 Popup sender actions/replies retain their existing acknowledgement and lifecycle
-guards. Popup decks fan on pointer hover, outside panel field traversal; their
-individual close commands await native removal. The daemon owns the bounded
+guards. Dismiss, Snooze and sender actions route only through `NotificationState`;
+without that owner they fail closed, never through a second Bar backend adapter.
+Unused direct bulk-clear adapters are removed; center deletion still requires the
+native prepare/confirm token. No key, editable stop or acknowledgement rule changes.
+Popup decks fan on pointer hover, outside panel field traversal; their individual
+close commands await native removal. The daemon owns the bounded
 reading lease, queued arrivals and popup-only timeout pause (see notifications.md).
 A content-free screen-sharing toast offers explicit snooze commands without
 stealing keyboard focus. Its bell entry reopens those choices; they are commands,
@@ -665,7 +669,10 @@ full store paths even when display values are shortened. Alt+A returns to all
 recent runs. Read-only details use the shared
 scrolling fallback, not editable field stops. F5 only refreshes reads. Incoming
 runs preserve stable selection; malformed, stale or closed-view replies cannot
-replace published rows. Live notification deep links target a validated run ID;
+replace published rows. `bar/UpdateValidation.js` owns the shared wire predicates;
+request ownership and atomic publication remain in `UpdateController`. Nullable
+and omitted fields, bounds and history-versus-overview timestamp rules are unchanged.
+Live notification deep links target a validated run ID;
 missing runs return to history with a notice, never open an unrelated run.
 Passive local-calendar date headers do not join result or field navigation;
 Up/Down still moves directly between Now and runs in catalog order. Relative timestamps

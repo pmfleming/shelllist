@@ -251,8 +251,6 @@ Item {
         return isLive(record) && beginOperation(record.id) && backend.contextAction(record, key);
     }
     function dismissNotification(id: int): bool { return beginOperation(id) && backend.dismiss(id); }
-    function clearNotifications(): bool { return backend.clear(); }
-    function clearNotificationGroup(key: string): bool { return backend.clearGroup(key); }
     function snoozeNotification(id: int, minutes: int): bool { return beginOperation(id) && backend.snooze(id, Date.now() + minutes * 60000); }
     function invokeNotificationAction(id: int, key: string): bool {
         const record = activeRecords.find(item => item.id === id);

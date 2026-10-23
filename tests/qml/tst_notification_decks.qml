@@ -13,11 +13,10 @@ DaemonTestCase {
     Component {
         id: factory
         Bar.NotificationToastStack {
-            id: deck
             width: 390
             controller: Bar.BarController {
                 surfaceRegistry: QtObject {
-                    property var notificationState: Activity.NotificationState { id: state }
+                    property Activity.NotificationState notificationState: Activity.NotificationState {}
                     property var wifiController: null
                     property var bluetoothController: null
                 }
@@ -122,6 +121,18 @@ DaemonTestCase {
         state.notifications = {available: true, backend: "native", settings: {countdown: true}};
         compare(expiry.visible, true);
         compare(findChild(deck, "notificationDeckCard1").notification.toast_expires_unix_ms, n.toast_expires_unix_ms);
+    }
+    function test_missingOwnerCannotBypassNotificationGuards() {
+        const deck = createTemporaryObject(factory, testCase, {group: {key: "chat", records: [record(1)]}});
+        deck.controller.surfaceRegistry = null;
+        tryVerify(() => deck.cardHeight > 0);
+        const count = calls.length;
+        mouseClick(findChild(deck, "notificationToastDismiss"));
+        verify(!deck.controller.dismissNotification(1));
+        verify(!deck.controller.snoozeNotification(1, 15));
+        verify(!deck.controller.invokeNotificationAction(1, "default"));
+        compare(calls.length, count);
+        compare(deck.group.records.length, 1);
     }
     function test_nativeProjectionOwnsRoutingAndOrder() {
         const deck = createTemporaryObject(factory, testCase, {group: {key: "chat", records: [record(1)]}});

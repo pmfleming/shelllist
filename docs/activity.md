@@ -198,7 +198,6 @@ Removal animation is presentation-only. Dismiss, clear-group, clear-all, snooze,
 | `activity/NotificationHistoryRow.qml` | Selected-message inspector |
 | `bar/NotificationToastStack.qml` | Monitor-local active groups |
 | `qml/Shelllist/Ui/NotificationPresentation.js` | Shared grouping, routing, and DND labels |
-| `qml/Shelllist/Ui/RemovalAnimation.qml` | Shared transient dismissal animation |
 
 `ActivityContent.qml` contains no filesystem, provider, subprocess, persistence, or notification-policy integration.
 

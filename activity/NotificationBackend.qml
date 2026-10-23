@@ -60,14 +60,6 @@ Io.BarDaemonBackend {
             id: id
         }, {operationKey: store.keyFor(id)});
     }
-    function clear(): bool {
-        return request("clear", Api.methods.notificationsClear, {}, {});
-    }
-    function clearGroup(key: string): bool {
-        return request("clear-group", Api.methods.notificationsClearGroup, {
-            group_key: key
-        }, {});
-    }
     function snooze(id: int, until: double): bool {
         return request("snooze", Api.methods.notificationsSnooze, {
             id: id,

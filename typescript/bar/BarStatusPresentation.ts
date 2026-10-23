@@ -111,9 +111,6 @@ function layoutDensity(width: unknown) {
     const available = Number(width) || 0;
     return available >= 1800 ? 0 : available >= 1200 ? 1 : available >= 700 ? 2 : 3;
 }
-function moduleText(module: StatusModule, density: number) {
-    return density > 0 ? module.compactText : module.text;
-}
 function statusModuleEqual(left: Maybe<StatusModule>, right: Maybe<StatusModule>) {
     if (!left || !right) return false;
     return (Object.keys(left) as (keyof StatusModule)[]).every(key => left[key] === right[key]);

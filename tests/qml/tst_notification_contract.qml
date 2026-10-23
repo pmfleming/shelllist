@@ -46,26 +46,10 @@ DaemonTestCase {
         verify(state.nativeAvailable && state.isActive(1));
         return state;
     }
-    function start(state, key) {
-        const example = fixture().replies[key];
+    function startReply(state) {
+        const example = fixture().replies.reply;
         const params = example.params;
-        let sent = false;
-        switch (key) {
-        case "setDnd": state.dndDurationMinutes = 0; sent = state.setDndEnabled(params.enabled); break;
-        case "setAppPolicy": sent = state.setAppPolicy(params.app_key, clone(params.policy)); break;
-        case "prepareDelete": sent = state.prepareDelete("", null, "All notifications"); break;
-        case "delete": state.confirmDelete(); sent = state.deletePending; break;
-        case "cancelDelete": state.cancelDelete(); sent = true; break;
-        case "dismiss": sent = state.dismissNotification(params.id); break;
-        case "clear": sent = state.clearNotifications(); break;
-        case "clearGroup": sent = state.clearNotificationGroup(params.group_key); break;
-        case "snooze":
-            // Fix the deadline for the contract test; duration calculation is UI-local.
-            sent = state.beginOperation(params.id) && state.backend.snooze(params.id, params.until_unix_ms); break;
-        case "invokeAction": sent = state.invokeNotificationAction(params.id, params.action_key); break;
-        case "reply": sent = state.replyNotification(params.id, params.text); break;
-        }
-        verify(sent, key);
+        verify(state.replyNotification(params.id, params.text));
         const call = lastCall(state, example.method);
         compare(call.params, params, "Requests must match live producer DTOs");
         verify(state.backend.isPending(call.route.localId));
@@ -74,7 +58,7 @@ DaemonTestCase {
     function test_replyCompletionCannotClearANewerDraftOrReusedId() {
         const state = make();
         const oldIdentity = state.keyFor(1);
-        const call = start(state, "reply");
+        const call = startReply(state);
         state.setDraft(oldIdentity, "A newer unsent draft");
         event(state, "replaced");
         const newIdentity = state.keyFor(1);

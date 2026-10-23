@@ -85,33 +85,6 @@ Io.BarDaemonBackend {
         return callSequenced("notifications-dnd", BarApi.methods.notificationsToggleDnd, {});
     }
 
-    function dismissNotification(notificationId: int): bool {
-        return callSequenced("notification-dismiss", BarApi.methods.notificationsDismiss, {
-            id: notificationId
-        });
-    }
-
-    function clearNotificationGroup(groupKey: string): bool {
-        return callSequenced("notifications-clear-group", BarApi.methods.notificationsClearGroup, {
-            group_key: groupKey
-        });
-    }
-
-    function snoozeNotification(notificationId: int, untilUnixMs: double): bool {
-        return callSequenced("notification-snooze", BarApi.methods.notificationsSnooze, {
-            id: notificationId,
-            until_unix_ms: untilUnixMs
-        });
-    }
-
-    function invokeNotificationAction(notificationId: int, actionKey: string): bool {
-        return callSequenced("notification-action", BarApi.methods.notificationsInvokeAction, {
-            id: notificationId,
-            action_key: actionKey,
-            activation_token: null
-        });
-    }
-
     readonly property var osdByRequestKind: ({
             "audio-adjust": function (data) {
                 controller.showOutputOsd(data.audio || controller.audio);

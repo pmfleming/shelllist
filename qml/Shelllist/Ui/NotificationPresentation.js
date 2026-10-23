@@ -88,28 +88,6 @@ function groupKey(record) {
     return String(notification.group_key || hints.desktop_entry || notification.app_name || "unknown");
 }
 
-function groupRecords(records) {
-    const groups = [];
-    const byKey = Object.create(null);
-    (records || []).forEach(function (record) {
-        const key = groupKey(record);
-        let group = byKey[key];
-        if (!group) {
-            const notification = notificationFor(record);
-            group = {
-                key: key,
-                appName: notification.app_name || "Notifications",
-                desktopEntry: (notification.hints || ({})).desktop_entry || "",
-                records: []
-            };
-            byKey[key] = group;
-            groups.push(group);
-        }
-        group.records.push(record);
-    });
-    return groups;
-}
-
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // Compact timestamp: relative within a day, then "Yesterday", then a date.
@@ -130,14 +108,4 @@ function timeLabel(createdMs, nowMs) {
     if (then >= new Date(today.getTime() - 86400000))
         return "Yesterday";
     return then.getDate() + " " + monthNames[then.getMonth()];
-}
-
-function notificationMonitor(notification, focusedMonitor, monitorNames) {
-    const available = monitorNames || [];
-    const source = String(notification && notification.source_monitor || "");
-    if (source.length > 0 && available.indexOf(source) >= 0)
-        return source;
-    if (focusedMonitor && available.indexOf(focusedMonitor) >= 0)
-        return focusedMonitor;
-    return available.length > 0 ? available[0] : "";
 }

@@ -870,11 +870,20 @@ DaemonTestCase {
         compare(root.controller.entries[0].job.id, "retained");
         const invalidRun = entry("invalid", "failed");
         invalidRun.components = [{name: "pi", phase: "failed", changed: false, before: null, after: null, error: "bad", incident: "bad\nkey"}];
-        verify(!root.controller.validEntry(invalidRun));
+        root.controller.activateUi("");
+        reply(latest(), [invalidRun]);
+        compare(root.controller.errorText, "Invalid update history reply");
+        compare(root.controller.entries[0].job.id, "retained");
         invalidRun.components[0].incident = "pi:build:fingerprint";
-        verify(root.controller.validEntry(invalidRun));
-        invalidRun.issues = [{component: 2, failed_at: 200, recovered_at: null, recovered_run_id: null}];
-        verify(!root.controller.validEntry(invalidRun));
+        root.controller.refresh();
+        reply(latest(), [invalidRun]);
+        compare(root.controller.errorText, "");
+        compare(root.controller.entries[0].components[0].incident, "pi:build:fingerprint");
+        const rejectedRun = Object.assign({}, invalidRun, {issues: [{component: 2, failed_at: 200, recovered_at: null, recovered_run_id: null}]});
+        root.controller.refresh();
+        reply(latest(), [rejectedRun]);
+        compare(root.controller.errorText, "Invalid update history reply");
+        compare(root.controller.entries[0].issues, undefined);
     }
     function test_taskTabsGearTransactionsAndFreshnessEvidence(): void {
         const root = fixture();

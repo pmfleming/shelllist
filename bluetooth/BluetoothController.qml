@@ -440,12 +440,6 @@ Ui.ProviderChooserController {
         status = "Switching Bluetooth audio to " + profile.label + "…";
         return backend.setAudioProfile(selectedDevice.key, profile.key);
     }
-    function renameSelected(alias) {
-        if (!hasSelection || actionInFlight)
-            return false;
-        nameEditState.edit(selectedDevice.key, alias || "");
-        return nameEditState.save(selectedDevice.key);
-    }
     function resetSelectedName() {
         if (!hasSelection || selectedDeviceBusy)
             return false;

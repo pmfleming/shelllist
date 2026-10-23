@@ -164,19 +164,6 @@ function historySegments(points: readonly ResourcePoint[], metric: string, start
     return segments;
 }
 
-function missingIntervals(segments: readonly ResourceInterval[][], start: number, end: number): {start: number; end: number}[] {
-    const gaps: {start: number; end: number}[] = [];
-    let cursor = start;
-    for (const segment of segments) {
-        for (const interval of segment) {
-            if (interval.start > cursor) gaps.push({start: cursor, end: interval.start});
-            cursor = Math.max(cursor, interval.end);
-        }
-    }
-    if (cursor < end) gaps.push({start: cursor, end});
-    return gaps;
-}
-
 function rangeEnergyConfidence(summary: HistorySummary | null | undefined): string {
     return ["low", "medium", "high"].includes(String(summary?.energy_confidence)) ? String(summary?.energy_confidence) : "unknown";
 }

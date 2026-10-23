@@ -20,11 +20,6 @@ function memoryText(value) {
     return (Math.round(mib * 10) / 10).toFixed(1) + " MiB";
 }
 
-function usageText(value) {
-    const usage = value || ({});
-    return "CPU " + cpuText(usage.cpu_percent) + " · " + memoryText(usage.memory_bytes);
-}
-
 function runningWindowIcon(instanceCount) {
     return Number(instanceCount || 0) > 1 ? "󰖲" : "󰖯";
 }

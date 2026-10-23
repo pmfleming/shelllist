@@ -93,9 +93,6 @@ function layoutDensity(width) {
     const available = Number(width) || 0;
     return available >= 1800 ? 0 : available >= 1200 ? 1 : available >= 700 ? 2 : 3;
 }
-function moduleText(module, density) {
-    return density > 0 ? module.compactText : module.text;
-}
 function statusModuleEqual(left, right) {
     if (!left || !right)
         return false;

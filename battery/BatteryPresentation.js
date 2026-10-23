@@ -180,14 +180,6 @@ function suspendStatus(state, pendingAction, retryAction, error) {
     return "";
 }
 
-function protectionRange(protection) {
-    if (!protection || !protection.supported)
-        return "Unsupported";
-    if (protection.start_percent === null || protection.start_percent === undefined || protection.end_percent === null || protection.end_percent === undefined)
-        return "Unknown";
-    return protection.start_percent + "–" + protection.end_percent + "%";
-}
-
 function desiredRange(protection) {
     if (!protection || protection.desired_start_percent === null || protection.desired_start_percent === undefined || protection.desired_end_percent === null || protection.desired_end_percent === undefined)
         return "Not configured";
