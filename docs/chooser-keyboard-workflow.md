@@ -252,7 +252,8 @@ clipboard rejection, undo/redo, narrow caret visibility and all five configurati
 `tst_ip_fields.qml` exercises real Wi-Fi saves, both families, gateway rejection,
 read-only/family transitions and independent DNS truncation guards. Parser/edit
 operations and all IPv4 mask conversions are covered by `check-ip-control.js`;
-legacy parser checks remain in `check-ip-validation.js`. Hardware IME, primary
+parser vectors now run in `tests/qml/tst_ip_validation.qml` through
+`cargo xtask check-ip-validation` (the real Qt engine, not Node). Hardware IME, primary
 selection/external drag-and-drop, live compositor and human screen-reader checks
 remain separate acceptance gates; synthetic/native key tests do not prove them.
 

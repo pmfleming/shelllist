@@ -53,6 +53,7 @@
     "shelllist/rust/shelllist-timezone-assets/Cargo.lock"
   ],
   "independentCrates": {
+    "shelllist/tools/xtask/Cargo.toml": "Standalone offline development checks with an empty workspace and its own Cargo.lock. Native DTO tests stay in producer crates; xtask does not link or replace production daemons.",
     "shelllist/tools/performance-lens/Cargo.toml": "Standalone external measurement CLI with an empty workspace and its own Cargo.lock; not a production package or dependency. Validated separately using the locked commands in tools/performance-lens/README.md."
   },
   "nonOwningLocks": {

@@ -4,6 +4,10 @@ Shelllist is a Hyprland-oriented desktop action center and top bar built with Qu
 
 Rust daemons own system integration, durable state and policy. Shelllist owns windows, layout, keyboard navigation, animation and presentation. A shared popover keeps lists anchored while details expand right; small work areas use explicit scrolling rather than clipping controls. A one-shot floating host is available for development. See [chooser geometry](docs/chooser-geometry.md).
 
+Development tooling uses [`cargo xtask`](tools/xtask/README.md): surface catalog
+generation, build-input checks, dry-run-first cache trimming, typed producer
+contracts, and Qt boundary/IP regression checks.
+
 ## Top bar
 
 The adaptive 51 px bar uses a balanced, icon-only layout: fixed **Shell, Browser, Code, Media, Text** workspace tiles at the left, independently centered **Media**, and **Network, Bluetooth, Battery, Notifications, Tray, Clock/date** at the right. One continuous rounded surface has no floating pods, workspace labels or hover tooltips. Narrow bars reduce spacing/date content and expose horizontal overflow, never hiding transport. Battery charge fills an upright icon continuously; charging/power-state marks remain outside its outline. The numeric clock/date is one direct action. Accessible metadata and choosers retain detailed values.

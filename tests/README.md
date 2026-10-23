@@ -11,6 +11,17 @@ retired coverage and exact before/after accounting. The [native-journey pass](te
 [ecosystem review](test-reduction-ecosystem.md) and checkpoints below are historical;
 do not reuse their totals as the current baseline.
 
+## Rust development tooling
+
+See [`tools/xtask/README.md`](../tools/xtask/README.md). `cargo xtask` owns surface
+catalog generation, build-input auditing, conservative cache trimming and contract
+parity. `cargo xtask contracts --nix` runs the producers' own serde fixture tests
+and builds, then compares their offline exports with the frontend fixtures.
+The old jq/shell contract gates are removed, not retained as weaker parallel checks.
+`cargo xtask check-daemon-boundary` and `check-ip-validation` run the migrated
+regression vectors against actual QML objects in Qt; Nix's full QML suite includes
+them. Neither check starts a real daemon or changes hardware.
+
 ## Panel standardization acceptance
 
 `docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,
@@ -72,8 +83,9 @@ offscreen/software, UTC setup. Refresh an existing development shell after chang
 - Shared daemon bridge/session and Bar recovery tests retain drain/exit behavior,
   ready-session attachment, isolation and stale-generation fencing. Native framework
   tests own transport deadlines, quotas, cancellation, routing and owner loss.
-- JavaScript retains generated producer/consumer contracts, daemon boundaries and
-  independent IP-validation vectors. All five daemon contract checks, generated
+- JavaScript retains generated producer/consumer runtime contracts. Daemon boundary
+  and IP-validation vectors now execute in Qt, driven by Rust xtask checks.
+  All five typed producer contract checks plus frontend parity, generated
   source freshness, QML lint and runtime smoke remain. Direct model, telemetry,
   history, color and per-controller JavaScript suites are retired.
 

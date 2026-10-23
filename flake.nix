@@ -83,6 +83,24 @@
             cargoLock.lockFile = ./tools/performance-lens/Cargo.lock;
             meta = mkMeta "Native Shelllist profiling and performance evidence" "shelllist-perf";
           };
+          xtask = rustPlatform.buildRustPackage {
+            pname = "shelllist-xtask";
+            version = "0.1.0";
+            src = pkgs.lib.fileset.toSource {
+              root = ./.;
+              fileset = pkgs.lib.fileset.unions [
+                (pkgs.lib.fileset.fileFilter (file:
+                  file.hasExt "rs" || builtins.elem file.name [ "Cargo.toml" "Cargo.lock" ]
+                ) ./tools/xtask)
+                ./contracts/surface-catalog.json
+              ];
+            };
+            cargoRoot = "tools/xtask";
+            buildAndTestSubdir = "tools/xtask";
+            cargoLock.lockFile = ./tools/xtask/Cargo.lock;
+            nativeCheckInputs = [ pkgs.git ];
+            meta = mkMeta "Offline Shelllist development checks and generators" "shelllist-xtask";
+          };
           shelllistTimezoneAssets = rustPlatform.buildRustPackage {
             pname = "shelllist-timezone-assets";
             version = "0.1.0";
@@ -104,7 +122,7 @@
         {
           connectParityProbe = nmDaemonConnectParityProbe;
 
-          inherit shelllistSearch shelllistTimezoneAssets performanceLens;
+          inherit shelllistSearch shelllistTimezoneAssets performanceLens xtask;
 
           wifiQrScanner = pkgs.callPackage ./nix/qrca.nix { inherit nmDaemon; };
 
@@ -456,41 +474,19 @@
               ) commands}
               touch $out
             '';
-          apiContract =
-            label: daemon: coverage: apiFiles:
-            pkgs.runCommand "shelllist-${label}-daemon-contract"
-              {
-                nativeBuildInputs = [
-                  pkgs.diffutils
-                  pkgs.jq
-                ];
-              }
-              ''
-                ${pkgs.bash}/bin/bash ${./tests/check-api-contract.sh} ${label}-api \
-                  ${daemon}/bin/${label}-daemon \
-                  ${./contracts + "/${label}-api-ui-contract.fixture.json"} \
-                  ${./contracts + "/${label}-api-ui-contract.assertions.jq"} \
-                  ${pkgs.lib.escapeShellArgs ([ coverage ] ++ map (file: "${file}") apiFiles)}
-                touch $out
-              '';
+          apiContract = label: daemon:
+            pkgs.runCommand "shelllist-${label}-daemon-contract" { } ''
+              ${self.packages.${system}.xtask}/bin/shelllist-xtask --root ${./.} \
+                contract ${label} --bin ${daemon}/bin/${label}-daemon
+              touch $out
+            '';
         in
         {
           buildInputs = import ./nix/build-inputs-check.nix { inherit inputs pkgs system; };
-          buildInputsTests =
-            pkgs.runCommand "shelllist-build-input-policy-tests"
-              {
-                nativeBuildInputs = [ pkgs.python3 ];
-              }
-              ''
-                python3 ${./tests/test-build-inputs.py} ${./tools/check-build-inputs.py}
-                touch $out
-              '';
+          buildInputsTests = self.packages.${system}.xtask;
           profilerAdapter = self.packages.${system}.performanceLens;
-          surfaceCatalog = pkgs.runCommand "shelllist-surface-catalog" {
-            nativeBuildInputs = [ pkgs.python3 ];
-          } ''
-            python3 ${./tools/generate-surface-catalog.py} --root ${./.} --check
-            python3 ${./tests/test-surface-catalog.py} ${./tools/generate-surface-catalog.py} ${./contracts/surface-catalog.json}
+          surfaceCatalog = pkgs.runCommand "shelllist-surface-catalog" { } ''
+            ${self.packages.${system}.xtask}/bin/shelllist-xtask --root ${./.} surfaces --check
             test '${toString (import ./tests/surface-catalog.nix { inherit pkgs; })}' = 1
             touch $out
           '';
@@ -531,21 +527,7 @@
                 diff -qr ${./rust/shelllist-search}/src ${inputs.clip-daemon}/vendor/shelllist-search/src
                 touch $out
               '';
-          appResourceContract =
-            pkgs.runCommand "shelllist-app-resource-contract"
-              {
-                nativeBuildInputs = [
-                  pkgs.diffutils
-                  pkgs.jq
-                ];
-              }
-              ''
-                ${appDaemon}/bin/app-daemon debug resource-contract-fixture > actual.json
-                diff -u \
-                  <(jq -S . ${./contracts/app-resource-ui-contract.fixture.json}) \
-                  <(jq -S . actual.json)
-                touch $out
-              '';
+          appResourceContract = apiContract "app" appDaemon;
 
           hypridleReadiness =
             pkgs.runCommand "shelllist-hypridle-readiness"
@@ -564,37 +546,13 @@
                 touch $out
               '';
 
-          appDaemonContract = apiContract "app" appDaemon "registry" [ ./launcher/AppApi.js ];
-
-          clipDaemonContract = apiContract "clip" clipDaemon "registry" [ ./clipboard/ClipApi.js ];
-
-          btDaemonContract = apiContract "bt" btDaemon "api:bluetooth|pairing" [ ./bluetooth/BtApi.js ];
-
-          nmDaemonContract =
-            pkgs.runCommand "shelllist-nm-daemon-contract"
-              {
-                nativeBuildInputs = [
-                  pkgs.diffutils
-                  pkgs.jq
-                ];
-              }
-              ''
-                ${pkgs.bash}/bin/bash ${./tests/check-nm-api-contract.sh} \
-                  ${nmDaemon}/bin/nm-daemon \
-                  ${./contracts/nm-api-ui-contract.fixture.json} \
-                  ${./wifi/NmApi.js}
-                touch $out
-              '';
-
-          barDaemonContract =
-            apiContract "bar" barDaemon
-              "api:bar|activity|locations|location|todos|workspace|media|audio|brightness|battery|powerProfile|powerSleep|displayPolicy|displayLayout|displayFocus|display-policy|power-profile|power-sleep|sleep-policy|osd-hardware|notifications|updates|timezone"
-              [
-                ./bar/BarApi.js
-                ./activity/ActivityApi.js
-                ./battery/BatteryApi.js
-                ./displays/DisplayApi.js
-              ];
+          # Each daemon package runs its own serde DTO fixture tests. The xtask
+          # compares those producer fixtures to the frontend copies and registry.
+          appDaemonContract = apiContract "app" appDaemon;
+          clipDaemonContract = apiContract "clip" clipDaemon;
+          btDaemonContract = apiContract "bt" btDaemon;
+          nmDaemonContract = apiContract "nm" nmDaemon;
+          barDaemonContract = apiContract "bar" barDaemon;
 
           qmlLint =
             pkgs.runCommand "shelllist-qml-lint"
@@ -754,11 +712,9 @@
                   $out/qmlbench.json)" -ge 10
               '';
 
-          ipValidation = nodeCheck "ip-validation" [
-            [
-              ./tests/check-ip-validation.js
-              ./qml/Shelllist/Ui/IpValidation.js
-            ]
+          # Validator and transport cases now run in Qt, not extracted Node code.
+          ipValidation = self.checks.${system}.qmlTests;
+          ipControlLogic = nodeCheck "ip-control-logic" [
             [
               ./tests/check-ip-control.js
               ./qml/Shelllist/Ui/IpValidation.js
@@ -783,12 +739,7 @@
             [ ./tests/check-generated-contracts.js ./. ]
           ];
 
-          daemonBoundary = nodeCheck "daemon-boundary" [
-            [
-              ./tests/check-daemon-boundary.js
-              ./.
-            ]
-          ];
+          daemonBoundary = self.checks.${system}.qmlTests;
 
           nativeApplication = pkgs.runCommand "shelllist-native-application-journey" {
             FONTCONFIG_FILE = fontsConf pkgs;

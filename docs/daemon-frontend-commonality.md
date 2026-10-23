@@ -94,4 +94,4 @@ late stdout and restarts even if its backoff elapsed before the old client exite
 
 ## Validation
 
-Protocol fixture checks, `tests/check-daemon-boundary.js`, and QML routing tests cover endpoint compatibility and shared-session behavior. Strict `qmllint` checks component integration. Common helper names and composition choices are review concerns, not source-token test contracts.
+Protocol fixture checks, `cargo xtask check-daemon-boundary` (actual Qt objects), and QML routing tests cover endpoint compatibility and shared-session behavior. Strict `qmllint` checks component integration. Common helper names and composition choices are review concerns, not source-token test contracts.

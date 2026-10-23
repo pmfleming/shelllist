@@ -107,6 +107,49 @@ TestCase {
         f.bridge.active = false;
     }
 
+    function test_backoffExitRace_data() {
+        return [{tag:"pending", expired:false}, {tag:"already-fired", expired:true}];
+    }
+    function test_backoffExitRace(data) {
+        const f=fixture();
+        f.bridge.initialRetryInterval=data.expired ? 1 : 60000;
+        f.bridge.active=true;
+        f.process.started();
+        f.bridge.recover("lost transport");
+        f.bridge.call("never-replay", "effect.once", {});
+        f.bridge.handleLine(JSON.stringify({kind:"response",id:"retired",ok:true,response:{ok:true}}));
+        compare(f.bridge.replies,0,"retired stdout is fenced");
+        if (data.expired) wait(50);
+        exitProcess(f,0);
+        compare(f.process.commands.length,data.expired?2:1);
+        compare(f.bridge.queuedLines.length,0);
+        compare(f.bridge.failures,1);
+        f.bridge.active=false;
+    }
+    function test_startFailureNeverReplaysEffects() {
+        const f=fixture();
+        f.process.simulated=false;
+        f.bridge.initialRetryInterval=60000;
+        f.bridge.queuedLines=["destructive-effect"];
+        f.bridge.active=true;
+        compare(f.bridge.failures,1);
+        compare(f.bridge.queuedLines.length,0);
+        f.bridge.active=false;
+        f.process.simulated=true;
+        f.bridge.active=true;
+        f.process.started();
+        compare(f.process.writes.length,0);
+        f.bridge.active=false;
+    }
+    function test_startupQueueIsBounded() {
+        const f=fixture();
+        f.bridge.maximumQueuedRequests=1;
+        f.bridge.call("first","effect.once",{});
+        let rejected=false;
+        try { f.bridge.call("overflow","effect.once",{}); } catch (error) { rejected=String(error).includes("capacity exceeded"); }
+        verify(rejected);
+        compare(f.bridge.queuedLines.length,1);
+    }
     function test_failedDrainIsNotSilenced() {
         const f = fixture();
         f.bridge.active = true;

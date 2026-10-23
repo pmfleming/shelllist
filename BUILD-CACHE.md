@@ -1,25 +1,28 @@
 # Build-cache maintenance
 
-The standalone `scripts/trim-build-cache.py` applies a **4 GiB Cargo budget per
-local target directory**. The packaged service additionally handles recognized
-non-Cargo outputs and selected shared development caches, described below.
-The `update-daemon` companion service runs it at system shutdown/reboot for
+Shelllist's native `cargo xtask trim-cache` applies a **4 GiB Cargo budget per
+local target directory**, reporting only unless `--apply` is given. The Python
+copy has been removed from this repository. The separately packaged maintenance
+service below is unchanged and still owns its ecosystem-wide policies.
+The `update-daemon` companion service runs its own policy at system shutdown/reboot for
 repositories discovered beneath configured workspace roots. Newly created or
 cloned repositories are included on the next run without a rebuild. There is no
 timer or automatic trimming on development-shell entry. This is a soft budget,
 not a filesystem quota.
 
 ```sh
-python3 scripts/trim-build-cache.py --dry-run
-python3 scripts/trim-build-cache.py
-CARGO_TARGET_MAX_GIB=8 python3 scripts/trim-build-cache.py
-CARGO_TARGET_MAX_GIB=0 python3 scripts/trim-build-cache.py  # disable this invocation
+cargo xtask trim-cache --dry-run
+cargo xtask trim-cache --apply
+CARGO_TARGET_MAX_GIB=8 cargo xtask trim-cache --apply
+CARGO_TARGET_MAX_GIB=0 cargo xtask trim-cache  # disable this invocation
 ```
 
 `--max-gib N` overrides `CARGO_TARGET_MAX_GIB` (non-negative integer; `0` disables).
 The old `SCRATCHPAD_TARGET_MAX_GIB` setting is a fallback for compatibility.
-Python 3.9+, Git, and GNU `du` are required; locking uses Linux Cargo's `flock`
-protocol. Existing `trim-target.sh` entry points delegate to this policy.
+Rust and Git are required; the packaged `shelllist-xtask` binary needs no compiler,
+Python or `du`. Native inode/block accounting includes retained hardlinks; locking
+uses Linux Cargo's `flock` protocol. `cargo xtask` may compile the tool before it
+runs, so use the built/package binary when even build-cache writes are unwanted.
 
 ## Cargo retention and safety
 
@@ -49,7 +52,7 @@ symlinked paths, and paths inside nested Git repositories are refused.
 
 ## Other build systems and shared caches
 
-The packaged service (`build-cache-trim`, not the standalone Cargo script) adds:
+The separately packaged service (`build-cache-trim`, not Shelllist's xtask) adds:
 
 - **Node/TypeScript:** ignored `dist/` next to tracked `package.json` files whose
   build script declares Vite, tsc, webpack, Rollup, or esbuild.
@@ -167,10 +170,12 @@ to disable trimming while leaving the hook armed.
 
 ## Maintaining the policy
 
-The script is vendored identically into the 12 Cargo-build repositories so each
-checkout works independently. The packaged reference and safety/scheduler tests
-are in `update-daemon/scripts/`; propagate policy changes to the other copies.
-`daemon-framework` also retains the mirrored policy safety suite.
+Shelllist's standalone Cargo implementation and temporary-fixture safety tests
+are in `tools/xtask/src/cache.rs`; run `cargo test --locked --manifest-path
+tools/xtask/Cargo.toml cache`. The packaged scheduler/ecosystem implementation
+and its remaining Python consumers are still owned by `update-daemon/scripts/`;
+this change does not deploy or replace that service. Keep safety changes aligned
+until that independent migration is completed.
 
 ```sh
 python3 scripts/test_trim_build_cache.py -v  # in update-daemon

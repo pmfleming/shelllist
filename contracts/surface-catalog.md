@@ -7,8 +7,8 @@ runtime settings file.
 
 ## Consumers and compatibility
 
-- `tools/generate-surface-catalog.py` emits `shell/SurfaceCatalog.generated.js`.
-  Regenerate with `python3 tools/generate-surface-catalog.py`; CI checks freshness
+- `cargo xtask surfaces` emits `shell/SurfaceCatalog.generated.js`.
+  The Rust implementation is in `tools/xtask/src/surfaces.rs`; CI checks freshness
   with `--check`. No runtime JSON I/O is added.
 - `SurfaceRegistry.qml` uses the descriptors, default surface, eager-loading set,
   and notification residency flag. All twelve controller/content factories remain
@@ -48,7 +48,7 @@ an addition. No factory source URL or effect dispatch is generated from strings.
 
 ## Tests and limits
 
-- Python schema/generator tests inject unsafe/duplicate identities, unknown state
+- Rust schema/generator tests in the xtask inject unsafe/duplicate identities, unknown state
   policies, shortcut conflicts and stale/missing/hand-edited output.
 - `tests/surface-catalog.nix` evaluates the real Home Manager module using minimal
   host-option fixtures: defaults, overrides, null-disable, disabled program and

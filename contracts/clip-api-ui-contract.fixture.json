@@ -1,4 +1,23 @@
 {
+  "history_example": {
+    "current": null,
+    "entries": [
+      {
+        "byte_size": 4,
+        "current": false,
+        "favorite": false,
+        "id": "entry-example",
+        "kind": "text",
+        "mime": "text/plain",
+        "preview": "test",
+        "revision": 1
+      }
+    ],
+    "generation": 0,
+    "has_more": false,
+    "next_offset": null,
+    "revision": 1
+  },
   "protocol": "clip-api",
   "registry": {
     "methods": [

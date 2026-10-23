@@ -46,7 +46,7 @@ trigger; it does not establish every detail of the underlying Qt defect.
 reentrant next-page requests through the actual QML registry. It also asserts
 that the old dictionaries do not exist. It passes on Qt 6.11.1 after the change.
 
-`tests/check-daemon-boundary.js` covers kind-authoritative routing, pending
+`tests/qml/tst_daemon_boundary.qml` (run with `cargo xtask check-daemon-boundary`) covers kind-authoritative routing, pending
 subscribe/reopen adoption, closed/destroyed views, late replies, generation
 rejection, owner-scoped events, startup queue limits, and failed-generation
 non-replay. The complete QML suite passed (194 tests at implementation time).

@@ -118,11 +118,9 @@ assert pkgs.lib.assertMsg (
   && builtins.elem system policy.systems
 ) "Shelllist evaluated build inputs differ from the approved product policy";
 pkgs.runCommand "shelllist-build-inputs-${system}"
-  {
-    nativeBuildInputs = [ pkgs.python3 ];
-  }
+  { }
   ''
-    python3 ${../tools/check-build-inputs.py} \
+    ${inputs.self.packages.${system}.xtask}/bin/shelllist-xtask --root ${../.} build-inputs \
       --policy ${../contracts/build-inputs.json} --sources ${sourceMap}
     mkdir -p $out
     printf '%s\n' '${builtins.toJSON report}' > $out/build-inputs.json

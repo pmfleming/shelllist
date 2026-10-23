@@ -5,7 +5,7 @@ import QtTest
 import Shelllist.Io as Io
 
 // Domain tests share a recording transport; routing/generation behavior is
-// exercised separately by tst_daemon_sessions and check-daemon-boundary.js.
+// exercised separately by tst_daemon_sessions and tst_daemon_boundary (cargo xtask check-daemon-boundary).
 TestCase {
     id: testCase
 

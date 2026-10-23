@@ -10,7 +10,7 @@ workspace proposal needs explicit approval and native validation on the supporte
 x86_64-linux platform before changing source roots and Crane cache boundaries.
 
 The product policy is `contracts/build-inputs.json`, enforced by
-`tools/check-build-inputs.py` and `checks.<system>.buildInputs`. This is a small
+`cargo xtask build-inputs` and `checks.<system>.buildInputs`. This is a small
 policy/inventory, not another dependency resolver or a generated universal
 workspace. Cargo and the existing locked, offline Nix builds remain authoritative
 for features and transitive resolution.
@@ -139,8 +139,8 @@ fixtures/TS/assets and native QML checks. Worker checks do not deploy, update a
 live system, or introduce a framework dependency into the worker crate.
 
 ```sh
-python3 shelllist/tools/check-build-inputs.py
-python3 shelllist/tests/test-build-inputs.py
+(cd shelllist && cargo xtask build-inputs)
+cargo test --locked --manifest-path shelllist/tools/xtask/Cargo.toml build_inputs
 # Run in the product developer shell, or use packaged local-build:
 daemon-framework/tools/local-build check shelllist --keep-going
 # Evaluate the complete supported output set (x86_64-linux only):

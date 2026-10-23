@@ -129,7 +129,7 @@ tests/run-qmllint.sh
 tests/run-qml-tests.sh
 tests/run-runtime-smoke.sh
 node tests/check-packaged-imports.js .
-node tests/check-daemon-boundary.js .
+cargo xtask check-daemon-boundary
 node tests/check-notification-presentation.js qml/Shelllist/Ui/NotificationPresentation.js
 node tools/build-typescript.mjs --check
 python3 tests/review-panel-ui.py --base a910ac5d

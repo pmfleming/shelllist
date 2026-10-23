@@ -150,6 +150,45 @@ TypeScript generation checks, producer fixtures and generated-contract checks pa
 Full sibling Nix packaging and live desktop/hardware acceptance remain separate
 gates; no deployment or service changes are performed by this migration.
 
+## Rust development tooling
+
+`cargo xtask` in `tools/xtask/` now owns surface catalog generation/freshness,
+build-input auditing, standalone Cargo cache trimming and offline fixture parity.
+The replaced Python tools/tests, jq assertions, shell API contract checks, and
+Node boundary/validator checks are removed. Nix invokes the Rust tool. See
+[`tools/xtask/README.md`](../tools/xtask/README.md) for commands and safety scope.
+
+App, bar, Bluetooth, clipboard and NetworkManager own the Rust contract tests:
+fixtures decode using their actual serde DTOs, with malformed-type regressions
+and retained semantic assertions. No parallel frontend-shaped Rust DTOs are
+invented. Bluetooth audio gained a shared live wire DTO; its fixture was missing
+endpoint metadata already emitted in production. Clipboard gained an explicit
+history-page witness. Registry/envelope projections that remain dynamic retain
+semantic checks. Frontend copies, method coverage and NM's API rendering are
+checked separately by xtask. Output-only deserialization is test-only.
+
+Transport ownership/recovery and IP-validation regressions now run against actual
+Qt/QML objects, driven by xtask, instead of extracting functions into Node. This
+does not migrate or weaken IP editing policy or introduce backend writes. Cache
+cleanup requires `--apply`; dry runs and temporary-fixture tests preserve the
+Cargo-lock, symlink, tracked/source, nested-repository and artifact-scope guards.
+The separately packaged update-daemon maintenance service is unchanged.
+
+Validation: **19 xtask tests**, **323 Qt passes** (one existing renderer skip),
+and **450 daemon library passes** (nine existing ignored probes). One existing NM
+private-bus activation test timed out during concurrent builds, then passed an
+isolated retry and the full suite unchanged. All-target Clippy passes for xtask,
+app, bar, Bluetooth and NM; clipboard's production library passes, while
+its tests still emit the pre-existing unused `CachedProjection::project` warning.
+QML lint, fixture/binding freshness, generated runtime contracts and TypeScript
+checks pass. The UI advisory reports zero new prompts.
+
+A sibling-aware Nix xtask package/build-input check passed before the final private
+NM-log regression was added. The final Nix surface/build-input recheck is blocked
+by an unrelated untracked worktree document; snapshot preflight is not bypassed.
+Full sibling packaging remains a separate gate. No real cache cleanup, deployment,
+service or hardware changes were performed.
+
 ## First-migration validation checkpoint
 
 - Native QML suite: 263 passes, no failures, one existing renderer skip; strict

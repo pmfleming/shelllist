@@ -75,7 +75,7 @@ flagged heuristically as unused were deliberately retained.
 node ../qmlqualitylens/dist/bin/qmlqualitylens.js measure all --config qmlqualitylens.config.json
 tests/run-qmllint.sh
 tests/run-qml-tests.sh
-node tests/check-daemon-boundary.js .
+cargo xtask check-daemon-boundary
 node tools/build-typescript.mjs --check
 ```
 
