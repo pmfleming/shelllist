@@ -65,7 +65,7 @@ Ui.PanelSurface {
         detail: content.pendingReview === "critical" ? qsTr("Use only one automatic power manager and verify that hibernation works on this device. A warning period precedes hibernation; locking and inhibitors remain enforced.") : qsTr("Calibration may discharge and recharge the battery and take several hours. Keep the power supply connected. You can cancel calibration from Charging actions.")
         acceptLabel: content.pendingReview === "critical" ? qsTr("Enable") : qsTr("Calibrate")
         acceptTone: "accent"
-        acceptEnabled: !content.controller.actionInFlight && (content.pendingReview === "critical" ? content.controller.backend.ready && !content.controller.suspendPolicySaving : content.reviewDeviceId === String(content.device.id || "") && content.controller.calibrationSupported && !!content.battery.plugged && !content.controller.calibrating && !content.controller.batteryOperationActive && !content.controller.thresholdOperationActive)
+        acceptEnabled: !content.controller.actionInFlight && (content.pendingReview === "critical" ? content.controller.backend.ready && !content.controller.suspendPolicySaving : content.reviewDeviceId === String(content.device.id || "") && content.controller.calibrationSupported && !!content.battery.plugged && !content.controller.calibrating && !content.controller.batteryOperationActive && !content.controller.settings.thresholdOperationActive)
         onAccepted: {
             if (!acceptEnabled) return;
             const kind = content.pendingReview;

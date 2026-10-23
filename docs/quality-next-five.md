@@ -35,6 +35,8 @@ buffer edits against the baseline. The 450-check JS vectors pass, as do native
 IP control (16) and real Wi-Fi IP fields (9); strict QML lint passes. The native
 IPv6 case now distinguishes local substring paste from rejected full selection,
 checks no write and undoes before continuing the original discard journey.
+The refactor lives in `typescript/ui/IpEdit.ts`; `IpEdit.js` is regenerated, not
+hand-maintained. Generation checking and the differential corpus both pass.
 
 ## 3. Notification acknowledgement locality
 
@@ -66,3 +68,56 @@ DetailsNavigation source lines: 585 → 493; component effort 1165 → 928; loca
 20 → 40. The collaborator adds code, so these are ownership-local measurements,
 not a claim of net line deletion. Full Qt: 244 passes, no failures, one existing
 RHI artwork skip. Strict lint, relative imports and UI role review pass.
+
+## 5. Battery settings transactions
+
+Internal `BatterySettings` owns saved threshold/alert drafts, revisions, debounce,
+validation, errors and failed-revision fences. Consumers address that owner
+explicitly, rather than retaining forwarding methods/properties on the controller.
+Controller input bindings and one status signal connect the collaborator; field-local
+transactions, interactive-operation ownership and suspend/critical safety remain
+with their existing owners. The unused `finishThresholdEditing` entry is removed.
+
+Native tests cover deferred threshold edits/discard/save, independent threshold
+failure and alert acknowledgement, a newer explicit save, and battery replacement
+before dispatch. Contract tests cover threshold/alert timeout and disconnect,
+explicit retry, older-revision completion and cancellation intent. The added duplicate
+reply test exposed a late start reply falling through to generic completion after
+its interactive operation had been consumed. BatteryBackend now consumes existing
+transport metadata before domain callbacks; duplicates cannot clear a newer save.
+
+Controller source lines: 813 → 568, component effort 1239 → 861, locality 0 → 14.
+The settings owner adds 223 source lines, effort 376 and locality 70. Its low reuse
+(leverage 15) is intentional domain ownership, not a new generic settings framework.
+Battery contract/presentation/suspend: 17 passes, no failures/skips.
+
+## Combined evidence and limits
+
+Production records exclude `tests/`, `dev/` and `*.generated.*`; they include all
+new helpers and compiled TypeScript projections. The configured-source total also
+includes test code. Typed source is not counted twice alongside its JS projection.
+
+| Measurement | Before | After |
+| --- | ---: | ---: |
+| Production source lines | 39,497 | 39,558 |
+| Cognitive sum / maximum | 6,485 / 41 | 6,462 / 22 |
+| Cyclomatic sum / maximum | 9,247 / 35 | 9,271 / 21 |
+| Advisory weighted effort sum / maximum | 40,692 / 179 | 40,686 / 102 |
+| All configured source lines | 51,904 | 52,136 |
+| Findings / score | 918 / 83 | 923 / 83 |
+
+These changes reduce the hardest functions and improve specific ownership
+boundaries; they do **not** reduce total LOC, cyclomatic sum or findings. Aggregate
+effort is essentially flat. Leverage is unchanged for the original controllers;
+no global coupling or clone reduction is claimed. Clone reporting remains capped
+at 100 groups, and effort is neither Halstead nor developer hours.
+
+Final gates: 250 Qt passes, zero failures, one existing RHI-only artwork skip;
+strict QML lint, TypeScript generation, generated contracts, daemon boundary,
+source-relative imports, runtime smoke and numeric UI review pass. The UI review
+reports no changed-line/new-wrapper prompts; the new nonvisual owners introduce
+no font/spacing/radius overrides. The 150,540-case IP differential corpus and
+450 JS checks pass after regeneration. The incoming fixture checksum is unchanged.
+No full package build, hardware/compositor/IME or human accessibility acceptance
+is claimed. Reports/logs are retained in `target/lens-next-five/` (final report:
+`step5.json`).

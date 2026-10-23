@@ -8,6 +8,7 @@ Ui.DetailColumnCard {
     id: pane
 
     required property BatteryController controller
+    readonly property BatterySettings settings: controller.settings
     objectName: "batteryLevelsCard"
 
     BatterySectionHeading {
@@ -26,8 +27,8 @@ Ui.DetailColumnCard {
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingSm
 
-            readonly property var fields: pane.controller.levelFields[modelData]
-            readonly property bool active: pane.controller.alertDraft[fields.notify]
+            readonly property var fields: pane.settings.levelFields[modelData]
+            readonly property bool active: pane.settings.alertDraft[fields.notify]
 
             RowLayout {
                 Layout.fillWidth: true
@@ -38,15 +39,15 @@ Ui.DetailColumnCard {
                     Layout.fillWidth: true
                     label: level.low ? qsTr("Low battery") : qsTr("Critical battery")
                     valueWidth: 40
-                    value: pane.controller.alertDraft[level.fields.percent]
+                    value: pane.settings.alertDraft[level.fields.percent]
                     enabled: level.active && !pane.controller.actionInFlight
                     onEdited: function (dragging) {
                         if (level.low)
-                            pane.controller.updateWarningPercent(Math.round(value), dragging);
+                            pane.settings.updateWarningPercent(Math.round(value), dragging);
                         else
-                            pane.controller.updateCriticalPercent(Math.round(value), dragging);
+                            pane.settings.updateCriticalPercent(Math.round(value), dragging);
                     }
-                    onEditingFinished: pane.controller.finishAlertEditing()
+                    onEditingFinished: pane.settings.finishAlertEditing()
                 }
 
                 Ui.ToggleSwitch {
@@ -61,7 +62,7 @@ Ui.DetailColumnCard {
                     Accessible.checkable: true
                     Accessible.checked: checked
                     onToggled: function (checked) {
-                        pane.controller.updateLevelEnabled(level.modelData, checked);
+                        pane.settings.updateLevelEnabled(level.modelData, checked);
                     }
                 }
             }
@@ -75,10 +76,10 @@ Ui.DetailColumnCard {
                     Layout.preferredHeight: implicitHeight
                     accessibleName: level.low ? qsTr("Low battery power profile") : qsTr("Critical battery power profile")
                     options: pane.controller.levelProfileOptions
-                    value: pane.controller.alertDraft[level.fields.profile]
+                    value: pane.settings.alertDraft[level.fields.profile]
                     interactive: level.active && !pane.controller.actionInFlight
                     onSelected: function (value) {
-                        pane.controller.updateLevelProfile(level.modelData, value);
+                        pane.settings.updateLevelProfile(level.modelData, value);
                     }
                 }
             }
@@ -86,7 +87,7 @@ Ui.DetailColumnCard {
     }
 
     Ui.FeedbackSource {
-        active: !pane.controller.alertDraftValid
+        active: !pane.settings.alertDraftValid
         text: qsTr("Critical percentage cannot exceed the low-battery percentage.")
         summaryText: qsTr("Critical level must not exceed low")
         tone: "error"
@@ -95,11 +96,11 @@ Ui.DetailColumnCard {
     Ui.SaveStatusLabel {
         objectName: "batteryLevelsSaveStatus"
         Layout.fillWidth: true
-        active: pane.controller.alertDraftDirty || pane.controller.alertOperationActive || pane.controller.alertSaveError.length > 0
-        text: pane.controller.alertSaveStatus
-        valid: pane.controller.alertDraftValid
-        error: pane.controller.alertSaveError
-        saving: pane.controller.alertOperationActive
+        active: pane.settings.alertDraftDirty || pane.settings.alertOperationActive || pane.settings.alertSaveError.length > 0
+        text: pane.settings.alertSaveStatus
+        valid: pane.settings.alertDraftValid
+        error: pane.settings.alertSaveError
+        saving: pane.settings.alertOperationActive
     }
 
     Ui.FeedbackSource {

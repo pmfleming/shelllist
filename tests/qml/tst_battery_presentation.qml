@@ -3,6 +3,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Battery as Battery
 import Shelllist.Ui as Ui
+import Shelllist.Io as Io
+import "../../bar/BarProtocol.generated.js" as Api
 
 DaemonTestCase {
     id: tests
@@ -67,6 +69,68 @@ DaemonTestCase {
         for (let i = 0; i < 24 && panel.surface.detailsNavigation.currentTarget !== target; i++) keyClick(Qt.Key_Tab);
         compare(panel.surface.detailsNavigation.currentTarget, target);
         return target;
+    }
+    function settingCalls(method) {
+        return calls.filter(call => call.method === method || (call.method === "battery.operation.start" && call.params.method === method));
+    }
+    function respondSetting(call, data, error = "") {
+        let envelope = {protocol: Api.protocol, version: Api.version, ok: !error, data: data};
+        if (error) envelope.error = {code: "settings-failed", message: error};
+        else if (call.method === "battery.operation.start") envelope = {protocol: Api.protocol, version: Api.version, ok: true,
+            data: {operation: {id: "settings-test", state: "finished", response: envelope}}};
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id, envelope, "", call.route);
+    }
+    function test_thresholdAndAlertAcknowledgementsStayIndependent() {
+        const panel = make("care");
+        const settings = panel.controller.settings;
+        const resume = browse(panel, "batteryResumeCharging");
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right);
+        wait(550);
+        compare(settingCalls("battery.setThresholds").length, 0, "native editing cannot enter the debounce queue");
+        compare(settings.draftStartPercent, 85);
+        keyClick(Qt.Key_Escape);
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right); keyClick(Qt.Key_Return);
+        tryVerify(() => settingCalls("battery.setThresholds").length === 1);
+        const first = settingCalls("battery.setThresholds")[0];
+        compare(first.params.params, {battery_id: "BAT0", start_percent: 86, end_percent: 90});
+        respondSetting(first, {}, "Threshold outcome unknown");
+        compare(settings.thresholdSaveError, "Threshold outcome unknown");
+        verify(settings.thresholdDraftDirty && !settings.thresholdOperationActive);
+        wait(650);
+        compare(settingCalls("battery.setThresholds").length, 1);
+        browse(panel, "batteryChargeNotificationToggle");
+        keyClick(Qt.Key_Return);
+        tryVerify(() => settingCalls("battery.setAlertPolicy").length === 1);
+        const acknowledged = battery();
+        acknowledged.policy = Object.assign({}, settings.alertDraft);
+        respondSetting(settingCalls("battery.setAlertPolicy")[0], {battery: acknowledged});
+        verify(!settings.alertDraftDirty && !settings.alertOperationActive);
+        compare(settings.thresholdSaveError, "Threshold outcome unknown");
+        compare(panel.controller.lastError, "Threshold outcome unknown");
+        compare(settings.draftStartPercent, 86, "an unrelated snapshot cannot replace the failed saved draft");
+        browse(panel, "batteryResumeCharging");
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right); keyClick(Qt.Key_Return);
+        tryVerify(() => settingCalls("battery.setThresholds").length === 2);
+        const retry = settingCalls("battery.setThresholds")[1];
+        compare(retry.params.params.start_percent, 87);
+        const observed = battery();
+        observed.devices[0].protection.desired_start_percent = 87;
+        respondSetting(retry, {battery: observed});
+        verify(!settings.thresholdDraftDirty && !settings.thresholdOperationActive);
+        compare(settings.thresholdSaveError, "");
+        compare(resume.value, 87);
+    }
+    function test_deviceReplacementCancelsOnlyItsUnsubmittedThresholdDraft() {
+        const panel = make("care");
+        browse(panel, "batteryResumeCharging");
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Right); keyClick(Qt.Key_Return);
+        verify(panel.controller.settings.thresholdDraftDirty);
+        panel.controller.applyBattery(battery("BAT1"));
+        compare(panel.controller.selectedDevice.id, "BAT1");
+        compare(panel.controller.settings.draftStartPercent, 85);
+        verify(!panel.controller.settings.thresholdDraftDirty);
+        wait(650);
+        compare(settingCalls("battery.setThresholds").length, 0, "a replacement battery never inherits queued settings");
     }
     function test_independentCriticalProtectionAndRecovery() {
         const panel = make("power");

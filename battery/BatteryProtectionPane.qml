@@ -9,11 +9,12 @@ Column {
     id: pane
 
     required property BatteryController controller
+    readonly property BatterySettings settings: controller.settings
     required property var battery
     required property var device
     required property var protection
     signal calibrationRequested()
-    readonly property bool thresholdsEditable: controller.protectionSupported && !controller.batteryOperationActive && !controller.thresholdOperationActive && !controller.actionInFlight
+    readonly property bool thresholdsEditable: controller.protectionSupported && !controller.batteryOperationActive && !settings.thresholdOperationActive && !controller.actionInFlight
 
     width: parent.width
     spacing: Ui.Theme.spacingMd
@@ -44,9 +45,9 @@ Column {
             compact: true
             icons: ["shield"]
             title: qsTr("Protect battery")
-            checked: pane.controller.draftProtectionEnabled
+            checked: pane.settings.draftProtectionEnabled
             interactive: pane.thresholdsEditable
-            onClicked: pane.controller.setProtection(!checked)
+            onClicked: pane.settings.setProtection(!checked)
         }
         Ui.LinkedValueSlider {
             objectName: "batteryResumeCharging"
@@ -56,12 +57,12 @@ Column {
             to: 100
             scaleValues: Ui.SliderScale.chargeValues()
             minimumValue: 0
-            maximumValue: pane.controller.draftEndPercent - 1
-            peerValue: pane.controller.draftEndPercent
-            value: pane.controller.draftStartPercent
+            maximumValue: pane.settings.draftEndPercent - 1
+            peerValue: pane.settings.draftEndPercent
+            value: pane.settings.draftStartPercent
             interactive: pane.thresholdsEditable
             onValueSelected: function (selectedValue) {
-                pane.controller.updateStartPercent(selectedValue, false);
+                pane.settings.updateStartPercent(selectedValue, false);
             }
         }
         Ui.LinkedValueSlider {
@@ -71,17 +72,17 @@ Column {
             from: 0
             to: 100
             scaleValues: Ui.SliderScale.chargeValues()
-            minimumValue: pane.controller.draftStartPercent + 1
+            minimumValue: pane.settings.draftStartPercent + 1
             maximumValue: 100
-            peerValue: pane.controller.draftStartPercent
-            value: pane.controller.draftEndPercent
+            peerValue: pane.settings.draftStartPercent
+            value: pane.settings.draftEndPercent
             interactive: pane.thresholdsEditable
             onValueSelected: function (selectedValue) {
-                pane.controller.updateEndPercent(selectedValue, false);
+                pane.settings.updateEndPercent(selectedValue, false);
             }
         }
         Ui.FeedbackSource {
-            active: !pane.controller.thresholdDraftValid
+            active: !pane.settings.thresholdDraftValid
             text: qsTr("Resume charging must be lower than stop charging.")
             summaryText: qsTr("Resume must be below stop")
             tone: "error"
@@ -89,11 +90,11 @@ Column {
         Ui.SaveStatusLabel {
             objectName: "batteryThresholdSaveStatus"
             Layout.fillWidth: true
-            active: pane.controller.protectionSupported && (pane.controller.thresholdDraftDirty || pane.controller.thresholdOperationActive || pane.controller.thresholdSaveError.length > 0)
-            text: pane.controller.thresholdSaveStatus
-            valid: pane.controller.thresholdDraftValid
-            error: pane.controller.thresholdSaveError
-            saving: pane.controller.thresholdOperationActive
+            active: pane.controller.protectionSupported && (pane.settings.thresholdDraftDirty || pane.settings.thresholdOperationActive || pane.settings.thresholdSaveError.length > 0)
+            text: pane.settings.thresholdSaveStatus
+            valid: pane.settings.thresholdDraftValid
+            error: pane.settings.thresholdSaveError
+            saving: pane.settings.thresholdOperationActive
         }
         Ui.ToggleRow {
             objectName: "batteryChargeNotificationToggle"
@@ -103,18 +104,18 @@ Column {
             icons: ["notifications", "arrow_forward"]
             title: chargeTarget + "%"
             accessibleName: qsTr("Notify at charge target (%1%)").arg(chargeTarget)
-            checked: pane.controller.alertDraft.notify_when_full
+            checked: pane.settings.alertDraft.notify_when_full
             interactive: !pane.controller.actionInFlight
-            onClicked: pane.controller.updateNotifyWhenFull(!checked)
+            onClicked: pane.settings.updateNotifyWhenFull(!checked)
         }
         Ui.SaveStatusLabel {
             objectName: "batteryChargeNotificationSaveStatus"
             Layout.fillWidth: true
-            active: pane.controller.alertDraftDirty || pane.controller.alertOperationActive || pane.controller.alertSaveError.length > 0
-            text: pane.controller.alertSaveStatus
-            valid: pane.controller.alertDraftValid
-            error: pane.controller.alertSaveError
-            saving: pane.controller.alertOperationActive
+            active: pane.settings.alertDraftDirty || pane.settings.alertOperationActive || pane.settings.alertSaveError.length > 0
+            text: pane.settings.alertSaveStatus
+            valid: pane.settings.alertDraftValid
+            error: pane.settings.alertSaveError
+            saving: pane.settings.alertOperationActive
         }
         RowLayout {
             objectName: "batteryChargingActionRow"
@@ -133,19 +134,19 @@ Column {
                     {
                         id: "once", icon: "battery_charging_full", accessKey: "O",
                         label: pane.protection.charge_once_active ? qsTr("Charging to 100%") : qsTr("Charge to 100% once"),
-                        enabled: !!pane.battery.plugged && !pane.protection.charge_once_active && !pane.controller.batteryOperationActive && !pane.controller.thresholdOperationActive && pane.controller.protectionSupported && !pane.controller.actionInFlight,
+                        enabled: !!pane.battery.plugged && !pane.protection.charge_once_active && !pane.controller.batteryOperationActive && !pane.settings.thresholdOperationActive && pane.controller.protectionSupported && !pane.controller.actionInFlight,
                         presentation: {group: "toolbar", iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(Presentation.profileTint("power-saver")), 0.35)}
                     },
                     {
                         id: "pause", icon: pane.controller.chargingInhibited ? "play_arrow" : "pause", accessKey: "P",
                         label: pane.controller.chargingInhibited ? qsTr("Resume charging") : qsTr("Pause charging"),
-                        enabled: pane.controller.inhibitionSupported && (!pane.controller.batteryOperationActive || pane.controller.chargingInhibited) && !pane.controller.thresholdOperationActive && !pane.controller.actionInFlight,
+                        enabled: pane.controller.inhibitionSupported && (!pane.controller.batteryOperationActive || pane.controller.chargingInhibited) && !pane.settings.thresholdOperationActive && !pane.controller.actionInFlight,
                         presentation: {group: "toolbar", iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(Presentation.profileTint("performance")), 0.35)}
                     },
                     {
                         id: "calibrate", icon: pane.controller.calibrating ? "cancel" : "autorenew", accessKey: "C",
                         label: pane.controller.calibrating ? qsTr("Cancel calibration") : qsTr("Calibrate battery"),
-                        enabled: pane.controller.calibrationSupported && (pane.controller.calibrating || !!pane.battery.plugged) && (!pane.controller.batteryOperationActive || pane.controller.calibrating) && !pane.controller.thresholdOperationActive && !pane.controller.actionInFlight,
+                        enabled: pane.controller.calibrationSupported && (pane.controller.calibrating || !!pane.battery.plugged) && (!pane.controller.batteryOperationActive || pane.controller.calibrating) && !pane.settings.thresholdOperationActive && !pane.controller.actionInFlight,
                         presentation: {group: "toolbar", iconColor: Ui.Theme.mix(Ui.Theme.text, Qt.color(Presentation.profileTint("balanced")), 0.35)}
                     }
                 ]

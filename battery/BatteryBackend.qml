@@ -153,7 +153,7 @@ Io.BarDaemonBackend {
         else if (isBackgroundRequest(id))
             controller.refreshFailed(id, error);
         else if (domain.length > 0)
-            controller.settingsOperationFailed(domain, error);
+            controller.settings.failed(domain, error);
         else
             controller.operationFailed(id, error);
     }
@@ -165,7 +165,7 @@ Io.BarDaemonBackend {
         else if (isBackgroundRequest(id))
             controller.refreshFinished(id);
         else if (domain.length > 0)
-            controller.settingsOperationFinished(domain);
+            controller.settings.finished(domain);
         else
             controller.operationFinished(id);
     }
@@ -180,6 +180,11 @@ Io.BarDaemonBackend {
     }
 
     onResponseReceived: function (id, envelope, transportError) {
+        const metadata = requestMetadata[id];
+        if (!metadata) return;
+        // Consume the transport request before domain callbacks can submit again.
+        // A late start reply must not fall through and acknowledge a newer save.
+        forgetRequestMetadata(id, metadata);
         if (!interactive.accept(id, envelope, transportError))
             finish(id, envelope, transportError);
     }
@@ -198,6 +203,6 @@ Io.BarDaemonBackend {
     }
     onTransportReady: {
         snapshot();
-        controller.resumePendingSettings();
+        controller.settings.resume();
     }
 }

@@ -45,22 +45,23 @@ DaemonTestCase {
         let sent = false;
         switch (method) {
         case "battery.setThresholds": case "battery.setProtection":
-            c.updateStartPercent(params.start_percent, false);
-            if (method === "battery.setProtection") c.protectionRevision += 1;
-            sent = c.flushThresholdPolicy(); break;
+            c.settings.updateStartPercent(params.start_percent, false);
+            if (method === "battery.setProtection") c.settings.protectionRevision += 1;
+            sent = c.settings.flushThresholdPolicy(); break;
         case "battery.chargeOnce": sent = c.chargeOnce(); break;
         case "battery.setChargingInhibited": sent = c.setChargingInhibited(params.enabled); break;
         case "battery.startCalibration": case "battery.cancelCalibration": sent = c.toggleCalibration(); break;
         case "battery.setAlertPolicy":
-            c.alertDraft = params; c.markAlertChanged(false);
-            sent = c.flushAlertPolicy(); break;
+            c.settings.alertDraft = params; c.settings.markAlertChanged(false);
+            sent = c.settings.flushAlertPolicy(); break;
         }
         verify(sent, method);
         const call = lastCall(c, method); compare(call.method === "battery.operation.start" ? call.params.params : call.params, params);
         verify(c.backend.isPending(call.route.localId)); return call;
     }
     function test_noReplay_data() {
-        return [["battery.setThresholds", false]]
+        return [["battery.setThresholds", false], ["battery.setThresholds", true],
+            ["battery.setAlertPolicy", false], ["battery.setAlertPolicy", true]]
             .map(([method, disconnect]) => ({tag: method + (disconnect ? "/disconnect" : "/timeout"), method: method, disconnect: disconnect}));
     }
     function test_noReplay(data) {
@@ -75,13 +76,27 @@ DaemonTestCase {
         compare(effects(c).length, 1, "No automatic replay after uncertain execution");
         verify(!c.backend.isPending(call.route.localId));
         if (["battery.setThresholds", "battery.setProtection"].includes(data.method)) {
-            verify(c.thresholdDraftDirty); compare(c.draftStartPercent, 60);
-            verify(c.flushThresholdPolicy(), "Explicit user retry remains possible");
+            verify(c.settings.thresholdDraftDirty); compare(c.settings.draftStartPercent, 60);
+            verify(c.settings.flushThresholdPolicy(), "Explicit user retry remains possible");
             compare(effects(c).length, 2);
         } else if (data.method === "battery.setAlertPolicy") {
-            verify(c.alertDraftDirty); compare(c.alertDraft.warning_percent, 30);
-            verify(c.flushAlertPolicy()); compare(effects(c).length, 2);
+            verify(c.settings.alertDraftDirty); compare(c.settings.alertDraft.warning_percent, 30);
+            verify(c.settings.flushAlertPolicy()); compare(effects(c).length, 2);
         }
+    }
+    function test_thresholdCompletionPreservesANewerSavedRevision() {
+        const c = make("battery.setThresholds");
+        const first = start(c, "battery.setThresholds");
+        c.settings.updateEndPercent(85, false);
+        const completion = clone(fixture().operationFinished["battery.setThresholds"].success);
+        reply(first, completion);
+        verify(c.settings.thresholdDraftDirty);
+        compare(c.settings.draftEndPercent, 85, "acknowledging an older save cannot overwrite the next saved revision");
+        tryVerify(() => effects(c).length === 2);
+        const next = lastCall(c, "battery.setThresholds");
+        compare(next.params.params, {battery_id: "BAT0", start_percent: 60, end_percent: 85});
+        reply(first, completion);
+        verify(c.settings.thresholdOperationActive, "a duplicate old reply cannot retire the new operation");
     }
     function test_cancelAcknowledgesIntentNotRollback() {
         const c = make("battery.chargeOnce");

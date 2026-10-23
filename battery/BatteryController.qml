@@ -119,35 +119,7 @@ Ui.ChooserController {
     }
     property string viewTab: "overview"
     property int selectedDeviceIndex: 0
-    property bool draftProtectionEnabled: false
-    property int draftStartPercent: 75
-    property int draftEndPercent: 80
-    property var alertDraft: Flow.alertDraft({})
-
-    // The last real profile per level, restored when a level is re-enabled.
-    property var lastLevelProfiles: ({
-            low: "power-saver",
-            critical: "power-saver"
-        })
-    property bool thresholdDraftDirty: false
-    property bool alertDraftDirty: false
-    property bool thresholdEditing: false
-    property bool alertEditing: false
-    property bool thresholdOperationActive: false
-    property bool alertOperationActive: false
-    property int thresholdRevision: 0
-    property int thresholdSentRevision: 0
-    property int protectionRevision: 0
-    property int protectionAcknowledgedRevision: 0
-    property int protectionSentRevision: 0
-    property int alertRevision: 0
-    property int alertSentRevision: 0
-    property string thresholdSaveError: ""
-    property string alertSaveError: ""
-    // A failed response does not prove a write was not applied. Only a newer
-    // user revision or an explicit flush may retry; reconnect/debounce may not.
-    property int thresholdFailedRevision: -1
-    property int alertFailedRevision: -1
+    readonly property BatterySettings settings: batterySettings
     property var batteryHistory: ({
             points: [],
             last_charge_timestamp_ms: 0,
@@ -215,12 +187,6 @@ Ui.ChooserController {
     })
     readonly property var batteryAutomation: powerProfile.battery_automation || ({})
     readonly property string automationStatus: Presentation.automationStatus(batteryAutomation, powerProfile.available)
-    readonly property bool thresholdDraftValid: Presentation.thresholdRangeValid(draftStartPercent, draftEndPercent)
-    readonly property bool alertDraftValid: Presentation.alertRangeValid(alertDraft.warning_percent, alertDraft.critical_percent)
-    readonly property bool settingsOperationActive: thresholdOperationActive || alertOperationActive
-    readonly property string thresholdSaveStatus: Presentation.saveStatus(thresholdDraftValid, "Choose a valid range", thresholdOperationActive, thresholdSaveError, thresholdDraftDirty)
-    readonly property string alertSaveStatus: Presentation.saveStatus(alertDraftValid, "Choose valid battery levels", alertOperationActive, alertSaveError, alertDraftDirty)
-    readonly property var levelFields: Flow.levelFields
 
     function selectViewTab(tab: string): void {
         if (viewTabs.some(function (option) {
@@ -238,13 +204,7 @@ Ui.ChooserController {
         const next = Flow.selection(battery, selectedDeviceIndex, requestedId);
         if ((selectedDevice ? selectedDevice.id : "") !== (next.device ? next.device.id : "")) {
             // Never apply a removed battery's pending range to its replacement.
-            thresholdAutoSave.stop();
-            thresholdDraftDirty = false;
-            thresholdEditing = false;
-            thresholdSaveError = "";
-            thresholdRevision += 1;
-            protectionAcknowledgedRevision = protectionRevision;
-            protectionSentRevision = protectionRevision;
+            settings.resetSelection();
         }
         selectedDeviceIndex = next.index;
         selectedDevice = next.device;
@@ -265,17 +225,7 @@ Ui.ChooserController {
         if (uiActive && changes.charge)
             requestEnergyPeriod("last-charge", true);
         syncBatterySelection(selectedDevice ? selectedDevice.id : "");
-        syncThresholdDraft();
-        if (!alertDraftDirty)
-            alertDraft = Flow.alertDraft(policy);
-    }
-
-    function syncThresholdDraft(): void {
-        if (!thresholdDraftDirty) {
-            draftProtectionEnabled = !!protection.desired_enabled;
-            draftStartPercent = Number(Flow.valueOr(protection.desired_start_percent, 75));
-            draftEndPercent = Number(Flow.valueOr(protection.desired_end_percent, 80));
-        }
+        settings.syncDrafts();
     }
 
     function applyBatteryHistory(value: var): void {
@@ -373,12 +323,11 @@ Ui.ChooserController {
         const index = devices.findIndex(function (device) {
             return device.id === batteryId;
         });
-        if (index < 0 || actionInFlight || settingsOperationActive || (selectedDevice && selectedDevice.id === batteryId))
+        if (index < 0 || actionInFlight || settings.operationActive || (selectedDevice && selectedDevice.id === batteryId))
             return;
-        thresholdAutoSave.stop();
         selectedDeviceIndex = index;
         syncBatterySelection(batteryId);
-        syncThresholdDraft();
+        settings.syncThresholdDraft();
     }
 
     function applyDomainEvent(kind: string, data: var): void {
@@ -407,18 +356,9 @@ Ui.ChooserController {
         return true;
     }
 
-    function currentSettingsError(): string {
-        return thresholdSaveError.length > 0 ? thresholdSaveError : alertSaveError;
-    }
-
-    function resumePendingSettings(): void {
-        scheduleThresholdSave(false);
-        finishAlertEditingIfIdle();
-    }
-
     onBatteryOperationActiveChanged: {
         if (!batteryOperationActive)
-            resumePendingSettings();
+            settings.resume();
     }
 
     function operationFinished(id: string): void {
@@ -432,8 +372,8 @@ Ui.ChooserController {
             suspendError = "";
         }
         actionInFlight = false;
-        lastError = currentSettingsError();
-        resumePendingSettings();
+        lastError = settings.error;
+        settings.resume();
     }
 
     function operationFailed(id: string, message: string): void {
@@ -441,52 +381,15 @@ Ui.ChooserController {
         if (id.startsWith("power-keep-awake-")) {
             keepAwakePending = false;
             keepAwakeError = message;
-            lastError = currentSettingsError();
+            lastError = settings.error;
         } else if (id.startsWith("power-suspend-")) {
             suspendPendingAction = "";
             suspendError = message;
-            lastError = currentSettingsError();
+            lastError = settings.error;
         } else {
             lastError = message;
         }
-        resumePendingSettings();
-    }
-
-    function settingsOperationFinished(domain: string): void {
-        if (domain === "threshold") {
-            thresholdOperationActive = false;
-            thresholdSaveError = "";
-            protectionAcknowledgedRevision = protectionSentRevision;
-            if (thresholdRevision === thresholdSentRevision)
-                thresholdDraftDirty = false;
-            else
-                scheduleThresholdSave(false);
-        } else {
-            alertOperationActive = false;
-            alertSaveError = "";
-            if (alertRevision === alertSentRevision)
-                alertDraftDirty = false;
-            else
-                finishAlertEditingIfIdle();
-        }
-        lastError = currentSettingsError();
-    }
-
-    function settingsOperationFailed(domain: string, message: string): void {
-        lastError = message;
-        if (domain === "threshold") {
-            thresholdOperationActive = false;
-            thresholdSaveError = message;
-            thresholdFailedRevision = thresholdSentRevision;
-            if (thresholdRevision !== thresholdSentRevision)
-                scheduleThresholdSave(false);
-        } else {
-            alertOperationActive = false;
-            alertSaveError = message;
-            alertFailedRevision = alertSentRevision;
-            if (alertRevision !== alertSentRevision)
-                finishAlertEditingIfIdle();
-        }
+        settings.resume();
     }
 
     function transportFailed(message: string): void {
@@ -500,27 +403,17 @@ Ui.ChooserController {
         }
         if (suspendPolicySaving)
             suspendPolicyFailed("Connection lost; settings may have been saved. Retry to confirm. " + message);
-        thresholdAutoSave.stop();
-        alertAutoSave.stop();
+        settings.stop();
         if (suspendPendingAction.length > 0) {
             suspendPendingAction = "";
             suspendError = "Connection lost. The request may already have been accepted; check the session before retrying. " + message;
-            lastError = currentSettingsError();
+            lastError = settings.error;
         } else if (actionInFlight) {
             // A recovered snapshot cannot confirm whether an effect succeeded.
             lastError = message;
         }
         actionInFlight = false;
-        if (thresholdOperationActive) {
-            thresholdOperationActive = false;
-            thresholdSaveError = message;
-            thresholdFailedRevision = thresholdSentRevision;
-        }
-        if (alertOperationActive) {
-            alertOperationActive = false;
-            alertSaveError = message;
-            alertFailedRevision = alertSentRevision;
-        }
+        settings.transportFailed(message);
     }
 
     function refreshFailed(_id: string, message: string): void {
@@ -534,181 +427,22 @@ Ui.ChooserController {
             transportError = "";
     }
 
-    function scheduleThresholdSave(immediate: bool): void {
-        thresholdAutoSave.stop();
-        if (thresholdEditing || !thresholdDraftValid || !thresholdDraftDirty || thresholdRevision <= thresholdFailedRevision)
-            return;
-        if (immediate)
-            flushThresholdPolicy();
-        else
-            thresholdAutoSave.restart();
-    }
-
-    function markThresholdChanged(immediate: bool): void {
-        thresholdRevision += 1;
-        thresholdDraftDirty = true;
-        thresholdSaveError = "";
-        scheduleThresholdSave(immediate);
-    }
-
-    function updateStartPercent(value: int, dragging: bool): void {
-        if (!Presentation.thresholdRangeValid(value, draftEndPercent)) return;
-        thresholdEditing = dragging;
-        draftStartPercent = value;
-        markThresholdChanged(false);
-    }
-
-    function updateEndPercent(value: int, dragging: bool): void {
-        if (!Presentation.thresholdRangeValid(draftStartPercent, value)) return;
-        thresholdEditing = dragging;
-        draftEndPercent = value;
-        markThresholdChanged(false);
-    }
-
-    function finishThresholdEditing(): void {
-        thresholdEditing = false;
-        scheduleThresholdSave(false);
-    }
-
-    function markAlertChanged(immediate: bool): void {
-        alertRevision += 1;
-        alertDraftDirty = true;
-        alertSaveError = "";
-        alertAutoSave.stop();
-        if (alertEditing || !alertDraftValid)
-            return;
-        if (immediate)
-            flushAlertPolicy();
-        else
-            alertAutoSave.restart();
-    }
-
-    function editAlert(changes: var, immediate: bool): void {
-        alertDraft = Object.assign({}, alertDraft, changes);
-        markAlertChanged(immediate);
-    }
-
-    function updateWarningPercent(value: int, dragging: bool): void {
-        alertEditing = dragging;
-        editAlert({
-            warning_percent: value
-        }, false);
-    }
-
-    function updateCriticalPercent(value: int, dragging: bool): void {
-        alertEditing = dragging;
-        editAlert({
-            critical_percent: value
-        }, false);
-    }
-
-    function finishAlertEditing(): void {
-        alertEditing = false;
-        finishAlertEditingIfIdle();
-    }
-
-    function finishAlertEditingIfIdle(): void {
-        if (!alertEditing && alertDraftValid && alertDraftDirty && alertRevision > alertFailedRevision)
-            alertAutoSave.restart();
-    }
-
-    function updateNotifyWhenFull(value: bool): void {
-        editAlert({
-            notify_when_full: value
-        }, true);
-    }
-
-    function updateLevelEnabled(level: string, enabled: bool): void {
-        const fields = levelFields[level];
-        if (actionInFlight || !fields)
-            return;
-        const current = alertDraft[fields.profile];
-        if (current !== "keep-current")
-            lastLevelProfiles = Object.assign({}, lastLevelProfiles, {
-                [level]: current
-            });
-        const previous = lastLevelProfiles[level];
-        const option = levelProfileOptions.find(function (option) {
-            return option.value === previous && option.enabled;
-        }) || levelProfileOptions.find(function (option) {
-            return option.enabled;
-        });
-        // Notifications remain available even without a power-profile service.
-        const profile = enabled && option ? option.value : "keep-current";
-        editAlert({
-            [fields.notify]: enabled,
-            [fields.profile]: profile
-        }, true);
-    }
-
-    function updateLevelProfile(level: string, value: string): void {
-        const fields = levelFields[level];
-        if (!fields || (value !== "keep-current" && !levelProfileOptions.some(function (option) {
-                return option.value === value && option.enabled !== false;
-            })))
-            return;
-        editAlert({
-            [fields.profile]: value
-        }, true);
-    }
-
-    function setProtection(enabled: bool): bool {
-        if (actionInFlight || batteryOperationActive || !protectionSupported || !selectedDevice)
-            return false;
-        draftProtectionEnabled = enabled;
-        protectionRevision += 1;
-        markThresholdChanged(true);
-        return true;
-    }
-
-    function flushThresholdPolicy(): bool {
-        if (thresholdEditing || thresholdOperationActive || actionInFlight || batteryOperationActive || !protectionSupported || !thresholdDraftValid || !thresholdDraftDirty || !selectedDevice)
-            return false;
-        thresholdSentRevision = thresholdRevision;
-        protectionSentRevision = protectionRevision;
-        thresholdOperationActive = true;
-        thresholdSaveError = "";
-        lastError = "";
-        const started = protectionRevision !== protectionAcknowledgedRevision ? backend.setProtection(selectedDevice.id, draftProtectionEnabled, draftStartPercent, draftEndPercent) : backend.setThresholds(selectedDevice.id, draftStartPercent, draftEndPercent);
-        if (started)
-            return true;
-        thresholdOperationActive = false;
-        thresholdSaveError = "Unable to send the battery protection policy";
-        lastError = thresholdSaveError;
-        return false;
-    }
-
     function chargeOnce(): bool {
-        if (actionInFlight || thresholdOperationActive || batteryOperationActive || !protectionSupported || !battery.plugged || !selectedDevice)
+        if (actionInFlight || settings.thresholdOperationActive || batteryOperationActive || !protectionSupported || !battery.plugged || !selectedDevice)
             return false;
         return startOperation(backend.chargeOnce(selectedDevice.id));
     }
 
     function setChargingInhibited(enabled: bool): bool {
-        if (actionInFlight || thresholdOperationActive || !inhibitionSupported || !selectedDevice || (batteryOperationActive && !chargingInhibited))
+        if (actionInFlight || settings.thresholdOperationActive || !inhibitionSupported || !selectedDevice || (batteryOperationActive && !chargingInhibited))
             return false;
         return startOperation(backend.setChargingInhibited(selectedDevice.id, enabled));
     }
 
     function toggleCalibration(): bool {
-        if (actionInFlight || thresholdOperationActive || !calibrationSupported || !selectedDevice || (!calibrating && (!battery.plugged || batteryOperationActive)))
+        if (actionInFlight || settings.thresholdOperationActive || !calibrationSupported || !selectedDevice || (!calibrating && (!battery.plugged || batteryOperationActive)))
             return false;
         return startOperation(calibrating ? backend.cancelCalibration(selectedDevice.id) : backend.startCalibration(selectedDevice.id));
-    }
-
-    function flushAlertPolicy(): bool {
-        if (alertEditing || alertOperationActive || actionInFlight || !alertDraftValid || !alertDraftDirty)
-            return false;
-        alertSentRevision = alertRevision;
-        alertOperationActive = true;
-        alertSaveError = "";
-        lastError = "";
-        if (backend.setAlertPolicy(alertDraft))
-            return true;
-        alertOperationActive = false;
-        alertSaveError = "Unable to send battery levels & actions";
-        lastError = alertSaveError;
-        return false;
     }
 
     function setPowerProfile(profile: string): bool {
@@ -774,7 +508,7 @@ Ui.ChooserController {
         suspendPendingAction = action;
         suspendRetryAction = action;
         suspendError = "";
-        lastError = currentSettingsError();
+        lastError = settings.error;
         actionInFlight = true;
         if (backend.powerSuspendAction(action))
             return true;
@@ -857,28 +591,21 @@ Ui.ChooserController {
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
         active: controller.uiActive
-        blocked: controller.actionInFlight || controller.settingsOperationActive
+        blocked: controller.actionInFlight || controller.settings.operationActive
         startMessage: "Capturing Battery & Power panel…"
     }
 
-    Timer {
-        id: thresholdAutoSave
-        interval: 500
-        repeat: false
-        onTriggered: {
-            if (controller.thresholdRevision > controller.thresholdFailedRevision)
-                controller.flushThresholdPolicy();
-        }
-    }
-
-    Timer {
-        id: alertAutoSave
-        interval: 500
-        repeat: false
-        onTriggered: {
-            if (controller.alertRevision > controller.alertFailedRevision)
-                controller.flushAlertPolicy();
-        }
+    BatterySettings {
+        id: batterySettings
+        backend: batteryBackend
+        actionInFlight: controller.actionInFlight
+        batteryOperationActive: controller.batteryOperationActive
+        protectionSupported: controller.protectionSupported
+        selectedDevice: controller.selectedDevice
+        protection: controller.protection
+        policy: controller.policy
+        levelProfileOptions: controller.levelProfileOptions
+        onStatusMessage: function (message) { controller.lastError = message; }
     }
 
     Timer {

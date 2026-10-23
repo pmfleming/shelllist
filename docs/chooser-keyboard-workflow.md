@@ -1472,6 +1472,19 @@ One-time charge, pause/resume and calibration use a compact shared
 content action row (Alt+O/P/C), outside field traversal. Ordinary success copy
 is hidden, not validation, firmware mismatch or operation progress.
 
+`BatterySettings` owns the saved threshold/alert drafts, debounce timers, revisions
+and independent acknowledgement/error fences. Shared controls still own unsaved
+field edits: even waiting past the debounce deadline while editing cannot write.
+A failed or uncertain revision never replays on reconnect; only an explicit retry
+or newer saved revision can submit again. An unrelated alert acknowledgement cannot
+clear a threshold error/draft, and an older threshold completion cannot clear a
+newer saved revision. Transport replies are consumed before domain callbacks;
+duplicate replies cannot retire a newer operation. Replacing the selected battery
+cancels its unsubmitted threshold draft, not global alert policy or suspend safety.
+Interactive operation ownership, cancellation intent and critical-protection guards
+remain separate. Native and domain tests live in `tst_battery_presentation.qml`,
+`tst_battery_contract.qml` and `tst_battery_suspend.qml`.
+
 Calibration starts only after a shared confirmation; cancelling an active
 calibration remains direct. Enabling critical-battery hibernation reviews the
 single-manager / working-hibernation requirements; disabling remains direct.
