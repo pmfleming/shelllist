@@ -225,14 +225,21 @@ node tools/build-typescript.mjs --check
 tsc --project tsconfig.json
 tests/run-qml-tests.sh
 tests/run-performance-benchmarks.sh
-# Installed resident host hidden:
-tests/benchmark-resident.py --duration 20 --check
-# Target Wayland session; opens every surface twice:
-tests/benchmark-responsiveness.py --check
+# Set PID to the resident Quickshell instance from `quickshell list --all --json`.
+# Installed resident host hidden; read-only status checks:
+shelllist-perf resident --pid "$PID" --duration 20s --check
+# Target Wayland session; explicit consent, one surface per run:
+shelllist-perf run warm-open --pid "$PID" --surface applications \
+  --allow-ui-control --exclusive-session --check
+# Native Qt profiler observations (not display-frame measurements):
+tests/profile-qml.sh
 ```
 
 Edit generated presentation logic under `typescript/`, then run `node tools/build-typescript.mjs` and commit the corresponding JavaScript. The manifest maps sources to outputs; freshness checks prevent drift. QML tests run against packaged shared imports and domain fixtures, including bar/display sources.
 
-The policy benchmark writes `target/performance/qmlbench.json`; resident measurements cover hidden CPU, PSS, faults and bridge threads. Responsiveness measurements cover acknowledgement, first frame, cold readiness, search and model latency. See [QML quality guidance](docs/qml-quality-review.md) for maintenance gates and validation limits.
+The [QML/Rust boundary migration](docs/rust-frontend-boundary.md) records theme,
+ranking and performance-tool ownership, cross-repository changes and validation gates.
+
+The policy benchmark writes `target/performance/qmlbench.json`; resident measurements cover hidden CPU, PSS, faults and bridge threads. Responsiveness measurements cover PID-targeted IPC acknowledgement, Qt frame callbacks and content readiness (cold only when actually observed). Latest search/model telemetry is not attributed to a new open. The three former Python tools now live in [the Rust performance lens](tools/performance-lens/README.md). See [QML quality guidance](docs/qml-quality-review.md) for maintenance gates and validation limits.
 
 For a standalone build, use `../daemon-framework/tools/local-build build .`. The desktop `rebuild` uses the same current-source policy and one frozen graph for mandatory checks and deployment.

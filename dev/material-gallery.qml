@@ -4,6 +4,7 @@ import Quickshell
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
+import Shelllist.Io as Io
 
 ShellRoot {
     id: gallery
@@ -47,9 +48,15 @@ ShellRoot {
         implicitHeight: 128
         radius: 20
         color: palette.surfaceContainer
+        Io.MaterialTheme {
+            id: previewTheme
+            active: true
+            seedColor: sample.seed
+            dark: sample.darkMode
+        }
         Ui.MaterialPalette {
             id: palette
-            seedColor: sample.seed
+            roles: previewTheme.roles || fallbackRoles
             dark: sample.darkMode
         }
         ColumnLayout {

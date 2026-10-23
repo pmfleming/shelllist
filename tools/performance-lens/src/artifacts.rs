@@ -271,7 +271,7 @@ pub fn raw(path: &Path, manifest: &Manifest) -> Result<(Vec<Sample>, Vec<Event>)
     }
     if manifest.status == "complete" {
         ensure!(!samples.is_empty(), "complete artifact has no samples");
-        if manifest.scenario == "capture" {
+        if matches!(manifest.scenario.as_str(), "capture" | "resident-hidden") {
             ensure!(
                 samples.iter().any(|s| s.label == "ui-host"
                     && s.phase == "capture"

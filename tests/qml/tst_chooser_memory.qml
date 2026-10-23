@@ -172,7 +172,15 @@ DaemonTestCase {
         compare(controller.filteredResultsModel.count, 1);
         verify(surface.listItem.searchFocused);
         keyClick(Qt.Key_A, Qt.ControlModifier); keyClick(Qt.Key_Backspace);
-        compare(controller.filteredResultsModel.count, 2, "clearing the query restores the baseline immediately");
+        compare(controller.filteredResultsModel.count, 1, "clearing also waits for Rust rather than sorting locally");
+        const clearedGeneration = store.searchGeneration;
+        store.applyRustRanking("another-owner", clearedGeneration, []);
+        store.applyRustRanking(store.searchOwner, clearedGeneration - 1, []);
+        compare(controller.filteredResultsModel.count, 1);
+        store.applyRustRanking(store.searchOwner, clearedGeneration, store.sourceResults.map(item => item.key).reverse());
+        compare(controller.filteredResultsModel.count, 2);
+        compare(store.visibleResults[0].id, "b", "even empty-query ordering is authoritative");
+        verify(surface.listItem.searchFocused);
     }
 
     function test_readinessResumesFocusButNeverRestoresUnsavedValues() {

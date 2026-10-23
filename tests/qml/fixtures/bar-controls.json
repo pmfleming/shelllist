@@ -772,5 +772,217 @@
       "protocol": "bar-api",
       "version": 2
     }
+  },
+  "theme.configure": {
+    "failed": {
+      "error": {
+        "code": "validation-error",
+        "message": "seed must be an opaque #rrggbb color"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "invalid_params": {
+      "dark": "false",
+      "seed": "#6750a4"
+    },
+    "limited": {
+      "data": {
+        "theme": {
+          "error": "#ba1a1a",
+          "errorContainer": "#ffdad6",
+          "onError": "#ffffff",
+          "onErrorContainer": "#93000a",
+          "onPrimary": "#ffffff",
+          "onPrimaryContainer": "#4d3d75",
+          "onSecondary": "#ffffff",
+          "onSecondaryContainer": "#4a4458",
+          "onSuccess": "#ffffff",
+          "onSurface": "#1d1b20",
+          "onSurfaceVariant": "#49454e",
+          "onTertiary": "#ffffff",
+          "onTertiaryContainer": "#633b48",
+          "onWarning": "#ffffff",
+          "outline": "#7a757f",
+          "outlineVariant": "#cac4cf",
+          "primary": "#65558f",
+          "primaryContainer": "#e9ddff",
+          "secondary": "#625b71",
+          "secondaryContainer": "#e8def8",
+          "success": "#3c6839",
+          "surface": "#fdf7ff",
+          "surfaceContainer": "#f2ecf4",
+          "surfaceContainerHigh": "#ece6ee",
+          "surfaceContainerHighest": "#e6e0e9",
+          "surfaceContainerLow": "#f8f2fa",
+          "surfaceContainerLowest": "#ffffff",
+          "tertiary": "#7e5260",
+          "tertiaryContainer": "#ffd9e3",
+          "warning": "#78590c"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "params": {
+      "dark": false,
+      "seed": "#6750a4"
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "theme.configure parameters are invalid: invalid type: string \"false\", expected a boolean"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "success": {
+      "data": {
+        "theme": {
+          "error": "#ba1a1a",
+          "errorContainer": "#ffdad6",
+          "onError": "#ffffff",
+          "onErrorContainer": "#93000a",
+          "onPrimary": "#ffffff",
+          "onPrimaryContainer": "#4d3d75",
+          "onSecondary": "#ffffff",
+          "onSecondaryContainer": "#4a4458",
+          "onSuccess": "#ffffff",
+          "onSurface": "#1d1b20",
+          "onSurfaceVariant": "#49454e",
+          "onTertiary": "#ffffff",
+          "onTertiaryContainer": "#633b48",
+          "onWarning": "#ffffff",
+          "outline": "#7a757f",
+          "outlineVariant": "#cac4cf",
+          "primary": "#65558f",
+          "primaryContainer": "#e9ddff",
+          "secondary": "#625b71",
+          "secondaryContainer": "#e8def8",
+          "success": "#3c6839",
+          "surface": "#fdf7ff",
+          "surfaceContainer": "#f2ecf4",
+          "surfaceContainerHigh": "#ece6ee",
+          "surfaceContainerHighest": "#e6e0e9",
+          "surfaceContainerLow": "#f8f2fa",
+          "surfaceContainerLowest": "#ffffff",
+          "tertiary": "#7e5260",
+          "tertiaryContainer": "#ffd9e3",
+          "warning": "#78590c"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    }
+  },
+  "theme.resolve": {
+    "failed": {
+      "error": {
+        "code": "validation-error",
+        "message": "seed must be an opaque #rrggbb color"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "invalid_params": {
+      "dark": "false",
+      "seed": "#6750a4"
+    },
+    "limited": {
+      "data": {
+        "theme": {
+          "error": "#ffb4ab",
+          "errorContainer": "#93000a",
+          "onError": "#690005",
+          "onErrorContainer": "#ffdad6",
+          "onPrimary": "#36275d",
+          "onPrimaryContainer": "#e9ddff",
+          "onSecondary": "#332d41",
+          "onSecondaryContainer": "#e8def8",
+          "onSuccess": "#0c390e",
+          "onSurface": "#e6e0e9",
+          "onSurfaceVariant": "#cac4cf",
+          "onTertiary": "#4a2532",
+          "onTertiaryContainer": "#ffd9e3",
+          "onWarning": "#402d00",
+          "outline": "#948f99",
+          "outlineVariant": "#49454e",
+          "primary": "#cfbdfe",
+          "primaryContainer": "#4d3d75",
+          "secondary": "#cbc2db",
+          "secondaryContainer": "#4a4458",
+          "success": "#a2d399",
+          "surface": "#141218",
+          "surfaceContainer": "#211f24",
+          "surfaceContainerHigh": "#2b292f",
+          "surfaceContainerHighest": "#36343a",
+          "surfaceContainerLow": "#1d1b20",
+          "surfaceContainerLowest": "#0f0d13",
+          "tertiary": "#efb8c8",
+          "tertiaryContainer": "#633b48",
+          "warning": "#eac16c"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "params": {
+      "dark": true,
+      "seed": "#6750a4"
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "theme.resolve parameters are invalid: invalid type: string \"false\", expected a boolean"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "success": {
+      "data": {
+        "theme": {
+          "error": "#ffb4ab",
+          "errorContainer": "#93000a",
+          "onError": "#690005",
+          "onErrorContainer": "#ffdad6",
+          "onPrimary": "#36275d",
+          "onPrimaryContainer": "#e9ddff",
+          "onSecondary": "#332d41",
+          "onSecondaryContainer": "#e8def8",
+          "onSuccess": "#0c390e",
+          "onSurface": "#e6e0e9",
+          "onSurfaceVariant": "#cac4cf",
+          "onTertiary": "#4a2532",
+          "onTertiaryContainer": "#ffd9e3",
+          "onWarning": "#402d00",
+          "outline": "#948f99",
+          "outlineVariant": "#49454e",
+          "primary": "#cfbdfe",
+          "primaryContainer": "#4d3d75",
+          "secondary": "#cbc2db",
+          "secondaryContainer": "#4a4458",
+          "success": "#a2d399",
+          "surface": "#141218",
+          "surfaceContainer": "#211f24",
+          "surfaceContainerHigh": "#2b292f",
+          "surfaceContainerHighest": "#36343a",
+          "surfaceContainerLow": "#1d1b20",
+          "surfaceContainerLowest": "#0f0d13",
+          "tertiary": "#efb8c8",
+          "tertiaryContainer": "#633b48",
+          "warning": "#eac16c"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    }
   }
 }

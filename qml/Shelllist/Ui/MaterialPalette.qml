@@ -1,11 +1,10 @@
 import QtQuick
-import "MaterialColors.generated.js" as Colors
-
-// Qt-only palette; desktop integration belongs to Theme, not the color engine.
+// Passive role bindings. Startup/offline roles are fixed Rust parity fixtures,
+// not a second color engine. Runtime schemes arrive from bar-daemon.
 QtObject {
-    property color seedColor: "#6750a4"
     property bool dark: false
-    readonly property var roles: Colors.MaterialColors.createScheme(seedColor.r, seedColor.g, seedColor.b, dark)
+    property var roles: fallbackRoles
+    readonly property var fallbackRoles: dark ? ThemeDefaults.darkRoles : ThemeDefaults.lightRoles
 
     readonly property color primary: roles.primary
     // Avoid onX property names: Qt interprets their initializers as handlers.

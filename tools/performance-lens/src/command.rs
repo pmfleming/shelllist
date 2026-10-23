@@ -71,18 +71,29 @@ pub fn run(
     timeout: Duration,
     allow_cleanup: bool,
 ) -> Result<String> {
+    let mut command = Command::new(program);
+    command.args(args).env("LC_ALL", "C");
+    run_configured(command, timeout, allow_cleanup, false)
+}
+
+/// Profile adapters need a controlled cwd/environment and must retire descendants
+/// even after their launcher exits successfully. They share the bounded runner.
+pub fn run_configured(
+    mut command: Command,
+    timeout: Duration,
+    allow_cleanup: bool,
+    retire_descendants: bool,
+) -> Result<String> {
     if !allow_cleanup && INTERRUPTED.load(Ordering::Relaxed) {
         bail!("interrupted before helper launch");
     }
-    let mut child = Command::new(program)
-        .args(args)
-        .env("LC_ALL", "C")
+    let mut child = command
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .process_group(0)
         .spawn()
-        .with_context(|| format!("execute {}", program.display()))?;
+        .with_context(|| format!("execute {:?}", command.get_program()))?;
     let result = (|| {
         let mut stdout = nonblocking(child.stdout.take().unwrap().into_raw_fd())?;
         let mut stderr = nonblocking(child.stderr.take().unwrap().into_raw_fd())?;
@@ -112,7 +123,7 @@ pub fn run(
             std::thread::sleep(Duration::from_millis(2));
         }
     })();
-    if result.is_err() {
+    if result.is_err() || retire_descendants {
         // SAFETY: child created a new process group whose id is its PID. Never target
         // the observed application, its service, or a process found by name.
         unsafe {

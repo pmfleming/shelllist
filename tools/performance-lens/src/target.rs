@@ -127,7 +127,7 @@ pub fn cgroup(pid: u32) -> Result<String> {
         .context("no cgroup v2 membership")
 }
 
-fn members(group: &str) -> Result<Vec<u32>> {
+pub fn members(group: &str) -> Result<Vec<u32>> {
     ensure!(
         group.starts_with('/') && group != "/" && !group.split('/').any(|s| s == ".."),
         "unsafe or root cgroup"

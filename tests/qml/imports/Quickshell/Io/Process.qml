@@ -15,6 +15,15 @@ QtObject {
     signal exited(int exitCode)
 
     function exec(command) {
+        // Search now starts for empty queries too. UI tests inject authoritative
+        // rankings; exercise the worker separately rather than starting a process.
+        if (command.length === 1 && command[0] === "shelllist-search") {
+            simulated = true;
+            commands = commands.concat([command]);
+            running = true;
+            started();
+            return;
+        }
         if (!simulated)
             throw new Error("Process execution disabled in tests");
         commands = commands.concat([command]);

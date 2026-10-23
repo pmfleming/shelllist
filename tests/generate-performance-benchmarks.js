@@ -55,7 +55,6 @@ const rawResults = Array.from({ length: 1000 }, (_, index) => ({
     score: 1000 - index,
     actions: []
 }));
-const normalized = model.resultList(rawResults);
 
 const qtVersion = process.env.QT_VERSION || "qt6";
 
@@ -67,11 +66,7 @@ const report = {
     windowSize: "headless",
     "command-line": process.argv.join(" "),
     "normalize-1000-results-per-second": benchmark(
-        () => model.resultList(rawResults), 10),
-    "rank-empty-1000-results-per-second": benchmark(
-        () => model.rankResults(normalized, ""), 20),
-    "rank-filter-1000-results-per-second": benchmark(
-        () => model.rankResults(normalized, "terminal 9"), 10)
+        () => model.resultList(rawResults), 10)
 };
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });

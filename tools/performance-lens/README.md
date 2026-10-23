@@ -16,6 +16,12 @@ root privileges, or sibling repository is required.
 
 ## Implemented
 
+- `profile-qml`: native Qt test profiling and source-hashed, streamed execution
+  observations. Replaces the Python adapter; `tests/profile-qml.sh` is only a CLI shim.
+- `resident`: hidden-host CPU/PSS/faults/bridge sampling using the same collectors,
+  with read-only PID-targeted visibility checks and stable service membership.
+- `check`: explicit budgets over validated resident/responsiveness artifacts;
+  also available as `resident --check` and `run warm-open --check`.
 - `doctor`: same-user process identity and procfs/DRM capabilities; optional
   **read-only**, PID-targeted Shelllist IPC check.
 - `capture`: passive CPU, memory, I/O, faults, thread counts, and supported DRM GPU
@@ -28,13 +34,14 @@ root privileges, or sibling repository is required.
 - `compare`: context-matched **descriptive** deltas for uniquely paired process
   roles, including daemons and the observer. Explicit `--changed-scope` declarations
   permit intended executable changes without bypassing protocol/context checks.
-  Incompatible runs get a report and nonzero exit; no invented performance budgets.
+  Incompatible runs get a report and nonzero exit. Comparison remains descriptive;
+  opt-in absolute budget checks are a separate operation.
 
 This implements the usable first version of [the plan](plan.html), not every
 future scenario. Cold-session launching, automated retention scenarios,
 search/input-to-visible capture, vendor-specific GPU tools, live dashboards,
-continuous cgroup accounting, hard regression gates and significance testing
-remain out of scope. Existing Shelllist benchmarks are unchanged.
+continuous cgroup accounting and significance testing remain out of scope.
+The overlapping Python resident/responsiveness/profiler tools are removed.
 
 ## Build and test
 
@@ -42,7 +49,8 @@ The product dependency audit records this exact standalone crate in
 `contracts/build-inputs.json` under `independentCrates`. Its own lockfile and
 requirements are intentionally separate from production dependency alignment;
 production path dependencies on it remain forbidden. This does not exempt new
-nested crates from inventory checks or run the tool's tests during a rebuild.
+nested crates from inventory checks. The development-only Nix `performanceLens`
+package now builds/tests the tool, and `profilerAdapter` checks that package.
 
 From the Shelllist root, using its Rust development environment:
 
@@ -60,6 +68,53 @@ same-user process ownership are required. IPC scenarios additionally require
 Quickshell with `list --all --json` and `ipc --pid` support. Tests use Rust load
 children, fake IPC endpoints, and coreutils (`sleep`, `head`, `printf`) for bounded
 helper tests; they never operate the desktop or user services.
+
+## Migration from the Python tools
+
+Build first (or use the development shell's `shelllist-perf`). Select the resident
+PID explicitly from `quickshell list --all --json`; never select a process by a
+substring of its command line.
+
+```sh
+shelllist-perf resident --pid "$PID" --duration 20s --check
+shelllist-perf run warm-open --pid "$PID" --surface applications \
+  --allow-ui-control --exclusive-session --check
+shelllist-perf check --run /path/to/run
+shelllist-perf profile-qml --root .
+# The quality-lens adapter also supports SHELLLIST_PERF=/path/to/shelllist-perf:
+tests/profile-qml.sh
+```
+
+Repeat `run warm-open` with each desired `--surface`. It never starts a resident
+host or hides a pre-existing panel. Both consent flags and a hidden initial state
+are required; cleanup hides only the invocation it owns. First-open content is
+checked against the cold budget only if Qt reports it was actually cold. An already
+warm session reports cold content as **not measured**. Frame callbacks are not
+input-to-photon measurements. Latest search/model telemetry is deliberately not
+attributed to the current open. Defaults: acknowledgement p95 50ms, warm callback
+p95 100ms, observed cold content p95 300ms; override with `--max-command-ack-ms`,
+`--max-warm-first-frame-ms`, `--max-cold-content-ms`.
+
+`resident` requires the exact `shelllist.service` cgroup, inventories actual `client`
+bridges, and fails if visibility or service membership changes at an observation.
+Status/membership polling runs once a second (and at completion), so shorter changes
+can be missed. CPU is a valid-interval weighted average, PSS a sampled peak rather
+than the former final sample. Defaults: 2% of one core, 300 MiB PSS, six threads per
+bridge; override with `--max-cpu-percent`, `--max-pss-mib`, `--max-bridge-threads`.
+Unavailable required metrics and incomplete runs cannot pass. `budgets.json` records
+the gate separately from raw evidence. These are absolute engineering budgets, not
+statistical regression claims; status polling adds work to resident measurements.
+
+Qt profiling preserves `target/profiling/{tests.qtd,coverage.json,runtime.json}`.
+The adapter fixes offscreen/software/UTC/local-fixture settings, captures source
+hashes before launch, and checks them again before publishing. It streams XML ranges
+into staged JSON (180s recording, 60s normalization, 512 MiB trace, five million
+ranges/definitions). Empty, malformed, negative-duration, oversized, changed-source
+or interrupted runs publish no success reports. Old reports are removed first;
+helper descendants are retired on success, failure, timeout and cancellation.
+Only mapped creation/binding/signal observations count; no inferred branch/line
+coverage, display-frame claims or standalone-JS multi-engine attribution. Requires
+`qmlprofiler`, `qmllint` and the existing native QML test runner, not Python or Node.
 
 ## Quick start: passive capture
 
@@ -91,10 +146,10 @@ lower-rate capture, and `--detail-ms 5000` to reduce expensive PSS/GPU reads
 independently. The detail interval defaults to 1000 ms and accepts 1000–60000 ms. Captures too short to contain a valid CPU interval fail instead
 of generating an apparently complete baseline.
 
-Each command prints its unique run directory and report path. Defaults are
-relative to the source tool directory embedded at build time, **not** the current
-working directory. Use `--output-dir /absolute/path/to/runs` when moving/installing
-the executable. Run directories have mode 0700, files mode 0600, are git-ignored,
+Each command prints its unique run directory and report path. Runs default to
+`target/performance-lens` under the current directory, including installed builds
+(no build-time or Nix-store output path). Use `--output-dir /absolute/path/to/runs`
+to override it. Run directories have mode 0700, files mode 0600, are git-ignored,
 and are never automatically pruned or overwritten.
 
 ### Process scopes
@@ -216,10 +271,10 @@ quiet resource baselines.
 ## Reports, comparisons and integrity
 
 ```sh
-"$LENS" report --run tools/performance-lens/runs/RUN_ID
-"$LENS" compare --baseline tools/performance-lens/runs/BASELINE_ID \
-  --candidate tools/performance-lens/runs/CANDIDATE_ID \
-  --output tools/performance-lens/runs/comparison-01
+"$LENS" report --run target/performance-lens/RUN_ID
+"$LENS" compare --baseline target/performance-lens/BASELINE_ID \
+  --candidate target/performance-lens/CANDIDATE_ID \
+  --output target/performance-lens/comparison-01
 ```
 
 Open `report.html` directly in a browser. It contains no scripts or external

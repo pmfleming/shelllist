@@ -72,43 +72,29 @@ Standalone section headings and expanded-panel identity headers are unchanged.
 
 ## Color implementation
 
-`Ui.MaterialPalette` is a Qt-only, reactive palette taking `seedColor` and `dark`.
-It uses Google's **@material/material-color-utilities 0.4.0**, pinned by URL and
-SHA-256 in `nix/material-colors.nix`. HCT/tonal generation is upstream color
-science, not RGB interpolation presented as Material. The provisional scheme is
-**Tonal Spot, spec 2021, standard contrast**. Expressive component styling does
-not require using the differently named Expressive color-scheme variant.
+`Ui.MaterialPalette` binds a complete role-to-hex map from `bar-daemon`.
+Rust's **material-colors 0.4.2** crate owns HCT/tonal generation, pinned in the
+daemon's Cargo manifest/lockfile. The scheme remains **Tonal Spot, spec 2021,
+standard contrast**. Expressive component styling does not require the differently
+named Expressive color-scheme variant. The native adapter explicitly preserves
+MCU 0.4.0's light container-text tone 30 rather than the port's older tone 10.
 
 Primary/secondary/tertiary, container, surface, outline and error roles come from
 upstream. Success and warning are explicitly Shelllist extensions: HCT hue/chroma
 145/36 and 85/36 with background/foreground tones 40/100 (light), 80/20 (dark).
 All role colors are opaque. Seed alpha does not make controls translucent.
 
-`tools/material-colors.mjs` is the authored adapter. The generated QML JavaScript
-bundle and upstream Apache-2.0 license are checked in so a normal source checkout
-requires no npm install or runtime dependency download. The Nix `materialColors`
-check rebuilds and compares both artifacts, then tests WCAG contrast for 150
-seed/mode combinations. Native Qt tests retain reference colors. Generated upstream source adds
-code volume; it is not hand-maintained application logic.
+The generated JavaScript engine, npm adapter and esbuild derivation are removed.
+`bar-daemon/src/theme.rs` owns the adapter; `test_support/theme-2021.json` retains
+fourteen old-generator seed/mode maps as parity evidence. QML's `ThemeDefaults`
+contains only the two fixed default-seed maps for startup/offline rendering.
+`MaterialPalette` uses `primaryText`, `surfaceText`, etc. because Qt interprets
+`onPrimary` initializers as handlers. `tst_material_theme.qml` exercises actual
+bindings, complete-map validation, stale replies and reconnect preference replay.
 
-Qt compatibility is tested with the actual QML engine, not only Node. The
-adapter avoids `Object.fromEntries`, which Qt's JavaScript engine lacks. The
-build explicitly hoists two already function-scoped `var` declarations to avoid
-Qt forward-reference warnings; it preserves initialization order and does not
-change upstream color calculations or suppress warnings. QML foreground properties
-use `primaryText`, `surfaceText`, etc.: `onPrimary`-style property initializers
-were silently interpreted as handlers by Qt. Exact QML foreground assertions and
-rendered gallery inspection now cover that adapter failure, not just Node output.
-
-To regenerate using current sibling worktrees:
-
-```sh
-python3 ../daemon-framework/tools/local-build.py build --attr materialColors . \
-  --no-link --print-out-paths
-# Copy MaterialColors.generated.js and material-color-utilities.LICENSE from
-# the printed store directory into qml/Shelllist/Ui/ (make local copies writable).
-nix build .#checks.x86_64-linux.materialColors # generated-source freshness, not a palette matrix
-```
+Run the daemon's `theme::` tests inside its development shell when changing the
+crate or adapter; update parity evidence only for an explicit color-contract change.
+There is no Node/esbuild color-generation step.
 
 ## Desktop theme integration
 
@@ -116,8 +102,17 @@ nix build .#checks.x86_64-linux.materialColors # generated-source freshness, not
 supplies the seed unless `SHELLLIST_ACCENT` explicitly overrides it.
 `Application.styleHints.colorScheme` supplies light/dark, with system-window
 brightness as the fallback for an unknown platform preference. Bindings respond
-to desktop palette and scheme notifications; there is no theme polling or daemon.
-An environment seed override remains fixed for the process's environment.
+to desktop palette and scheme notifications, sending opaque seed/mode preferences
+through `theme.configure`. The daemon atomically publishes the full role map on
+`theme.changed`; subscription startup, projected snapshots and gap recovery use
+the same map. Reconnect resends the current preferences. An environment seed
+override remains fixed for the process's environment.
+
+`theme.resolve` computes a read-only preview without changing the shared stream
+(the development gallery uses it). Failed/disconnected requests retain the last
+complete palette. `SHELLLIST_THEME_OFFLINE=1` uses fixed default-seed roles without
+a theme client, for isolated fixtures. No HCT, ranking or blending engine is
+reintroduced as a frontend fallback.
 
 Individual legacy background/text/status overrides are intentionally retired;
 see the README migration note. Resource-series overrides remain independent.

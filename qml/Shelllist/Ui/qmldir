@@ -8,6 +8,7 @@ FeedbackButton 1.0 FeedbackButton.qml
 InlineStatus 1.0 InlineStatus.qml
 singleton Theme 1.0 Theme.qml
 MaterialPalette 1.0 MaterialPalette.qml
+singleton ThemeDefaults 1.0 ThemeDefaults.qml
 MaterialIcons 1.0 MaterialIcons.js
 ThemeText 1.0 ThemeText.qml
 ActionControl 1.0 ActionControl.qml

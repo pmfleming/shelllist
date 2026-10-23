@@ -98,7 +98,7 @@
       "import_paths": ["qml"]
     },
     "qmltestrunner": {
-      "command": "tests/profile-qml.py",
+      "command": "tests/profile-qml.sh",
       "check": true,
       "timeout_ms": 300000,
       "environment": { "QT_QPA_PLATFORM": "offscreen" }

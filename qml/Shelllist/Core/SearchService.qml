@@ -9,6 +9,7 @@ Item {
     property int ownerSequence: 0
     property var queuedRequests: []
     property var catalogs: ({})
+    property var latestRequests: ({})
     property int rankDebounceMs: 35
     readonly property Io.SearchProcess process: processLoader.item as Io.SearchProcess
     readonly property bool ready: process?.ready ?? false
@@ -18,6 +19,18 @@ Item {
     function allocateOwner(): string {
         ownerSequence += 1;
         return "result-store-" + ownerSequence;
+    }
+
+    function releaseOwner(owner: string): void {
+        const nextCatalogs = Object.assign({}, catalogs);
+        const nextRequests = Object.assign({}, latestRequests);
+        delete nextCatalogs[owner];
+        delete nextRequests[owner];
+        catalogs = nextCatalogs;
+        latestRequests = nextRequests;
+        queuedRequests = queuedRequests.filter(request => request.owner !== owner);
+        if (ready)
+            writeMessage({type: "release", owner: owner});
     }
 
     function compactItems(items: var): var {
@@ -67,6 +80,9 @@ Item {
             generation: generation,
             query: query || ""
         };
+        const next = Object.assign({}, latestRequests);
+        next[owner] = request;
+        latestRequests = next;
         // Keep only the latest query per owner during the typing debounce. The
         // Rust worker also coalesces commands received behind in-flight work.
         queuedRequests = queuedRequests.filter(function (queued) {
@@ -123,6 +139,7 @@ Item {
         target: service.process
         function onProcessReady(): void {
             service.sendCatalogs();
+            service.queuedRequests = Object.values(service.latestRequests);
             if (!rankDebounce.running)
                 service.flush();
         }
@@ -132,7 +149,7 @@ Item {
         function onStopped(error: string): void {
             if (error.length > 0)
                 console.warn("shelllist fuzzy search stopped: " + error);
-            if (service.queuedRequests.length > 0)
+            if (Object.keys(service.latestRequests).length > 0)
                 restartTimer.restart();
         }
     }

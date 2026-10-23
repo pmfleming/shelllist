@@ -18,12 +18,10 @@ SelectionModel {
     property double lastSearchRankLatencyMs: -1
     property bool rankRequestsEnabled: true
     property bool providerRankedResults: false
-    readonly property bool fuzzyQuery: !providerRankedResults && queryText.trim().length > 0
-    readonly property var baselineResults: Model.rankResults(sourceResults, "")
-    // Fuzzy work belongs to the Rust matcher. While a request is pending, keep
-    // the previous keyed model (or the unfiltered baseline for the first edit)
-    // instead of ranking the same catalog synchronously on the UI thread.
-    readonly property var visibleResults: fuzzyQuery && hasRankedResults ? rustRankedResults : baselineResults
+    // All ordering, including empty queries, belongs to Rust. Providers with
+    // native ranked windows bypass this service without re-sorting their rows.
+    // Retain the accepted window while pending; source order is startup-only.
+    readonly property var visibleResults: !providerRankedResults && hasRankedResults ? rustRankedResults : sourceResults
     readonly property KeyedListModel visibleModel: visibleListModel
     count: visibleResults.length
 
@@ -35,9 +33,14 @@ SelectionModel {
 
     function requestRustRanking(): void {
         searchGeneration += 1;
-        if (!fuzzyQuery) {
+        if (providerRankedResults) {
             hasRankedResults = false;
             rustRankedResults = [];
+            SearchService.releaseOwner(searchOwner);
+            return;
+        }
+        if (!rankRequestsEnabled) {
+            SearchService.releaseOwner(searchOwner);
             return;
         }
         // An accepted empty window is still a window. Do not flash the entire
@@ -49,7 +52,7 @@ SelectionModel {
     }
 
     function applyRustRanking(owner: string, generation: int, keys: var): void {
-        if (owner !== searchOwner || generation !== searchGeneration)
+        if (providerRankedResults || owner !== searchOwner || generation !== searchGeneration)
             return;
         const previous = selected();
         const byKey = ({});
@@ -162,6 +165,8 @@ SelectionModel {
     }
 
     function clear(): void {
+        hasRankedResults = false;
+        rustRankedResults = [];
         sourceResults = [];
         selectedIndex = 0;
         activeQueryId = "";
@@ -183,6 +188,16 @@ SelectionModel {
         selectedIndex = 0;
         requestRustRanking();
     }
+    onProviderRankedResultsChanged: {
+        if (!providerRankedResults && rankRequestsEnabled && searchOwner.length > 0)
+            SearchService.updateCatalog(searchOwner, sourceResults);
+        requestRustRanking();
+    }
+    onRankRequestsEnabledChanged: {
+        if (rankRequestsEnabled && searchOwner.length > 0)
+            SearchService.updateCatalog(searchOwner, sourceResults);
+        requestRustRanking();
+    }
     onVisibleResultsChanged: selectedIndex = clampIndex(selectedIndex)
 
     Component.onCompleted: {
@@ -191,6 +206,8 @@ SelectionModel {
             SearchService.updateCatalog(searchOwner, sourceResults);
         requestRustRanking();
     }
+
+    Component.onDestruction: SearchService.releaseOwner(searchOwner)
 
     Connections {
         target: SearchService

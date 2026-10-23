@@ -131,7 +131,7 @@ Reproduce the isolated measurements in the product dev shell:
 QML_XHR_ALLOW_FILE_READ=1 tests/run-qmlquality-tests.sh \
   -input tests/qml/tst_bar_recovery.qml -o /tmp/shelllist-recovery.log,txt
 QML_LOG=/tmp/shelllist-recovery.log tests/benchmark-architecture.sh
-python3 tests/benchmark-resident.py --duration 5
+shelllist-perf resident --pid "$PID" --duration 5s
 ```
 
 Committed sample: [architecture-reliability.sample.json](architecture-reliability.sample.json).

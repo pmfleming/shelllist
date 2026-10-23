@@ -38,9 +38,12 @@ on result movement. Missing results may close unavailable details safely.
 
 While asynchronous ranking is pending, retain the last accepted result window,
 including an empty window. Do not flash the full catalog on each subsequent key
-or catalog refresh. The first query may use the unfiltered baseline until its
-first ranking arrives; clearing the query restores that baseline immediately.
-Owner/generation fences still reject stale rankings.
+or catalog refresh. All queries, including empty/cleared queries, are ordered by
+`shelllist-search` (Rust), never a frontend scorer. The first query may show
+source order until its first ranking arrives; clearing retains the accepted
+window until Rust returns the empty-query order. Native provider-ranked windows
+keep their supplied order and are not ranked twice. Owner/generation fences
+reject stale rankings; reconnect replays each live owner's catalog and query.
 
 Contiguous keyed-list insertions/removals retain surviving delegates rather than
 resetting the model merely because many indexes shift. Large insertions yield in

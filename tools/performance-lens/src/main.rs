@@ -1,4 +1,5 @@
 mod artifacts;
+mod budgets;
 mod cgroup;
 mod command;
 #[cfg(test)]
@@ -11,6 +12,7 @@ mod encoding;
 mod ipc;
 mod model;
 mod procfs;
+mod qml_profile;
 mod rate_summary;
 mod report;
 mod sampler;
@@ -48,6 +50,28 @@ struct Cli {
 }
 #[derive(Subcommand)]
 enum Commands {
+    /// Profile native QML tests and publish bounded, source-hashed observations.
+    ProfileQml(qml_profile::Options),
+    /// Sample a hidden resident host and its client bridges; never change UI state.
+    Resident {
+        #[command(flatten)]
+        common: Common,
+        #[arg(long, value_parser=duration, default_value="20s")]
+        duration: Duration,
+        #[arg(long, default_value = "quickshell")]
+        quickshell: PathBuf,
+        #[arg(long)]
+        check: bool,
+        #[command(flatten)]
+        budgets: budgets::Budgets,
+    },
+    /// Apply explicit budgets to a validated resident or responsiveness run.
+    Check {
+        #[arg(long)]
+        run: PathBuf,
+        #[command(flatten)]
+        budgets: budgets::Budgets,
+    },
     /// Inspect a same-user process and collector capabilities, without changing UI state.
     Doctor {
         #[arg(long)]
@@ -69,6 +93,10 @@ enum Commands {
     },
     /// Consent-gated warm opens through existing PID-targeted IPC. No synthetic input.
     Run {
+        #[arg(long)]
+        check: bool,
+        #[command(flatten)]
+        budgets: budgets::Budgets,
         #[arg(value_enum)]
         scenario: Scenario,
         #[command(flatten)]
@@ -126,7 +154,7 @@ struct Common {
     /// Also read cgroup v2 totals for selected process scopes (overlaps process accounting).
     #[arg(long)]
     include_cgroups: bool,
-    /// Parent for unique run directories; defaults to this tool's runs/ directory.
+    /// Parent for unique run directories; defaults to ./target/performance-lens.
     #[arg(long)]
     output_dir: Option<PathBuf>,
     /// Matched conditions: display/Hz/scale/backend/power/workload/visibility. Required for comparison.
@@ -228,6 +256,34 @@ fn execute() -> Result<()> {
     command::install_signals()?;
     let defaults = Defaults::load(cli.config.as_deref())?;
     match cli.command {
+        Commands::ProfileQml(options) => qml_profile::run(options)?,
+        Commands::Check { run, budgets } => budgets::check(&run, &budgets)?,
+        Commands::Resident {
+            mut common,
+            duration,
+            quickshell,
+            check,
+            budgets,
+        } => {
+            ensure!(!duration.is_zero(), "resident duration must be positive");
+            common.include_service_members = true;
+            let ipc = ipc::Ipc::connect(&quickshell, &procfs::identity(common.pid)?)?;
+            ensure!(
+                !ipc.status(Duration::from_secs(2), false)?.visible,
+                "refusing to benchmark a visible surface"
+            );
+            let path = capture(
+                common,
+                &defaults,
+                duration,
+                Duration::from_secs_f64(defaults.settle_seconds),
+                None,
+                Some(ipc),
+            )?;
+            if check {
+                budgets::check(&path, &budgets)?;
+            }
+        }
         Commands::Doctor {
             pid,
             ipc_check,
@@ -272,9 +328,11 @@ fn execute() -> Result<()> {
             let settle = settle.unwrap_or_else(|| Duration::from_secs_f64(defaults.settle_seconds));
             ensure!(!duration.is_zero(), "capture duration must be positive");
             ensure!(settle <= Duration::from_secs(300), "settle must be <=300s");
-            capture(common, &defaults, duration, settle, None)?;
+            capture(common, &defaults, duration, settle, None, None)?;
         }
         Commands::Run {
+            check,
+            budgets,
             scenario: Scenario::WarmOpen,
             common,
             surface,
@@ -299,13 +357,17 @@ fn execute() -> Result<()> {
             );
             let ipc = ipc::Ipc::connect(&quickshell, &procfs::identity(common.pid)?)?;
             scenarios::preflight(&ipc, &surface)?;
-            capture(
+            let path = capture(
                 common,
                 &defaults,
                 Duration::ZERO,
                 Duration::from_secs_f64(defaults.settle_seconds),
                 Some((ipc, surface, trials)),
+                None,
             )?;
+            if check {
+                budgets::check(&path, &budgets)?;
+            }
         }
         Commands::Report { run } => {
             let (manifest, samples, events) = artifacts::load(&run)?;
@@ -327,13 +389,29 @@ fn execute() -> Result<()> {
     Ok(())
 }
 
+fn check_resident(ipc: &ipc::Ipc, expected_members: &BTreeSet<u32>) -> Result<()> {
+    ensure!(
+        !ipc.status(Duration::from_secs(1), false)?.visible,
+        "surface became visible during resident capture"
+    );
+    let members = target::members(&target::cgroup(ipc.identity.pid)?)?
+        .into_iter()
+        .collect::<BTreeSet<_>>();
+    ensure!(
+        members == *expected_members,
+        "resident service membership changed; bridge budget is not comparable"
+    );
+    Ok(())
+}
+
 fn capture(
     common: Common,
     defaults: &Defaults,
     duration: Duration,
     settle: Duration,
     active: Option<(ipc::Ipc, String, u32)>,
-) -> Result<()> {
+    hidden: Option<ipc::Ipc>,
+) -> Result<PathBuf> {
     let interval = common.interval_ms.unwrap_or(defaults.interval_ms);
     ensure!(
         (20..=10000).contains(&interval),
@@ -350,12 +428,17 @@ fn capture(
         common.include_related_daemons,
         &common.related_pid,
     )?;
-    if let Some((ipc, _, _)) = &active {
+    if let Some(ipc) = active.as_ref().map(|(ipc, _, _)| ipc).or(hidden.as_ref()) {
         ensure!(
             ipc.identity == targets[0].identity,
             "target changed during setup"
         );
     }
+    let resident_members: BTreeSet<_> = targets
+        .iter()
+        .filter(|t| t.label == "ui-host" || t.label.starts_with("ui-service-member:"))
+        .map(|t| t.identity.pid)
+        .collect();
     let cgroups = if common.include_cgroups {
         cgroup::discover(&targets, &mut warnings)
     } else {
@@ -373,7 +456,7 @@ fn capture(
     };
     let root = common
         .output_dir
-        .unwrap_or_else(|| Path::new(env!("CARGO_MANIFEST_DIR")).join("runs"));
+        .unwrap_or_else(|| PathBuf::from("target/performance-lens"));
     let path = artifacts::create(&root)?;
     println!("Run: {}", path.display());
     warnings.extend([
@@ -386,6 +469,8 @@ fn capture(
     let ticks = procfs::ticks_per_second()?;
     let scenario = if active.is_some() {
         "warm-open"
+    } else if hidden.is_some() {
+        "resident-hidden"
     } else {
         "capture"
     };
@@ -408,6 +493,32 @@ fn capture(
         warnings,
         hashes: BTreeMap::new(),
     };
+    if let Some(ipc) = &hidden {
+        ensure!(
+            !manifest
+                .warnings
+                .iter()
+                .any(|w| w.starts_with("service member ")),
+            "resident service inventory is incomplete"
+        );
+        let mut bridges = Vec::new();
+        for target in &targets {
+            if target.label.starts_with("ui-service-member:") {
+                let cmdline = std::fs::read(format!("/proc/{}/cmdline", target.identity.pid))?;
+                if cmdline.split(|b| *b == 0).rfind(|part| !part.is_empty())
+                    == Some(b"client".as_slice())
+                {
+                    bridges.push(target.label.clone());
+                }
+            }
+        }
+        manifest.settings["bridge_labels"] = json!(bridges);
+        manifest.settings["visibility_poll_ms"] = json!(1000);
+        manifest.settings["command_path"] = json!("direct_pid_ipc_status_only");
+        manifest.settings["config_identity"] =
+            json!(target::config_identity(&ipc.instance.config_path)?);
+        manifest.warnings.push("Resident visibility checked once per second; brief changes between observations may be missed. Status polling adds observer/target work.".into());
+    }
     artifacts::atomic_json(&path.join("manifest.json"), &manifest)?;
     let samples = artifacts::raw_file(&path.join("samples.jsonl"))?;
     let mut events = artifacts::EventFile::new(artifacts::raw_file(&path.join("events.jsonl"))?);
@@ -458,7 +569,14 @@ fn capture(
             None => {
                 control.phase("capture");
                 let until = Instant::now() + duration;
+                let mut next_visibility = Instant::now();
                 while Instant::now() < until {
+                    if Instant::now() >= next_visibility {
+                        if let Some(ipc) = &hidden {
+                            check_resident(ipc, &resident_members)?;
+                        }
+                        next_visibility = Instant::now() + Duration::from_secs(1);
+                    }
                     ensure!(
                         !worker.is_finished(),
                         "sampler stopped; target or output may be unavailable"
@@ -470,6 +588,9 @@ fn capture(
                     )?;
                 }
             }
+        }
+        if let Some(ipc) = &hidden {
+            check_resident(ipc, &resident_members)?;
         }
         Ok(())
     })();
@@ -522,5 +643,5 @@ fn capture(
         "run incomplete: {}",
         manifest.error.as_deref().unwrap_or("unknown error")
     );
-    Ok(())
+    Ok(path)
 }

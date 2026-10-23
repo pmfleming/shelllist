@@ -76,6 +76,13 @@
             cargoLock.lockFile = ./rust/shelllist-search/Cargo.lock;
             meta = mkMeta "Fuzzy result ranking service for Shelllist" "shelllist-search";
           };
+          performanceLens = rustPlatform.buildRustPackage {
+            pname = "shelllist-perf";
+            version = "0.1.0";
+            src = ./tools/performance-lens;
+            cargoLock.lockFile = ./tools/performance-lens/Cargo.lock;
+            meta = mkMeta "Native Shelllist profiling and performance evidence" "shelllist-perf";
+          };
           shelllistTimezoneAssets = rustPlatform.buildRustPackage {
             pname = "shelllist-timezone-assets";
             version = "0.1.0";
@@ -97,9 +104,8 @@
         {
           connectParityProbe = nmDaemonConnectParityProbe;
 
-          inherit shelllistSearch shelllistTimezoneAssets;
+          inherit shelllistSearch shelllistTimezoneAssets performanceLens;
 
-          materialColors = import ./nix/material-colors.nix { inherit pkgs; };
           wifiQrScanner = pkgs.callPackage ./nix/qrca.nix { inherit nmDaemon; };
 
           # Development-only: never part of the resident host or installed bar.
@@ -479,15 +485,7 @@
                 python3 ${./tests/test-build-inputs.py} ${./tools/check-build-inputs.py}
                 touch $out
               '';
-          profilerAdapter = pkgs.runCommand "shelllist-profiler-adapter-tests" {
-            nativeBuildInputs = [ pkgs.python3 ];
-          } ''
-            mkdir tests
-            cp ${./tests/profile-qml.py} tests/profile-qml.py
-            cp ${./tests/test_profile_qml.py} tests/test_profile_qml.py
-            python3 tests/test_profile_qml.py
-            touch $out
-          '';
+          profilerAdapter = self.packages.${system}.performanceLens;
           surfaceCatalog = pkgs.runCommand "shelllist-surface-catalog" {
             nativeBuildInputs = [ pkgs.python3 ];
           } ''
@@ -672,18 +670,6 @@
             touch $out
           '';
 
-          materialColors =
-            pkgs.runCommand "shelllist-material-colors-current"
-              {
-                nativeBuildInputs = [ pkgs.diffutils ];
-              }
-              ''
-                generated=${self.packages.${system}.materialColors}
-                diff -u "$generated/MaterialColors.generated.js" ${./qml/Shelllist/Ui/MaterialColors.generated.js}
-                cmp "$generated/material-color-utilities.LICENSE" ${./qml/Shelllist/Ui/material-color-utilities.LICENSE}
-                touch $out
-              '';
-
           typescript =
             pkgs.runCommand "shelllist-typescript-current"
               {
@@ -758,17 +744,13 @@
                 nativeBuildInputs = [
                   pkgs.jq
                   pkgs.nodejs
-                  pkgs.python3
                 ];
               }
               ''
                 mkdir -p $out
-                PYTHONPYCACHEPREFIX=$TMPDIR/python-cache python -m py_compile \
-                  ${./tests/benchmark-resident.py} \
-                  ${./tests/benchmark-responsiveness.py}
                 node ${./tests/generate-performance-benchmarks.js} \
                   ${./qml/Shelllist/Core/Model.js} $out/qmlbench.json
-                test "$(jq -r '."rank-empty-1000-results-per-second"."samples-in-average"' \
+                test "$(jq -r '."normalize-1000-results-per-second"."samples-in-average"' \
                   $out/qmlbench.json)" -ge 10
               '';
 
@@ -925,7 +907,7 @@
               pkgs.nixpkgs-fmt
               pkgs.nodejs
               pkgs.typescript
-              pkgs.esbuild
+              self.packages.${system}.performanceLens
               pkgs.qt6.qtdeclarative # qmlformat, qmllint
               pkgs.qt6.qtsvg # QtTest loads real weather/timezone SVG assets
               pkgs.tzdata

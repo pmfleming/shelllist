@@ -265,10 +265,17 @@ Item {
         return luminance(color) > 0.58 ? "#111827" : "#f8fafc";
     }
 
-    MaterialPalette {
-        id: material
+    Io.MaterialTheme {
+        id: themeBackend
+        active: Quickshell.env("SHELLLIST_THEME_OFFLINE") !== "1"
         seedColor: theme.desktopAccent
         dark: theme.dark
+        publishTheme: true
+    }
+    MaterialPalette {
+        id: material
+        dark: theme.dark
+        roles: themeBackend.roles || fallbackRoles
     }
 
     SystemPalette {

@@ -262,8 +262,9 @@ node tests/check-generated-contracts.js .
 tests/run-qml-tests.sh
 tests/run-runtime-smoke.sh
 tests/run-performance-benchmarks.sh
-tests/benchmark-resident.py --duration 20 --check
-tests/benchmark-responsiveness.py --check
+shelllist-perf resident --pid "$PID" --duration 20s --check
+shelllist-perf run warm-open --pid "$PID" --surface applications \
+  --allow-ui-control --exclusive-session --check
 ```
 
 The deterministic policy benchmark emits qmlbench-compatible samples under
@@ -272,13 +273,13 @@ is intentionally manual because it measures the installed Wayland session; run
 it only with Shelllist hidden. It enforces budgets for host CPU, PSS, and bridge
 thread counts without mutating UI state.
 
-The responsiveness benchmark is also target-session-only and deliberately opens
-each surface once cold (when possible) and once warm. The resident host records
-shortcut/IPC request-to-first-frame, content incubation, Rust search, and first
-model-chunk timestamps. The script reports median, p95, and maximum values and
-enforces acknowledgement, warm-frame, and cold-content budgets. Use
-`shelllist responsiveness` to inspect the latest sample without running the
-complete scenario.
+The Rust `run warm-open` scenario is target-session-only and consent-gated. It
+opens one selected surface for warmup and repeated warm trials; run it separately
+for each surface. `--check` enforces acknowledgement, warm Qt frame-callback and
+observed cold-content budgets. Already-warm content is not a cold measurement.
+Search/model telemetry remains available via `shelllist responsiveness`, but is
+not attributed to the current open. The old Python benchmark adapters are removed;
+see [performance lens](../tools/performance-lens/README.md) for evidence and limits.
 
 For an optional structural report, generate benchmark evidence first:
 

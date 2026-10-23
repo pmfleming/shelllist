@@ -1,9 +1,17 @@
 # Review of previously skipped quality checks
 
-## Current profiler checkpoint — five-target follow-up
+## Rust consolidation
+
+The adapter is now `tests/profile-qml.sh`, delegating to `shelllist-perf profile-qml`.
+Rust owns bounded streaming XML normalization, source hashes, staging and process-group
+cleanup. The Python adapter and its tests are removed; native Rust unit/process tests
+own those boundaries. The counts below describe earlier Python-era checkpoints,
+not acceptance evidence for the port.
+
+## Historical profiler checkpoint — five-target follow-up
 
 The [five-target review](../docs/qml-quality-five-targets.md) supersedes the
-historical execution counts below. `tests/profile-qml.py` now caches definition
+historical execution counts below. The former Python adapter cached definition
 resolution, frees parsed XML children and streams duration records to staged JSON.
 It supplies the fixture-read/offscreen environment, rejects stale/partial evidence,
 and cleans up descendant processes on timeout or outer cancellation. Limits are
@@ -60,7 +68,7 @@ complete daemon bundle was built. Lens's CMake-specific slot remains skipped.
 
 ## Execution coverage — valuable, partial observations now collected
 
-`tests/profile-qml.py` runs the real QML tests through Qt's profiler and emits
+`tests/profile-qml.sh` runs the real QML tests through Qt's profiler and emits
 `target/profiling/coverage.json`. Lens consumes the native observation format
 without pretending it is Cobertura statement/branch coverage. Object creation,
 binding execution and signal-handler locations are kept distinct; compilation
