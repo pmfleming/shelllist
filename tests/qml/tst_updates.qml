@@ -254,6 +254,29 @@ DaemonTestCase {
         compare(root.controller.publishedRevision, "v1");
         compare(root.controller.historyWindow, null);
     }
+    function test_continuationRejectsChangedMetadata_data(): var {
+        return [
+            {tag: "total", total: 121, cursor: "next", retain: 50},
+            {tag: "retention", total: 120, cursor: "next", retain: 51},
+            {tag: "cursor", total: 120, cursor: "refresh:25", retain: 50}
+        ];
+    }
+    function test_continuationRejectsChangedMetadata(data): void {
+        const root = fixture();
+        const runs = historyRuns(120);
+        reply(latest(), runs.slice(0, 50), "old:50", true, null, 120);
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_F5);
+        reply(latest(), runs.slice(0, 25), "refresh:25", true, null, 120, {revision: "refresh", retain_through: 50});
+        const staged = root.controller.historyWindow;
+        reply(latest(), runs.slice(25, 50), data.cursor, true, null, data.total, {revision: "refresh", retain_through: data.retain});
+        verify(root.controller.errorText.includes("continuation"));
+        compare(root.controller.entries.length, 50);
+        compare(root.controller.publishedRevision, "revision");
+        compare(root.controller.historyWindow, null);
+        compare(staged.entries.length, 25, "Rejected pages cannot mutate the unpublished window");
+        compare(staged.pages, 1);
+    }
     function test_browseInspectAndLogCommandNeverRunAnUpdate(): void {
         const root = fixture();
         compare(root.controller.backend.expectedVersion, Contract.version);

@@ -6,6 +6,7 @@ import "BarProtocol.generated.js" as Contract
 import "UpdatePresentation.js" as Presentation
 import "UpdateValidation.js" as Validation
 import "UpdateHistory.js" as History
+import "UpdateHistoryWindow.js" as HistoryWindow
 
 Ui.ProviderChooserController {
     id: controller
@@ -310,36 +311,30 @@ Ui.ProviderChooserController {
         stageHistoryPage(page);
     }
     function stageHistoryPage(page: var): void {
-        const window = historyWindow;
-        if (window.revision && window.revision !== page.revision) {
+        const transition = HistoryWindow.advance(historyWindow, page);
+        switch (transition.error) {
+        case "revision":
             if (restartHistoryWindow()) return;
             failHistory(qsTr("Update history kept changing; refresh again")); return;
-        }
-        const next = window.entries.concat(page.entries);
-        if (new Set(next.map(entry => entry.job.id)).size !== next.length) {
+        case "duplicate":
             failHistory(qsTr("Duplicate update history identities")); return;
-        }
-        if (page.total < next.length || (window.total >= 0 && window.total !== page.total)
-                || (window.retainThrough >= 0 && window.retainThrough !== (page.retain_through || 0))
-                || (page.cursor && (!page.entries.length || page.cursor === window.cursor || next.length >= page.total))
-                || (!page.cursor && next.length !== page.total) || ++window.pages > 128) {
+        case "continuation":
             failHistory(qsTr("Invalid update history continuation")); return;
         }
-        window.entries = next;
-        window.revision = page.revision;
-        window.total = page.total;
-        window.retainThrough = page.retain_through || 0;
-        window.cursor = page.cursor || "";
-        window.diagnostic = page.error || window.diagnostic;
-        if (!window.append && window.cursor && next.length < Math.max(window.target, window.retainThrough)) { sendHistoryPage(); return; }
+        historyWindow = transition.window;
+        if (HistoryWindow.needsMore(historyWindow)) { sendHistoryPage(); return; }
+        publishHistory(page);
+    }
+    function publishHistory(page: var): void {
+        const window = historyWindow;
         const preserve = publishedQuery === queryKey;
         publishedQuery = queryKey;
         publishedRevision = page.revision;
         publishedAnchors = window.anchors;
         const diagnostic = window.diagnostic;
         retireHistory();
-        entries = next;
-        total = page.total;
+        entries = window.entries;
+        total = window.total;
         available = page.available;
         cursor = page.cursor || "";
         coverage = page.coverage;

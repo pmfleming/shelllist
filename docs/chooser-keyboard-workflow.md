@@ -670,8 +670,10 @@ recent runs. Read-only details use the shared
 scrolling fallback, not editable field stops. F5 only refreshes reads. Incoming
 runs preserve stable selection; malformed, stale or closed-view replies cannot
 replace published rows. `bar/UpdateValidation.js` owns the shared wire predicates;
-request ownership and atomic publication remain in `UpdateController`. Nullable
-and omitted fields, bounds and history-versus-overview timestamp rules are unchanged.
+request ownership and atomic publication remain in `UpdateController`.
+`UpdateHistoryWindow` validates continuation metadata and returns a new unpublished
+window without mutating a rejected/previous window; it owns no requests or cache.
+Nullable and omitted fields, bounds and history-versus-overview timestamp rules are unchanged.
 Live notification deep links target a validated run ID;
 missing runs return to history with a notice, never open an unrelated run.
 Passive local-calendar date headers do not join result or field navigation;
