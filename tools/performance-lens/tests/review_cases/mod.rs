@@ -164,6 +164,22 @@ fn thread_capture_localizes_named_child_and_rejects_invalid_rehashed_intervals()
         ],
     );
     let summary = json(&run.join("summary.json"));
+    for metric in [
+        "rchar_per_second",
+        "minor_faults_per_second",
+        "observed_task_cpu_percent",
+    ] {
+        let rate = summary["rates"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|r| r["label"] == "ui-host" && r["phase"] == "capture" && r["metric"] == metric)
+            .unwrap();
+        assert!(rate["covered_s"].as_f64().unwrap() > 0.0);
+        assert!(rate["average"].is_number());
+        assert!(rate["valid_intervals"].as_u64().unwrap() > 0);
+        assert!(rate["source"].is_string());
+    }
     let hot = summary["threads"]
         .as_array()
         .unwrap()
@@ -188,6 +204,11 @@ fn thread_capture_localizes_named_child_and_rejects_invalid_rehashed_intervals()
         fs::read_to_string(run.join("report.html"))
             .unwrap()
             .contains("perf-hot")
+    );
+    assert_eq!(
+        summary["rates"],
+        json(&run.join("summary.json"))["rates"],
+        "offline regeneration retains rate coverage"
     );
     let raw = fs::read_to_string(run.join("samples.jsonl")).unwrap();
     let mut rows: Vec<Value> = raw

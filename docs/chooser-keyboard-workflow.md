@@ -36,6 +36,20 @@ Expansion belongs to the **surface**, not each result. Per-result
 memory can restore tabs, scroll and field locations, but cannot open/close details
 on result movement. Missing results may close unavailable details safely.
 
+While asynchronous ranking is pending, retain the last accepted result window,
+including an empty window. Do not flash the full catalog on each subsequent key
+or catalog refresh. The first query may use the unfiltered baseline until its
+first ranking arrives; clearing the query restores that baseline immediately.
+Owner/generation fences still reject stale rankings.
+
+Contiguous keyed-list insertions/removals retain surviving delegates rather than
+resetting the model merely because many indexes shift. Large insertions yield in
+bounded chunks; superseding updates invalidate unfinished chunks. Preserved native
+editors retain their draft and focus; this does not save, discard or replay an
+operation. Explicit removals still remove their controls. Arbitrary large reorders
+retain the existing reset policy. Native regressions: `tst_keyed_updates.qml` and
+`tst_chooser_memory.qml`.
+
 ## Field browsing
 
 - Only visible, enabled, editable controls are Tab stops. Read-only text, labels,

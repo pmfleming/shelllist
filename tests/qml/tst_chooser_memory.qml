@@ -150,6 +150,31 @@ DaemonTestCase {
         surface.chooserController.restoreUiFocus();
     }
 
+    function test_emptySearchWindowDoesNotFlashCatalogWhileRanking() {
+        const surface = makeSurface();
+        const controller = surface.chooserController;
+        const store = controller.selectionModel;
+        store.rankRequestsEnabled = false;
+        surface.listItem.focusSearch();
+        keyClick(Qt.Key_Z);
+        compare(controller.filterText, "z");
+        store.applyRustRanking(store.searchOwner, store.searchGeneration, []);
+        compare(controller.filteredResultsModel.count, 0);
+        keyClick(Qt.Key_Z);
+        compare(controller.filterText, "zz");
+        compare(controller.filteredResultsModel.count, 0, "accepted empty results remain visible while the next query is pending");
+        const stale = store.searchGeneration;
+        catalog(surface, [{id: "a", title: "Alpha updated"}, {id: "b", title: "Beta"}]);
+        compare(controller.filteredResultsModel.count, 0, "catalog refresh must not flash unrelated results either");
+        store.applyRustRanking(store.searchOwner, stale, [store.sourceResults[0].key]);
+        compare(controller.filteredResultsModel.count, 0, "stale ranking still cannot publish");
+        store.applyRustRanking(store.searchOwner, store.searchGeneration, [store.sourceResults[0].key]);
+        compare(controller.filteredResultsModel.count, 1);
+        verify(surface.listItem.searchFocused);
+        keyClick(Qt.Key_A, Qt.ControlModifier); keyClick(Qt.Key_Backspace);
+        compare(controller.filteredResultsModel.count, 2, "clearing the query restores the baseline immediately");
+    }
+
     function test_readinessResumesFocusButNeverRestoresUnsavedValues() {
         const surface = makeSurface();
         inspectSecondTab(surface);

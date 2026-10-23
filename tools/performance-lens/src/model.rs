@@ -215,6 +215,21 @@ pub struct ResourceSummary {
     pub unattributed_thread_covered_s: f64,
 }
 
+/// Time-weighted rates retain their own coverage and provenance, never zero-fill gaps.
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct RateSummary {
+    pub label: String,
+    pub phase: String,
+    pub metric: String,
+    pub unit: String,
+    pub source: String,
+    pub valid_intervals: usize,
+    pub unavailable_observations: usize,
+    pub covered_s: f64,
+    pub average: Option<f64>,
+    pub sampled_peak: Option<f64>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Distribution {
     pub count: usize,
@@ -245,6 +260,8 @@ pub struct Summary {
     pub raw_sha256: BTreeMap<String, String>,
     pub status: String,
     pub resources: Vec<ResourceSummary>,
+    #[serde(default)]
+    pub rates: Vec<RateSummary>,
     #[serde(default)]
     pub threads: Vec<ThreadSummary>,
     #[serde(default)]

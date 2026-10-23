@@ -149,6 +149,7 @@ pub fn summarize(manifest: &Manifest, samples: &[Sample], events: &[Event]) -> S
         raw_sha256: manifest.hashes.clone(),
         status: manifest.status.clone(),
         resources,
+        rates: crate::rate_summary::summarize(samples),
         threads,
         evidence_limits,
         attempted_trials: attempted,
@@ -216,6 +217,32 @@ fn write_rate(row: &ResourceSummary) -> Option<f64> {
                 .map(|n| n / row.io_write_covered_s)
         })
         .flatten()
+}
+fn rate_table(summary: &Summary, include: impl Fn(&RateSummary) -> bool) -> String {
+    let mut html = String::from(
+        "<table><tr><th>Scope / phase / metric</th><th>Time-weighted average</th><th>Sampled peak</th><th>Unit / source</th><th>Covered seconds</th><th>Valid intervals / unavailable observations</th></tr>",
+    );
+    for row in summary.rates.iter().filter(|row| include(row)) {
+        let _ = write!(
+            html,
+            "<tr><td>{} / {} / {}</td><td>{}</td><td>{}</td><td>{} / {}</td><td>{:.3}</td><td>{} / {}</td></tr>",
+            escape(&row.label),
+            escape(&row.phase),
+            escape(&row.metric),
+            number(row.average),
+            number(row.sampled_peak),
+            escape(&row.unit),
+            escape(&row.source),
+            row.covered_s,
+            row.valid_intervals,
+            row.unavailable_observations
+        );
+    }
+    html.push_str("</table>");
+    html
+}
+fn application_process(row: &ResourceSummary) -> bool {
+    row.label != "lens-observer" && !row.label.starts_with("cgroup:")
 }
 fn mib(v: Option<u64>) -> String {
     number(v.map(|n| n as f64 / 1048576.0))
@@ -306,11 +333,15 @@ pub fn write(
     for limit in &summary.evidence_limits {
         let _ = write!(html, "<li>{}</li>", escape(limit));
     }
-    html.push_str("</ul><h3>Highest observed CPU by scope / phase</h3><p>Localization only, not proof of a bottleneck. Initial settling is excluded here; all phases remain below.</p><table><tr><th>Scope / phase</th><th>% one core</th><th>CPU covered s</th><th>Write bytes/s</th><th>Write covered s</th></tr>");
+    html.push_str("</ul><h3>Highest observed CPU by scope / phase</h3><p>Application process scopes only; observer and overlapping cgroup totals are shown separately below, never ranked as additional application work. Localization only, not proof of a bottleneck. Initial settling is excluded here; all phases remain below.</p><table><tr><th>Scope / phase</th><th>% one core</th><th>CPU covered s</th><th>Write bytes/s</th><th>Write covered s</th></tr>");
     let mut hotspots: Vec<_> = summary
         .resources
         .iter()
-        .filter(|r| r.phase != "initial-settle" && r.cpu_percent_one_core.is_some())
+        .filter(|r| {
+            application_process(r)
+                && r.phase != "initial-settle"
+                && r.cpu_percent_one_core.is_some()
+        })
         .collect();
     hotspots.sort_by(|a, b| {
         b.cpu_percent_one_core
@@ -329,11 +360,13 @@ pub fn write(
             r.io_write_covered_s
         );
     }
-    html.push_str("</table><h3>Highest observed disk-write rate</h3><p>Ranked independently of CPU. Process storage accounting, not durable writes or physical device throughput; rates use only covered intervals.</p><table><tr><th>Scope / phase</th><th>Write bytes/s</th><th>Observed write bytes</th><th>Covered seconds</th></tr>");
+    html.push_str("</table><h3>Highest observed disk-write rate</h3><p>Application processes ranked independently of CPU; observer writes and overlapping cgroup totals are excluded. Process storage accounting, not durable writes or physical device throughput; rates use only covered intervals.</p><table><tr><th>Scope / phase</th><th>Write bytes/s</th><th>Observed write bytes</th><th>Covered seconds</th></tr>");
     let mut writers: Vec<_> = summary
         .resources
         .iter()
-        .filter(|r| r.phase != "initial-settle" && write_rate(r).is_some())
+        .filter(|r| {
+            application_process(r) && r.phase != "initial-settle" && write_rate(r).is_some()
+        })
         .collect();
     writers.sort_by(|a, b| write_rate(b).unwrap().total_cmp(&write_rate(a).unwrap()));
     for r in writers.into_iter().take(10) {
@@ -492,35 +525,10 @@ pub fn write(
         html.push_str("</table>");
     }
     if manifest.settings["include_scheduler"] == true {
-        html.push_str("<h3>Observed-task scheduler accounting</h3><p>Nanosecond runtime and run-queue wait from schedstat; voluntary/involuntary context switches summed across observed threads, NOT wakeups. Includes paired tasks and proven births, but excludes unobserved/exited work. This is not a replacement for complete process/cgroup CPU totals. Disabled scheduler wait accounting is unavailable, not zero.</p><table><tr><th>Scope / phase / metric</th><th>Average</th><th>Unit</th><th>Covered seconds</th></tr>");
-        let mut metrics = BTreeMap::<_, (f64, f64)>::new();
-        for s in samples {
-            for (key, rate) in s
-                .rates
-                .iter()
-                .filter(|(key, _)| key.starts_with("observed_task_"))
-            {
-                if let (Some(value), Some(dt)) = (rate.value, s.interval_s) {
-                    let entry = metrics
-                        .entry((&s.label, &s.phase, key, &rate.unit))
-                        .or_default();
-                    entry.0 += value * dt;
-                    entry.1 += dt;
-                }
-            }
-        }
-        for ((label, phase, key, unit), (integral, dt)) in metrics {
-            let _ = write!(
-                html,
-                "<tr><td>{} / {} / {}</td><td>{:.3}</td><td>{}</td><td>{dt:.3}</td></tr>",
-                escape(label),
-                escape(phase),
-                escape(key),
-                integral / dt,
-                escape(unit)
-            );
-        }
-        html.push_str("</table>");
+        html.push_str("<h3>Observed-task scheduler accounting</h3><p>Nanosecond runtime and run-queue wait from schedstat; voluntary/involuntary context switches summed across observed threads, NOT wakeups. Includes paired tasks and proven births, but excludes unobserved/exited work. This is not a replacement for complete process/cgroup CPU totals. Disabled scheduler wait accounting is unavailable, not zero. Coverage and unavailable observations are per metric; absent old-artifact metrics are not invented.</p>");
+        html.push_str(&rate_table(summary, |row| {
+            row.metric.starts_with("observed_task_")
+        }));
     }
     html.push_str("</section><section><h2>Memory</h2><p>MiB. Peaks are sampled, not allocator peaks; VmHWM in raw data is process-lifetime. RSS sums are not unique physical memory. Start/end below are first/last available observations, not proof of coverage at the exact phase boundary.</p><div class=\"table\"><table><tr><th>Scope / phase</th><th>RSS first</th><th>RSS last</th><th>RSS peak</th><th>PSS peak</th></tr>");
     for r in &summary.resources {
@@ -554,28 +562,10 @@ pub fn write(
                 mib(r.cgroup_memory_peak_bytes)
             );
         }
-        html.push_str("</table><h3>Pressure stall information</h3><p>Delta of kernel some/full total stall time divided by covered wall time. Not CPU utilization or summed task wait.</p><table><tr><th>Scope / phase / counter</th><th>% stalled wall time</th><th>Covered seconds</th></tr>");
-        let mut pressure = BTreeMap::<_, (f64, f64)>::new();
-        for s in samples.iter().filter(|s| s.cgroup.is_some()) {
-            for (key, rate) in s.rates.iter().filter(|(key, _)| key.starts_with("psi.")) {
-                if let (Some(value), Some(dt)) = (rate.value, s.interval_s) {
-                    let entry = pressure.entry((&s.label, &s.phase, key)).or_default();
-                    entry.0 += value * dt;
-                    entry.1 += dt;
-                }
-            }
-        }
-        for ((label, phase, key), (integral, dt)) in pressure {
-            let _ = write!(
-                html,
-                "<tr><td>{} / {} / {}</td><td>{:.3}</td><td>{dt:.3}</td></tr>",
-                escape(label),
-                escape(phase),
-                escape(key),
-                integral / dt
-            );
-        }
-        html.push_str("</table>");
+        html.push_str("</table><h3>Pressure stall information</h3><p>Delta of kernel some/full total stall time divided by covered wall time. Not CPU utilization or summed task wait. Unsupported fields stay visible as unavailable.</p>");
+        html.push_str(&rate_table(summary, |row| {
+            row.label.starts_with("cgroup:") && row.metric.starts_with("psi.")
+        }));
     }
     html.push_str("</section><section><h2>I/O</h2><p>Storage-accounted observed byte deltas over valid intervals only. Gaps and phase boundaries are excluded. Not syscall character traffic, network usage, durable writes or disk latency. Raw rchar/wchar and fault counters remain separate.</p><div class=\"table\"><table><tr><th>Scope / phase</th><th>Read bytes</th><th>Read covered s</th><th>Write bytes</th><th>Write covered s</th></tr>");
     for r in &summary.resources {
@@ -594,6 +584,19 @@ pub fn write(
     for key in ["read_bytes_per_second", "write_bytes_per_second"] {
         html.push_str(&chart(samples, "ui-host", key, 1.0));
     }
+    html.push_str("<h3>Process I/O rates and page faults</h3><p>rchar/wchar measure syscall character traffic, NOT disk or network throughput. Minor faults do not require storage I/O; major faults are not a latency measurement. Rates use only valid intervals, with no zero-filling of gaps. Peaks are sampling-window averages, not instantaneous bursts. All phases and observer work remain separate; these existing raw rates add no collection work.</p>");
+    html.push_str(&rate_table(summary, |row| {
+        !row.label.starts_with("cgroup:")
+            && matches!(
+                row.metric.as_str(),
+                "read_bytes_per_second"
+                    | "write_bytes_per_second"
+                    | "rchar_per_second"
+                    | "wchar_per_second"
+                    | "minor_faults_per_second"
+                    | "major_faults_per_second"
+            )
+    }));
     html.push_str("</section><section><h2>GPU</h2><p>DRM clients are deduplicated across descriptors/processes in each sampling batch. A shared client is assigned to the first observed scope, not counted twice. Engine percentages are per engine capacity (ABI default 1); no aggregate GPU percentage. Memory region fields may overlap each other and RSS. GPU/compositor frame times are unmeasured.</p><div class=\"table\"><table><tr><th>Scope / client / engine</th><th>Observed intervals</th><th>Time-weighted %</th><th>Peak %</th></tr>");
     let mut engines = BTreeMap::<String, Vec<(f64, f64)>>::new();
     let mut memory = BTreeMap::new();

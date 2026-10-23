@@ -1,6 +1,9 @@
 # Performance review follow-up
 
 This supplements README.md's original schema-1 and task-pairing description.
+The [2026-10-23 review](../../docs/performance-review-2026-10-23.md) adds newer
+live evidence and offline reporting improvements; the rollout results below
+remain historical, not current deployment acceptance.
 
 ## Delivered diagnostics
 

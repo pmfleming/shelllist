@@ -11,6 +11,7 @@ mod encoding;
 mod ipc;
 mod model;
 mod procfs;
+mod rate_summary;
 mod report;
 mod sampler;
 #[cfg(test)]

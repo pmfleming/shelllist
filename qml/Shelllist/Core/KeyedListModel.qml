@@ -9,6 +9,7 @@ ListModel {
     property int chunkSize: 64
     property int generation: 0
     property int pendingIndex: 0
+    property int pendingOffset: 0
     property var pendingValues: []
     dynamicRoles: true
 
@@ -18,21 +19,21 @@ ListModel {
         return left === right;
     }
 
-    function appendChunk(expectedGeneration: int): void {
+    function insertChunk(expectedGeneration: int): void {
         if (expectedGeneration !== generation)
             return;
         const size = pendingValues.length > maximumSynchronousItems ? Math.max(1, chunkSize) : pendingValues.length;
         const end = Math.min(pendingIndex + size, pendingValues.length);
         while (pendingIndex < end) {
-            const value = pendingValues[pendingIndex++];
-            append({
+            const value = pendingValues[pendingIndex];
+            insert(pendingOffset + pendingIndex++, {
                 resultKey: value.key,
                 resultData: value
             });
         }
         chunkApplied();
         if (pendingIndex < pendingValues.length)
-            Qt.callLater(appendChunk, expectedGeneration);
+            Qt.callLater(insertChunk, expectedGeneration);
         else
             pendingValues = [];
     }
@@ -89,22 +90,35 @@ ListModel {
         chunkApplied();
     }
 
+    // A contiguous insertion/removal shifts many indexes without reordering any
+    // survivor. Detect it in linear time rather than treating that shift as a reset.
+    function spliceChange(keys: var): var {
+        if (keys.length === values.length) return null;
+        const shared = Math.min(keys.length, values.length);
+        let first = 0;
+        while (first < shared && keys[first] === values[first].key) first++;
+        let suffix = 0;
+        while (suffix < shared - first && keys[keys.length - 1 - suffix] === values[values.length - 1 - suffix].key) suffix++;
+        return first + suffix === shared ? {index: first, removed: keys.length - shared, inserted: values.length - shared} : null;
+    }
+
     function sync(): void {
         generation++;
         pendingValues = [];
         pendingIndex = 0;
+        pendingOffset = 0;
         const keys = currentKeys();
-        // Large history pages are append-only, not a reorder. Preserve existing
-        // delegates (and the viewport) instead of crossing the reset threshold.
-        if (values.length > keys.length && keys.every(function (key, index) {
-            return key === values[index].key;
-        })) {
-            for (let index = 0; index < keys.length; index++) {
-                if (!equivalent(get(index).resultData, values[index]))
-                    setProperty(index, "resultData", values[index]);
+        const splice = spliceChange(keys);
+        if (splice) {
+            if (splice.removed) remove(splice.index, splice.removed);
+            for (let index = 0; index < count; index++) {
+                const value = values[index < splice.index ? index : index + splice.inserted];
+                if (!equivalent(get(index).resultData, value))
+                    setProperty(index, "resultData", value);
             }
-            pendingValues = values.slice(keys.length);
-            appendChunk(generation);
+            pendingOffset = splice.index;
+            pendingValues = values.slice(splice.index, splice.index + splice.inserted);
+            insertChunk(generation);
             return;
         }
         if (orderChanges(keys) <= maximumIncrementalOrderChanges) {
@@ -113,7 +127,7 @@ ListModel {
         }
         pendingValues = values.slice();
         clear();
-        appendChunk(generation);
+        insertChunk(generation);
     }
 
     onValuesChanged: sync()

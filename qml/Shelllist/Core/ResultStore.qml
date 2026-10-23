@@ -10,8 +10,8 @@ SelectionModel {
     property string activeQueryId: ""
     property string searchOwner: ""
     property int searchGeneration: 0
-    property int appliedSearchGeneration: -1
     property var rustRankedResults: []
+    property bool hasRankedResults: false
     property double catalogUpdateStartedAtMs: 0
     property double searchRankRequestedAtMs: 0
     property double lastCatalogToModelLatencyMs: -1
@@ -23,7 +23,7 @@ SelectionModel {
     // Fuzzy work belongs to the Rust matcher. While a request is pending, keep
     // the previous keyed model (or the unfiltered baseline for the first edit)
     // instead of ranking the same catalog synchronously on the UI thread.
-    readonly property var visibleResults: fuzzyQuery ? appliedSearchGeneration === searchGeneration ? rustRankedResults : rustRankedResults.length > 0 ? rustRankedResults : baselineResults : baselineResults
+    readonly property var visibleResults: fuzzyQuery && hasRankedResults ? rustRankedResults : baselineResults
     readonly property KeyedListModel visibleModel: visibleListModel
     count: visibleResults.length
 
@@ -35,13 +35,13 @@ SelectionModel {
 
     function requestRustRanking(): void {
         searchGeneration += 1;
-        appliedSearchGeneration = -1;
         if (!fuzzyQuery) {
+            hasRankedResults = false;
             rustRankedResults = [];
             return;
         }
-        if (rustRankedResults.length === 0)
-            rustRankedResults = baselineResults;
+        // An accepted empty window is still a window. Do not flash the entire
+        // catalog while the next query or catalog revision is being ranked.
         if (rankRequestsEnabled && searchOwner.length > 0) {
             searchRankRequestedAtMs = Date.now();
             SearchService.rank(searchOwner, searchGeneration, queryText);
@@ -61,7 +61,7 @@ SelectionModel {
         }).filter(function (item) {
             return !!item;
         });
-        appliedSearchGeneration = generation;
+        hasRankedResults = true;
         if (searchRankRequestedAtMs > 0) {
             lastSearchRankLatencyMs = Math.max(0, Date.now() - searchRankRequestedAtMs);
             searchRankRequestedAtMs = 0;

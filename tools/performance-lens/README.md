@@ -1,5 +1,10 @@
 # Shelllist performance lens
 
+The [current performance review](../../docs/performance-review-2026-10-23.md)
+records fresh passive captures, periodic write bursts, source-level follow-ups and
+the coverage-preserving rate-summary/report improvements. No live UI control or
+production deployment was performed.
+
 See [the performance follow-up](followup.md) for current thread accounting,
 cgroup/scheduler options, compact schema 2, and validation results. It supersedes
 the original task-pairing and raw-format descriptions below.
@@ -220,7 +225,12 @@ quiet resource baselines.
 Open `report.html` directly in a browser. It contains no scripts or external
 assets. Reports lead with CPU triage and explicit evidence limits, then cover
 responsiveness, CPU, optional thread localization, memory, I/O, GPU and coverage;
-all process scopes and phases stay separate. Plots show sampled points (at most
+all process scopes and phases stay separate. Application hotspot rankings exclude
+observer and overlapping cgroup totals; full resource sections retain them.
+I/O/fault tables distinguish storage bytes from character traffic; peaks are
+sampling-window averages, not instantaneous bursts or operation latency.
+Scheduler/PSI tables retain explicitly unavailable metrics and their coverage.
+Plots show sampled points (at most
 roughly 1,000 per series), not interpolated missing intervals. Hover/interactive
 charts and GPU timelines are not part of this version; GPU engine summaries and
 last observed region memory fields are shown, with full GPU time series in JSONL.
@@ -236,6 +246,13 @@ Artifacts:
 - `summary.json`: first/last available and sampled-peak memory, time-weighted CPU,
   observed I/O totals **with covered seconds**, successful-trial latency and all
   failure counts, task summaries and evidence limits; bound to run ID and raw hashes.
+  `rates` exposes existing raw process/scheduler/PSI rates with unit/source,
+  time-weighted average, sampled peak, covered seconds and valid/unavailable
+  observation counts. Missing/absent observations are not zero-filled; all-missing
+  metrics retain null averages/peaks. Different units/sources are never merged.
+  Older summaries without `rates` remain readable; absent old-artifact metrics
+  are not invented. This is an offline projection, not new collection or comparison
+  budgets.
 - `samples.csv`: long-form process procfs counters/rates (GPU/task detail stays in JSONL).
 - `report.html`: Rust-generated, HTML-escaped static report. Spreadsheet formula
   prefixes in CSV labels are escaped too.

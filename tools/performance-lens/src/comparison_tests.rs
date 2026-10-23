@@ -191,6 +191,77 @@ fn write_hotspots_do_not_hide_quiet_cpu_writers() {
 }
 
 #[test]
+fn triage_excludes_overlapping_cgroups_and_the_observer() {
+    let m = manifest();
+    let mut s = summary(&m, 1.0, 1.0);
+    let mut group = s.resources[0].clone();
+    group.label = "cgroup:overlapping".into();
+    s.resources.push(group);
+    for row in &mut s.resources {
+        row.io_write_observed_bytes = Some(50.0);
+        row.io_write_covered_s = 1.0;
+    }
+    let dir = tempfile::tempdir().unwrap();
+    report::write(dir.path(), &m, &s, &[], &[]).unwrap();
+    let html = std::fs::read_to_string(dir.path().join("report.html")).unwrap();
+    for heading in [
+        "Highest observed CPU by scope / phase",
+        "Highest observed disk-write rate",
+    ] {
+        let table = html
+            .split(heading)
+            .nth(1)
+            .unwrap()
+            .split("<table>")
+            .nth(1)
+            .unwrap()
+            .split("</table>")
+            .next()
+            .unwrap();
+        assert!(table.contains("ui-host"));
+        assert!(!table.contains("lens-observer"));
+        assert!(!table.contains("cgroup:overlapping"));
+    }
+    assert!(
+        html.contains("cgroup:overlapping"),
+        "full coverage table must retain cgroups"
+    );
+    assert!(html.contains("lens-observer"));
+}
+
+#[test]
+fn rate_tables_show_unavailable_provenance_and_escape_values() {
+    let mut m = manifest();
+    m.settings["include_scheduler"] = true.into();
+    let mut s = summary(&m, 1.0, 1.0);
+    s.rates = vec![RateSummary {
+        label: "<worker>".into(),
+        phase: "capture".into(),
+        metric: "observed_task_wait_percent".into(),
+        unit: "%".into(),
+        source: "<schedstat & unavailable>".into(),
+        unavailable_observations: 3,
+        ..Default::default()
+    }];
+    let dir = tempfile::tempdir().unwrap();
+    report::write(dir.path(), &m, &s, &[], &[]).unwrap();
+    let html = std::fs::read_to_string(dir.path().join("report.html")).unwrap();
+    assert!(html.contains("&lt;worker&gt; / capture / observed_task_wait_percent"));
+    assert!(html.contains("&lt;schedstat &amp; unavailable&gt;"));
+    assert!(html.contains("<td>unavailable</td><td>unavailable</td>"));
+    assert!(html.contains("<td>0 / 3</td>"));
+    assert!(!html.contains("<worker>"));
+    let mut legacy = serde_json::to_value(&s).unwrap();
+    legacy.as_object_mut().unwrap().remove("rates");
+    assert!(
+        serde_json::from_value::<Summary>(legacy)
+            .unwrap()
+            .rates
+            .is_empty()
+    );
+}
+
+#[test]
 fn legacy_protocol_defaults_and_missing_phases_remain_explicit() {
     let a = manifest();
     let mut b = a.clone();
