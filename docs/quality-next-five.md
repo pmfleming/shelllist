@@ -20,3 +20,18 @@ validation from effects and eliminating in-place partial state transitions, not
 claiming that extraction deletes work. Existing refresh/selection/viewport tests
 and new native F5/continuation tests cover changed totals, retention and cursors.
 Qt Updates: 35 passed, no failures/skips. Strict QML lint passes.
+
+## 2. Structured IP operations
+
+`IpEdit` now separates atomic paste classification, fixed-separator deletion
+ranges and auto-advance from slot replacement. One offset helper serves selection
+removal and insertion. Inspection separates structural/state checks from rendering
+without normalizing invalid drafts. No additional editor/session state is stored.
+
+`replace` cognitive/cyclomatic/effort: 41/35/179 → 14/13/66; `inspect`:
+33/25/120 → 16/13/59. Helpers are included in the report; maxima are not totals.
+150,540 deterministic differential cases cover inspect, replacement and native
+buffer edits against the baseline. The 450-check JS vectors pass, as do native
+IP control (16) and real Wi-Fi IP fields (9); strict QML lint passes. The native
+IPv6 case now distinguishes local substring paste from rejected full selection,
+checks no write and undoes before continuing the original discard journey.

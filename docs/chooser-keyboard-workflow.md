@@ -225,6 +225,11 @@ shares the parser with domain adapters. Wi-Fi retains the whole raw pair in
 `IpSettingsState.addressWithSubnet`, so invalid saves continue blocking readiness,
 and valid saves cannot publish an intermediate half-updated address/prefix pair.
 
+`IpEdit` keeps full-value paste classification, fixed-separator selection ranges
+and caret/auto-advance decisions separate from atomic replacement. Only local IPv6
+substring paste may fall through after full-address parsing; malformed full-value
+paste still rejects as a whole. Shared slot offsets never truncate the source.
+
 `tests/qml/tst_ip_control.qml` owns native selection, keyboard/pointer transactions,
 clipboard rejection, undo/redo, narrow caret visibility and all five configurations.
 `tst_ip_fields.qml` exercises real Wi-Fi saves, both families, gateway rejection,

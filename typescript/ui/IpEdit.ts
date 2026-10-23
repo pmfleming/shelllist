@@ -65,28 +65,28 @@ function inspectSubnet(value: string, config: IpConfiguration): {state: number; 
     const prefix = mask ? maskPrefix(value) : Number(value);
     return {state: prefix < 0 ? Validation.Invalid : Validation.Acceptable, prefix};
 }
+function emptyPart(value: string, config: IpConfiguration): boolean { return value === "" || (config.family === "ipv4" && value === "..."); }
+function inspectParts(value: string, pair: ReturnType<typeof parts>, config: IpConfiguration, empty: boolean): {state: number; prefix: number | null} {
+    if (!supported(config) || value.length >= MaximumDraftLength || /\s/.test(value)
+            || value.split("/").length > (combined(config) ? 2 : 1))
+        return {state: Validation.Invalid, prefix: null};
+    const addressState = config.family === "ipv4" ? octetSlotsState(pair.address) : Validation.ipv6State(pair.address);
+    const subnet = inspectSubnet(pair.subnet, config);
+    // Native ordering: either invalid half wins; both must be complete to save.
+    const state = empty ? (config.allowEmpty ? Validation.Acceptable : Validation.Intermediate)
+        : Math.min(addressState, subnet.state);
+    return {state, prefix: subnet.prefix};
+}
 function inspect(value: string, config: IpConfiguration) {
     const pair = parts(value);
-    const emptyAddress = pair.address === "" || (config.family === "ipv4" && pair.address === "...");
-    const emptySubnet = pair.subnet === "" || (config.family === "ipv4" && pair.subnet === "...");
-    const empty = emptyAddress && (!combined(config) || emptySubnet);
-    let state = Validation.Invalid;
-    let prefix: number | null = null;
-    if (supported(config) && value.length < MaximumDraftLength && !/\s/.test(value)
-            && value.split("/").length <= (combined(config) ? 2 : 1)) {
-        const addressState = config.family === "ipv4" ? octetSlotsState(pair.address) : Validation.ipv6State(pair.address);
-        const subnet = inspectSubnet(pair.subnet, config);
-        prefix = subnet.prefix;
-        // Native validator ordering: Invalid < Intermediate < Acceptable.
-        // Either invalid half wins; both halves must be complete to save.
-        state = Math.min(addressState, subnet.state);
-        if (empty) state = config.allowEmpty ? Validation.Acceptable : Validation.Intermediate;
-    }
-    const valid = state === Validation.Acceptable;
+    const empty = emptyPart(pair.address, config) && (!combined(config) || emptyPart(pair.subnet, config));
+    const result = inspectParts(value, pair, config, empty);
+    const valid = result.state === Validation.Acceptable;
     const address = valid && !empty ? serializeAddress(pair.address, config.family) : pair.address;
-    const subnet = valid && prefix !== null ? config.subnetNotation === "netmask" ? prefixMask(prefix) : String(prefix) : pair.subnet;
-    const text = valid ? empty ? "" : address + (combined(config) ? "/" + subnet : "") : value;
-    return {state, valid, empty, address: empty ? "" : address, prefixLength: empty ? null : prefix, text};
+    const subnet = valid && result.prefix !== null ? config.subnetNotation === "netmask" ? prefixMask(result.prefix) : String(result.prefix) : pair.subnet;
+    let text = value;
+    if (valid) text = empty ? "" : address + (combined(config) ? "/" + subnet : "");
+    return {state: result.state, valid, empty, address: empty ? "" : address, prefixLength: empty ? null : result.prefix, text};
 }
 function padOctets(value: string): string {
     const slots = value.split(".");
@@ -150,58 +150,66 @@ function fullPaste(value: string, config: IpConfiguration): string | null {
     // Bare full-address paste intentionally empties the old subnet.
     return prepare(text, config);
 }
+// undefined means a local edit; null means reject the entire full-value paste.
+function pasteReplacement(config: IpConfiguration, insertion: string, paste: boolean, fullSelection: boolean): IpPosition | null | undefined {
+    if (!(paste || fullSelection) || !/[.:/]/.test(insertion)) return undefined;
+    const full = fullPaste(insertion, config);
+    if (full !== null) return position(full, full.length);
+    // Only IPv6 substring paste may fall through to local replacement.
+    return fullSelection || config.family === "ipv4" || insertion.includes("/") ? null : undefined;
+}
+interface IpReplacementRange { start: number; end: number; index: number; }
+function replacementRange(slots: IpComponent[], start: number, end: number, deleting: boolean, backwards: boolean): IpReplacementRange | null {
+    const index = slots.findIndex(slot => start >= slot.start && start <= slot.end);
+    if (index < 0) return null;
+    if (!deleting || end <= start || slots.some(slot => start < slot.end && end > slot.start)) return {start, end, index};
+    // Deleting only a fixed separator reaches the preceding/following digit.
+    const adjacent = backwards
+        ? slots.filter(slot => slot.end <= start && slot.value.length > 0).pop()
+        : slots.find(slot => slot.start >= end && slot.value.length > 0);
+    if (!adjacent) return null;
+    const digit = backwards ? adjacent.end - 1 : adjacent.start;
+    return {start: digit, end: digit + 1, index: slots.indexOf(adjacent)};
+}
+function slotOffset(slot: IpComponent, offset: number): number { return Math.max(0, Math.min(slot.value.length, offset - slot.start)); }
+function replacementPosition(state: IpPosition, slots: IpComponent[], range: IpReplacementRange, insertion: string, paste: boolean, values: string[], text: string): IpPosition {
+    const slot = slots[range.index];
+    let cursor = range.start + insertion.length;
+    let autoSlot = state.autoSlot;
+    const fresh = !slot.value || (range.start <= slot.start && range.end >= slot.end);
+    if (fresh && insertion) autoSlot = range.index;
+    if (insertion.length !== 1 || paste || slot.kind !== "octet") autoSlot = -1;
+    if (autoSlot === range.index && values[range.index].length === 3 && range.index + 1 < slots.length) {
+        cursor++; autoSlot = -1;
+    }
+    return position(text, Math.min(cursor, text.length), autoSlot);
+}
 function replace(state: IpPosition, config: IpConfiguration, start: number, end: number,
         insertion: string, paste: boolean, backwards: boolean): IpPosition | null {
     if (!supported(config) || insertion.length >= MaximumDraftLength) return null;
     const fullSelection = start === 0 && end === state.text.length;
-    if ((paste || fullSelection) && /[.:/]/.test(insertion)) {
-        const full = fullPaste(insertion, config);
-        if (full !== null) return position(full, full.length);
-        // IPv6 substring paste uses ordinary selection replacement; a full-value
-        // malformed paste must never fall through and salvage a substring.
-        if (fullSelection || config.family === "ipv4" || insertion.includes("/")) return null;
-    }
+    const full = pasteReplacement(config, insertion, paste, fullSelection);
+    if (full !== undefined) return full;
     const slots = components(state.text, config);
-    // An unexpected bound source must not lose unrepresented suffixes while
-    // editing. Full replacement/clear is still available for recovery.
+    // Unexpected source suffixes survive local edits. Only full replacement or
+    // clear can recover the source, still through the same validated operation.
     if (joinComponents(slots, slots.map(slot => slot.value), config) !== state.text) {
         if (!fullSelection) return null;
         const blank = position(prepare("", config), 0);
         return replace(blank, config, 0, blank.text.length, insertion, paste, backwards);
     }
-    let index = slots.findIndex(slot => start >= slot.start && start <= slot.end);
-    if (index < 0) return null;
-    // Deleting only a fixed separator reaches the preceding/following digit.
-    if (!insertion && end > start && !slots.some(slot => start < slot.end && end > slot.start)) {
-        const adjacent = backwards
-            ? slots.filter(slot => slot.end <= start && slot.value.length > 0).pop()
-            : slots.find(slot => slot.start >= end && slot.value.length > 0);
-        if (!adjacent) return null;
-        start = backwards ? adjacent.end - 1 : adjacent.start;
-        end = start + 1;
-        index = slots.indexOf(adjacent);
-    }
-    const slot = slots[index];
+    const range = replacementRange(slots, start, end, !insertion, backwards);
+    if (!range) return null;
+    const slot = slots[range.index];
     if (!(slot.kind === "ipv6" ? /^[0-9a-fA-F:.]*$/ : /^\d*$/).test(insertion)) return null;
-    const values = slots.map(part => {
-        const left = Math.max(0, Math.min(part.value.length, start - part.start));
-        const right = Math.max(left, Math.min(part.value.length, end - part.start));
-        return part.value.slice(0, left) + part.value.slice(right);
-    });
-    const local = Math.max(0, Math.min(slot.value.length, start - slot.start));
-    values[index] = values[index].slice(0, local) + insertion + values[index].slice(local);
-    if (slot.kind !== "ipv6" && values[index].length > 3) return null;
+    const values = slots.map(part => part.value.slice(0, slotOffset(part, range.start))
+        + part.value.slice(slotOffset(part, Math.max(range.start, range.end))));
+    const local = slotOffset(slot, range.start);
+    values[range.index] = values[range.index].slice(0, local) + insertion + values[range.index].slice(local);
+    if (slot.kind !== "ipv6" && values[range.index].length > 3) return null;
     const text = joinComponents(slots, values, config);
     if (text.length >= MaximumDraftLength) return null;
-    let cursor = start + insertion.length;
-    let autoSlot = state.autoSlot;
-    const fresh = !slot.value || (start <= slot.start && end >= slot.end);
-    if (fresh && insertion) autoSlot = index;
-    if (insertion.length !== 1 || paste || slot.kind !== "octet") autoSlot = -1;
-    if (autoSlot === index && values[index].length === 3 && index + 1 < slots.length) {
-        cursor++; autoSlot = -1;
-    }
-    return position(text, Math.min(cursor, text.length), autoSlot);
+    return replacementPosition(state, slots, range, insertion, paste, values, text);
 }
 // Native IME/clipboard/deletion may replace more than the current selection.
 // Find its exact contiguous change without normalizing or clipping any text.

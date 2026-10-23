@@ -198,6 +198,14 @@ TestCase {
         keyClick(Qt.Key_Return);
         compare(panel.sources[4], "2001:db8::1/128");
         keyClick(Qt.Key_Return);
+        input(panel, 4).select(5, 8);
+        paste("ab:cd", false);
+        compare(editor.text, "2001:ab:cd::1/128", "IPv6 substrings replace only the native selection");
+        paste("ab:cd");
+        compare(editor.text, "2001:ab:cd::1/128", "the same incomplete full-value paste is rejected atomically");
+        compare(panel.writes, 1);
+        keyClick(Qt.Key_Z, Qt.ControlModifier);
+        compare(editor.text, "2001:db8::1/128");
         input(panel, 4).select(4, 5);
         keyClick(Qt.Key_Delete);
         compare(editor.text, "2001db8::1/128", "IPv6 colons are editable native text");
