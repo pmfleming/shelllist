@@ -22,11 +22,10 @@ FocusScope {
     property Item additionalCommandItem: null
     property bool headerShortcutsEnabled: false
     property Item headerContentItem: contentItem
-    readonly property list<SurfaceActionRow> actionRows: uniqueItems(collectActionRows(headerContentItem).concat(collectActionRows(additionalCommandItem)))
-    readonly property list<ActionControl> headerButtons: actionRows.filter(row => row.headerCommands).reduce((buttons, row) => buttons.concat(Array.from(row.buttons)), [])
-    readonly property list<ActionControl> contentCommands: uniqueItems(collectCommands(contentItem).concat(collectCommands(additionalCommandItem))).filter(item => commandInScope(item))
-    readonly property list<ActionControl> commandButtons: headerButtons.concat(contentCommands.filter(item => !!item.accessKey))
-    readonly property bool commandMenuOpen: commandMenu.visible || actionRows.some(row => row.popupOpen)
+    readonly property list<ActionControl> headerButtons: commands.headerButtons
+    readonly property list<ActionControl> contentCommands: commands.contentCommands
+    readonly property list<ActionControl> commandButtons: commands.commandButtons
+    readonly property bool commandMenuOpen: commands.popupOpen
     property ChooserMemory viewMemory: null
     property bool pendingMemory: false
     property bool resumeEditor: false
@@ -137,8 +136,7 @@ FocusScope {
         fieldModal = null;
         finishEditor(false);
         cancelSessionRestore();
-        for (const row of actionRows) row.closePopup();
-        commandMenu.close();
+        commands.closeAll();
         const dropdown = currentTarget as DropDownList;
         if (dropdown && dropdown.popup.visible)
             dropdown.popup.close();
@@ -282,65 +280,7 @@ FocusScope {
         finishEditor(true);
         focusContent();
     }
-    function uniqueItems(items: var): var {
-        return items.filter((item, index) => items.indexOf(item) === index);
-    }
-    function collectActionRows(item: Item): var {
-        if (!item || !item.visible || item instanceof ModalFrame || (item as DetailSection)?.informationOnly)
-            return [];
-        if (item instanceof SurfaceActionRow)
-            return [item];
-        let result = [];
-        for (const child of item.children)
-            result = result.concat(collectActionRows(child));
-        return result;
-    }
-    function collectCommands(item: Item): var {
-        if (!item || !item.visible || item instanceof DetailsHeader || item instanceof DetailsTabBar || item instanceof ModalFrame)
-            return [];
-        // Responsive content rows reuse their live buttons without parallel
-        // header registrations or a second command/navigation model.
-        const actionRow = item as SurfaceActionRow;
-        if (actionRow && actionRow.headerCommands)
-            return [];
-        const action = item as ActionControl;
-        let result = action && !binary(action) ? [action] : [];
-        for (const child of item.children)
-            result = result.concat(collectCommands(child));
-        return result;
-    }
-    function commandInScope(item: ActionControl): bool {
-        const scope = item.commandScope;
-        if (!scope) return true;
-        let target = currentTarget;
-        while (target) {
-            if (target === scope) return true;
-            target = target.parent;
-        }
-        return false;
-    }
-    function shortcutFor(button: ActionControl): string {
-        if (!button || commandButtons.indexOf(button) < 0
-                || !["Alt", "Ctrl"].includes(button.accessModifier)
-                || !(button.accessModifier === "Ctrl" ? /^[A-Z]$/ : /^[A-IK-RT-Z]$/).test(button.accessKey)
-                || commandButtons.filter(other => other.accessKey === button.accessKey
-                    && other.accessModifier === button.accessModifier).length !== 1)
-            return "";
-        return button.accessModifier + "+" + button.accessKey;
-    }
-    onHeaderShortcutsEnabledChanged: if (!headerShortcutsEnabled) {
-        commandMenu.close();
-        for (const row of actionRows) row.closePopup();
-    }
-    function triggerHeader(index: int): void {
-        const button = commandButtons[index];
-        if (!headerShortcutsEnabled || popupOpen || !button || !button.visible || !button.enabled || !button.interactive)
-            return;
-        interactionRequested();
-        cancelSessionRestore();
-        pendingMemory = false;
-        button.activate();
-    }
+    function shortcutFor(button: ActionControl): string { return commands.shortcutFor(button); }
     function cycleFocus(backwards: bool): void {
         if (!restorationAllowed) return;
         interactionRequested();
@@ -460,13 +400,12 @@ FocusScope {
     }
     function retreat(): void {
         if (commandMenuOpen) {
-            commandMenu.close();
-            for (const row of actionRows) row.closePopup();
+            commands.closeAll();
         } else if (editing) {
             finishEditor(false);
             focusContent();
         } else if (popupOpen) {
-            for (const row of actionRows) row.closePopup();
+            commands.closeRows();
         } else {
             exitRequested();
         }
@@ -560,67 +499,29 @@ FocusScope {
         }
     }
 
-    function closeCommandMenu(): void { commandMenu.close(); }
-    function openCommandMenu(): void { openCommandMenuFor(null); }
-    // Contextual buttons use the same menu, modal guards and native traversal
-    // as Alt+J, restricted to their command-only subtree when requested.
-    function openCommandMenuFor(root: Item): void {
-        if (!headerShortcutsEnabled || popupOpen)
-            return;
-        commandMenu.commandRoot = root;
-        if (commandMenu.commands.length > 0)
-            commandMenu.open();
-    }
-    ActionMenu {
-        id: commandMenu
-        parent: navigation.additionalCommandItem && navigation.additionalCommandItem.visible ? navigation.additionalCommandItem : navigation
-        property Item commandRoot: null
-        readonly property list<ActionControl> commands: (commandRoot ? navigation.collectCommands(commandRoot) : navigation.contentCommands).filter(item => !item.accessKey || item.includeInCommandMenu)
-        // A removed/replaced subtree or command must not redirect Enter to a
-        // different window, including while the global Alt+J menu is open.
-        onCommandRootChanged: if (visible) close()
-        onCommandsChanged: if (visible) close()
-        actions: commands
-        function available(index: int): bool {
-            const command = commands[index];
-            return !!command && command.visible && command.enabled && command.interactive;
+    function closeCommandMenu(): void { commands.closeMenu(); }
+    function openCommandMenu(): void { commands.openMenu(null); }
+    function openCommandMenuFor(root: Item): void { commands.openMenu(root); }
+    DetailsCommands {
+        id: commands
+        menuParent: navigation
+        contentItem: navigation.contentItem
+        headerContentItem: navigation.headerContentItem
+        additionalCommandItem: navigation.additionalCommandItem
+        currentTarget: navigation.currentTarget
+        shortcutsEnabled: navigation.headerShortcutsEnabled
+        blocked: navigation.popupOpen
+        onShortcutInvoked: {
+            navigation.interactionRequested();
+            navigation.cancelSessionRestore();
+            navigation.pendingMemory = false;
         }
-        function labelFor(index: int): string {
-            const command = commands[index];
-            return command ? command.accessibleName || command.objectName : "";
-        }
-        maximumVisibleItems: 7
-        accessibleName: qsTr("Content actions")
-        listObjectName: "detailsCommandMenu"
-        onTriggered: function (action) { (action as ActionControl)?.activate(); }
-    }
-    Shortcut {
-        sequence: "Alt+J"
-        enabled: navigation.headerShortcutsEnabled && !navigation.popupOpen && commandMenu.commands.length > 0
-        autoRepeat: false
-        onActivated: navigation.openCommandMenu()
     }
     Shortcut {
         sequences: ["Return", "Enter"]
         enabled: navigation.editing && navigation.restorationAllowed && !navigation.commandMenuOpen
         autoRepeat: false
         onActivated: navigation.saveEditor()
-    }
-
-    Repeater {
-        model: navigation.commandButtons
-        delegate: Item {
-            id: shortcutSlot
-            required property ActionControl modelData
-            required property int index
-            readonly property string sequence: navigation ? navigation.shortcutFor(modelData) : ""
-            Shortcut {
-                sequence: shortcutSlot.sequence
-                enabled: !!shortcutSlot.sequence && navigation.headerShortcutsEnabled && !navigation.popupOpen
-                autoRepeat: false
-                onActivated: navigation.triggerHeader(shortcutSlot.index)
-            }
-        }
     }
 
 }

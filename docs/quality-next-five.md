@@ -48,3 +48,21 @@ No dynamic handler registry, fallback write path or retry is introduced.
 malformed settings, duplicate completions, queued observations and cancellation
 error isolation through real toggle/confirmation routes. Notification center,
 catalog, toast and reply suites: 21 passes, no failures/skips. Strict lint passes.
+
+## 4. Shared command registry
+
+Internal `DetailsCommands` owns discovery, scope, chords and the content menu.
+`DetailsNavigation` retains fields, transactions and focus restoration, with its
+existing command-facing API for controls/hints. There is no second registry or
+panel-local key model. Menu geometry and translation context are retained.
+
+The new native command-removal test exposed synchronous close/focus return
+re-entering a scoped discovery binding. Invalidation now disables activation
+immediately and queues only dismissal; reopening cancels that queued dismissal.
+Tests also move one action row between overlapping header/content hosts and
+confirm exactly one activation, no added editable stops and retained focus.
+
+DetailsNavigation source lines: 585 → 493; component effort 1165 → 928; locality
+20 → 40. The collaborator adds code, so these are ownership-local measurements,
+not a claim of net line deletion. Full Qt: 244 passes, no failures, one existing
+RHI artwork skip. Strict lint, relative imports and UI role review pass.

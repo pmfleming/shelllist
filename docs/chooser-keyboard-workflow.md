@@ -414,6 +414,11 @@ A command-only
 `CommandGroup` can move between a selected-result host and details without
 joining editable traversal or field-page readiness. Shared navigation deduplicates
 those live command objects; it does not create parallel command registrations.
+Its internal `DetailsCommands` collaborator owns command discovery, scoping,
+shortcuts and the content menu; `DetailsNavigation` retains field transactions
+and focus restoration. Command replacement blocks menu activation immediately,
+then closes outside discovery bindings so focus return cannot recursively rebuild
+the registry. Queued dismissal cannot close a subsequently reopened menu.
 `RecoveryActions` shares only the labeled retry/discard layout. Its controls keep
 stable domain command names, access keys and independent enabled guards; domain
 owners retain drafts, retries, discard effects and acknowledgement handling.

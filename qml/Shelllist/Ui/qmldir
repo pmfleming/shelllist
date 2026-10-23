@@ -49,6 +49,7 @@ DetailSection 1.0 DetailSection.qml
 DetailsHeader 1.0 DetailsHeader.qml
 DetailsPane 1.0 DetailsPane.qml
 DetailsNavigation 1.0 DetailsNavigation.qml
+internal DetailsCommands DetailsCommands.qml
 ActionMenu 1.0 ActionMenu.qml
 DestructiveIconButton 1.0 DestructiveIconButton.qml
 DetailsTab 1.0 DetailsTab.qml

@@ -240,6 +240,21 @@ TestCase {
         verify(surface.detailsNavigation.browsing);
         verify(field(surface, "switch").focusSurface !== field(surface, "switch"), "Only the switch is highlighted, not labels");
     }
+    function test_commandRemovalClosesMenuWithoutRetargetingEnter() {
+        const surface = make();
+        const target = surface.detailsNavigation.currentTarget;
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        tryVerify(() => surface.detailsNavigation.commandMenuOpen);
+        field(surface, "otherAction").visible = false;
+        tryVerify(() => !surface.detailsNavigation.commandMenuOpen);
+        verify(surface.detailsNavigation.browsing);
+        compare(surface.detailsNavigation.currentTarget, target);
+        keyClick(Qt.Key_Return);
+        verify(surface.detailsNavigation.editing, "Enter returns to the field, not a replacement command");
+        keyClick(Qt.Key_Escape);
+        compare(surface.actions, 0);
+        compare(surface.writes, 0);
+    }
     function test_commandChordsAndMenuNeverBecomeFieldStops() {
         const surface = make();
         keyClick(Qt.Key_R, Qt.AltModifier);

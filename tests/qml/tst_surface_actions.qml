@@ -62,6 +62,19 @@ TestCase {
         keyClick(Qt.Key_N, Qt.ControlModifier);
         compare(navigation.calls, 3, "both modifiers respect the same host guard");
     }
+    function test_overlappingHostsShareOneCommandRegistry() {
+        const navigation = createTemporaryObject(navigationComponent, testCase);
+        navigation.additionalCommandItem = navigation.row;
+        navigation.focusContent(true);
+        tryVerify(() => navigation.headerButtons.length === 2);
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        compare(navigation.calls, 1);
+        navigation.row.headerCommands = false;
+        tryVerify(() => navigation.headerButtons.length === 0 && navigation.contentCommands.length === 2);
+        keyClick(Qt.Key_C, Qt.AltModifier);
+        compare(navigation.calls, 2, "moving rows between registries cannot duplicate a shortcut");
+        compare(navigation.availableFields().length, 0);
+    }
     function test_overflowKeyboardSelectionAndFocusRestoration() {
         const navigation = createTemporaryObject(navigationComponent, testCase, {width: 60});
         navigation.actions = [
