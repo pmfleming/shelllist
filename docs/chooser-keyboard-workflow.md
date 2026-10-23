@@ -748,6 +748,11 @@ Enter/Tab saves the control-mode draft; acknowledged mode chooses track/seek
 controls on the compact bar only. The panel exposes Previous, Next, Rewind 30s
 and Forward 30s directly, with independent capability guards and no transport
 More menu. Shared header sizing may omit disabled commands only as a last resort.
+The secondary Show application command (Alt+O) requests MPRIS root Raise for the
+inspected player, independently of playback capability or the pinned player.
+Supporting browsers own selection of the media-session tab; focus is best-effort.
+Missing/false CanRaise, busy and disconnected states disable it. It adds no field
+Tab stop, playback, URL opening or application launch, and failures are not retried.
 Playback state uses icons and timing uses numbers, with full accessible descriptions.
 Playing result rows use the shared passive `PlaybackIndicator`: three animated
 bars only while the Media panel is active, the row is in view, the backend is

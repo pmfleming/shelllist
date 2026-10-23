@@ -2,7 +2,7 @@
 .import "BarMediaPresentation.js" as Media
 
 function action(id, label, icon, enabled, tone) {
-    const keys = {quieter: "Q", louder: "L", mixer: "A", previous: "B", "play-pause": "P", next: "N", rewind: "R", forward: "F",
+    const keys = {quieter: "Q", louder: "L", mixer: "A", previous: "B", "play-pause": "P", next: "N", rewind: "R", forward: "F", raise: "O",
         activate: "A", menu: "O", secondary: "C", "scroll-up": "U", "scroll-down": "D"};
     return {id: id, label: label, icon: icon, accessKey: keys[id] || "", enabled: !!enabled, closePolicy: "keep-open",
         presentation: {group: "toolbar", tone: tone || "normal"}};
@@ -39,7 +39,8 @@ function media(players, busy) {
             action("play-pause", String(player.playback_status || "").toLowerCase() === "playing" ? "Pause" : "Play", Media.playPauseActionIcon(player), !busy && Media.canPlayPause(player), "active"),
             action("next", "Next track", "", control && player.can_next),
             action("rewind", "Rewind 30 seconds", "replay_30", control && player.can_seek),
-            action("forward", "Fast-forward 30 seconds", "forward_30", control && player.can_seek)
+            action("forward", "Fast-forward 30 seconds", "forward_30", control && player.can_seek),
+            action("raise", "Show application", "open_in_new", !busy && player.can_raise)
         ]);
         result.metadata.desktopEntry = player.desktop_entry || "";
         result.metadata.iconNames = service ? service.icons : [];

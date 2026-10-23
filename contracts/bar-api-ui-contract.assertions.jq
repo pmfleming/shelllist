@@ -24,6 +24,7 @@
 (.snapshot.workspaces.monitors[0].active_workspace_id | type == "number") and
 (.snapshot.media.players[0].playback_status | type == "string") and
 (.snapshot.media.players[0].can_seek | type == "boolean") and
+(.snapshot.media.players[0].can_raise | type == "boolean") and
 (.snapshot.media | has("pinned_player")) and
 (.snapshot.media.pinned_player | type == "string" or . == null) and
 (.snapshot.media.players[0].control_mode == "automatic") and

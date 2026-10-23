@@ -147,6 +147,55 @@ DaemonTestCase {
         tryCompare(indicator, "animating", true);
         compare(calls.length, 0);
     }
+    function test_mediaShowApplicationTargetsInspectedPlayerAndRespectsGuards(): void {
+        const root = fixture();
+        const inspected = Object.assign(mediaPlayer("browser", "Paused"), {can_raise: true, can_control: false});
+        function publish(player) {
+            root.desktop.media = {players: [mediaPlayer("active", "Playing"), player],
+                active_player: "active", pinned_player: "active"};
+        }
+        publish(inspected);
+        root.chooser.activateUi("");
+        tryVerify(() => findChild(root.content, "systemResult:browser") !== null);
+        mouseClick(findChild(root.content, "systemResult:browser"));
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        const button = findChild(root.content, "detailAction:raise");
+        verify(button !== null);
+        verify(button.visible && button.enabled, "activation is independent of playback CanControl");
+        compare(button.Accessible.name, "Show application");
+        compare(calls.length, 0, "inspection does not activate");
+        keyClick(Qt.Key_Tab);
+        const navigation = root.content.detailsNavigation;
+        tryVerify(() => navigation.currentTarget !== null);
+        verify(navigation.currentTarget !== button, "commands are not editable stops");
+        keyClick(Qt.Key_O, Qt.AltModifier);
+        compare(calls.length, 1);
+        compare(calls[0].method, BarApi.methods.mediaOperation);
+        compare(calls[0].params.operation, "raise");
+        compare(calls[0].params.player_id, "browser");
+        compare(root.desktop.media.pinned_player, "active");
+        verify(!root.chooser.perform("raise", "browser"), "pending blocks duplicate activation");
+        acknowledge(root, calls[0], {operation: "raise", player_id: "browser"});
+        tryVerify(() => findChild(root.content, "detailAction:raise")?.enabled === true);
+        mouseClick(findChild(root.content, "detailAction:raise"));
+        compare(calls.length, 2, "secondary pointer action uses the same request");
+        acknowledge(root, calls[1], {operation: "raise", player_id: "browser"});
+
+        publish(Object.assign({}, inspected, {can_raise: false}));
+        tryVerify(() => findChild(root.content, "detailAction:raise")?.enabled === false);
+        keyClick(Qt.Key_O, Qt.AltModifier);
+        verify(!root.chooser.perform("raise", "browser"));
+        publish(mediaPlayer("browser", "Paused"));
+        verify(!root.chooser.perform("raise", "browser"), "older snapshots fail closed");
+        publish(inspected);
+        root.chooser.deactivateUi();
+        verify(!root.chooser.perform("raise", "browser"));
+        root.chooser.activateUi("");
+        root.desktop.media = {players: [], active_player: "", pinned_player: ""};
+        verify(!root.chooser.perform("raise", "browser"), "removed player cannot retarget the active player");
+        compare(calls.length, 2);
+    }
     function test_audioBrowseDoesNotMuteAndOnlyAcknowledgementUpdatesState(): void {
         const root = fixture();
         root.chooser.kind = "audio";

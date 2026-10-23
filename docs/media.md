@@ -58,6 +58,13 @@ editable controls and daemon acknowledgement/capability guards.
   as needed; enabled commands remain direct (wrapping at extreme widths).
   Read-only rate is not a speed menu; there are no invented chapters, device routes
   or whole-book totals. Audiobook timing refers to the reported MPRIS segment.
+- **Show application (Alt+O)** is a secondary header command, outside field Tab
+  traversal. It sends MPRIS root `Raise` to the inspected player, not the active
+  or pinned player. Supporting browsers select their media-session tab themselves;
+  tab selection and compositor focus remain best-effort, not a verified outcome.
+  It never opens a URL/new tab, launches an application, pins or changes playback.
+  Missing/false `can_raise`, disconnected and pending states disable the command;
+  failures retain existing operation feedback without automatic retry.
 - Pin to bar remains immediate and acknowledged. Bar controls remains a deferred
   shared dropdown (Enter saves, Escape discards, Tab saves and continues). When a
   different player is pinned, an icon-only Alt+A command restores automatic choice.
@@ -137,7 +144,10 @@ has configurable Super+Shift+M; this desktop's Lua config deliberately uses Supe
 
 ## Tests
 
-- `tst_system_choosers.qml`: actual animated bar changes, playback/panel/viewport
+- `tst_system_choosers.qml`: native Show application pointer/Alt+O routes to the
+  inspected (non-active) player, independent playback capability, pending,
+  missing/false capability, inactive/removed-player guards and no pin mutation;
+  actual animated bar changes, playback/panel/viewport
   suspension, reduced-motion and connection-loss gates, fixed footprint, passive
   navigation and zero playback writes during animation. Historical coverage also
   included native media-mode draft/save/discard and acknowledged
