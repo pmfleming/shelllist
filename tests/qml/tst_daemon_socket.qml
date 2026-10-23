@@ -1,0 +1,112 @@
+import QtQuick
+import QtTest
+import Shelllist.Io as Io
+
+TestCase {
+    id: testCase
+    name: "DaemonSocket"
+    when: windowShown
+    Component {
+        id: factory
+        Io.JsonlDaemonClient {
+            daemonName: "bt-daemon"
+            useSocket: true
+            socketPath: "/isolated/bt-daemon.sock"
+            active: false
+            streams: []
+            automaticSubscribe: false
+            recoverProtocolErrors: true
+            initialRetryInterval: 60000
+            maximumRetryInterval: 60000
+            property int failures: 0
+            property var replies: []
+            onTransportFailed: failures++
+            onResponse: function(id, envelope, error, route) {
+                replies = replies.concat([{id: id, envelope: envelope, error: error, route: route}]);
+            }
+        }
+    }
+    function fixture() {
+        const client = createTemporaryObject(factory, testCase);
+        verify(client !== null);
+        const transport = findChild(client, "daemonSocketTransport");
+        verify(transport !== null);
+        client.active = true;
+        verify(client.ready);
+        verify(!transport.connectDeadline.running, "synchronous connect must disarm deadline");
+        compare(findChild(client, "daemonBridgeProcess").commands.length, 0);
+        return {client: client, transport: transport};
+    }
+    function reply(socket, id, response, route) {
+        socket.deliver(JSON.stringify({kind: "response", id: id, ok: true, response: response, route: route}));
+    }
+    function test_responseAndRoutePreserveWireAndReleaseWindow() {
+        const f = fixture();
+        const route = {consumerId: "view", localId: "read", generation: 4, kind: "call"};
+        f.client.call("read", "bluetooth.snapshot", {}, route);
+        const message = JSON.parse(f.transport.endpoint.writes[0]);
+        compare(message.route, route);
+        compare(f.transport.pendingCalls, 1);
+        reply(f.transport.endpoint, "read", {ok: true}, route);
+        compare(f.client.replies.length, 1);
+        compare(f.client.replies[0].route, route);
+        compare(f.transport.pendingCalls, 0);
+        compare(f.transport.pendingBytes, 0);
+    }
+    function test_backpressureReservesControlsAndNeverReplaysFailedEffects() {
+        const f = fixture();
+        f.transport.maximumCalls = 1;
+        f.transport.maximumControls = 1;
+        f.client.call("effect", "effect.once", {});
+        let rejected = false;
+        try { f.client.call("overflow", "effect.once", {}); } catch (error) { rejected = true; }
+        verify(rejected);
+        f.client.cancel("cancel", "owned-operation");
+        compare(f.transport.endpoint.writes.length, 2);
+        rejected = false;
+        try { f.client.cancel("cancel-two", "owned-operation"); } catch (error) { rejected = true; }
+        verify(rejected);
+        f.client.initialRetryInterval = 1;
+        f.client.maximumRetryInterval = 1;
+        f.transport.endpoint.error(1);
+        tryCompare(f.client, "failures", 1);
+        tryCompare(f.client, "ready", true);
+        compare(f.transport.pendingBytes, 0);
+        compare(f.transport.endpoint.writes.length, 0, "failed-generation effects are not replayed");
+    }
+    function test_closeDrainsRepliesAndReopenQueuesForFreshGeneration() {
+        const f = fixture();
+        f.client.call("old", "effect.once", {});
+        const old = f.transport.endpoint;
+        f.client.active = false;
+        compare(f.client.lifecycle, "stopping");
+        compare(JSON.parse(old.writes[1]).op, "shutdown");
+        f.client.active = true;
+        f.client.call("new", "effect.once", {});
+        compare(old.writes.length, 2);
+        reply(old, "old", {ok: true}, null);
+        compare(f.client.replies.length, 1);
+        reply(old, f.transport.shutdownId, {shutdown: true}, null);
+        tryCompare(f.client, "ready", true);
+        compare(f.client.failures, 0);
+        compare(f.transport.endpoint.writes.length, 1);
+        compare(JSON.parse(f.transport.endpoint.writes[0]).id, "new");
+    }
+    function test_byteBudgetMalformedReplyAndDeadlineFailClosed() {
+        const f = fixture();
+        f.transport.maximumPendingBytes = 8;
+        let rejected = false;
+        try { f.client.call("oversize", "effect.once", {}); } catch (error) { rejected = true; }
+        verify(rejected);
+        compare(f.transport.endpoint.writes.length, 0);
+        f.transport.endpoint.deliver("null");
+        tryCompare(f.client, "failures", 1);
+        compare(f.client.ready, false);
+        const timed = fixture();
+        timed.transport.acknowledgementTimeout = 10;
+        timed.client.call("missing", "effect.once", {});
+        tryCompare(timed.client, "failures", 1);
+        compare(timed.transport.pendingBytes, 0);
+        verify(timed.transport.errorText.indexOf("outcome unknown") >= 0);
+    }
+}

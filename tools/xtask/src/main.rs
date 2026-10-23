@@ -121,7 +121,12 @@ fn main() -> Result<()> {
         }
         Task::CheckDaemonBoundary => qt(
             &cli.root,
-            &["daemon_bridge", "daemon_sessions", "daemon_boundary"],
+            &[
+                "daemon_bridge",
+                "daemon_socket",
+                "daemon_sessions",
+                "daemon_boundary",
+            ],
         ),
         Task::CheckIpValidation => qt(&cli.root, &["ip_validation", "ip_fields", "ip_control"]),
     }

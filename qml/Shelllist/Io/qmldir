@@ -12,4 +12,5 @@ ClipboardScreenshotCapture 1.0 ClipboardScreenshotCapture.qml
 HyprlandLayerRuleClient 1.0 process/HyprlandLayerRuleClient.qml
 HyprlandWorkAreaClient 1.0 process/HyprlandWorkAreaClient.qml
 JsonlDaemonClient 1.0 process/JsonlDaemonClient.qml
+JsonlSocketTransport 1.0 process/JsonlSocketTransport.qml
 SearchProcess 1.0 process/SearchProcess.qml

@@ -1,3 +1,4 @@
+import Quickshell
 import Quickshell.Io
 import QtQuick
 import "../JsonlRouting.js" as Routing
@@ -14,7 +15,11 @@ Item {
     property var queuedLines: []
     property int maximumQueuedRequests: 256
     property bool retiring: false
-    // This is the short-lived JSONL bridge, never the resident D-Bus daemon.
+    // Bluetooth prototype only. No automatic bridge fallback/replay on failure.
+    property bool useSocket: daemonName === "bt-daemon" && Quickshell.env("SHELLLIST_BT_SOCKET") === "1"
+    property string socketPath: Quickshell.env("XDG_RUNTIME_DIR") ? Quickshell.env("XDG_RUNTIME_DIR") + "/" + daemonName + ".sock" : ""
+    readonly property var transportBackend: useSocket ? socketTransport : process
+    // A frontend transport generation, never the resident daemon's lifetime.
     property string lifecycle: "stopped"
     property var counters: ({
             sequence: 0,
@@ -29,16 +34,16 @@ Item {
     signal transportFailed(string message)
 
     function start() {
-        if (!active || lifecycle !== "stopped" || process.running || retryTimer.running)
+        if (!active || lifecycle !== "stopped" || transportBackend.running || retryTimer.running)
             return;
         lifecycle = "starting";
-        process.stdinEnabled = true;
+        transportBackend.stdinEnabled = true;
         try {
             console.info("shelllist transport starting daemon=" + daemonName);
-            process.exec([daemonName, "client"]);
+            transportBackend.exec([daemonName, "client"]);
         } catch (error) {
             lifecycle = "stopped";
-            process.stdinEnabled = false;
+            transportBackend.stdinEnabled = false;
             // Requests belong to one transport generation. Once that
             // generation is reported failed they must never be replayed by a
             // later process, especially when they may carry an effect.
@@ -66,7 +71,7 @@ Item {
         // subscriptions/operations. Keep delivering those replies, but queue
         // new requests for a replacement rather than writing to closing stdin.
         // Only failed generations fence stdout in recover().
-        process.stdinEnabled = false;
+        transportBackend.stdinEnabled = false;
     }
 
     function call(id, method, params, route) {
@@ -108,14 +113,14 @@ Item {
             start();
             return;
         }
-        process.write(line + "\n");
+        transportBackend.write(line + "\n");
     }
 
     function flushQueue() {
         const lines = queuedLines;
         queuedLines = [];
         for (let index = 0; index < lines.length; index++)
-            process.write(lines[index] + "\n");
+            transportBackend.write(lines[index] + "\n");
     }
 
     function subscribe() {
@@ -207,6 +212,69 @@ Item {
         }
     }
 
+    function transportStarted() {
+        console.info("shelllist transport started daemon=" + daemonName + " socket=" + useSocket);
+        if (lifecycle === "stopping") {
+            transportBackend.stdinEnabled = false;
+            return;
+        }
+        if (!active) {
+            stop();
+            return;
+        }
+        retiring = false;
+        lifecycle = "running";
+        ready = true;
+        if (lifecycle !== "running")
+            return;
+        try {
+            if (automaticSubscribe)
+                subscribe();
+            flushQueue();
+        } catch (error) {
+            recover("Could not initialize " + daemonName + " client: " + error);
+        }
+    }
+    function transportExited(exitCode) {
+        const expected = lifecycle === "stopping" && exitCode === 0 && !retiring;
+        ready = false;
+        lifecycle = "stopped";
+        if (expected) {
+            start();
+            return;
+        }
+        clearQueue();
+        if (retiring) {
+            start();
+            return;
+        }
+        if (!active)
+            return;
+        const stderr = useSocket ? socketTransport.errorText : processError.text;
+        const detail = stderr.length > 0 ? stderr : "exit " + exitCode;
+        console.error("shelllist transport exited daemon=" + daemonName + " detail=" + detail);
+        transportFailed(daemonName + " client stopped: " + detail);
+        if (!retryTimer.running)
+            scheduleRetry();
+    }
+
+    JsonlSocketTransport {
+        id: socketTransport
+        objectName: "daemonSocketTransport"
+        socketPath: client.socketPath
+        onStarted: client.transportStarted()
+        onExited: function(exitCode) { client.transportExited(exitCode); }
+        onMessageReceived: function(message) {
+            if (client.retiring)
+                return;
+            try {
+                client.handleMessage(message);
+            } catch (error) {
+                client.recover("Invalid " + client.daemonName + " socket message: " + error);
+            }
+        }
+    }
+
     Component.onCompleted: start()
     onActiveChanged: {
         if (active) {
@@ -239,56 +307,9 @@ Item {
             id: processError
             waitForEnd: true
         }
-        onStarted: {
-            console.info("shelllist transport started daemon=" + client.daemonName);
-            // The view may have closed (and reopened) before exec completed.
-            // Once EOF was requested this process must finish, not be reused.
-            if (client.lifecycle === "stopping") {
-                process.stdinEnabled = false;
-                return;
-            }
-            if (!client.active) {
-                client.stop();
-                return;
-            }
-            client.retiring = false;
-            client.lifecycle = "running";
-            client.ready = true;
-            if (client.lifecycle !== "running")
-                return;
-            try {
-                if (client.automaticSubscribe)
-                    client.subscribe();
-                client.flushQueue();
-            } catch (error) {
-                client.recover("Could not initialize " + client.daemonName + " client: " + error);
-            }
-        }
+        onStarted: client.transportStarted()
         onExited: function (exitCode) { // qmllint disable signal-handler-parameters
-            const expected = client.lifecycle === "stopping" && exitCode === 0 && !client.retiring;
-            client.ready = false;
-            client.lifecycle = "stopped";
-            if (expected) {
-                // These requests were never sent: they belong to a reopen
-                // while the old Rust bridge was draining, not to its lifetime.
-                client.start();
-                return;
-            }
-            // Failed-generation effects must never be replayed.
-            client.clearQueue();
-            if (client.retiring) {
-                // Respect a pending backoff; if it already fired while we
-                // were draining, the exit must still wake the replacement.
-                client.start();
-                return;
-            }
-            if (!client.active)
-                return;
-            const detail = processError.text.length > 0 ? processError.text : "exit " + exitCode;
-            console.error("shelllist transport exited daemon=" + client.daemonName + " detail=" + detail);
-            client.transportFailed(client.daemonName + " client stopped: " + detail);
-            if (!retryTimer.running)
-                client.scheduleRetry();
+            client.transportExited(exitCode);
         }
     }
 
