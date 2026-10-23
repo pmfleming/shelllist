@@ -53,6 +53,37 @@ DaemonTestCase {
         compare(state.settingsError, "Disk full");
         content.destroy();
     }
+    function test_settingsReplyOwnershipAndEventFence() {
+        const {state, controller, content} = make();
+        const summary = {available: true, backend: "native", history_revision: 2, settings: {countdown: true, code_expiry_seconds: 60, history_days: 30}};
+        state.applySummary(summary);
+        controller.openSettings();
+        tryVerify(() => content.detailsNavigation.contentReady);
+        const toggle = findChild(content, "notificationCountdownSetting");
+        content.detailsNavigation.focusContent(true);
+        for (let i = 0; i < 12 && content.detailsNavigation.currentTarget !== toggle; ++i) keyClick(Qt.Key_Tab);
+        compare(content.detailsNavigation.currentTarget, toggle);
+        keyClick(Qt.Key_Return);
+        const first = request(state, "settings");
+        verify(!!first);
+        state.lastError = "Independent operation error";
+        state.backend.finish(first, {notifications: {settings: {countdown: false, history_days: 31, code_expiry_seconds: 60}}}, "", "");
+        compare(state.settingsError, "Invalid notification settings acknowledgement");
+        compare(state.settings.countdown, true);
+        keyClick(Qt.Key_Return);
+        const second = request(state, "settings");
+        verify(!!second && second !== first);
+        state.backend.finish(first, {}, "Duplicate failure", "");
+        verify(state.settingsPending);
+        compare(state.settingsError, "");
+        state.queueEvent(true, Object.assign({}, summary, {history_revision: 3, settings: {countdown: true, code_expiry_seconds: 60, history_days: 20}}));
+        state.backend.finish(second, {notifications: Object.assign({}, summary, {settings: {countdown: false, code_expiry_seconds: 60, history_days: 30}})}, "", "");
+        verify(!state.settingsPending);
+        compare(state.settings.history_days, 20);
+        compare(state.settings.countdown, true, "Queued observations precede an old acknowledgement");
+        compare(state.lastError, "Independent operation error");
+        content.destroy();
+    }
     function test_deleteFromUnselectedRowConfirmsNativeScopeAndNeverReplays() {
         const {state, controller, content} = make();
         tryVerify(() => findChild(content, "notificationDelete-named:Mail") !== null);
@@ -72,7 +103,9 @@ DaemonTestCase {
         keyClick(Qt.Key_Escape);
         tryCompare(state, "deleteConfirmation", null);
         compare(calls.filter(c => c.method === "notifications.delete").pop().params, {token: "owned", cancel: true});
+        state.lastError = "Independent operation error";
         state.backend.finish(request(state, "delete"), {cancelled: true}, "", "");
+        compare(state.lastError, "Independent operation error", "Cancellation never falls through to generic success");
         content.listItem.focusList(); keyClick(Qt.Key_D, Qt.AltModifier);
         state.backend.finish(request(state, "prepare-delete"), {delete_confirmation: Object.assign({}, challenge, {token: "second", app_key: "named:Chat"})}, "", "");
         const modal = findChild(content, "notificationDeleteConfirmation");

@@ -106,38 +106,19 @@ Io.BarDaemonBackend {
         // Scoped readers/settings/consent own their result, including errors.
         // They must not fall through to generic snapshot or error publication.
         switch (context.kind) {
-        case "sharing": {
-            const failure = error || (data.notifications?.sharing?.generation !== context.sharingGeneration ? qsTr("Screen-sharing acknowledgement changed") : "");
-            store.finishSharing(context.eventVersion === store.eventVersion ? data.notifications : null, failure);
-            return;
-        }
-        case "context-action": {
-            const failure = error || (typeof data.copied !== "boolean" ? qsTr("Notification action outcome unconfirmed") : "");
-            store.finishOperation(context.operationKey);
-            store.lastError = failure;
-            store.contextActionFinished(context.operationKey, context.updated, context.actionKey, !failure && data.copied === true, failure);
-            return;
-        }
-        case "settings": {
-            const settings = data.notifications?.settings;
-            const valid = settings && typeof settings.countdown === "boolean"
-                && NotificationValidation.integerIn(settings.history_days, 1, 30)
-                && (settings.code_expiry_seconds === 0 || NotificationValidation.integerIn(settings.code_expiry_seconds, 10, 300));
-            store.finishSettings(context.eventVersion === store.eventVersion ? data.notifications : null,
-                error || (!valid ? qsTr("Invalid notification settings acknowledgement") : ""));
-            return;
-        }
+        case "sharing":
+            acknowledgeSharing(context, data, error); return;
+        case "context-action":
+            acknowledgeContextAction(context, data, error); return;
+        case "settings":
+            acknowledgeSettings(context, data, error); return;
         case "reading":
             return; // Lease failure expires safely in Rust; never replay mutations.
         case "center":
             store.centerResponse(context.center, data.notification_center, error, errorCode);
             return;
-        case "app-policy": {
-            const policyError = error || (!data.notifications?.app_policies?.[context.policyKey] ? qsTr("Invalid application policy acknowledgement") : "");
-            store.finishAppPolicy(context.policyKey, data.notifications, policyError);
-            store.lastError = policyError;
-            return;
-        }
+        case "app-policy":
+            acknowledgeAppPolicy(context, data, error); return;
         case "prepare-delete":
             store.finishPrepareDelete(context.deleteGeneration, data.delete_confirmation, error);
             return;
@@ -149,11 +130,33 @@ Io.BarDaemonBackend {
             acknowledgeOperation(context, data, error);
         }
     }
+    function currentNotifications(context: var, data: var): var {
+        return context.eventVersion === store.eventVersion ? data.notifications : null;
+    }
+    function acknowledgeSharing(context: var, data: var, error: string): void {
+        const failure = error || (data.notifications?.sharing?.generation !== context.sharingGeneration ? qsTr("Screen-sharing acknowledgement changed") : "");
+        store.finishSharing(currentNotifications(context, data), failure);
+    }
+    function acknowledgeContextAction(context: var, data: var, error: string): void {
+        const failure = error || (typeof data.copied !== "boolean" ? qsTr("Notification action outcome unconfirmed") : "");
+        store.finishOperation(context.operationKey);
+        store.lastError = failure;
+        store.contextActionFinished(context.operationKey, context.updated, context.actionKey, !failure && data.copied === true, failure);
+    }
+    function acknowledgeSettings(context: var, data: var, error: string): void {
+        const failure = error || (!NotificationValidation.settings(data.notifications?.settings) ? qsTr("Invalid notification settings acknowledgement") : "");
+        store.finishSettings(currentNotifications(context, data), failure);
+    }
+    function acknowledgeAppPolicy(context: var, data: var, error: string): void {
+        const failure = error || (!data.notifications?.app_policies?.[context.policyKey] ? qsTr("Invalid application policy acknowledgement") : "");
+        store.finishAppPolicy(context.policyKey, data.notifications, failure);
+        store.lastError = failure;
+    }
     function acknowledgeOperation(context: var, data: var, error: string): void {
         if (context.replyKey !== undefined)
             store.finishReply(context.replyKey, context.text, error);
         if (context.kind === "dnd")
-            store.finishDnd(context.eventVersion === store.eventVersion ? data.notifications : null, error);
+            store.finishDnd(currentNotifications(context, data), error);
         if (context.operationKey !== undefined)
             store.finishOperation(context.operationKey);
         if (error) {

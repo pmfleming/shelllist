@@ -7,6 +7,10 @@ QtObject {
     function integerIn(value: var, minimum: double, maximum: double): bool {
         return Number.isSafeInteger(value) && value >= minimum && value <= maximum;
     }
+    function settings(value: var): bool {
+        return !!value && typeof value.countdown === "boolean" && integerIn(value.history_days, 1, 30)
+            && (value.code_expiry_seconds === 0 || integerIn(value.code_expiry_seconds, 10, 300));
+    }
     function token(value: var): bool { return typeof value === "string" && value.length > 0; }
     function identity(id: var, created: var): bool {
         return integerIn(id, 1, 4294967295) && integerIn(created, 1, Number.MAX_SAFE_INTEGER);

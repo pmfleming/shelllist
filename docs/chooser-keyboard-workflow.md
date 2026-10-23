@@ -540,7 +540,10 @@ manual DND preferences are independent. The notification backend consumes a comp
 checks its domain generation before flushing queued observations or acknowledging
 any domain. Duplicate/obsolete replies cannot publish, and cancellation replies
 cannot clear unrelated errors or apply snapshots. Scoped catalog, policy and
-consent owners remain separate from generic action/snapshot completion.
+consent owners remain separate from generic action/snapshot completion. Explicit
+backend dispatch calls domain acknowledgement handlers; shared wire checks live
+in `NotificationValidation`. Settings, sharing and DND use the same event-version
+fence, while request consumption and generation checks precede every handler.
 Tab changes still discard only uncommitted app-control edits.
 `NotificationCatalog` owns only app-group reads; its obsolete selected-record/page
 reader is removed. Timeline and explicit group-resolution replies cannot retire a

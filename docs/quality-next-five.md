@@ -35,3 +35,16 @@ buffer edits against the baseline. The 450-check JS vectors pass, as do native
 IP control (16) and real Wi-Fi IP fields (9); strict QML lint passes. The native
 IPv6 case now distinguishes local substring paste from rejected full selection,
 checks no write and undoes before continuing the original discard journey.
+
+## 3. Notification acknowledgement locality
+
+Explicit dispatch now calls small settings, sharing, context-action and app-policy
+handlers. `NotificationValidation.settings` owns the settings wire predicate;
+one event-version helper fences settings/sharing/DND observations. The sole
+request map, consume-before-flush ordering and generation gate are unchanged.
+No dynamic handler registry, fallback write path or retry is introduced.
+
+`acknowledge` cognitive/cyclomatic/effort: 35/27/143 → 14/12/66. Native tests add
+malformed settings, duplicate completions, queued observations and cancellation
+error isolation through real toggle/confirmation routes. Notification center,
+catalog, toast and reply suites: 21 passes, no failures/skips. Strict lint passes.
