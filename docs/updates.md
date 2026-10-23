@@ -137,8 +137,12 @@ Freshness is separate from execution and deployment:
   generation's `etc/shelllist/application-inventory.json`, not a running-binary
   probe. Latest uses cached upstream release evidence from the worker's separate
   `check-applications` job, never a copied local version or Nix target. Explicit
-  sources currently support GitHub stable releases, Chrome Stable (Linux) and
-  VS Code Stable (Linux x64). Unsupported/unqueried sources remain a dash. Failed
+  sources support GitHub stable releases, Chrome Stable (Linux), VS Code Stable
+  (Linux x64), reviewed Savannah/GNU/Yubico release archives and GNOME stable
+  source catalogues. Expanded host mappings include ACL, attr, Adwaita, Android
+  tools and common GNU/desktop utilities; libfido2 uses Yubico rather than an empty
+  GitHub release feed. Unsupported/unqueried sources remain a dash. Initial
+  population can span multiple hourly runs under the worker's 32-request budget. Failed
   or expired checks retain last-known versions with warning/history icons;
   clicking the icon explains the state in the fixed status bar. Full source,
   check time and failure diagnostics remain accessible. Heading Help uses the
