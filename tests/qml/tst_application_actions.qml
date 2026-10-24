@@ -62,8 +62,13 @@ DaemonTestCase {
             {protocol: Api.protocol, version: Api.version, ok: !error, data: data}, error || "", call.route);
     }
     function operation(call, status, extra) {
-        return Object.assign({id: "op-" + call.id, target_id: call.params.target_id,
-            action: call.params.action, status: status, message: status}, extra || {});
+        const request = new XMLHttpRequest();
+        request.open("GET", Qt.resolvedUrl("fixtures/" + (status === "accepted" ? "app-replies.json" : "app-events.json")), false);
+        request.send();
+        const fixture = JSON.parse(request.responseText);
+        const native = status === "accepted" ? fixture["applications.execute"].data.operation : fixture[status].data.operation;
+        return Object.assign({}, native, {id: "op-" + call.id, target_id: call.params.target_id,
+            action: call.params.action, message: status}, extra || {});
     }
     function accept(call) { reply(call, {operation: operation(call, "accepted")}); }
     function event(call, status, extra) {
@@ -209,6 +214,40 @@ DaemonTestCase {
         reply(lastCall(Api.methods.operationStatus), {operation_status: operation(call, "completed")});
         verify(!c.actionInFlight);
         compare(c.selectedApplication.instances.length, 2);
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+    }
+    function test_nativeOperationRevisionFencesStatusEventsAndQuietTerminalRecovery() {
+        const panel = makePanel();
+        const c = panel.controller;
+        verify(c.triggerDetailAction("close"));
+        const call = lastCall(Api.methods.execute);
+        accept(call);
+        c.operations.check("Alpha");
+        const captured = lastCall(Api.methods.operationStatus);
+        event(call, "running", {revision: 3, message: "new observation"});
+        reply(captured, {operation_status: operation(call, "running", {revision: 2})});
+        compare(c.operations.forTarget("Alpha").revision, 3);
+        event(call, "running", {revision: 2});
+        event(call, "running", {revision: 3});
+        compare(c.operations.forTarget("Alpha").revision, 3);
+        // Terminal delivery is lost with no later event. The owned status read
+        // converges; old traffic cannot revive a terminal operation.
+        c.operations.check("Alpha");
+        reply(lastCall(Api.methods.operationStatus), {operation_status: operation(call, "completed", {revision: 4})});
+        verify(!c.operations.busy("Alpha"));
+        event(call, "running", {revision: 3});
+        verify(!c.operations.busy("Alpha"));
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+    }
+    function test_missingNativeOperationRevisionLeavesOutcomeUnknownWithoutReplay() {
+        const panel = makePanel();
+        const c = panel.controller;
+        verify(c.triggerDetailAction("close"));
+        const call = lastCall(Api.methods.execute);
+        reply(call, {operation: operation(call, "accepted", {revision: undefined})});
+        verify(!c.operations.busy("Alpha"));
+        verify(c.operations.feedback.Alpha.message.includes("matching daemon required"));
+        verify(c.operations.feedback.Alpha.message.includes("outcome unknown"));
         compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
     }
     function test_malformedStatusRetiresOnlyItsReadAndAllowsRecovery() {

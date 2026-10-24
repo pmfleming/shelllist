@@ -52,13 +52,14 @@ TestCase {
     function test_optInsAreExplicitAndDaemonScoped() {
         const original = QuickshellFixture.Quickshell.environment;
         try {
-            for (const enabled of ["", "SHELLLIST_NM_SOCKET", "SHELLLIST_BT_SOCKET"]) {
+            for (const enabled of ["", "SHELLLIST_NM_SOCKET", "SHELLLIST_BT_SOCKET", "SHELLLIST_APP_SOCKET"]) {
                 QuickshellFixture.Quickshell.environment = Object.assign({XDG_RUNTIME_DIR: "/isolated"}, enabled ? {[enabled]: "1"} : {});
-                for (const daemon of ["nm-daemon", "bt-daemon", "bar-daemon"]) {
+                for (const daemon of ["nm-daemon", "bt-daemon", "app-daemon", "bar-daemon"]) {
                     const client = createTemporaryObject(optInFactory, testCase, {daemonName: daemon}) as Io.JsonlDaemonClient;
                     verify(client !== null);
                     compare(client.useSocket, (daemon === "nm-daemon" && enabled === "SHELLLIST_NM_SOCKET")
-                        || (daemon === "bt-daemon" && enabled === "SHELLLIST_BT_SOCKET"));
+                        || (daemon === "bt-daemon" && enabled === "SHELLLIST_BT_SOCKET")
+                        || (daemon === "app-daemon" && enabled === "SHELLLIST_APP_SOCKET"));
                     compare(client.socketPath, "/isolated/" + daemon + ".sock");
                 }
             }

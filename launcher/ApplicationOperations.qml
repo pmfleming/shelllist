@@ -67,7 +67,7 @@ Item {
             request: {id: request.id, actionId: request.actionId,
                 result: {id: request.result.id, title: request.result.title},
                 action: {label: request.action.label}},
-            operationId: "", statusRequestId: "", status: "", checks: 0,
+            operationId: "", statusRequestId: "", status: "", checks: 0, revision: 0,
             generation: controller.uiGeneration, viewEpoch: controller.actionViewEpoch, handedOff: false,
             windowIds: windowId ? [windowId] : windows.map(window => window.id),
             progressMessage: progressMessage(request, params),
@@ -96,7 +96,13 @@ Item {
         const transition = Lifecycle.operationTransition(original.request, original.request.result.id, original.operationId, responseId, operation);
         if (!transition)
             return;
-        const record = Object.assign({}, original, {operationId: operation.id, status: transition.status,
+        if (!Number.isSafeInteger(operation.revision) || operation.revision < 1) {
+            fail(original.request.id, "Missing or malformed native application operation revision; matching daemon required. Action outcome unknown; check applications before trying again.", "");
+            return;
+        }
+        if (operation.revision <= (original.revision || 0))
+            return;
+        const record = Object.assign({}, original, {operationId: operation.id, status: transition.status, revision: operation.revision,
             placement: operation.placement || null, close: operation.close || null,
             windowIds: Array.isArray(operation.close?.targeted_window_ids) ? operation.close.targeted_window_ids : original.windowIds,
             checks: original.operationId ? original.checks : 0});

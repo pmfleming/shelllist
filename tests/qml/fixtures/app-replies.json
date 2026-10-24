@@ -21,6 +21,7 @@
         "action": "activate",
         "id": "operation-example",
         "message": "Application action accepted",
+        "revision": 1,
         "status": "accepted",
         "target_id": "Alpha"
       }
@@ -56,6 +57,7 @@
         "action": "activate",
         "id": "operation-example",
         "message": "Application action completed",
+        "revision": 3,
         "status": "completed",
         "target_id": "Alpha"
       }

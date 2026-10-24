@@ -4,6 +4,13 @@ import "AppProtocol.generated.js" as Contract
 
 Io.DaemonBackend {
     required property ApplicationController controller
+    // Local invalidation barrier, not a sortable native content token. Reads
+    // dispatched before an invalidation cannot publish afterwards.
+    property int observationGeneration: 0
+    function classifyRequest(method: string, params: var): var {
+        return {observation: [AppApi.methods.query, AppApi.methods.refresh, AppApi.methods.revision].includes(method)
+            ? observationGeneration : -1};
+    }
     daemonName: "app-daemon"
     expectedProtocol: AppApi.protocol
     expectedVersion: AppApi.version
@@ -13,6 +20,11 @@ Io.DaemonBackend {
     active: controller.uiActive || controller.actionInFlight
 
     function finish(id: string, envelope: var, transportError: string): void {
+        const metadata = requestMetadata[id];
+        if (metadata && metadata.observation >= 0 && metadata.observation !== observationGeneration) {
+            controller.scheduleRefresh();
+            return;
+        }
         const error = responseError(envelope, transportError, "Application operation failed");
         if (error) {
             controller.handleFailure(id, error, transportError ? "" : envelope?.error?.code);
@@ -75,25 +87,29 @@ Io.DaemonBackend {
         finish(id, envelope, transportError);
     }
     onEventGapDetected: {
+        observationGeneration++;
         controller.operations.poll();
         controller.scheduleRefresh();
     }
     onEventReceived: function (event) {
-        if (event.event === "subscribed")
-            return;
         if (event.stream === AppApi.streams.operation) {
+            if (event.event === "subscribed")
+                return;
             const operation = event.data.operation;
             if (operation)
                 controller.applyOperation("", operation);
             return;
         }
-        if (event.stream === AppApi.streams.applications || event.stream === AppApi.streams.windows)
+        if (event.stream === AppApi.streams.applications || event.stream === AppApi.streams.windows) {
+            observationGeneration++;
             controller.scheduleRefresh();
+        }
     }
     onSendFailed: function (id, message) {
         controller.handleFailure(id, message);
     }
     onTransportFailed: function (message) {
+        observationGeneration++;
         controller.handleTransportFailure(message);
     }
 }

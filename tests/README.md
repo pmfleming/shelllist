@@ -77,6 +77,32 @@ this native smoke test establishes OS-process-crash, release/mixed-load, maximum
 NM payload or hardware acceptance. `SHELLLIST_NM_SOCKET=1` is opt-in only and needs
 a matching already-running daemon; socket activation/default switching is deferred.
 
+App's `tests/session/socket.rs` uses the actual private daemon OS process: socket/
+D-Bus parity, owned cancellation/status/event visibility, disconnect with unread
+acceptance, release and SIGKILL/restart during a fake handoff. No real application
+is launched. The separate native Quickshell probe exercises production shared
+routing, eight catalog reads and subscription renewal:
+
+```sh
+# From Shelllist; use app's build dependencies, not the frontend Cargo environment.
+export SHELLLIST_SOURCE="$PWD"
+export SHELLLIST_QUICKSHELL="$(nix develop . --no-write-lock-file --command bash -c 'command -v quickshell')"
+nix develop ../app-daemon --no-write-lock-file --command bash -c '
+  set -e
+  cd ../app-daemon
+  cargo test --locked --test session socket::native_quickshell_app_socket_acceptance -- --ignored --nocapture
+'
+```
+
+The harness clears the native child's environment, uses private HOME/runtime and
+nonexistent bus addresses, and selects `SHELLLIST_APP_SOCKET=1`. Do not run the QML
+fixture standalone against live services. The app listener must already run for
+normal opt-in use; cold-start/default switching is not implemented by this stage.
+The 405-pass Qt checkpoint (one existing renderer skip) separately covers query/
+invalidation barriers and atomic operation-revision consumption, including quiet
+terminal status recovery and old-producer rejection. Neither suite establishes
+maximum payload, matched release performance or sustained-load acceptance.
+
 ## Panel standardization acceptance
 
 `docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,

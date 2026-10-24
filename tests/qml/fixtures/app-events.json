@@ -41,6 +41,7 @@
         "action": "activate",
         "id": "operation-example",
         "message": "Application action cancelled",
+        "revision": 3,
         "status": "cancelled",
         "target_id": "Alpha"
       }
@@ -57,6 +58,7 @@
         "action": "activate",
         "id": "operation-example",
         "message": "Application action completed",
+        "revision": 3,
         "status": "completed",
         "target_id": "Alpha"
       }
@@ -73,6 +75,7 @@
         "action": "activate",
         "id": "operation-example",
         "message": "Application action failed",
+        "revision": 3,
         "status": "failed",
         "target_id": "Alpha"
       }
@@ -89,6 +92,23 @@
       "reason": "subscriber-lag"
     },
     "event": "gap",
+    "protocol": "app-api",
+    "stream": "applications.operation",
+    "subscription_id": "subscription-example",
+    "version": 2
+  },
+  "running": {
+    "data": {
+      "operation": {
+        "action": "activate",
+        "id": "operation-example",
+        "message": "Application action running",
+        "revision": 2,
+        "status": "running",
+        "target_id": "Alpha"
+      }
+    },
+    "event": "running",
     "protocol": "app-api",
     "stream": "applications.operation",
     "subscription_id": "subscription-example",

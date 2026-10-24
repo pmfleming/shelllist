@@ -149,11 +149,59 @@ hardware acceptance result.
 Request/pairing/scan/OBEX lifecycle snapshots are **not** ordered by these two
 state cursors. Their status races and quiet terminal loss remain in the matrix.
 
+## Application direct ingress and recovery stage
+
+`SHELLLIST_APP_SOCKET=1` independently selects the app listener, through the same
+shared session and socket adapter. The daemon reuses its exported in-process
+`ServiceBoundary`, dispatcher, operation registry and event workers; no D-Bus
+proxy, duplicate poller or alternative launch/settings policy is introduced.
+Operation events are owner-filtered on both transports, using the status access
+gate. Socket lifetime owns tasks and unfinished operations, including cleanup
+when acceptance was never consumed. Other owners survive. A new owner cannot
+read old private outcomes, and a crash cannot promise rollback of a handoff.
+
+Catalog/window streams are **invalidations**, not ordered deltas. Their native
+53-bit content identities are not sortable counters. Initial subscriptions,
+changes and transport retirement invalidate the frontend's local read barrier.
+A query/revision captured before that barrier cannot publish afterwards, even
+before the debounced replacement query is dispatched. Fresh query/refresh reads
+replace state; explicit refresh and view warmup repair quiet final-invalidation
+loss. No missed invalidation is synthesized into a historical event.
+
+Operation `revision` is assigned with the cached status under the producer's
+operation lock, including cancellation and terminal retention (256 results, up
+to 15 minutes). Its namespace is the never-reused operation ID; it is not a global
+sequence, content token or transport generation. The finite phase machine keeps
+it positive/exact. Actual Qt consumers reject duplicate/older observations from
+reads or events, and retired operations cannot reopen. Bounded two-second status
+polling (ten checks), gap-triggered status reads and explicit checks recover lost
+terminal delivery without another effect. Poll exhaustion, expiry, lost admission
+and connection/process loss leave outcomes uncertain, never authorize a replay.
+Missing/malformed operation revisions fail closed with a matching-build error on
+both transports. Conservative upstream broadcast gaps can include filtered-out
+owners; they trigger only owned reads, not guessed missing transitions.
+
+Evidence: producer library atomic-status/owner tests and private real-process
+D-Bus/socket parity, unread acceptance cleanup, release, foreign ownership,
+SIGKILL/restart and no-replay cases; actual Qt query/invalidation races, native
+operation status/event races, duplicate/older observations, quiet loss and old
+producer rejection. The real Quickshell 0.3.0 probe uses production shared routing
+for eight catalog reads and subscription renewal with no application launch.
+The native probe is not the deterministic Qt transport mock. Validation at this
+stage: 46 producer library passes (three ignored), 16 integration passes (native
+probe normally ignored, explicitly passed), 405 Qt passes and one existing skip;
+strict Rust Clippy/formatting and QML lint, app generated bindings/offline parity,
+surface/build-input checks, and sibling-source Nix `appDaemonContract` (including
+release producer tests), `qmlTests` and `buildInputs` pass. The all-producer local
+binding script reached the unchanged NM stage but required its absent debug
+binary; app's binding was independently regenerated and compared successfully.
+Release/load, maximum payload and cold-start/default rollout gates remain separate.
+
 ## Remaining scope
 
 This closes NM's network delta-chain gap, not the entire multi-daemon revision
 migration. Other streams' content identities/internal counters are not claimed as
-uniform wire watermarks. Bar, app and clipboard direct adapters, full runtime
+uniform wire watermarks. Bar and clipboard direct adapters, full runtime
 packaging, release/mixed-load, maximum NM payload and real process-crash acceptance
 remain staged work. NM's test recreates a listener, not an OS process. D-Bus remains
 supported and the bridge remains the frontend default.
