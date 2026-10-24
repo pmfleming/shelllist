@@ -84,5 +84,10 @@ Producer paths are relative to their sibling repository. Audited against framewo
 `563e7f9`, BT `ecf65fc`, NM `0396f00`, app `2bf19d6`, bar `ba04a15`, clip `2c2cef3`
 and Shelllist `80b4662`. BT full-state ordering subsequently landed in `962f5ee`
 and `3e0ecb4`, with matched frontend fencing in the linked recovery record.
+App ingress/recovery landed in producer `bb013f1` and frontend `a1971f2` as scoped
+above. Bar producer `360bcbf` adds shared ingress and transport-owned cancellation,
+but does not close either bar ordering row or enable the frontend socket flag.
+Its private socket/owner tests and retained-bridge gallery are not shared-Quickshell
+socket acceptance. See the linked recovery record for exact evidence.
 Subsequent stages must update this inventory with their actual implemented scope,
 not mark all ordering work complete after one stream.

@@ -197,11 +197,38 @@ binding script reached the unchanged NM stage but required its absent debug
 binary; app's binding was independently regenerated and compared successfully.
 Release/load, maximum payload and cold-start/default rollout gates remain separate.
 
+## Bar producer ingress checkpoint
+
+Bar producer `360bcbf` adds the shared listener and transport-neutral event
+destinations through the existing exported service boundary and domain state
+store. No second set of monitors or policies is created. Mixed subscriptions
+retain independent domain workers, and owner loss releases only that owner's
+work-area demand and subscriptions. Interactive battery work observes socket
+lifetime rather than D-Bus name ownership. Cancellation requests authorization
+shutdown while retaining admission until durable reconciliation finishes; it is
+not rollback. D-Bus callers retain the shared connection owner monitor.
+
+Private real-socket/D-Bus tests cover dispatch/validation parity, foreign
+cancellation, unrelated audio bursts and work-area ownership. A real-socket test
+runs the actual battery admission coordinator with fake authorization work and
+proves cancellation retains capacity until reconciliation. No hardware helper is
+called. Strict all-target Clippy/formatting, offline bar contract parity and the
+sibling-source Nix `barDaemonContract`, `materialGallery` and `buildInputs` pass.
+The release package ran 220 library tests, 30 update-worker integration tests and
+two isolated native tests, including normally ignored cases. The gallery uses
+the **retained bridge**, not a bar socket: its success is compatibility evidence.
+
+This producer-only checkpoint does not enable a frontend bar socket flag. Native
+read/event ordering and domain-specific quiet loss still need qualification,
+especially bounded battery/sleep/notification/OSD transitions versus current
+state. Bar shared-Quickshell socket acceptance, maximum payload, sustained load,
+matched release performance and OS-process-crash acceptance remain outstanding.
+
 ## Remaining scope
 
 This closes NM's network delta-chain gap, not the entire multi-daemon revision
 migration. Other streams' content identities/internal counters are not claimed as
-uniform wire watermarks. Bar and clipboard direct adapters, full runtime
+uniform wire watermarks. Bar frontend integration and clipboard direct ingress, full runtime
 packaging, release/mixed-load, maximum NM payload and real process-crash acceptance
 remain staged work. NM's test recreates a listener, not an OS process. D-Bus remains
 supported and the bridge remains the frontend default.
