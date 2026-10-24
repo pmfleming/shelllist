@@ -183,6 +183,24 @@ DaemonTestCase {
         verify(surface.listItem.searchFocused);
     }
 
+    function test_navigationDuringPendingRestoreWinsOverLateReadiness() {
+        const surface = makeSurface();
+        inspectSecondTab(surface);
+        closeInvocation(surface);
+        surface.sessionReady = false;
+        reopenInvocation(surface);
+        tryVerify(() => surface.detailsNavigation.browsing && surface.detailsNavigation.currentTarget?.objectName === "level");
+        keyClick(Qt.Key_Escape);
+        tryVerify(() => surface.listItem.listFocused);
+        keyClick(Qt.Key_Z);
+        tryVerify(() => surface.listItem.searchFocused);
+        surface.sessionReady = true;
+        wait(30); // Include both queued readiness turns.
+        verify(surface.listItem.searchFocused);
+        verify(!surface.detailsNavigation.editing);
+        compare(surface.chooserController.filterText, "z");
+        compare(surface.edits, 0);
+    }
     function test_readinessResumesFocusButNeverRestoresUnsavedValues() {
         const surface = makeSurface();
         inspectSecondTab(surface);

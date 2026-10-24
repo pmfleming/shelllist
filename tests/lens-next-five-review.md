@@ -61,6 +61,23 @@ such as `toString`, rather than treating them as supported wire fields.
 - Interaction contract: field-local drafts still enter the owner only on save;
   no per-keystroke writes, automatic retries or acknowledgement changes.
 
+## 4. Shared chooser restoration interruption
+
+`ChooserSession.interruptRestore` owns the common pending/restoring predicate for
+region, search-selection, popup, native-focus and cursor events. Event-specific
+conditions stay at their callers: applying presentation memory is still exempt
+where it was before; explicit suspension/disable/interaction still cancels directly.
+No reactive cancellation binding or second restoration state was introduced.
+
+- Entire component function/handler sums: cyclomatic **104 → 98**, cognitive
+  **86 → 79**, weighted effort **426 → 407** (including the new helper).
+- Native chooser memory **5 passed**, keyboard **4 passed**, strict lint: pass.
+- Added real Escape/printable-search navigation while readiness is pending;
+  late readiness cannot steal focus, resume editing or publish a field write.
+- Interaction contract: restoration never restores unsaved values; explicit user
+  navigation wins over deferred restoration. The retained readiness case still
+  proves that uninterrupted restoration resumes editing and saves only on Enter.
+
 ## Measurement limits
 
 Lens metrics are advisory, not developer-hour or correctness estimates. Source

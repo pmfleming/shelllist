@@ -47,6 +47,12 @@ Item {
         consumed = true;
         navigation.cancelSessionRestore();
     }
+    // User input may interrupt queued restoration, but restoration's own focus
+    // changes must not cancel it. Callers retain their event-specific guards.
+    function interruptRestore(): void {
+        if (!restoring && (pending || navigation.sessionLocation))
+            cancel();
+    }
     function request(): void {
         if (consumed || !invocationActive)
             return;
@@ -105,8 +111,8 @@ Item {
     // invocation and must not resume a previously cancelled editor request.
     onEnabledChanged: if (!enabled) cancel()
     // Track restored focus too, so subsequent native focus loss retains it.
-    onRegionChanged: if (rememberRegion() && !restoring && (pending || (region !== "details" && navigation.sessionLocation)))
-        cancel()
+    onRegionChanged: if (rememberRegion() && (pending || region !== "details"))
+        interruptRestore()
     onContextChanged: {
         rememberRegion();
         if (navigation.sessionLocation && controller.focusMemory.context !== context)
@@ -133,28 +139,28 @@ Item {
     Connections {
         target: session.listItem
         function onQuerySelectionChanged(): void {
-            if (session.pending && !session.restoring && session.listItem.searchFocused)
-                session.cancel();
+            if (session.pending && session.listItem.searchFocused)
+                session.interruptRestore();
         }
     }
     Connections {
         target: session.navigation
         function onInteractionRequested(): void { session.cancel(); }
         function onPopupOpenChanged(): void {
-            if (session.navigation.popupOpen && !session.restoring && (session.pending || session.navigation.sessionLocation))
-                session.cancel();
+            if (session.navigation.popupOpen)
+                session.interruptRestore();
         }
         function onNativeFocusChanged(): void {
-            if (!session.restoring && !session.navigation.applyingMemory && (session.pending || session.navigation.sessionLocation))
-                session.cancel();
+            if (!session.navigation.applyingMemory)
+                session.interruptRestore();
         }
     }
     Connections {
         target: session.navigation.editorTarget as TextField
         function onEdited(): void { session.cancel(); }
         function onCursorPositionChanged(): void {
-            if (session.pending && !session.restoring && !session.navigation.applyingMemory && (session.navigation.editorTarget as TextField)?.inputActiveFocus)
-                session.cancel();
+            if (session.pending && !session.navigation.applyingMemory && (session.navigation.editorTarget as TextField)?.inputActiveFocus)
+                session.interruptRestore();
         }
     }
     Connections {
