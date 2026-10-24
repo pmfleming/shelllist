@@ -12,6 +12,7 @@ internal UpdateComponents UpdateComponents.qml
 internal UpdateLog UpdateLog.qml
 SystemChooserController 1.0 SystemChooserController.qml
 SystemChooserContent 1.0 SystemChooserContent.qml
+internal SystemChooserDetails SystemChooserDetails.qml
 BarAction 1.0 BarAction.qml
 internal BarBatteryGauge BarBatteryGauge.qml
 internal BarClockButton BarClockButton.qml

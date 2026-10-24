@@ -78,6 +78,49 @@ No reactive cancellation binding or second restoration state was introduced.
   navigation wins over deferred restoration. The retained readiness case still
   proves that uninterrupted restoration resumes editing and saves only on Enter.
 
+## 5. System chooser detail locality
+
+`SystemChooserDetails` is an internal domain view built from the same shared
+`ActionDetailsPane`, `DetailFlickable`, `FormField`, toggle and command controls.
+The parent now owns only list/menu lifecycle and supplies one typed controller
+plus the resolved identity icon. No parent-object escape hatch, callback registry,
+extra Loader or local setting-control wrapper was added. Translation contexts,
+editor object names, hierarchy within details, spacing and guards are retained.
+
+- Surface source lines **252 → 140**; extracted details **120**. Surface binding
+  count **124 → 56** and fan-out **18 → 8**; details have **70** bindings.
+- Locality **0 → 49** for the surface; **51** for the new details component.
+  The component effort sum increases **395 → 414** with the explicit boundary;
+  this is a locality improvement, not a free abstraction or runtime speed claim.
+- Actual Qt system chooser suite: **10 passed**. New native traversal skips passive
+  artwork, retains a mode draft across metadata arrival, discards on Escape, saves
+  on Tab to the inspected player and waits for acknowledgement.
+- Full Qt suite: **373 passed, 0 failed, 1 existing renderer skip**; strict lint,
+  source-relative import check and native offscreen runtime smoke: pass.
+- UI drift review: no numeric-style/new-wrapper prompts. The extracted view was
+  also reviewed directly: all dimensions/roles were moved unchanged, owned by the
+  shared UI/system chooser maintainers. No new appearance exception is introduced.
+- Interaction contract: Media pin/mode remain the only editable controls there;
+  Audio mute and independent commands retain their guards. The shared surface
+  still owns all browsing, field transactions, modal guards and session memory.
+
+## Combined outcome
+
+Baseline → stage 5, production only (excluding `tests/` and `dev/` in this summary,
+not in Lens discovery): source **39,811 → 39,836**, function/handler cyclomatic sum
+**9,247 → 9,246**, cognitive sum **6,491 → 6,484**, weighted effort sum
+**40,616 → 40,614**. Full configured source including regressions increases
+**48,868 → 49,021**. These five changes prioritize explicit safety boundaries and
+locality rather than claiming a net line-count reduction. No tests were removed.
+
+Whole-project locality **76 → 77**, overall **83 → 83**, leverage **33 → 33**;
+findings **946 → 943**. The local complexity reductions are substantially larger
+than the rounded project scores. No exhaustive clone reduction is claimed.
+
+Validation does not include a full Nix/package build, sibling-daemon tests, live
+hardware or human accessibility review. The smoke runner retains the offscreen
+window-mask warning. Source-import checking is not installed-package acceptance.
+
 ## Measurement limits
 
 Lens metrics are advisory, not developer-hour or correctness estimates. Source

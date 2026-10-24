@@ -1,10 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.SystemTray
 import Shelllist.Ui as Ui
-import "BarMediaPresentation.js" as Media
 
 Ui.ProviderChooserSurface {
     id: content
@@ -122,119 +120,9 @@ Ui.ProviderChooserSurface {
             }
         }
     }
-    detailsComponent: Ui.ActionDetailsPane {
-        chooserController: content.controller
-        uiScale: 1
-        title: content.controller.selectedPlayer ? Media.heading(content.controller.selectedPlayer) : content.controller.selectedResult ? content.controller.selectedResult.title : ""
-        subtitle: content.controller.selectedPlayer ? Media.identityLabel(content.controller.selectedPlayer) : content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
-        icon: content.controller.selectedResult ? content.controller.selectedResult.icon : ""
+    detailsComponent: SystemChooserDetails {
+        controller: content.controller
         iconSource: content.controller.selectedTrayItem ? content.controller.selectedTrayItem.icon : content.applicationIconSource(content.controller.selectedResult)
-        actions: content.controller.detailActions.filter(action => !["inspect", "quieter", "louder"].includes(action.id)).map(action => Object.assign({}, action, {
-                presentation: Object.assign({}, action.presentation, {
-                    group: content.controller.kind === "media" ? Media.actionGroup(content.controller.selectedPlayer, action.id) : action.id === "activate" ? "primary" : "toolbar"
-                })
-            }))
-        Ui.DetailFlickable {
-            anchors.fill: parent
-            viewMemory: content.controller.viewMemory
-            memoryTab: "details"
-            Column {
-                width: parent.width
-                spacing: Ui.Theme.spacingMd
-                Ui.DetailColumnCard {
-                    visible: content.controller.kind === "audio" && content.controller.direction === "output"
-                    title: qsTr("Output volume")
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Ui.ThemeText {
-                            objectName: "audioVolumeValue"
-                            Layout.fillWidth: true
-                            text: content.controller.barController && Number.isFinite(content.controller.barController.audio.volume_percent) ? content.controller.barController.audio.volume_percent + "%" : qsTr("Not reported")
-                            font.pixelSize: Ui.Theme.fontSizeHeading
-                            Accessible.name: qsTr("Volume: %1").arg(text)
-                        }
-                        Ui.SurfaceActionRow {
-                            actionObjectNamePrefix: "audioVolume-"
-                            Layout.preferredWidth: 2 * Ui.Theme.formActionSize + Ui.Theme.spacingSm
-                            headerCommands: false
-                            compactSecondaryActions: true
-                            actions: content.controller.kind === "audio" ? content.controller.detailActions.filter(action => ["quieter", "louder"].includes(action.id)).map(action => Object.assign({}, action, {presentation: {group: "toolbar"}})) : []
-                            onTriggered: function (actionId) {
-                                content.controller.triggerDetailAction(actionId);
-                            }
-                        }
-                    }
-                }
-                Ui.ToggleRow {
-                    objectName: "audioMute"
-                    visible: content.controller.kind === "audio"
-                    title: content.controller.direction === "input" ? qsTr("Mute microphone") : qsTr("Mute output")
-                    checked: content.controller.muted
-                    enabled: content.controller.hasSelection && !content.controller.actionInFlight
-                    onClicked: content.controller.toggleAudioMuted()
-                }
-                MediaPlaybackCard {
-                    objectName: "mediaPlayback"
-                    visible: content.controller.kind === "media"
-                    player: content.controller.selectedPlayer
-                    active: content.controller.uiActive && !!content.controller.barController && content.controller.barController.backend.ready
-                }
-                Ui.DetailColumnCard {
-                    objectName: "mediaPreferences"
-                    visible: content.controller.kind === "media"
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Ui.ToggleRow {
-                            objectName: "mediaPlayerPin"
-                            Layout.fillWidth: true
-                            title: qsTr("Pin to bar")
-                            accessibleName: qsTr("Pin this session to the bar until it exits")
-                            checked: content.controller.playerPinned
-                            enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
-                            onClicked: content.controller.setMediaSelection(!checked)
-                        }
-                        Ui.ActionButton {
-                            icon: "autorenew"
-                            objectName: "mediaAutomatic"
-                            accessKey: "A"
-                            sizeRole: "secondary"
-                            uiScale: Ui.Theme.expandedSecondaryActionScale
-                            visible: content.controller.mediaPreferencesSupported && !!content.controller.barController.media.pinned_player && !content.controller.playerPinned
-                            label: qsTr("Resume automatic player selection")
-                            enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
-                            onClicked: content.controller.setMediaSelection(false)
-                        }
-                    }
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 1
-                        color: Ui.Theme.border
-                    }
-                    Ui.FormField {
-                        Layout.fillWidth: true
-                        label: qsTr("Bar controls")
-                        icon: "tune"
-                        Ui.DropDownList {
-                            objectName: "mediaControlMode"
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            compact: true
-                            Accessible.name: qsTr("Bar controls")
-                            value: content.controller.selectedPlayer ? content.controller.selectedPlayer.control_mode || "automatic" : "automatic"
-                            options: [
-                                {value: "automatic", label: qsTr("Automatic"), icon: "autorenew"},
-                                {value: "tracks", label: qsTr("Previous/next track"), icon: "skip_next"},
-                                {value: "seek", label: qsTr("Seek ±30 seconds"), icon: "replay_30"}
-                            ]
-                            enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
-                            onSelected: function (value) {
-                                content.controller.setMediaMode(value);
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
     Connections {
         target: content.controller

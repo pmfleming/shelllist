@@ -196,6 +196,37 @@ DaemonTestCase {
         verify(!root.chooser.perform("raise", "browser"), "removed player cannot retarget the active player");
         compare(calls.length, 2);
     }
+    function test_mediaDetailFieldsKeepDraftsAndAcknowledgedSelection(): void {
+        const root = fixture();
+        const selected = mediaPlayer("chosen", "Paused");
+        const media = {players: [mediaPlayer("active", "Playing"), selected], active_player: "active", pinned_player: ""};
+        root.desktop.media = media;
+        root.chooser.activateUi("");
+        tryVerify(() => findChild(root.content, "systemResult:chosen") !== null);
+        mouseClick(findChild(root.content, "systemResult:chosen"));
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        const navigation = root.content.detailsNavigation;
+        keyClick(Qt.Key_Tab);
+        tryCompare(navigation, "currentTarget", findChild(root.content, "mediaPlayerPin"));
+        keyClick(Qt.Key_Tab);
+        const mode = findChild(root.content, "mediaControlMode");
+        compare(navigation.currentTarget, mode, "artwork and telemetry add no field stops");
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Down);
+        root.desktop.media = Object.assign({}, media, {players: [media.players[0], Object.assign({}, selected, {title: "Updated metadata"})]});
+        verify(navigation.editing);
+        compare(calls.length, 0);
+        keyClick(Qt.Key_Escape);
+        compare(mode.value, "automatic");
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Down); keyClick(Qt.Key_Tab);
+        compare(calls.length, 1);
+        compare(calls[0].params, {operation: "set-mode", player_id: "chosen", mode: "tracks"});
+        compare(root.chooser.selectedPlayer.control_mode, "automatic", "save is not acknowledgement");
+        acknowledge(root, calls[0], {media: Object.assign({}, media, {players: [media.players[0], Object.assign({}, selected, {control_mode: "tracks"})]})});
+        compare(mode.value, "tracks");
+        compare(root.desktop.media.active_player, "active");
+        compare(root.desktop.media.pinned_player, "");
+    }
     function test_audioBrowseDoesNotMuteAndOnlyAcknowledgementUpdatesState(): void {
         const root = fixture();
         root.chooser.kind = "audio";
