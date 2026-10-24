@@ -49,6 +49,10 @@ Item {
     signal transportReady
     signal sendFailed(string id, string message)
 
+    function renewBaseSubscription(): bool {
+        return DaemonSessions.renewBaseSubscription(daemonName, sharedConsumerId);
+    }
+
     function isPending(id: string): bool {
         return !!pending[id];
     }

@@ -36,7 +36,7 @@ DaemonTestCase {
         if (kind !== "gap")
             envelope.data = Object.assign(envelope.data, data);
         const route = Object.assign({}, call.route, {kind: "base-subscription", localId: "session-subscribe"});
-        Io.DaemonSessions.sessions["bar-daemon"].client.eventReceived(envelope, route);
+        emitBaseEvent("bar-daemon", route, envelope);
     }
     function test_gapStormIsSingleFlightAndDomainLocal() {
         const controller = make();

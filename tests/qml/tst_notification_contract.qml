@@ -36,7 +36,7 @@ DaemonTestCase {
     }
     function event(state, name) {
         const route = Object.assign({}, lastCall(state, "bar.snapshot").route, {kind: "base-subscription", localId: "session-subscribe"});
-        Io.DaemonSessions.sessions["bar-daemon"].client.eventReceived(clone(fixture().events[name]), route);
+        emitBaseEvent("bar-daemon", route, clone(fixture().events[name]));
         state.flushEvents();
     }
     function make() {

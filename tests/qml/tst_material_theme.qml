@@ -17,8 +17,8 @@ DaemonTestCase {
     }
     function push(call, roles) {
         const route = Object.assign({}, call.route, {kind: "base-subscription", localId: "session-subscribe"});
-        Io.DaemonSessions.sessions["bar-daemon"].client.eventReceived(
-            {protocol: "bar-api", version: 2, stream: "theme.changed", event: "changed", subscription_id: "theme", data: roles}, route);
+        emitBaseEvent("bar-daemon", route,
+            {protocol: "bar-api", version: 2, stream: "theme.changed", event: "changed", data: roles});
     }
     function test_startupRolesMatchNativeProducerFixtures() {
         const request = new XMLHttpRequest();

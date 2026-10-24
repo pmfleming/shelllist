@@ -17,6 +17,7 @@ Item {
     function warmCache() {
         if (!controller.uiActive || !controller.powered)
             return;
+        backend.refreshNetworkStream();
         controller.setBackgroundStatus("Loading cached Wi-Fi networks…");
         if (!backend.refreshNetworks(true))
             console.warn("shelllist wifi cache warmup was rejected");
@@ -68,6 +69,7 @@ Item {
         snapshotSeen = false;
         // The explicit scan below owns this refresh. Asking wifi.networks to
         // refresh its cache as well would schedule a second NetworkManager scan.
+        backend.refreshNetworkStream();
         const listAccepted = backend.refreshNetworks(false);
         const scanAccepted = backend.startScan();
         if (!listAccepted || !scanAccepted) {
@@ -86,7 +88,11 @@ Item {
             console.warn("shelllist wifi scan watchdog cancellation failed request_id=" + requestId);
         requestId = "";
         pendingRefresh = false;
-        if (!snapshotSeen) {
+        if (!snapshotSeen && backend.networkCursor.initialized) {
+            // A current-table RPC has no delta watermark. Renew the isolated
+            // network subscription instead of replacing its live delta base.
+            backend.refreshNetworkStream();
+        } else if (!snapshotSeen) {
             // The event stream is unavailable, so do not schedule a background
             // cache refresh whose completion would arrive over that same stream.
             // Read NetworkManager's current AP table through the request/reply path.
@@ -101,7 +107,7 @@ Item {
             controller.networksError = event.data.message || qsTr("Wi-Fi scan failed");
         if (event.event === "snapshot") {
             snapshotSeen = true;
-            controller.applyNetworks(event.data.networks || [], false, event.data.snapshot || null);
+            controller.applyProvisionalNetworks(event.data.networks || [], false, event.data.snapshot || null);
         }
         controller.setBackgroundStatus(Api.scanEventStatus(event, controller.status));
     }
@@ -110,6 +116,9 @@ Item {
             return;
         applyEvent(event);
         if (Api.isTerminalEvent(event)) {
+            // Also repairs a lost final network delta (no later delta exists to
+            // reveal its gap). This is a fresh read, never another scan.
+            backend.refreshNetworkStream();
             requestId = "";
             maybeRefresh();
         }

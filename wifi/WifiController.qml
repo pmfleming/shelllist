@@ -358,8 +358,18 @@ ProviderChooserController {
     function applyNetworkEvent(event: var): void {
         if (event.event !== "changed")
             return;
-        const networks = event.data.initial ? (event.data.added || []) : Flow.mergeNetworkChanges(visibleNetworks, event.data);
-        applyNetworks(networks, false, event.data.snapshot || null);
+        const data = event.data;
+        const validRows = rows => Array.isArray(rows) && rows.every(row => row && typeof row === "object"
+            && !Array.isArray(row) && typeof row.key === "string" && row.key.length > 0);
+        if (!data || !validRows(data.added) || !validRows(data.changed) || !validRows(data.removed)
+                || (data.initial === true && (data.changed.length > 0 || data.removed.length > 0))) {
+            backend.networkCursor.invalidate();
+            return;
+        }
+        if (!backend.networkCursor.accept(event.subscription_id || "", data))
+            return;
+        const networks = data.initial ? data.added : Flow.mergeNetworkChanges(visibleNetworks, data);
+        applyNetworks(networks, false, data.snapshot || null);
     }
 
     function dispatchDaemonEvent(event: var): void {
@@ -372,6 +382,10 @@ ProviderChooserController {
         status = "Could not parse nm-daemon event: " + error;
     }
     function handleDaemonEventGap(stream: string): void {
+        if (stream === NmApi.streams.wifi_networks) {
+            backend.networkCursor.invalidate();
+            return;
+        }
         status = "Network events were missed; recovering current state…";
         if (stream === NmApi.streams.network_inventory) {
             inventory.refresh();
@@ -429,6 +443,10 @@ ProviderChooserController {
     }
     function triggerDetailAction(id) {
         return executeSelected(id);
+    }
+    function applyProvisionalNetworks(networks, resetSelection, snapshot) {
+        if (!backend.networkCursor.initialized && !backend.networkCursor.recovering)
+            applyNetworks(networks, resetSelection, snapshot);
     }
     function applyNetworks(networks, resetSelection, snapshot) {
         networksLoaded = true;

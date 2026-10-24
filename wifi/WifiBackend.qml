@@ -12,8 +12,27 @@ Io.DaemonBackend {
     daemonName: "nm-daemon"
     expectedProtocol: NmApi.protocol
     expectedVersion: NmApi.version
-    streams: NmApi.subscribedStreams
+    streams: NmApi.subscribedStreams.filter(stream => stream !== NmApi.streams.wifi_networks)
     recoverProtocolErrors: false
+    readonly property Io.DeltaCursor networkCursor: Io.DeltaCursor {
+        onGapDetected: {
+            backend.controller.status = "Network events were missed; recovering current state…";
+            backend.networkEvents.renewBaseSubscription();
+        }
+    }
+    // Recover collection history independently: renewing a mixed subscription
+    // could briefly remove SecretAgent/health observers during an active task.
+    readonly property Io.DaemonBackend networkEvents: Io.DaemonBackend {
+        daemonName: backend.daemonName
+        expectedProtocol: backend.expectedProtocol
+        expectedVersion: backend.expectedVersion
+        streams: [NmApi.streams.wifi_networks]
+        active: backend.active
+        recoverProtocolErrors: false
+        onEventReceived: function(event) { backend.controller.handleDaemonEvent(event); }
+        onEventGapDetected: backend.networkCursor.invalidate()
+        onTransportFailed: backend.networkCursor.reset()
+    }
     active: controller.statusMonitorActive || controller.uiActive || requestRunning || controller.connection.running || controller.promptActive || (controller.portal && controller.portal.busy)
     function classifyRequest(method: string, params: var): var {
         return RequestMetadata.classify(method, params);
@@ -100,6 +119,10 @@ Io.DaemonBackend {
             }
         })
 
+    function refreshNetworkStream() {
+        if (networkCursor.initialized)
+            networkCursor.invalidate();
+    }
     function recoverStatus() {
         return call("status-recovery", NmApi.methods.wifi_status, {});
     }
@@ -265,10 +288,14 @@ Io.DaemonBackend {
         const data = Api.apiPayload(envelope);
         if (!envelope.ok)
             throw new Error(Api.apiErrorMessage(envelope));
+        // This RPC has no subscription watermark. Once the live baseline is
+        // established it cannot replace the collection used by later deltas.
+        if (networkCursor.initialized || networkCursor.recovering)
+            return;
         const networks = data.networks || [];
         const snapshot = data.snapshot || null;
         if (!controller.scan.snapshotSeen)
-            controller.applyNetworks(networks, true, snapshot);
+            controller.applyProvisionalNetworks(networks, true, snapshot);
         const stale = snapshot && snapshot.stale ? "stale " : "";
         const refreshing = snapshot && snapshot.refresh_requested;
         controller.setBackgroundStatus(networks.length + " " + stale + "cached networks" + (refreshing ? "; refreshing…" : ""));
@@ -422,6 +449,7 @@ Io.DaemonBackend {
             controller.failCall(kind, message);
     }
     onTransportFailed: function (message, lostRequestIds) {
+        networkCursor.reset();
         console.error("shelllist nm transport failed error=" + message + " lost_requests=" + (lostRequestIds.length > 0 ? lostRequestIds.join(",") : "none"));
         controller.handleTransportFailure(message, lostRequestIds.map(id => (requestMetadata[id] || ({})).responseHandler || ""));
     }

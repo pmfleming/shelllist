@@ -45,7 +45,7 @@ DaemonTestCase {
     }
     function event(controller, state) {
         const route = Object.assign({}, lastCall(controller, "bar.snapshot").route, {kind: "base-subscription", localId: "session-subscribe"});
-        Io.DaemonSessions.sessions["bar-daemon"].client.eventReceived(clone(fixture().events[state]), route);
+        emitBaseEvent("bar-daemon", route, clone(fixture().events[state]));
         // Test the fixed fixture deadline against a fixed observation clock, not the wall date.
         controller.clock = fixture().events.preview.data.layout.trial.expires_at * 1000 - 20000;
     }

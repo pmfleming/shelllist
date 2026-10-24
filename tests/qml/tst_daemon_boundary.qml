@@ -181,6 +181,9 @@ TestCase {
             subscription_id: "owned"
         };
         f.client.eventReceived(event, old.route);
+        compare(f.view.events, 0, "unacknowledged subscriptions cannot deliver state");
+        reply(f, old, "owned");
+        f.client.eventReceived(event, old.route);
         f.client.eventReceived(event, Object.assign({}, old.route, {
             consumerId: "missing"
         }));
@@ -194,6 +197,34 @@ TestCase {
         reply(f, requests(f)[1], "new-generation");
         f.view.active = false;
         compare(f.client.cancellations, ["new-generation"]);
+    }
+    function test_renewalFencesOldEventsAndRepliesWithoutRetiringEffectsOrPeers() {
+        const f = fixture();
+        f.view.active = true;
+        const old = requests(f)[0];
+        reply(f, old, "old-subscription");
+        f.view.call("effect", "effect.once", {});
+        verify(f.view.renewBaseSubscription());
+        verify(f.view.isPending("effect"));
+        compare(f.client.cancellations, ["old-subscription"]);
+        compare(f.client.recoveries.length, 0);
+        verify(f.client.active && f.resident.ready);
+        const event = {protocol: "test-api", version: 1, stream: "updates", event: "changed", data: {}, subscription_id: "old-subscription"};
+        f.client.eventReceived(event, old.route);
+        compare(f.view.events, 0);
+        verify(f.view.renewBaseSubscription());
+        compare(requests(f).length, 2, "repeated gaps coalesce during renewal");
+        const fresh = requests(f)[1];
+        reply(f, fresh, "fresh-subscription");
+        reply(f, old, "old-subscription");
+        reply(f, fresh, "fresh-subscription");
+        compare(f.client.cancellations, ["old-subscription"], "duplicate replies cannot cancel the replacement");
+        f.client.eventReceived(event, old.route);
+        compare(f.view.events, 0);
+        f.client.eventReceived(Object.assign({}, event, {subscription_id: "fresh-subscription"}), fresh.route);
+        compare(f.view.events, 1);
+        verify(f.view.isPending("effect"));
+        compare(f.client.recoveries.length, 0);
     }
     function test_eventValidationAndGapsUseRealBackend() {
         const f = fixture();
@@ -238,7 +269,7 @@ TestCase {
             generation: f.session.generation
         };
         const outcome = Routing.responseOutcome({
-            id: f.id + "::" + data.localId,
+            id: data.kind === "base-subscription" ? requests(f)[0].id : f.id + "::" + data.localId,
             ok: data.ok,
             error: "subscription refused",
             route: route,

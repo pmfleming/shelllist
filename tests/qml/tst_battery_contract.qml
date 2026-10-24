@@ -30,7 +30,7 @@ DaemonTestCase {
     }
     function event(c, value) {
         const route = Object.assign({}, lastCall(c, "bar.snapshot").route, {kind:"base-subscription", localId:"session-subscribe"});
-        Io.DaemonSessions.sessions["bar-daemon"].client.eventReceived(clone(value), route);
+        emitBaseEvent("bar-daemon", route, clone(value));
     }
     function make(method) {
         const c = createTemporaryObject(factory, tests); verify(c !== null);

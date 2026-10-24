@@ -80,10 +80,13 @@ QtObject {
             active: !!backend.active,
             streams: (backend.streams || []).slice(),
             baseSubscriptionId: "",
+            baseSubscriptionRequestId: "",
             baseSubscriptionPending: false
         };
         session.consumers = consumers;
         updateSession(session);
+        if (consumers[id].active && session.client.ready)
+            ensureBaseSubscription(session, id, consumers[id]);
         revision += 1;
         return id;
     }
@@ -149,14 +152,44 @@ QtObject {
         if (!session)
             throw new Error("Shared daemon session is unavailable");
         const transportLocalId = base ? localId + "::" + (++session.subscriptionSequence) : localId;
-        session.client.subscribeExtra(namespace(consumerId, transportLocalId), streams || [], address(session, consumerId, localId, base ? "base-subscription" : "subscription"));
+        const transportId = namespace(consumerId, transportLocalId);
+        if (base)
+            session.consumers[consumerId].baseSubscriptionRequestId = transportId;
+        session.client.subscribeExtra(transportId, streams || [], address(session, consumerId, localId, base ? "base-subscription" : "subscription"));
     }
 
     function ensureBaseSubscription(session, consumerId, consumer) {
         if (consumer.baseSubscriptionId || consumer.baseSubscriptionPending)
             return;
         consumer.baseSubscriptionPending = true;
-        subscribe(session.daemonName, consumerId, "session-subscribe", consumer.streams, true);
+        try {
+            subscribe(session.daemonName, consumerId, "session-subscribe", consumer.streams, true);
+        } catch (error) {
+            consumer.baseSubscriptionPending = false;
+            consumer.baseSubscriptionRequestId = "";
+            session.client.recover("Could not establish subscription: " + error);
+        }
+    }
+
+    // A delta gap needs a fresh baseline, not a new connection. Cancel only
+    // this consumer's subscription; operations and other consumers stay owned.
+    function renewBaseSubscription(daemonName, consumerId) {
+        const session = sessions[daemonName];
+        const consumer = session ? session.consumers[consumerId] : null;
+        if (!consumer || !consumer.active || !session.client.ready)
+            return false;
+        if (consumer.baseSubscriptionPending)
+            return true;
+        try {
+            cancelBaseSubscription(session, consumerId, consumer);
+            ensureBaseSubscription(session, consumerId, consumer);
+        } catch (error) {
+            // Control uncertainty must not leave an unbounded orphan stream.
+            // Retirement cancels ownership; no effect is replayed.
+            session.client.recover("Could not retire subscription: " + error);
+            return false;
+        }
+        return true;
     }
 
     function cancelBaseSubscription(session, consumerId, consumer) {
@@ -166,6 +199,7 @@ QtObject {
             return;
         const subscriptionId = consumer.baseSubscriptionId;
         consumer.baseSubscriptionId = "";
+        consumer.baseSubscriptionRequestId = "";
         cancel(session.daemonName, consumerId, subscriptionId, "cancel-session-subscription");
     }
 
@@ -174,17 +208,25 @@ QtObject {
         return subscription.id || "";
     }
 
-    function recordSubscription(session, route, consumer, envelope, transportError) {
+    function recordSubscription(session, transportId, route, consumer, envelope, transportError) {
         if (route.kind !== "base-subscription")
-            return;
-        consumer.baseSubscriptionPending = false;
+            return true;
         const id = registry.subscriptionId(envelope);
+        // Renewal starts only after the preceding reply was adopted/cancelled.
+        // A mismatched reply is therefore retired/duplicate, not a new owner.
+        if (transportId !== consumer.baseSubscriptionRequestId)
+            return false;
+        // Duplicate replies must not adopt or cancel a newer subscription.
+        if (!consumer.baseSubscriptionPending)
+            return false;
+        consumer.baseSubscriptionPending = false;
         if (!id)
-            return;
+            return true;
         if (consumer.active && !transportError)
             consumer.baseSubscriptionId = id;
         else
             cancel(session.daemonName, route.consumerId, id, "cancel-stale-subscription");
+        return true;
     }
 
     function routeResponse(daemonName, transportId, envelope, transportError, route) {
@@ -209,7 +251,8 @@ QtObject {
             }
             return;
         }
-        recordSubscription(session, route, consumer, envelope, transportError);
+        if (!recordSubscription(session, transportId, route, consumer, envelope, transportError))
+            return;
         consumer.backend.acceptSharedResponse(route.localId, envelope, transportError);
         if (route.kind === "base-subscription" && transportError)
             session.client.recover(transportError);
@@ -223,8 +266,13 @@ QtObject {
             if (route.generation !== session.generation)
                 return;
             const consumer = session.consumers[route.consumerId];
-            if (consumer)
+            if (consumer) {
+                if (route.kind === "base-subscription" && (!consumer.active
+                        || !consumer.baseSubscriptionId
+                        || (event.subscription_id || event.request_id) !== consumer.baseSubscriptionId))
+                    return;
                 consumer.backend.acceptSharedEvent(event);
+            }
             return;
         }
         if (event.subscription_id)
@@ -243,6 +291,7 @@ QtObject {
         Object.keys(session.consumers).forEach(function (id) {
             const consumer = session.consumers[id];
             consumer.baseSubscriptionId = "";
+            consumer.baseSubscriptionRequestId = "";
             consumer.baseSubscriptionPending = false;
             if (consumer.active)
                 ensureBaseSubscription(session, id, consumer);
@@ -257,6 +306,7 @@ QtObject {
         Object.keys(session.consumers).forEach(function (id) {
             const consumer = session.consumers[id];
             consumer.baseSubscriptionId = "";
+            consumer.baseSubscriptionRequestId = "";
             consumer.baseSubscriptionPending = false;
             consumer.backend.failSharedTransport(message);
         });
