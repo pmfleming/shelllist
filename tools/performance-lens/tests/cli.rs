@@ -148,7 +148,14 @@ fn capture_with(
         .map(|e| e.unwrap().path())
         .collect();
     paths.sort();
-    paths.pop().unwrap()
+    let run = paths.pop().unwrap();
+    // Nix sandboxes intentionally have no /etc/machine-id. These synthetic
+    // captures share a fixture host; do not relax the production identity guard.
+    let manifest_path = run.join("manifest.json");
+    let mut manifest = json(&manifest_path);
+    manifest["context"]["machine_id"] = "synthetic-test-machine".into();
+    fs::write(&manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+    run
 }
 
 #[test]
@@ -229,8 +236,9 @@ fn descriptive_compare_requires_matching_context() {
         .unwrap();
     assert!(
         result.status.success(),
-        "{}",
-        String::from_utf8_lossy(&result.stderr)
+        "{}\n{}",
+        String::from_utf8_lossy(&result.stderr),
+        json(&output.join("comparison.json"))
     );
     assert_eq!(
         json(&output.join("comparison.json"))["status"],

@@ -20,8 +20,9 @@ fn compare(a: &Path, b: &Path, output: &Path, scopes: &[&str], succeeds: bool) -
     assert_eq!(
         result.status.success(),
         succeeds,
-        "{}",
-        String::from_utf8_lossy(&result.stderr)
+        "{}\n{}",
+        String::from_utf8_lossy(&result.stderr),
+        json(&output.join("comparison.json"))
     );
     json(&output.join("comparison.json"))
 }
@@ -121,6 +122,12 @@ fn changed_scopes_preserve_all_other_comparison_guards() {
             "/context/operator_conditions",
             Value::from("different workload"),
         ),
+        (
+            "machine",
+            "/context/machine_id",
+            Value::from("different-machine"),
+        ),
+        ("missing-machine", "/context/machine_id", Value::from("")),
         ("protocol", "/settings/include_threads", Value::from(true)),
         ("incomplete", "/status", Value::from("partial")),
         ("config", "/settings/config_identity", Value::Null),
