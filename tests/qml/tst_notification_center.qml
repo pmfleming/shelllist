@@ -123,6 +123,45 @@ DaemonTestCase {
         compare(controller.visibleApps.length, 2, "failure cannot optimistically remove notifications");
         content.destroy();
     }
+    function test_rejectedDeleteConfirmationReleasesOnlyItsToken_data() {
+        return [
+            {tag: "empty-token", patch: {token: ""}},
+            {tag: "count-bound", patch: {count: 100201}},
+            {tag: "expired", patch: {expires_unix_ms: 1}},
+            {tag: "wrong-app", patch: {app_key: "named:Other"}},
+            {tag: "wrong-record-version", patch: {selected: {id: 23, created: 23001}}},
+            {tag: "missing-record", patch: {selected: null}}
+        ];
+    }
+    function test_rejectedDeleteConfirmationReleasesOnlyItsToken(data) {
+        const {state, content} = make();
+        verify(state.prepareDelete("named:Chat", preview(23, "named:Chat"), "Chat"));
+        const value = Object.assign({token: "rejected", count: 1, app_key: "named:Chat",
+            selected: {id: 23, created: 23000}, expires_unix_ms: Date.now() + 60000}, data.patch);
+        state.backend.finish(request(state, "prepare-delete"), {delete_confirmation: value}, "", "");
+        verify(!state.deletePreparing && !state.deletePending);
+        compare(state.deleteConfirmation, null);
+        verify(state.lastError.length > 0);
+        const releases = calls.filter(call => call.method === "notifications.delete");
+        compare(releases.length, value.token ? 1 : 0);
+        if (value.token) compare(releases[0].params, {token: value.token, cancel: true});
+        content.destroy();
+    }
+    function test_lateDeleteTokenCannotRetireNewPreparation() {
+        const {state, content} = make();
+        verify(state.prepareDelete("named:Chat", null, "Chat"));
+        const old = request(state, "prepare-delete");
+        state.cancelDelete();
+        verify(state.prepareDelete("named:Mail", null, "Mail"));
+        state.lastError = "Independent error";
+        state.backend.finish(old, {delete_confirmation: {token: "late"}}, "", "");
+        verify(state.deletePreparing);
+        compare(state.deleteScope.app_key, "named:Mail");
+        compare(state.deleteConfirmation, null);
+        compare(state.lastError, "Independent error");
+        compare(calls.filter(call => call.method === "notifications.delete").pop().params, {token: "late", cancel: true});
+        content.destroy();
+    }
     function timelinePage(offset, ids, next) {
         return {view: "timeline", epoch: "epoch", revision: "1", query: "", app_key: "named:Chat", date: "older", period_day: "2026-10-08", recent: [1000,999,998].map(id => preview(id, "named:Chat")), dates: ["today", "week", "month", "older"].map(key => ({key: key, count: key === "older" ? 40 : 0})), count: 40, total_rows: 40, offset: offset, next_offset: next, anchor_reached: true,
             entries: ids.map(id => ({key: id + ":" + id * 1000, preview: preview(id, "named:Chat"), members: [{id: id, created: id * 1000}]}))};

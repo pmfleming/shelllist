@@ -217,16 +217,15 @@ Item {
         return backend.prepareDelete(deleteScope.app_key, deleteScope.selected, deleteGeneration);
     }
     function finishPrepareDelete(generation: int, value: var, error: string): void {
-        if (generation !== deleteGeneration || !uiActive) {
-            if (value?.token) backend.deleteConfirmed(value.token, true);
+        const owned = generation === deleteGeneration && uiActive;
+        if (owned) deletePreparing = false;
+        if (owned && !error && NotificationValidation.deleteConfirmation(value, deleteScope, Date.now())) {
+            deleteConfirmation = value;
             return;
         }
-        deletePreparing = false;
-        if (error || typeof value?.token !== "string" || !NotificationValidation.integerIn(value.count, 1, 100200) || !Number.isSafeInteger(value.expires_unix_ms) || value.expires_unix_ms <= Date.now() || (value.app_key ?? null) !== deleteScope.app_key || (deleteScope.selected ? value.selected?.id !== deleteScope.selected.id || value.selected?.created !== deleteScope.selected.created : (value.selected ?? null) !== null)) {
-            if (value?.token) backend.deleteConfirmed(value.token, true);
-            lastError = error || qsTr("Invalid delete confirmation"); return;
-        }
-        deleteConfirmation = value;
+        // Release rejected/late tokens without touching a newer preparation.
+        if (value?.token) backend.deleteConfirmed(value.token, true);
+        if (owned) lastError = error || qsTr("Invalid delete confirmation");
     }
     function cancelDelete(): void {
         deleteGeneration++; deletePreparing = false;

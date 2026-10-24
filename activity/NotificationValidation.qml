@@ -15,6 +15,16 @@ QtObject {
     function identity(id: var, created: var): bool {
         return integerIn(id, 1, 4294967295) && integerIn(created, 1, Number.MAX_SAFE_INTEGER);
     }
+    function deleteScope(value: var, scope: var): bool {
+        if ((value.app_key ?? null) !== scope.app_key) return false;
+        const selected = value.selected ?? null;
+        return scope.selected ? selected?.id === scope.selected.id && selected?.created === scope.selected.created : selected === null;
+    }
+    function deleteConfirmation(value: var, scope: var, now: double): bool {
+        return !!value && token(value.token) && integerIn(value.count, 1, 100200)
+            && Number.isSafeInteger(value.expires_unix_ms) && value.expires_unix_ms > now
+            && deleteScope(value, scope);
+    }
     function preview(item: var): bool {
         return !!item && identity(item.id, item.created_unix_ms) && token(item.app_key)
             && [item.app_name, item.app_icon, item.summary, item.body].every(text => typeof text === "string");
