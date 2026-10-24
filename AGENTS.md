@@ -1,5 +1,11 @@
 # Shelllist contributor contract
 
+`docs/` is local, ignored reference material, not a build input. If a referenced
+file is absent, read its last tracked version with
+`git show 71e1b3e:docs/<filename>`; do not re-add the directory. The rules below
+remain tracked and authoritative. Maintain new executable contracts in
+`contracts/` and test evidence in `tests/`.
+
 Before changing or adding a panel, read `docs/chooser-keyboard-workflow.md`.
 It is the mandatory interaction model for every panel and supersedes older
 keyboard behavior in proposals/reviews. Use the approved visual roles and review

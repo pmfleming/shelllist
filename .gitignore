@@ -4,13 +4,5 @@
 /.direnv
 /.quickshell-cache
 
-# Local October 8 working notes are not rebuild inputs.
-/docs/daemon-opportunities-2026-10-08.md
-/docs/qml-maintenance-2026-10-08.md
-
-# Frequently changing proposals are not rebuild inputs.
-/docs/proposals/
-/docs/shelllist-wordmark.html
-
-# Local design and test review notes are not rebuild inputs.
-/docs/reviews/
+# Local documentation and all subdirectories are not rebuild inputs.
+/docs/

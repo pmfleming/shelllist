@@ -1,5 +1,11 @@
 # Shelllist
 
+Documentation links under `docs/` refer to local, ignored reference material.
+Those files are not shipped in fresh checkouts; their last tracked snapshot is
+available with `git show 71e1b3e:docs/<filename>`. Current contributor rules,
+protocol contracts and test instructions remain in `AGENTS.md`, `contracts/`
+and `tests/README.md`.
+
 Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and twelve surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, **Notifications**, **Time & Weather**, **Displays**, **Battery**, **Audio**, **Media**, and **Tray**.
 
 Rust daemons own system integration, durable state and policy. Shelllist owns windows, layout, keyboard navigation, animation and presentation. A shared popover keeps lists anchored while details expand right; small work areas use explicit scrolling rather than clipping controls. A one-shot floating host is available for development. See [chooser geometry](docs/chooser-geometry.md).
