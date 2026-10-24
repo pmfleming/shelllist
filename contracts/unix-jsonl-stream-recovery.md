@@ -1,5 +1,10 @@
 # Unix JSONL migration: stream recovery contract
 
+The [current stream matrix](unix-jsonl-stream-matrix.md) distinguishes replacement,
+delta, invalidation, historical, sample and private lifecycle streams, and records
+missing recovery APIs and per-stream rollout blockers. It supersedes the archived
+pre-NM audit; the implementation/evidence checkpoints below remain scoped.
+
 ## Network collection stage
 
 `wifi.networks.changed` retains its initial/added/changed/removed payload and
