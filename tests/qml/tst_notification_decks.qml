@@ -48,7 +48,10 @@ DaemonTestCase {
         verify(!state.sharingPending);
         mouseClick(choice.button);
         const next = Object.keys(state.backend.requests).find(id => id.startsWith("sharing-"));
-        state.backend.finish(next, {notifications: Object.assign({}, summary, {sharing: {active: true, prompt: false, generation: 7}})}, "", "");
+        const acknowledged = Object.assign({}, summary, {sharing: {active: true, prompt: false, generation: 7}});
+        state.backend.finish(next, {observations: {notifications: acknowledged}}, "", "");
+        verify(state.notifications.sharing.prompt, "receipt does not replace current state");
+        state.applySummary(acknowledged);
         compare(state.notifications.sharing.prompt, false);
     }
     function record(id) {

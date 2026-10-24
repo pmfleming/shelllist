@@ -37,7 +37,7 @@ BarDaemonBackend {
         if (responseError(envelope, transportError, "Theme generation failed"))
             return;
         if (id === latestRequest)
-            accept(envelope.data.theme);
+            accept(envelope.data.theme || envelope.data.snapshot?.theme);
         else if (publishTheme && envelope.data.snapshot)
             accept(envelope.data.snapshot.theme);
     }

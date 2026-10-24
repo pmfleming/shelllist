@@ -131,10 +131,10 @@ Io.BarDaemonBackend {
         }
     }
     function currentNotifications(context: var, data: var): var {
-        return context.eventVersion === store.eventVersion ? data.notifications : null;
+        return data.snapshot?.notifications || null;
     }
     function acknowledgeSharing(context: var, data: var, error: string): void {
-        const failure = error || (data.notifications?.sharing?.generation !== context.sharingGeneration ? qsTr("Screen-sharing acknowledgement changed") : "");
+        const failure = error || ((data.observations?.notifications || data.notifications)?.sharing?.generation !== context.sharingGeneration ? qsTr("Screen-sharing acknowledgement changed") : "");
         store.finishSharing(currentNotifications(context, data), failure);
     }
     function acknowledgeContextAction(context: var, data: var, error: string): void {
@@ -144,12 +144,12 @@ Io.BarDaemonBackend {
         store.contextActionFinished(context.operationKey, context.updated, context.actionKey, !failure && data.copied === true, failure);
     }
     function acknowledgeSettings(context: var, data: var, error: string): void {
-        const failure = error || (!NotificationValidation.settings(data.notifications?.settings) ? qsTr("Invalid notification settings acknowledgement") : "");
+        const failure = error || (!NotificationValidation.settings((data.observations?.notifications || data.notifications)?.settings) ? qsTr("Invalid notification settings acknowledgement") : "");
         store.finishSettings(currentNotifications(context, data), failure);
     }
     function acknowledgeAppPolicy(context: var, data: var, error: string): void {
-        const failure = error || (!data.notifications?.app_policies?.[context.policyKey] ? qsTr("Invalid application policy acknowledgement") : "");
-        store.finishAppPolicy(context.policyKey, data.notifications, failure);
+        const failure = error || (!(data.observations?.notifications || data.notifications)?.app_policies?.[context.policyKey] ? qsTr("Invalid application policy acknowledgement") : "");
+        store.finishAppPolicy(context.policyKey, currentNotifications(context, data), failure);
         store.lastError = failure;
     }
     function acknowledgeOperation(context: var, data: var, error: string): void {
@@ -167,10 +167,7 @@ Io.BarDaemonBackend {
             store.lastError = "";
         if (!data.snapshot)
             return;
-        if (context.eventVersion === store.eventVersion)
-            store.applySnapshot(data.snapshot);
-        else if (!store.notifications.available && (store.resident || store.uiActive))
-            Qt.callLater(snapshot);
+        store.applySnapshot(data.snapshot);
     }
 
     onResponseReceived: function (id, envelope, transportError) {

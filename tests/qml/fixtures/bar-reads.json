@@ -2,6 +2,10 @@
   "changed": {
     "activity.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 2
+        },
         "available": true,
         "error": null,
         "event_count": 1,
@@ -436,6 +440,10 @@
     },
     "audio.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-2",
+          "revision": 2
+        },
         "available": true,
         "error": null,
         "input_available": true,
@@ -455,6 +463,10 @@
     },
     "battery.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-3",
+          "revision": 2
+        },
         "available": true,
         "charging": false,
         "critical": false,
@@ -609,6 +621,10 @@
     },
     "brightness.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-4",
+          "revision": 2
+        },
         "available": true,
         "brightness": 500,
         "device": "amdgpu_bl1",
@@ -624,6 +640,10 @@
     },
     "compositor.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-5",
+          "revision": 2
+        },
         "animations_enabled": false,
         "available": true,
         "error": null,
@@ -637,6 +657,10 @@
     },
     "display-policy.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-6",
+          "revision": 2
+        },
         "available": true,
         "baseline": "",
         "docking_state": "settled",
@@ -748,6 +772,10 @@
     },
     "media.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-7",
+          "revision": 2
+        },
         "active_player": "org.mpris.MediaPlayer2.spotify",
         "available": true,
         "error": null,
@@ -792,6 +820,10 @@
     },
     "notifications.active.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-8",
+          "revision": 2
+        },
         "available": true,
         "error": null,
         "notifications": [
@@ -841,6 +873,10 @@
     },
     "notifications.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-9",
+          "revision": 2
+        },
         "alt": "dnd-notification",
         "app_policies": {},
         "available": true,
@@ -863,6 +899,10 @@
     },
     "osd-hardware.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-10",
+          "revision": 2
+        },
         "available": true,
         "camera_privacy": true,
         "caps_lock": false,
@@ -879,6 +919,10 @@
     },
     "power-profile.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-11",
+          "revision": 2
+        },
         "actions": [
           {
             "description": "Panel power savings",
@@ -922,6 +966,10 @@
     },
     "power-sleep.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-12",
+          "revision": 2
+        },
         "available": true,
         "can_hibernate": "challenge",
         "can_suspend": "yes",
@@ -965,6 +1013,10 @@
     },
     "sleep-policy.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-13",
+          "revision": 4
+        },
         "active_profile": "shared",
         "available": true,
         "critical_battery": {
@@ -1008,6 +1060,10 @@
     },
     "theme.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-14",
+          "revision": 2
+        },
         "error": "#ffb4ab",
         "errorContainer": "#93000a",
         "onError": "#690005",
@@ -1047,6 +1103,10 @@
     },
     "timezone.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-15",
+          "revision": 2
+        },
         "abbreviation": "CEST",
         "available": true,
         "city": "Amsterdam",
@@ -1066,6 +1126,10 @@
     },
     "updates.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-16",
+          "revision": 2
+        },
         "available": true,
         "error": null,
         "jobs": [
@@ -1102,6 +1166,10 @@
     },
     "workarea.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-17",
+          "revision": 2
+        },
         "available": true,
         "error": null,
         "monitors": {
@@ -1122,6 +1190,10 @@
     },
     "workspaces.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-18",
+          "revision": 2
+        },
         "active_window": {
           "address": "0x123",
           "class_name": "com.mitchellh.ghostty",
@@ -1363,6 +1435,10 @@
   },
   "monitor_failed": {
     "data": {
+      "_publication": {
+        "epoch": "fixture-publication-2",
+        "revision": 3
+      },
       "available": false,
       "error": "audio monitor panicked; restart daemon to recover",
       "input_available": true,
@@ -1384,6 +1460,10 @@
     "data": {
       "snapshot": {
         "activity": {
+          "_publication": {
+            "epoch": "fixture-publication-1",
+            "revision": 2
+          },
           "available": true,
           "error": null,
           "event_count": 1,
@@ -1811,6 +1891,10 @@
           ]
         },
         "audio": {
+          "_publication": {
+            "epoch": "fixture-publication-2",
+            "revision": 2
+          },
           "available": true,
           "error": null,
           "input_available": true,
@@ -1823,6 +1907,10 @@
           "volume_percent": 50
         },
         "battery": {
+          "_publication": {
+            "epoch": "fixture-publication-3",
+            "revision": 2
+          },
           "available": true,
           "charging": false,
           "critical": false,
@@ -1970,6 +2058,10 @@
           "warning": false
         },
         "brightness": {
+          "_publication": {
+            "epoch": "fixture-publication-4",
+            "revision": 2
+          },
           "available": true,
           "brightness": 500,
           "device": "amdgpu_bl1",
@@ -1978,12 +2070,20 @@
           "percent": 50
         },
         "compositor": {
+          "_publication": {
+            "epoch": "fixture-publication-5",
+            "revision": 2
+          },
           "animations_enabled": false,
           "available": true,
           "error": null,
           "revision": 1
         },
         "display_policy": {
+          "_publication": {
+            "epoch": "fixture-publication-6",
+            "revision": 2
+          },
           "available": true,
           "baseline": "",
           "docking_state": "settled",
@@ -2088,6 +2188,10 @@
           "status": "external"
         },
         "media": {
+          "_publication": {
+            "epoch": "fixture-publication-7",
+            "revision": 2
+          },
           "active_player": "org.mpris.MediaPlayer2.spotify",
           "available": true,
           "error": null,
@@ -2125,6 +2229,10 @@
           ]
         },
         "notification_active": {
+          "_publication": {
+            "epoch": "fixture-publication-8",
+            "revision": 2
+          },
           "available": true,
           "error": null,
           "notifications": [
@@ -2167,6 +2275,10 @@
           "revision": 1
         },
         "notifications": {
+          "_publication": {
+            "epoch": "fixture-publication-9",
+            "revision": 2
+          },
           "alt": "dnd-notification",
           "app_policies": {},
           "available": true,
@@ -2182,6 +2294,10 @@
           "tooltip": "1 Notification"
         },
         "osd_hardware": {
+          "_publication": {
+            "epoch": "fixture-publication-10",
+            "revision": 2
+          },
           "available": true,
           "camera_privacy": true,
           "caps_lock": false,
@@ -2191,6 +2307,10 @@
           "num_lock": true
         },
         "power_profile": {
+          "_publication": {
+            "epoch": "fixture-publication-11",
+            "revision": 2
+          },
           "actions": [
             {
               "description": "Panel power savings",
@@ -2227,6 +2347,10 @@
           "version": "0.30"
         },
         "power_sleep": {
+          "_publication": {
+            "epoch": "fixture-publication-12",
+            "revision": 2
+          },
           "available": true,
           "can_hibernate": "challenge",
           "can_suspend": "yes",
@@ -2263,6 +2387,10 @@
           "resume_generation": 0
         },
         "sleep_policy": {
+          "_publication": {
+            "epoch": "fixture-publication-13",
+            "revision": 4
+          },
           "active_profile": "shared",
           "available": true,
           "critical_battery": {
@@ -2299,6 +2427,10 @@
           }
         },
         "theme": {
+          "_publication": {
+            "epoch": "fixture-publication-14",
+            "revision": 2
+          },
           "error": "#ffb4ab",
           "errorContainer": "#93000a",
           "onError": "#690005",
@@ -2331,6 +2463,10 @@
           "warning": "#eac16c"
         },
         "timezone": {
+          "_publication": {
+            "epoch": "fixture-publication-15",
+            "revision": 2
+          },
           "abbreviation": "CEST",
           "available": true,
           "city": "Amsterdam",
@@ -2343,6 +2479,10 @@
           "utc_offset_seconds": 7200
         },
         "updates": {
+          "_publication": {
+            "epoch": "fixture-publication-16",
+            "revision": 2
+          },
           "available": true,
           "error": null,
           "jobs": [
@@ -2372,6 +2512,10 @@
           "state_directory": "/var/lib/nixos-delayed-updates-v2"
         },
         "workarea": {
+          "_publication": {
+            "epoch": "fixture-publication-17",
+            "revision": 2
+          },
           "available": true,
           "error": null,
           "monitors": {
@@ -2385,6 +2529,10 @@
           "revision": 1
         },
         "workspaces": {
+          "_publication": {
+            "epoch": "fixture-publication-18",
+            "revision": 2
+          },
           "active_window": {
             "address": "0x123",
             "class_name": "com.mitchellh.ghostty",
@@ -2426,6 +2574,10 @@
   "subscribed": {
     "activity.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 1
+        },
         "available": false,
         "error": null,
         "event_count": 0,
@@ -2478,6 +2630,10 @@
     },
     "audio.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-2",
+          "revision": 1
+        },
         "available": false,
         "error": null,
         "input_available": false,
@@ -2497,6 +2653,10 @@
     },
     "battery.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-3",
+          "revision": 1
+        },
         "available": false,
         "charging": false,
         "critical": false,
@@ -2587,6 +2747,10 @@
     },
     "brightness.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-4",
+          "revision": 1
+        },
         "available": false,
         "brightness": 0,
         "device": "",
@@ -2602,6 +2766,10 @@
     },
     "compositor.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-5",
+          "revision": 1
+        },
         "animations_enabled": null,
         "available": false,
         "error": null,
@@ -2615,6 +2783,10 @@
     },
     "display-policy.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-6",
+          "revision": 1
+        },
         "available": false,
         "baseline": "",
         "docking_state": "settled",
@@ -2646,6 +2818,10 @@
     },
     "media.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-7",
+          "revision": 1
+        },
         "active_player": null,
         "available": false,
         "error": null,
@@ -2660,6 +2836,10 @@
     },
     "notifications.active.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-8",
+          "revision": 1
+        },
         "available": false,
         "error": null,
         "notifications": [],
@@ -2673,6 +2853,10 @@
     },
     "notifications.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-9",
+          "revision": 1
+        },
         "alt": "",
         "app_policies": {},
         "available": false,
@@ -2695,6 +2879,10 @@
     },
     "osd-hardware.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-10",
+          "revision": 1
+        },
         "available": false,
         "camera_privacy": false,
         "caps_lock": false,
@@ -2711,6 +2899,10 @@
     },
     "power-profile.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-11",
+          "revision": 1
+        },
         "actions": [],
         "active_holds": [],
         "available": false,
@@ -2736,6 +2928,10 @@
     },
     "power-sleep.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-12",
+          "revision": 1
+        },
         "available": false,
         "can_hibernate": "",
         "can_suspend": "",
@@ -2770,6 +2966,10 @@
     },
     "sleep-policy.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-13",
+          "revision": 1
+        },
         "active_profile": "",
         "available": false,
         "critical_battery": {
@@ -2813,6 +3013,10 @@
     },
     "theme.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-14",
+          "revision": 1
+        },
         "error": "#ba1a1a",
         "errorContainer": "#ffdad6",
         "onError": "#ffffff",
@@ -2852,6 +3056,10 @@
     },
     "timezone.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-15",
+          "revision": 1
+        },
         "abbreviation": "",
         "available": false,
         "city": "",
@@ -2868,6 +3076,10 @@
     },
     "updates.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-16",
+          "revision": 1
+        },
         "available": false,
         "error": null,
         "jobs": [],
@@ -2883,6 +3095,10 @@
     },
     "workarea.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-17",
+          "revision": 1
+        },
         "available": false,
         "error": null,
         "monitors": {},
@@ -2896,6 +3112,10 @@
     },
     "workspaces.changed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-18",
+          "revision": 1
+        },
         "active_window": null,
         "available": false,
         "error": null,

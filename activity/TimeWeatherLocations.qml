@@ -15,6 +15,7 @@ Io.DaemonBackend {
     property var removal: null
     readonly property bool modalOpen: pickerMode.length > 0 || removal !== null
     property int modalGeneration: 0
+    property var pendingCitySelection: null
     property string query: ""
     property var candidates: []
     property string choice: ""
@@ -187,7 +188,8 @@ Io.DaemonBackend {
                 && Math.abs(city.place.latitude - submittedPlace.latitude) < 0.05
                 && Math.abs(city.place.longitude - submittedPlace.longitude) < 0.05;
         if (!targetValid) return false;
-        if (revision >= Number(catalog.revision || 0)) controller.activity = returned;
+        // This is an effect receipt, not an ordered live activity projection.
+        // The controller's shared backend reconciles through bar.snapshot.
         return true;
     }
     function finishMutation(data: var, failure: string): void {
@@ -216,11 +218,32 @@ Io.DaemonBackend {
         if (ownView) closeModal();
         if (kind === "add" && ownView && controller.filterText === submittedFilter) {
             controller.filterText = "";
+            pendingCitySelection = {id: data.id, generation: modalGeneration};
             controller.rebuildCityModel();
-            const index = controller.filteredCities.findIndex(city => city.id === data.id);
-            if (index >= 0) controller.selectionModel.selectedIndex = index;
+            selectConfirmedCity();
         }
         controller.backend.snapshot();
+    }
+    function selectConfirmedCity(): void {
+        const pending = pendingCitySelection;
+        if (!pending) return;
+        if (!controller.uiActive || pending.generation !== modalGeneration || controller.filterText) {
+            pendingCitySelection = null;
+            return;
+        }
+        const index = controller.filteredCities.findIndex(city => city.id === pending.id);
+        if (index >= 0) {
+            controller.rebuildCityModel();
+            controller.selectionModel.selectedIndex = index;
+            pendingCitySelection = null;
+        }
+    }
+    Connections {
+        target: owner.controller
+        function onFilteredCitiesChanged(): void { Qt.callLater(owner.selectConfirmedCity); }
+        function onUiActiveChanged(): void { owner.selectConfirmedCity(); }
+        function onFilterTextChanged(): void { owner.selectConfirmedCity(); }
+        function onNavigationInteracted(): void { owner.pendingCitySelection = null; }
     }
     function finish(id: string, envelope: var, transportError: string): void {
         // Empty IDs are idle slots, never owned completions.
@@ -234,6 +257,7 @@ Io.DaemonBackend {
     onResponseReceived: function(id, envelope, transportError) { finish(id, envelope, transportError); }
     onSendFailed: function(id, message) { finish(id, null, message); }
     onTransportFailed: function(message) {
+        pendingCitySelection = null;
         searchId = "";
         statusId = "";
         if (mutationId) {

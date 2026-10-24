@@ -28,6 +28,7 @@ Ui.ProviderChooserController {
     property string pendingAction: ""
     property string observedTrialId: ""
     property bool revertOnArrival: false
+    property string revertTrialId: ""
     property var draft: []
     property var baselineDraft: []
     property string baselineFingerprint: ""
@@ -333,6 +334,10 @@ Ui.ProviderChooserController {
         identifyActive = true;
         identifyTimer.restart();
     }
+    function acceptPreviewReceipt(id: string, data: var): void {
+        if (id.startsWith("display-preview-") && pendingAction === "preview" && revertOnArrival)
+            revertTrialId = data.observations?.display_policy?.layout?.trial?.id || "";
+    }
     function requestFinished(id: string): void {
         if (!id.startsWith("display-snapshot-")) {
             actionInFlight = false;
@@ -340,6 +345,10 @@ Ui.ProviderChooserController {
         }
         if (!trial && !dirty)
             reloadDraft();
+        if (!trial) {
+            revertOnArrival = false;
+            revertTrialId = "";
+        }
         displayPolicyError = "";
         settleHiddenTrial();
     }
@@ -353,16 +362,21 @@ Ui.ProviderChooserController {
     function transportFailed(message: string): void {
         workspaceState = ({available: false});
         stateReady = false;
+        revertOnArrival = false;
+        revertTrialId = "";
         actionInFlight = false;
         pendingAction = "";
         displayPolicyError = message;
     }
     function settleHiddenTrial(): void {
-        if (revertOnArrival && trial && !actionInFlight && backend.ready) {
+        if (revertOnArrival && revertTrialId && trial && !actionInFlight && backend.ready && displayPolicyState.available) {
+            // Closing a pending preview authorizes rollback of its receipt's
+            // identity, never whichever trial a later recovery read observes.
+            const id = revertTrialId;
             revertOnArrival = false;
-            displayLayoutAction("revert", {
-                id: trial.id
-            });
+            revertTrialId = "";
+            if (trial.id === id)
+                displayLayoutAction("revert", {id: id});
         }
     }
     function activateUi(workspaceId) {
@@ -373,6 +387,7 @@ Ui.ProviderChooserController {
     function deactivateUi() {
         identifyActive = false;
         revertOnArrival = !!trial || pendingAction === "preview";
+        revertTrialId = pendingAction === "preview" ? "" : trial?.id || "";
         settleHiddenTrial();
         deactivateUiState();
     }

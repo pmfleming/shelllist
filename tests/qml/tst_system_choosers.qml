@@ -37,7 +37,20 @@ DaemonTestCase {
     property var previousEnvironment
     function init(): void { calls = []; failOnWarning(/.*/); previousScheme = Ui.Theme.previewColorScheme; previousEnvironment = QuickshellFixture.Quickshell.environment; }
     function cleanup(): void { clientReady = true; TrayFixture.SystemTray.items.values = []; Quickshell.themeIcons = {}; Ui.Theme.previewColorScheme = previousScheme; QuickshellFixture.Quickshell.environment = previousEnvironment; }
+    property int publication: 1
     function acknowledge(fixture, call, data): void {
+        if (call.method === "bar.snapshot" || (data && (data.audio || data.media))) {
+            const request = new XMLHttpRequest();
+            request.open("GET", Qt.resolvedUrl("fixtures/bar-reads.json"), false);
+            request.send();
+            const native = JSON.parse(request.responseText).snapshot.data.snapshot;
+            const snapshot = call.method === "bar.snapshot" ? native : {};
+            for (const key of ["audio", "media"]) {
+                const value = call.method === "bar.snapshot" ? fixture.desktop[key] : data[key];
+                if (value) snapshot[key] = Object.assign({}, native[key], value, {_publication: Object.assign({}, native[key]._publication, {revision: ++publication})});
+            }
+            data = Object.assign({}, data, {snapshot: snapshot});
+        }
         Io.DaemonSessions.sessions[fixture.desktop.backend.daemonName].client.response(call.id, {protocol: BarApi.protocol, version: BarApi.version, ok: true, data: data || {}}, "", call.route);
     }
     function fixture() {

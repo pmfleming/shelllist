@@ -279,10 +279,17 @@ Item {
         const error = eventEnvelopeError(event);
         if (error.length > 0) {
             console.warn("shelllist " + daemonName + " event rejected error=" + error);
+            if (requestPolicy && typeof requestPolicy.invalidEvent === "function")
+                requestPolicy.invalidEvent(event, error);
             return;
         }
-        if (requestPolicy)
-            requestPolicy.observe(event);
+        if (requestPolicy) {
+            const observed = requestPolicy.observe(event);
+            if (observed === false)
+                return;
+            if (observed && typeof observed === "object")
+                event = observed;
+        }
         if (isEventGap(event)) {
             eventGapDetected(event.stream, event);
             return;

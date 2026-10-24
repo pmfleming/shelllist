@@ -20,7 +20,20 @@ DaemonTestCase {
         return controller;
     }
     function reads(backend) { return calls.filter(call => call.route.consumerId === backend.sharedConsumerId && call.method === "bar.snapshot"); }
+    function nativeFixtures() {
+        const request = new XMLHttpRequest();
+        request.open("GET", Qt.resolvedUrl("fixtures/bar-reads.json"), false);
+        request.send();
+        return JSON.parse(request.responseText);
+    }
     function reply(call, snapshot) {
+        const native = nativeFixtures().snapshot.data.snapshot;
+        const n = calls.filter(c => c.route.consumerId === call.route.consumerId && c.method === "bar.snapshot").findIndex(c => c.id === call.id) + 1;
+        const result = {};
+        for (const [key, value] of Object.entries(snapshot)) {
+            result[key] = Object.assign({}, native[key], value, {_publication: Object.assign({}, native[key]._publication, {revision: n})});
+        }
+        snapshot = result;
         Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id,
             {protocol: "bar-api", version: 2, ok: true, data: {snapshot: snapshot}}, "", call.route);
     }
@@ -34,7 +47,7 @@ DaemonTestCase {
         const envelope = group ? group[stream] : {protocol: "bar-api", version: 2, stream: stream, event: kind, data: {}};
         // Gap payloads are used verbatim; only state telemetry is varied.
         if (kind !== "gap")
-            envelope.data = Object.assign(envelope.data, data);
+            envelope.data = Object.assign(envelope.data, data, {_publication: Object.assign({}, envelope.data._publication, {revision: Number(data.volume_percent) || 100})});
         const route = Object.assign({}, call.route, {kind: "base-subscription", localId: "session-subscribe"});
         emitBaseEvent("bar-daemon", route, envelope);
     }

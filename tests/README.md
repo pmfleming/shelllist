@@ -103,6 +103,26 @@ invalidation barriers and atomic operation-revision consumption, including quiet
 terminal status recovery and old-producer rejection. Neither suite establishes
 maximum payload, matched release performance or sustained-load acceptance.
 
+### Bar atomic ordering checkpoint
+
+Producer `8f30caa` adds per-domain atomic publication metadata and independently
+captured post-effect observations. `tst_bar_publication.qml` and the bar recovery,
+display, battery, theme, notification and location interaction suites cover stale/
+duplicate/malformed records, rollover, quiet-loss reads, isolated renewal, pending
+work and drafts. A deferred display rollback targets its acknowledgement's trial
+ID, never a different trial observed by a later read; connection loss clears that
+intent. Location receipts wait for current activity state before selecting a row.
+
+Validation: **418 Qt passes / one existing renderer skip**, strict QML lint and
+producer-generated contracts; **221 debug library passes / two normally ignored**
+and all-target Clippy. The sibling-source release package ran **223 library,
+30 update-worker and two isolated native passes**, including ignored cases.
+`barDaemonContract`, `qmlTests`, `materialGallery` and `buildInputs` are the matched
+Nix gates. The gallery uses the **bridge**, not a bar socket. The bar socket flag
+and private shared-Quickshell socket probe remain next-stage work; these results
+are not installed-session, sustained-load, maximum-payload, release-performance
+or OS-process-crash acceptance. No live service or hardware changes were made.
+
 ## Panel standardization acceptance
 
 `docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,

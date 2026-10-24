@@ -44,7 +44,11 @@ DaemonTestCase {
         compare(saved[0].params, {history_days: 29});
         compare(state.settings.history_days, 30, "draft is not an acknowledgement");
         verify(state.settingsPending);
-        state.backend.finish(request(state, "settings"), {notifications: Object.assign({}, summary, {history_revision: 3, settings: {countdown: true, code_expiry_seconds: 60, history_days: 29}})}, "", "");
+        const savedSummary = Object.assign({}, summary, {history_revision: 3, settings: {countdown: true, code_expiry_seconds: 60, history_days: 29}});
+        state.backend.finish(request(state, "settings"), {observations: {notifications: savedSummary}}, "", "");
+        compare(state.settings.history_days, 30, "effect receipts do not replace live state");
+        // Domain-level interaction fixture: publication is independent of acknowledgement.
+        state.applySummary(savedSummary);
         compare(state.settings.history_days, 29);
         verify(!state.settingsPending);
         state.setSettings({countdown: false});

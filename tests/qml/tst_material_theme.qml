@@ -9,16 +9,24 @@ DaemonTestCase {
     when: windowShown
     Component { id: factory; Io.MaterialTheme { active: true; publishTheme: true } }
     Component { id: paletteFactory; Ui.MaterialPalette {} }
-    function init() { calls = []; clientReady = true; }
+    property int publication: 0
+    function init() { calls = []; clientReady = true; publication = 0; }
+    function published(roles) {
+        const request = new XMLHttpRequest();
+        request.open("GET", Qt.resolvedUrl("fixtures/bar-reads.json"), false);
+        request.send();
+        const stamp = JSON.parse(request.responseText).changed["theme.changed"].data._publication;
+        return Object.assign({}, roles, {_publication: Object.assign({}, stamp, {revision: ++publication})});
+    }
     function requests(backend) { return calls.filter(call => call.route.consumerId === backend.sharedConsumerId); }
     function reply(call, roles) {
         Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id,
-            {protocol: "bar-api", version: 2, ok: true, data: {theme: roles}}, "", call.route);
+            {protocol: "bar-api", version: 2, ok: true, data: call.method === "theme.resolve" ? {theme: roles} : {theme: roles, snapshot: {theme: published(roles)}}}, "", call.route);
     }
     function push(call, roles) {
         const route = Object.assign({}, call.route, {kind: "base-subscription", localId: "session-subscribe"});
         emitBaseEvent("bar-daemon", route,
-            {protocol: "bar-api", version: 2, stream: "theme.changed", event: "changed", data: roles});
+            {protocol: "bar-api", version: 2, stream: "theme.changed", event: "changed", data: published(roles)});
     }
     function test_startupRolesMatchNativeProducerFixtures() {
         const request = new XMLHttpRequest();

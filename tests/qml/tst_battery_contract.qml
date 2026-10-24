@@ -113,6 +113,23 @@ DaemonTestCase {
         reply(first, completion);
         verify(c.settings.thresholdOperationActive, "a duplicate old reply cannot retire the new operation");
     }
+    function test_domainRecoveryAndSubscriptionRenewalKeepAcceptedBatteryWork() {
+        const c = make("battery.chargeOnce");
+        const call = start(c, "battery.chargeOnce");
+        reply(call, fixture().operationStarted);
+        const pending = JSON.stringify(c.backend.interactiveOperations.requests);
+        c.backend.requestPolicy.recover("battery.changed");
+        const read = lastCall(c, "bar.snapshot");
+        compare(read.params.streams, ["battery.changed"]);
+        reply(read, fixture().snapshot);
+        verify(c.actionInFlight);
+        compare(JSON.stringify(c.backend.interactiveOperations.requests), pending);
+        verify(c.backend.renewBaseSubscription());
+        event(c, {protocol: "bar-api", version: 2, stream: "battery.changed", event: "subscribed", data: fixture().snapshot.data.snapshot.battery});
+        verify(c.actionInFlight);
+        compare(JSON.stringify(c.backend.interactiveOperations.requests), pending);
+        compare(effects(c).length, 1, "renewal cannot cancel or replay accepted work");
+    }
     function test_cancelAcknowledgesIntentNotRollback() {
         const c = make("battery.chargeOnce");
         const call = start(c, "battery.chargeOnce");

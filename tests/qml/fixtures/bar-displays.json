@@ -2,6 +2,10 @@
   "events": {
     "confirmed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 4
+        },
         "available": true,
         "baseline": "baseline-preview",
         "docking_state": "settled",
@@ -80,6 +84,10 @@
     },
     "expired": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 9
+        },
         "available": true,
         "baseline": "baseline-preview",
         "docking_state": "settled",
@@ -178,6 +186,10 @@
     },
     "focus": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 6
+        },
         "available": true,
         "baseline": "baseline-initial",
         "docking_state": "settled",
@@ -245,6 +257,10 @@
     },
     "focusReset": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 7
+        },
         "available": true,
         "baseline": "baseline-initial",
         "docking_state": "settled",
@@ -310,6 +326,10 @@
     },
     "initial": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 2
+        },
         "available": true,
         "baseline": "baseline-initial",
         "docking_state": "settled",
@@ -377,6 +397,10 @@
     },
     "policy": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 8
+        },
         "available": true,
         "baseline": "baseline-policy",
         "docking_state": "applying",
@@ -444,6 +468,10 @@
     },
     "preview": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 3
+        },
         "available": true,
         "baseline": "baseline-preview",
         "docking_state": "settled",
@@ -542,6 +570,10 @@
     },
     "reverted": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 5
+        },
         "available": true,
         "baseline": "baseline-initial",
         "docking_state": "settled",
@@ -609,6 +641,10 @@
     },
     "rollback-failed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 10
+        },
         "available": true,
         "baseline": "baseline-preview",
         "docking_state": "failed",
@@ -707,6 +743,10 @@
     },
     "settled": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 11
+        },
         "available": true,
         "baseline": "baseline-policy",
         "docking_state": "settled",
@@ -774,6 +814,10 @@
     },
     "stale": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 12
+        },
         "available": true,
         "baseline": "baseline-external-change",
         "docking_state": "settled",
@@ -962,6 +1006,70 @@
               "prefer_external": true
             },
             "status": "internal"
+          },
+          "snapshot": {
+            "display_policy": {
+              "_publication": {
+                "epoch": "fixture-publication-1",
+                "revision": 7
+              },
+              "available": true,
+              "baseline": "baseline-initial",
+              "docking_state": "settled",
+              "error": null,
+              "focus": {
+                "available": true,
+                "error": null,
+                "saved": {},
+                "values": {
+                  "cursor:no_warps": false,
+                  "input:follow_mouse": 1
+                }
+              },
+              "layout": {
+                "manual_enablement": false,
+                "saved": {
+                  "outputs": []
+                },
+                "trial": null
+              },
+              "outputs": [
+                {
+                  "availableModes": [
+                    "1920x1200@60.00Hz"
+                  ],
+                  "current_mode": "1920x1200@60.00Hz",
+                  "disabled": false,
+                  "focused": false,
+                  "height": 1200,
+                  "id": 0,
+                  "internal": true,
+                  "mirrorOf": "",
+                  "mirror_of": "",
+                  "modes": [
+                    {
+                      "height": 1200,
+                      "id": "1920x1200@60.00Hz",
+                      "rate": 60.0,
+                      "size": "1920x1200",
+                      "width": 1920
+                    }
+                  ],
+                  "name": "eDP-1",
+                  "refreshRate": 60.0,
+                  "scale": 1.25,
+                  "supported": true,
+                  "transform": 0,
+                  "width": 1920,
+                  "x": 0,
+                  "y": 0
+                }
+              ],
+              "policy": {
+                "prefer_external": true
+              },
+              "status": "internal"
+            }
           }
         },
         "ok": true,
@@ -1067,6 +1175,72 @@
               "prefer_external": true
             },
             "status": "internal"
+          },
+          "snapshot": {
+            "display_policy": {
+              "_publication": {
+                "epoch": "fixture-publication-1",
+                "revision": 6
+              },
+              "available": true,
+              "baseline": "baseline-initial",
+              "docking_state": "settled",
+              "error": null,
+              "focus": {
+                "available": true,
+                "error": null,
+                "saved": {
+                  "input:follow_mouse": 0
+                },
+                "values": {
+                  "cursor:no_warps": false,
+                  "input:follow_mouse": 0
+                }
+              },
+              "layout": {
+                "manual_enablement": false,
+                "saved": {
+                  "outputs": []
+                },
+                "trial": null
+              },
+              "outputs": [
+                {
+                  "availableModes": [
+                    "1920x1200@60.00Hz"
+                  ],
+                  "current_mode": "1920x1200@60.00Hz",
+                  "disabled": false,
+                  "focused": false,
+                  "height": 1200,
+                  "id": 0,
+                  "internal": true,
+                  "mirrorOf": "",
+                  "mirror_of": "",
+                  "modes": [
+                    {
+                      "height": 1200,
+                      "id": "1920x1200@60.00Hz",
+                      "rate": 60.0,
+                      "size": "1920x1200",
+                      "width": 1920
+                    }
+                  ],
+                  "name": "eDP-1",
+                  "refreshRate": 60.0,
+                  "scale": 1.25,
+                  "supported": true,
+                  "transform": 0,
+                  "width": 1920,
+                  "x": 0,
+                  "y": 0
+                }
+              ],
+              "policy": {
+                "prefer_external": true
+              },
+              "status": "internal"
+            }
           }
         },
         "ok": true,
@@ -1181,6 +1355,83 @@
               "prefer_external": true
             },
             "status": "internal"
+          },
+          "snapshot": {
+            "display_policy": {
+              "_publication": {
+                "epoch": "fixture-publication-1",
+                "revision": 4
+              },
+              "available": true,
+              "baseline": "baseline-preview",
+              "docking_state": "settled",
+              "error": null,
+              "focus": {
+                "available": true,
+                "error": null,
+                "saved": {
+                  "input:follow_mouse": 1
+                },
+                "values": {
+                  "cursor:no_warps": false,
+                  "input:follow_mouse": 1
+                }
+              },
+              "layout": {
+                "manual_enablement": false,
+                "saved": {
+                  "outputs": [
+                    {
+                      "enabled": true,
+                      "mirror_of": "",
+                      "mode": "1920x1200@60.00Hz",
+                      "name": "eDP-1",
+                      "scale": 2.0,
+                      "transform": 0,
+                      "x": 0,
+                      "y": 0
+                    }
+                  ]
+                },
+                "trial": null
+              },
+              "outputs": [
+                {
+                  "availableModes": [
+                    "1920x1200@60.00Hz"
+                  ],
+                  "current_mode": "1920x1200@60.00Hz",
+                  "disabled": false,
+                  "focused": false,
+                  "height": 1200,
+                  "id": 0,
+                  "internal": true,
+                  "mirrorOf": "",
+                  "mirror_of": "",
+                  "modes": [
+                    {
+                      "height": 1200,
+                      "id": "1920x1200@60.00Hz",
+                      "rate": 60.0,
+                      "size": "1920x1200",
+                      "width": 1920
+                    }
+                  ],
+                  "name": "eDP-1",
+                  "refreshRate": 60.0,
+                  "scale": 2.0,
+                  "supported": true,
+                  "transform": 0,
+                  "width": 1920,
+                  "x": 0,
+                  "y": 0
+                }
+              ],
+              "policy": {
+                "prefer_external": true
+              },
+              "status": "internal"
+            }
           }
         },
         "ok": true,
@@ -1339,6 +1590,103 @@
               "prefer_external": true
             },
             "status": "internal"
+          },
+          "snapshot": {
+            "display_policy": {
+              "_publication": {
+                "epoch": "fixture-publication-1",
+                "revision": 3
+              },
+              "available": true,
+              "baseline": "baseline-preview",
+              "docking_state": "settled",
+              "error": null,
+              "focus": {
+                "available": true,
+                "error": null,
+                "saved": {
+                  "input:follow_mouse": 1
+                },
+                "values": {
+                  "cursor:no_warps": false,
+                  "input:follow_mouse": 1
+                }
+              },
+              "layout": {
+                "manual_enablement": false,
+                "saved": {
+                  "outputs": []
+                },
+                "trial": {
+                  "expires_at": 2147483647,
+                  "id": "trial-example",
+                  "previous": {
+                    "outputs": [
+                      {
+                        "enabled": true,
+                        "mirror_of": "",
+                        "mode": "1920x1200@60.00Hz",
+                        "name": "eDP-1",
+                        "scale": 1.25,
+                        "transform": 0,
+                        "x": 0,
+                        "y": 0
+                      }
+                    ]
+                  },
+                  "proposed": {
+                    "outputs": [
+                      {
+                        "enabled": true,
+                        "mirror_of": "",
+                        "mode": "1920x1200@60.00Hz",
+                        "name": "eDP-1",
+                        "scale": 2.0,
+                        "transform": 0,
+                        "x": 0,
+                        "y": 0
+                      }
+                    ]
+                  }
+                }
+              },
+              "outputs": [
+                {
+                  "availableModes": [
+                    "1920x1200@60.00Hz"
+                  ],
+                  "current_mode": "1920x1200@60.00Hz",
+                  "disabled": false,
+                  "focused": false,
+                  "height": 1200,
+                  "id": 0,
+                  "internal": true,
+                  "mirrorOf": "",
+                  "mirror_of": "",
+                  "modes": [
+                    {
+                      "height": 1200,
+                      "id": "1920x1200@60.00Hz",
+                      "rate": 60.0,
+                      "size": "1920x1200",
+                      "width": 1920
+                    }
+                  ],
+                  "name": "eDP-1",
+                  "refreshRate": 60.0,
+                  "scale": 2.0,
+                  "supported": true,
+                  "transform": 0,
+                  "width": 1920,
+                  "x": 0,
+                  "y": 0
+                }
+              ],
+              "policy": {
+                "prefer_external": true
+              },
+              "status": "internal"
+            }
           }
         },
         "ok": true,
@@ -1442,6 +1790,72 @@
               "prefer_external": true
             },
             "status": "internal"
+          },
+          "snapshot": {
+            "display_policy": {
+              "_publication": {
+                "epoch": "fixture-publication-1",
+                "revision": 5
+              },
+              "available": true,
+              "baseline": "baseline-initial",
+              "docking_state": "settled",
+              "error": null,
+              "focus": {
+                "available": true,
+                "error": null,
+                "saved": {
+                  "input:follow_mouse": 1
+                },
+                "values": {
+                  "cursor:no_warps": false,
+                  "input:follow_mouse": 1
+                }
+              },
+              "layout": {
+                "manual_enablement": false,
+                "saved": {
+                  "outputs": []
+                },
+                "trial": null
+              },
+              "outputs": [
+                {
+                  "availableModes": [
+                    "1920x1200@60.00Hz"
+                  ],
+                  "current_mode": "1920x1200@60.00Hz",
+                  "disabled": false,
+                  "focused": false,
+                  "height": 1200,
+                  "id": 0,
+                  "internal": true,
+                  "mirrorOf": "",
+                  "mirror_of": "",
+                  "modes": [
+                    {
+                      "height": 1200,
+                      "id": "1920x1200@60.00Hz",
+                      "rate": 60.0,
+                      "size": "1920x1200",
+                      "width": 1920
+                    }
+                  ],
+                  "name": "eDP-1",
+                  "refreshRate": 60.0,
+                  "scale": 1.25,
+                  "supported": true,
+                  "transform": 0,
+                  "width": 1920,
+                  "x": 0,
+                  "y": 0
+                }
+              ],
+              "policy": {
+                "prefer_external": true
+              },
+              "status": "internal"
+            }
           }
         },
         "ok": true,
@@ -1545,6 +1959,72 @@
               "prefer_external": false
             },
             "status": "pending"
+          },
+          "snapshot": {
+            "display_policy": {
+              "_publication": {
+                "epoch": "fixture-publication-1",
+                "revision": 8
+              },
+              "available": true,
+              "baseline": "baseline-policy",
+              "docking_state": "applying",
+              "error": null,
+              "focus": {
+                "available": true,
+                "error": null,
+                "saved": {
+                  "input:follow_mouse": 1
+                },
+                "values": {
+                  "cursor:no_warps": false,
+                  "input:follow_mouse": 1
+                }
+              },
+              "layout": {
+                "manual_enablement": false,
+                "saved": {
+                  "outputs": []
+                },
+                "trial": null
+              },
+              "outputs": [
+                {
+                  "availableModes": [
+                    "1920x1200@60.00Hz"
+                  ],
+                  "current_mode": "1920x1200@60.00Hz",
+                  "disabled": false,
+                  "focused": false,
+                  "height": 1200,
+                  "id": 0,
+                  "internal": true,
+                  "mirrorOf": "",
+                  "mirror_of": "",
+                  "modes": [
+                    {
+                      "height": 1200,
+                      "id": "1920x1200@60.00Hz",
+                      "rate": 60.0,
+                      "size": "1920x1200",
+                      "width": 1920
+                    }
+                  ],
+                  "name": "eDP-1",
+                  "refreshRate": 60.0,
+                  "scale": 1.25,
+                  "supported": true,
+                  "transform": 0,
+                  "width": 1920,
+                  "x": 0,
+                  "y": 0
+                }
+              ],
+              "policy": {
+                "prefer_external": false
+              },
+              "status": "pending"
+            }
           }
         },
         "ok": true,
@@ -1567,6 +2047,10 @@
       "data": {
         "snapshot": {
           "activity": {
+            "_publication": {
+              "epoch": "fixture-publication-2",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "event_count": 0,
@@ -1612,6 +2096,10 @@
             "world_clocks": []
           },
           "audio": {
+            "_publication": {
+              "epoch": "fixture-publication-3",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "input_available": false,
@@ -1624,6 +2112,10 @@
             "volume_percent": 0
           },
           "battery": {
+            "_publication": {
+              "epoch": "fixture-publication-4",
+              "revision": 1
+            },
             "available": false,
             "charging": false,
             "critical": false,
@@ -1707,6 +2199,10 @@
             "warning": false
           },
           "brightness": {
+            "_publication": {
+              "epoch": "fixture-publication-5",
+              "revision": 1
+            },
             "available": false,
             "brightness": 0,
             "device": "",
@@ -1715,12 +2211,20 @@
             "percent": 0
           },
           "compositor": {
+            "_publication": {
+              "epoch": "fixture-publication-6",
+              "revision": 1
+            },
             "animations_enabled": null,
             "available": false,
             "error": null,
             "revision": 0
           },
           "display_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-1",
+              "revision": 4
+            },
             "available": true,
             "baseline": "baseline-preview",
             "docking_state": "settled",
@@ -1792,6 +2296,10 @@
             "status": "internal"
           },
           "media": {
+            "_publication": {
+              "epoch": "fixture-publication-7",
+              "revision": 1
+            },
             "active_player": null,
             "available": false,
             "error": null,
@@ -1799,12 +2307,20 @@
             "players": []
           },
           "notification_active": {
+            "_publication": {
+              "epoch": "fixture-publication-8",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "notifications": [],
             "revision": 0
           },
           "notifications": {
+            "_publication": {
+              "epoch": "fixture-publication-9",
+              "revision": 1
+            },
             "alt": "",
             "app_policies": {},
             "available": false,
@@ -1820,6 +2336,10 @@
             "tooltip": ""
           },
           "osd_hardware": {
+            "_publication": {
+              "epoch": "fixture-publication-10",
+              "revision": 1
+            },
             "available": false,
             "camera_privacy": false,
             "caps_lock": false,
@@ -1829,6 +2349,10 @@
             "num_lock": false
           },
           "power_profile": {
+            "_publication": {
+              "epoch": "fixture-publication-11",
+              "revision": 1
+            },
             "actions": [],
             "active_holds": [],
             "available": false,
@@ -1847,6 +2371,10 @@
             "version": ""
           },
           "power_sleep": {
+            "_publication": {
+              "epoch": "fixture-publication-12",
+              "revision": 1
+            },
             "available": false,
             "can_hibernate": "",
             "can_suspend": "",
@@ -1874,6 +2402,10 @@
             "resume_generation": 0
           },
           "sleep_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-13",
+              "revision": 1
+            },
             "active_profile": "",
             "available": false,
             "critical_battery": {
@@ -1910,6 +2442,10 @@
             }
           },
           "theme": {
+            "_publication": {
+              "epoch": "fixture-publication-14",
+              "revision": 1
+            },
             "error": "#ba1a1a",
             "errorContainer": "#ffdad6",
             "onError": "#ffffff",
@@ -1942,6 +2478,10 @@
             "warning": "#78590c"
           },
           "timezone": {
+            "_publication": {
+              "epoch": "fixture-publication-15",
+              "revision": 1
+            },
             "abbreviation": "",
             "available": false,
             "city": "",
@@ -1951,6 +2491,10 @@
             "utc_offset_seconds": 0
           },
           "updates": {
+            "_publication": {
+              "epoch": "fixture-publication-16",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "jobs": [],
@@ -1959,12 +2503,20 @@
             "state_directory": ""
           },
           "workarea": {
+            "_publication": {
+              "epoch": "fixture-publication-17",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "monitors": {},
             "revision": 0
           },
           "workspaces": {
+            "_publication": {
+              "epoch": "fixture-publication-18",
+              "revision": 1
+            },
             "active_window": null,
             "available": false,
             "error": null,
@@ -1982,6 +2534,10 @@
       "data": {
         "snapshot": {
           "activity": {
+            "_publication": {
+              "epoch": "fixture-publication-2",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "event_count": 0,
@@ -2027,6 +2583,10 @@
             "world_clocks": []
           },
           "audio": {
+            "_publication": {
+              "epoch": "fixture-publication-3",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "input_available": false,
@@ -2039,6 +2599,10 @@
             "volume_percent": 0
           },
           "battery": {
+            "_publication": {
+              "epoch": "fixture-publication-4",
+              "revision": 1
+            },
             "available": false,
             "charging": false,
             "critical": false,
@@ -2122,6 +2686,10 @@
             "warning": false
           },
           "brightness": {
+            "_publication": {
+              "epoch": "fixture-publication-5",
+              "revision": 1
+            },
             "available": false,
             "brightness": 0,
             "device": "",
@@ -2130,12 +2698,20 @@
             "percent": 0
           },
           "compositor": {
+            "_publication": {
+              "epoch": "fixture-publication-6",
+              "revision": 1
+            },
             "animations_enabled": null,
             "available": false,
             "error": null,
             "revision": 0
           },
           "display_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-1",
+              "revision": 6
+            },
             "available": true,
             "baseline": "baseline-initial",
             "docking_state": "settled",
@@ -2196,6 +2772,10 @@
             "status": "internal"
           },
           "media": {
+            "_publication": {
+              "epoch": "fixture-publication-7",
+              "revision": 1
+            },
             "active_player": null,
             "available": false,
             "error": null,
@@ -2203,12 +2783,20 @@
             "players": []
           },
           "notification_active": {
+            "_publication": {
+              "epoch": "fixture-publication-8",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "notifications": [],
             "revision": 0
           },
           "notifications": {
+            "_publication": {
+              "epoch": "fixture-publication-9",
+              "revision": 1
+            },
             "alt": "",
             "app_policies": {},
             "available": false,
@@ -2224,6 +2812,10 @@
             "tooltip": ""
           },
           "osd_hardware": {
+            "_publication": {
+              "epoch": "fixture-publication-10",
+              "revision": 1
+            },
             "available": false,
             "camera_privacy": false,
             "caps_lock": false,
@@ -2233,6 +2825,10 @@
             "num_lock": false
           },
           "power_profile": {
+            "_publication": {
+              "epoch": "fixture-publication-11",
+              "revision": 1
+            },
             "actions": [],
             "active_holds": [],
             "available": false,
@@ -2251,6 +2847,10 @@
             "version": ""
           },
           "power_sleep": {
+            "_publication": {
+              "epoch": "fixture-publication-12",
+              "revision": 1
+            },
             "available": false,
             "can_hibernate": "",
             "can_suspend": "",
@@ -2278,6 +2878,10 @@
             "resume_generation": 0
           },
           "sleep_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-13",
+              "revision": 1
+            },
             "active_profile": "",
             "available": false,
             "critical_battery": {
@@ -2314,6 +2918,10 @@
             }
           },
           "theme": {
+            "_publication": {
+              "epoch": "fixture-publication-14",
+              "revision": 1
+            },
             "error": "#ba1a1a",
             "errorContainer": "#ffdad6",
             "onError": "#ffffff",
@@ -2346,6 +2954,10 @@
             "warning": "#78590c"
           },
           "timezone": {
+            "_publication": {
+              "epoch": "fixture-publication-15",
+              "revision": 1
+            },
             "abbreviation": "",
             "available": false,
             "city": "",
@@ -2355,6 +2967,10 @@
             "utc_offset_seconds": 0
           },
           "updates": {
+            "_publication": {
+              "epoch": "fixture-publication-16",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "jobs": [],
@@ -2363,12 +2979,20 @@
             "state_directory": ""
           },
           "workarea": {
+            "_publication": {
+              "epoch": "fixture-publication-17",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "monitors": {},
             "revision": 0
           },
           "workspaces": {
+            "_publication": {
+              "epoch": "fixture-publication-18",
+              "revision": 1
+            },
             "active_window": null,
             "available": false,
             "error": null,
@@ -2386,6 +3010,10 @@
       "data": {
         "snapshot": {
           "activity": {
+            "_publication": {
+              "epoch": "fixture-publication-2",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "event_count": 0,
@@ -2431,6 +3059,10 @@
             "world_clocks": []
           },
           "audio": {
+            "_publication": {
+              "epoch": "fixture-publication-3",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "input_available": false,
@@ -2443,6 +3075,10 @@
             "volume_percent": 0
           },
           "battery": {
+            "_publication": {
+              "epoch": "fixture-publication-4",
+              "revision": 1
+            },
             "available": false,
             "charging": false,
             "critical": false,
@@ -2526,6 +3162,10 @@
             "warning": false
           },
           "brightness": {
+            "_publication": {
+              "epoch": "fixture-publication-5",
+              "revision": 1
+            },
             "available": false,
             "brightness": 0,
             "device": "",
@@ -2534,12 +3174,20 @@
             "percent": 0
           },
           "compositor": {
+            "_publication": {
+              "epoch": "fixture-publication-6",
+              "revision": 1
+            },
             "animations_enabled": null,
             "available": false,
             "error": null,
             "revision": 0
           },
           "display_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-1",
+              "revision": 7
+            },
             "available": true,
             "baseline": "baseline-initial",
             "docking_state": "settled",
@@ -2598,6 +3246,10 @@
             "status": "internal"
           },
           "media": {
+            "_publication": {
+              "epoch": "fixture-publication-7",
+              "revision": 1
+            },
             "active_player": null,
             "available": false,
             "error": null,
@@ -2605,12 +3257,20 @@
             "players": []
           },
           "notification_active": {
+            "_publication": {
+              "epoch": "fixture-publication-8",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "notifications": [],
             "revision": 0
           },
           "notifications": {
+            "_publication": {
+              "epoch": "fixture-publication-9",
+              "revision": 1
+            },
             "alt": "",
             "app_policies": {},
             "available": false,
@@ -2626,6 +3286,10 @@
             "tooltip": ""
           },
           "osd_hardware": {
+            "_publication": {
+              "epoch": "fixture-publication-10",
+              "revision": 1
+            },
             "available": false,
             "camera_privacy": false,
             "caps_lock": false,
@@ -2635,6 +3299,10 @@
             "num_lock": false
           },
           "power_profile": {
+            "_publication": {
+              "epoch": "fixture-publication-11",
+              "revision": 1
+            },
             "actions": [],
             "active_holds": [],
             "available": false,
@@ -2653,6 +3321,10 @@
             "version": ""
           },
           "power_sleep": {
+            "_publication": {
+              "epoch": "fixture-publication-12",
+              "revision": 1
+            },
             "available": false,
             "can_hibernate": "",
             "can_suspend": "",
@@ -2680,6 +3352,10 @@
             "resume_generation": 0
           },
           "sleep_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-13",
+              "revision": 1
+            },
             "active_profile": "",
             "available": false,
             "critical_battery": {
@@ -2716,6 +3392,10 @@
             }
           },
           "theme": {
+            "_publication": {
+              "epoch": "fixture-publication-14",
+              "revision": 1
+            },
             "error": "#ba1a1a",
             "errorContainer": "#ffdad6",
             "onError": "#ffffff",
@@ -2748,6 +3428,10 @@
             "warning": "#78590c"
           },
           "timezone": {
+            "_publication": {
+              "epoch": "fixture-publication-15",
+              "revision": 1
+            },
             "abbreviation": "",
             "available": false,
             "city": "",
@@ -2757,6 +3441,10 @@
             "utc_offset_seconds": 0
           },
           "updates": {
+            "_publication": {
+              "epoch": "fixture-publication-16",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "jobs": [],
@@ -2765,12 +3453,20 @@
             "state_directory": ""
           },
           "workarea": {
+            "_publication": {
+              "epoch": "fixture-publication-17",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "monitors": {},
             "revision": 0
           },
           "workspaces": {
+            "_publication": {
+              "epoch": "fixture-publication-18",
+              "revision": 1
+            },
             "active_window": null,
             "available": false,
             "error": null,
@@ -2788,6 +3484,10 @@
       "data": {
         "snapshot": {
           "activity": {
+            "_publication": {
+              "epoch": "fixture-publication-2",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "event_count": 0,
@@ -2833,6 +3533,10 @@
             "world_clocks": []
           },
           "audio": {
+            "_publication": {
+              "epoch": "fixture-publication-3",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "input_available": false,
@@ -2845,6 +3549,10 @@
             "volume_percent": 0
           },
           "battery": {
+            "_publication": {
+              "epoch": "fixture-publication-4",
+              "revision": 1
+            },
             "available": false,
             "charging": false,
             "critical": false,
@@ -2928,6 +3636,10 @@
             "warning": false
           },
           "brightness": {
+            "_publication": {
+              "epoch": "fixture-publication-5",
+              "revision": 1
+            },
             "available": false,
             "brightness": 0,
             "device": "",
@@ -2936,12 +3648,20 @@
             "percent": 0
           },
           "compositor": {
+            "_publication": {
+              "epoch": "fixture-publication-6",
+              "revision": 1
+            },
             "animations_enabled": null,
             "available": false,
             "error": null,
             "revision": 0
           },
           "display_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-1",
+              "revision": 2
+            },
             "available": true,
             "baseline": "baseline-initial",
             "docking_state": "settled",
@@ -3002,6 +3722,10 @@
             "status": "internal"
           },
           "media": {
+            "_publication": {
+              "epoch": "fixture-publication-7",
+              "revision": 1
+            },
             "active_player": null,
             "available": false,
             "error": null,
@@ -3009,12 +3733,20 @@
             "players": []
           },
           "notification_active": {
+            "_publication": {
+              "epoch": "fixture-publication-8",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "notifications": [],
             "revision": 0
           },
           "notifications": {
+            "_publication": {
+              "epoch": "fixture-publication-9",
+              "revision": 1
+            },
             "alt": "",
             "app_policies": {},
             "available": false,
@@ -3030,6 +3762,10 @@
             "tooltip": ""
           },
           "osd_hardware": {
+            "_publication": {
+              "epoch": "fixture-publication-10",
+              "revision": 1
+            },
             "available": false,
             "camera_privacy": false,
             "caps_lock": false,
@@ -3039,6 +3775,10 @@
             "num_lock": false
           },
           "power_profile": {
+            "_publication": {
+              "epoch": "fixture-publication-11",
+              "revision": 1
+            },
             "actions": [],
             "active_holds": [],
             "available": false,
@@ -3057,6 +3797,10 @@
             "version": ""
           },
           "power_sleep": {
+            "_publication": {
+              "epoch": "fixture-publication-12",
+              "revision": 1
+            },
             "available": false,
             "can_hibernate": "",
             "can_suspend": "",
@@ -3084,6 +3828,10 @@
             "resume_generation": 0
           },
           "sleep_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-13",
+              "revision": 1
+            },
             "active_profile": "",
             "available": false,
             "critical_battery": {
@@ -3120,6 +3868,10 @@
             }
           },
           "theme": {
+            "_publication": {
+              "epoch": "fixture-publication-14",
+              "revision": 1
+            },
             "error": "#ba1a1a",
             "errorContainer": "#ffdad6",
             "onError": "#ffffff",
@@ -3152,6 +3904,10 @@
             "warning": "#78590c"
           },
           "timezone": {
+            "_publication": {
+              "epoch": "fixture-publication-15",
+              "revision": 1
+            },
             "abbreviation": "",
             "available": false,
             "city": "",
@@ -3161,6 +3917,10 @@
             "utc_offset_seconds": 0
           },
           "updates": {
+            "_publication": {
+              "epoch": "fixture-publication-16",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "jobs": [],
@@ -3169,12 +3929,20 @@
             "state_directory": ""
           },
           "workarea": {
+            "_publication": {
+              "epoch": "fixture-publication-17",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "monitors": {},
             "revision": 0
           },
           "workspaces": {
+            "_publication": {
+              "epoch": "fixture-publication-18",
+              "revision": 1
+            },
             "active_window": null,
             "available": false,
             "error": null,
@@ -3192,6 +3960,10 @@
       "data": {
         "snapshot": {
           "activity": {
+            "_publication": {
+              "epoch": "fixture-publication-2",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "event_count": 0,
@@ -3237,6 +4009,10 @@
             "world_clocks": []
           },
           "audio": {
+            "_publication": {
+              "epoch": "fixture-publication-3",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "input_available": false,
@@ -3249,6 +4025,10 @@
             "volume_percent": 0
           },
           "battery": {
+            "_publication": {
+              "epoch": "fixture-publication-4",
+              "revision": 1
+            },
             "available": false,
             "charging": false,
             "critical": false,
@@ -3332,6 +4112,10 @@
             "warning": false
           },
           "brightness": {
+            "_publication": {
+              "epoch": "fixture-publication-5",
+              "revision": 1
+            },
             "available": false,
             "brightness": 0,
             "device": "",
@@ -3340,12 +4124,20 @@
             "percent": 0
           },
           "compositor": {
+            "_publication": {
+              "epoch": "fixture-publication-6",
+              "revision": 1
+            },
             "animations_enabled": null,
             "available": false,
             "error": null,
             "revision": 0
           },
           "display_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-1",
+              "revision": 8
+            },
             "available": true,
             "baseline": "baseline-policy",
             "docking_state": "applying",
@@ -3406,6 +4198,10 @@
             "status": "pending"
           },
           "media": {
+            "_publication": {
+              "epoch": "fixture-publication-7",
+              "revision": 1
+            },
             "active_player": null,
             "available": false,
             "error": null,
@@ -3413,12 +4209,20 @@
             "players": []
           },
           "notification_active": {
+            "_publication": {
+              "epoch": "fixture-publication-8",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "notifications": [],
             "revision": 0
           },
           "notifications": {
+            "_publication": {
+              "epoch": "fixture-publication-9",
+              "revision": 1
+            },
             "alt": "",
             "app_policies": {},
             "available": false,
@@ -3434,6 +4238,10 @@
             "tooltip": ""
           },
           "osd_hardware": {
+            "_publication": {
+              "epoch": "fixture-publication-10",
+              "revision": 1
+            },
             "available": false,
             "camera_privacy": false,
             "caps_lock": false,
@@ -3443,6 +4251,10 @@
             "num_lock": false
           },
           "power_profile": {
+            "_publication": {
+              "epoch": "fixture-publication-11",
+              "revision": 1
+            },
             "actions": [],
             "active_holds": [],
             "available": false,
@@ -3461,6 +4273,10 @@
             "version": ""
           },
           "power_sleep": {
+            "_publication": {
+              "epoch": "fixture-publication-12",
+              "revision": 1
+            },
             "available": false,
             "can_hibernate": "",
             "can_suspend": "",
@@ -3488,6 +4304,10 @@
             "resume_generation": 0
           },
           "sleep_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-13",
+              "revision": 1
+            },
             "active_profile": "",
             "available": false,
             "critical_battery": {
@@ -3524,6 +4344,10 @@
             }
           },
           "theme": {
+            "_publication": {
+              "epoch": "fixture-publication-14",
+              "revision": 1
+            },
             "error": "#ba1a1a",
             "errorContainer": "#ffdad6",
             "onError": "#ffffff",
@@ -3556,6 +4380,10 @@
             "warning": "#78590c"
           },
           "timezone": {
+            "_publication": {
+              "epoch": "fixture-publication-15",
+              "revision": 1
+            },
             "abbreviation": "",
             "available": false,
             "city": "",
@@ -3565,6 +4393,10 @@
             "utc_offset_seconds": 0
           },
           "updates": {
+            "_publication": {
+              "epoch": "fixture-publication-16",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "jobs": [],
@@ -3573,12 +4405,20 @@
             "state_directory": ""
           },
           "workarea": {
+            "_publication": {
+              "epoch": "fixture-publication-17",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "monitors": {},
             "revision": 0
           },
           "workspaces": {
+            "_publication": {
+              "epoch": "fixture-publication-18",
+              "revision": 1
+            },
             "active_window": null,
             "available": false,
             "error": null,
@@ -3596,6 +4436,10 @@
       "data": {
         "snapshot": {
           "activity": {
+            "_publication": {
+              "epoch": "fixture-publication-2",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "event_count": 0,
@@ -3641,6 +4485,10 @@
             "world_clocks": []
           },
           "audio": {
+            "_publication": {
+              "epoch": "fixture-publication-3",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "input_available": false,
@@ -3653,6 +4501,10 @@
             "volume_percent": 0
           },
           "battery": {
+            "_publication": {
+              "epoch": "fixture-publication-4",
+              "revision": 1
+            },
             "available": false,
             "charging": false,
             "critical": false,
@@ -3736,6 +4588,10 @@
             "warning": false
           },
           "brightness": {
+            "_publication": {
+              "epoch": "fixture-publication-5",
+              "revision": 1
+            },
             "available": false,
             "brightness": 0,
             "device": "",
@@ -3744,12 +4600,20 @@
             "percent": 0
           },
           "compositor": {
+            "_publication": {
+              "epoch": "fixture-publication-6",
+              "revision": 1
+            },
             "animations_enabled": null,
             "available": false,
             "error": null,
             "revision": 0
           },
           "display_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-1",
+              "revision": 3
+            },
             "available": true,
             "baseline": "baseline-preview",
             "docking_state": "settled",
@@ -3841,6 +4705,10 @@
             "status": "internal"
           },
           "media": {
+            "_publication": {
+              "epoch": "fixture-publication-7",
+              "revision": 1
+            },
             "active_player": null,
             "available": false,
             "error": null,
@@ -3848,12 +4716,20 @@
             "players": []
           },
           "notification_active": {
+            "_publication": {
+              "epoch": "fixture-publication-8",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "notifications": [],
             "revision": 0
           },
           "notifications": {
+            "_publication": {
+              "epoch": "fixture-publication-9",
+              "revision": 1
+            },
             "alt": "",
             "app_policies": {},
             "available": false,
@@ -3869,6 +4745,10 @@
             "tooltip": ""
           },
           "osd_hardware": {
+            "_publication": {
+              "epoch": "fixture-publication-10",
+              "revision": 1
+            },
             "available": false,
             "camera_privacy": false,
             "caps_lock": false,
@@ -3878,6 +4758,10 @@
             "num_lock": false
           },
           "power_profile": {
+            "_publication": {
+              "epoch": "fixture-publication-11",
+              "revision": 1
+            },
             "actions": [],
             "active_holds": [],
             "available": false,
@@ -3896,6 +4780,10 @@
             "version": ""
           },
           "power_sleep": {
+            "_publication": {
+              "epoch": "fixture-publication-12",
+              "revision": 1
+            },
             "available": false,
             "can_hibernate": "",
             "can_suspend": "",
@@ -3923,6 +4811,10 @@
             "resume_generation": 0
           },
           "sleep_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-13",
+              "revision": 1
+            },
             "active_profile": "",
             "available": false,
             "critical_battery": {
@@ -3959,6 +4851,10 @@
             }
           },
           "theme": {
+            "_publication": {
+              "epoch": "fixture-publication-14",
+              "revision": 1
+            },
             "error": "#ba1a1a",
             "errorContainer": "#ffdad6",
             "onError": "#ffffff",
@@ -3991,6 +4887,10 @@
             "warning": "#78590c"
           },
           "timezone": {
+            "_publication": {
+              "epoch": "fixture-publication-15",
+              "revision": 1
+            },
             "abbreviation": "",
             "available": false,
             "city": "",
@@ -4000,6 +4900,10 @@
             "utc_offset_seconds": 0
           },
           "updates": {
+            "_publication": {
+              "epoch": "fixture-publication-16",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "jobs": [],
@@ -4008,12 +4912,20 @@
             "state_directory": ""
           },
           "workarea": {
+            "_publication": {
+              "epoch": "fixture-publication-17",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "monitors": {},
             "revision": 0
           },
           "workspaces": {
+            "_publication": {
+              "epoch": "fixture-publication-18",
+              "revision": 1
+            },
             "active_window": null,
             "available": false,
             "error": null,
@@ -4031,6 +4943,10 @@
       "data": {
         "snapshot": {
           "activity": {
+            "_publication": {
+              "epoch": "fixture-publication-2",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "event_count": 0,
@@ -4076,6 +4992,10 @@
             "world_clocks": []
           },
           "audio": {
+            "_publication": {
+              "epoch": "fixture-publication-3",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "input_available": false,
@@ -4088,6 +5008,10 @@
             "volume_percent": 0
           },
           "battery": {
+            "_publication": {
+              "epoch": "fixture-publication-4",
+              "revision": 1
+            },
             "available": false,
             "charging": false,
             "critical": false,
@@ -4171,6 +5095,10 @@
             "warning": false
           },
           "brightness": {
+            "_publication": {
+              "epoch": "fixture-publication-5",
+              "revision": 1
+            },
             "available": false,
             "brightness": 0,
             "device": "",
@@ -4179,12 +5107,20 @@
             "percent": 0
           },
           "compositor": {
+            "_publication": {
+              "epoch": "fixture-publication-6",
+              "revision": 1
+            },
             "animations_enabled": null,
             "available": false,
             "error": null,
             "revision": 0
           },
           "display_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-1",
+              "revision": 5
+            },
             "available": true,
             "baseline": "baseline-initial",
             "docking_state": "settled",
@@ -4245,6 +5181,10 @@
             "status": "internal"
           },
           "media": {
+            "_publication": {
+              "epoch": "fixture-publication-7",
+              "revision": 1
+            },
             "active_player": null,
             "available": false,
             "error": null,
@@ -4252,12 +5192,20 @@
             "players": []
           },
           "notification_active": {
+            "_publication": {
+              "epoch": "fixture-publication-8",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "notifications": [],
             "revision": 0
           },
           "notifications": {
+            "_publication": {
+              "epoch": "fixture-publication-9",
+              "revision": 1
+            },
             "alt": "",
             "app_policies": {},
             "available": false,
@@ -4273,6 +5221,10 @@
             "tooltip": ""
           },
           "osd_hardware": {
+            "_publication": {
+              "epoch": "fixture-publication-10",
+              "revision": 1
+            },
             "available": false,
             "camera_privacy": false,
             "caps_lock": false,
@@ -4282,6 +5234,10 @@
             "num_lock": false
           },
           "power_profile": {
+            "_publication": {
+              "epoch": "fixture-publication-11",
+              "revision": 1
+            },
             "actions": [],
             "active_holds": [],
             "available": false,
@@ -4300,6 +5256,10 @@
             "version": ""
           },
           "power_sleep": {
+            "_publication": {
+              "epoch": "fixture-publication-12",
+              "revision": 1
+            },
             "available": false,
             "can_hibernate": "",
             "can_suspend": "",
@@ -4327,6 +5287,10 @@
             "resume_generation": 0
           },
           "sleep_policy": {
+            "_publication": {
+              "epoch": "fixture-publication-13",
+              "revision": 1
+            },
             "active_profile": "",
             "available": false,
             "critical_battery": {
@@ -4363,6 +5327,10 @@
             }
           },
           "theme": {
+            "_publication": {
+              "epoch": "fixture-publication-14",
+              "revision": 1
+            },
             "error": "#ba1a1a",
             "errorContainer": "#ffdad6",
             "onError": "#ffffff",
@@ -4395,6 +5363,10 @@
             "warning": "#78590c"
           },
           "timezone": {
+            "_publication": {
+              "epoch": "fixture-publication-15",
+              "revision": 1
+            },
             "abbreviation": "",
             "available": false,
             "city": "",
@@ -4404,6 +5376,10 @@
             "utc_offset_seconds": 0
           },
           "updates": {
+            "_publication": {
+              "epoch": "fixture-publication-16",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "jobs": [],
@@ -4412,12 +5388,20 @@
             "state_directory": ""
           },
           "workarea": {
+            "_publication": {
+              "epoch": "fixture-publication-17",
+              "revision": 1
+            },
             "available": false,
             "error": null,
             "monitors": {},
             "revision": 0
           },
           "workspaces": {
+            "_publication": {
+              "epoch": "fixture-publication-18",
+              "revision": 1
+            },
             "active_window": null,
             "available": false,
             "error": null,

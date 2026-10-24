@@ -79,6 +79,24 @@ DaemonTestCase {
         verify(!controller.canChange);
         return call;
     }
+    function test_domainRecoveryKeepsDraftAndPendingPreviewUntilItsAcknowledgement() {
+        const controller = make();
+        const preview = start(controller, "displayLayout.preview");
+        const draft = JSON.stringify(controller.draft);
+        controller.backend.requestPolicy.recover("display-policy.changed");
+        const recovery = lastCall(controller, "bar.snapshot");
+        compare(recovery.params.streams, ["display-policy.changed"]);
+        reply(recovery, fixture().snapshots.initial);
+        compare(JSON.stringify(controller.draft), draft);
+        verify(controller.actionInFlight);
+        compare(effects(controller).length, 1);
+        event(controller, "preview");
+        verify(controller.actionInFlight, "state observation is not the effect acknowledgement");
+        reply(preview, fixture().replies[preview.method].success);
+        verify(!controller.actionInFlight);
+        verify(controller.trial !== null);
+        compare(effects(controller).length, 1);
+    }
     function test_nativeDraftRejectionPreservesRawInputUntilExplicitRetry() {
         const controller = make();
         controller.edit("eDP-1", "scale", "");
@@ -96,6 +114,34 @@ DaemonTestCase {
         controller.edit("eDP-1", "scale", 1.5);
         verify(controller.preview());
         compare(effects(controller).length, 2);
+    }
+    function test_latePreviewReceiptCannotRevertAnotherObservedTrial() {
+        const controller = make();
+        const preview = start(controller, "displayLayout.preview");
+        controller.deactivateUi();
+        const foreign = clone(fixture().events.preview);
+        foreign.data.layout.trial.id = "another-trial";
+        foreign.data._publication.revision++;
+        const route = Object.assign({}, preview.route, {kind:"base-subscription", localId:"session-subscribe"});
+        emitBaseEvent("bar-daemon", route, foreign);
+        reply(preview, fixture().replies[preview.method].success);
+        compare(controller.trial.id, "another-trial");
+        compare(effects(controller).length, 1, "receipt identity cannot authorize rollback of newer live state");
+        verify(!controller.revertOnArrival);
+    }
+    function test_lostPreviewAcceptanceDoesNotAuthorizeRollbackAfterReconnect() {
+        const controller = make();
+        start(controller, "displayLayout.preview");
+        controller.deactivateUi();
+        clientReady = false;
+        Io.DaemonSessions.sessions["bar-daemon"].client.transportFailed("Preview outcome unknown");
+        verify(!controller.revertOnArrival);
+        controller.uiActive = true;
+        clientReady = true;
+        reply(lastCall(controller, "bar.snapshot"), fixture().snapshots.preview);
+        wait(0);
+        compare(controller.trial.id, fixture().events.preview.data.layout.trial.id);
+        compare(calls.filter(c => c.method.startsWith("displayLayout.")).length, 1, "a fresh baseline is not effect or rollback authority");
     }
     function test_explicitCloseRevertsOnceButLostRevertIsNotReplayed() {
         const controller = make();

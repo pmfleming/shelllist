@@ -57,6 +57,25 @@ DaemonTestCase {
     function select(s,id) {s.owner.selectionModel.selectedIndex=s.owner.filteredCities.findIndex(c=>c.id===id);}
     function mutations() {return calls.filter(c=>["locations.add","locations.remove","location.setManual","location.returnToAutomatic"].includes(c.method));}
     function reply(s,id,data) {s.locations.finish(id,{protocol:"bar-api",version:2,ok:true,data:data},"");}
+    function test_addedCitySelectionWaitsForCurrentState_data() {
+        return [{tag:"select-confirmed",intervene:false},{tag:"preserve-navigation",intervene:true}];
+    }
+    function test_addedCitySelectionWaitsForCurrentState(data) {
+        const s=start(true);
+        s.locations.openPicker("add");
+        s.locations.candidates=[place("Dublin","Europe/Dublin")];
+        s.locations.choice="0";
+        s.locations.submitPicker();
+        verify(s.locations.mutationId.length>0);
+        const activity=Object.assign({},s.owner.activity,{location_catalog:{revision:2,writable:true},locations:rows(true).concat([city("city:2","Dublin",false,false)])});
+        reply(s,s.locations.mutationId,{id:"city:2",activity:activity});
+        compare(s.owner.cityModel.count,2,"receipt is not the current activity projection");
+        if (data.intervene) s.owner.navigationInteracted();
+        s.owner.activity=activity;
+        tryCompare(s.owner.cityModel,"count",3);
+        tryVerify(()=>s.owner.selectedCity.id===(data.intervene?"weather:home":"city:2"));
+        compare(mutations().length,1);
+    }
     function test_nativeClockUpdatesKeepTheCityDelegateAndOpenDraft() {
         const s=start(false);openDetails(s);
         const row=findChild(s.view,"timeWeatherLocation::weather:home");
@@ -112,6 +131,8 @@ DaemonTestCase {
         verify(s.owner.cities.some(c=>c.id==="city:1"),"no optimistic removal");
         const activity=Object.assign({},s.owner.activity,{location_catalog:{revision:2,writable:true},locations:rows(true).filter(c=>c.id!=="city:1")});
         reply(s,s.locations.mutationId,{id:"city:1",activity:activity});
+        compare(s.owner.cityModel.count,2,"city receipt does not overwrite the ordered activity projection");
+        s.owner.activity=activity; // Independently reconciled live state, not the receipt.
         tryCompare(s.owner.cityModel,"count",1);compare(s.owner.selectedCity.id,"weather:home");
     }
 }

@@ -22,7 +22,7 @@ Ui.ProviderChooserController {
     readonly property bool mediaPreferencesSupported: !!selectedPlayer && selectedPlayer.control_mode !== undefined && barController.media.pinned_player !== undefined
     readonly property bool playerPinned: !!selectedPlayer && barController.media.pinned_player === selectedPlayer.id
     readonly property string direction: selectedResult ? selectedResult.metadata.direction : ""
-    readonly property bool muted: !!barController && (direction === "input" ? barController.audio.input_muted : barController.audio.muted)
+    readonly property bool muted: !!barController && (direction === "input" ? barController.audio.input_muted : barController.audio.muted) === true
     readonly property string statusText: barController && kind !== "tray" ? barController.backend.operationError : ""
     actionInFlight: !!barController && kind !== "tray" && (!barController.backend.ready || barController.backend.requestRunning)
     providerRankedResults: true

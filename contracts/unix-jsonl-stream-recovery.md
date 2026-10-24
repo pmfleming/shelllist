@@ -224,11 +224,61 @@ especially bounded battery/sleep/notification/OSD transitions versus current
 state. Bar shared-Quickshell socket acceptance, maximum payload, sustained load,
 matched release performance and OS-process-crash acceptance remain outstanding.
 
+## Bar atomic publication and recovery stage
+
+Every bar stream now carries `data._publication = {epoch, revision,
+previous_epoch?}`; `bar.snapshot` carries the same metadata in each domain
+projection. Each domain's payload and clock are captured under the existing
+state-store lock, including unavailable/error publications. Revisions are
+positive exact integers bounded by `2^53 - 1`. Independent entropy-backed epochs
+and retained rollover lineage are not transport counters or content tokens.
+Unchanged replacements do not advance; explicit history invalidations do.
+
+The shared bar policy checks producer schemas and per-domain `SnapshotCursor`s
+before admitting state. Delayed reads, duplicate/older events and unrelated
+epochs cannot roll state backwards. Malformed/missing native metadata marks
+that domain unavailable without consuming the valid cursor; matching producers are required
+on the bridge too. Recovery is single-flight per domain, with gap barriers and
+paused failures rather than unbounded retry. A cached read repairs quiet final
+loss; this is an explicit refresh/warmup mechanism, not periodic monitoring.
+
+Effect receipts remain unchanged on the wire. The producer adds an independently
+captured `data.snapshot` for domains present in an effect reply; it never stamps
+an earlier receipt as current. The UI retains those receipts under
+`data.observations` and publishes only validated snapshots. Nested battery
+completions keep their operation ownership/acknowledgement guards. `theme.resolve`
+is a pure preview, while `theme.configure` reconciles current published roles.
+Location acknowledgements no longer replace the activity projection; confirmed
+city selection waits for that projection and yields to intervening navigation.
+
+Full-state watches may coalesce. Battery/sleep/active-notification/hardware-OSD
+streams retain their bounded transition buffers: a discontinuity or recovery read
+is a `subscribed` current-state baseline, **not** replay of missing edges. Cached
+state cannot reconstruct a missed sleep transition or OSD/toast history. Domain
+reads and subscription renewal do not retire other consumers, accepted battery
+work, or display drafts/pending preview acknowledgements. A deferred display
+rollback targets the receipt's trial ID, not a newer observed trial, and connection
+loss clears that pending intent instead of treating recovery as rollback authority.
+
+Producer `8f30caa`: 221 debug library passes / two ignored; strict formatting and
+all-target Clippy. The sibling-source release package passes 223 library,
+30 update-worker and two isolated native tests, including ignored cases. The
+frontend has 418 Qt passes / one existing renderer skip and strict lint/contracts.
+
+Evidence: producer tests cover captured payload/clock atomicity, unchanged state,
+independent domains, health failures, coalesced rollover, effect reconciliation,
+and bounded transition loss. Qt tests cover inversion/duplicates/malformed clocks,
+quiet loss, renewal, unrelated peers, theme previews, nested battery receipts,
+display draft guards and deferred location selection. This is deterministic Qt
+and private producer evidence, not native bar socket, installed-session, sustained
+load, release-performance or OS-process-crash acceptance. The frontend bar socket
+flag remains absent at this checkpoint.
+
 ## Remaining scope
 
 This closes NM's network delta-chain gap, not the entire multi-daemon revision
 migration. Other streams' content identities/internal counters are not claimed as
-uniform wire watermarks. Bar frontend integration and clipboard direct ingress, full runtime
+uniform wire watermarks. Bar socket opt-in/native acceptance and clipboard direct ingress, full runtime
 packaging, release/mixed-load, maximum NM payload and real process-crash acceptance
 remain staged work. NM's test recreates a listener, not an OS process. D-Bus remains
 supported and the bridge remains the frontend default.

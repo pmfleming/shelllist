@@ -2,6 +2,10 @@
   "events": {
     "closed": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 4
+        },
         "available": true,
         "error": null,
         "notifications": [],
@@ -15,6 +19,10 @@
     },
     "dnd": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-2",
+          "revision": 3
+        },
         "alt": "dnd-notification",
         "app_policies": {},
         "available": true,
@@ -50,6 +58,10 @@
     },
     "dndCleared": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-2",
+          "revision": 4
+        },
         "alt": "notification",
         "app_policies": {},
         "available": true,
@@ -85,6 +97,10 @@
     },
     "replaced": {
       "data": {
+        "_publication": {
+          "epoch": "fixture-publication-1",
+          "revision": 3
+        },
         "available": true,
         "error": null,
         "notifications": [
@@ -665,6 +681,10 @@
     "data": {
       "snapshot": {
         "activity": {
+          "_publication": {
+            "epoch": "fixture-publication-3",
+            "revision": 1
+          },
           "available": false,
           "error": null,
           "event_count": 0,
@@ -710,6 +730,10 @@
           "world_clocks": []
         },
         "audio": {
+          "_publication": {
+            "epoch": "fixture-publication-4",
+            "revision": 1
+          },
           "available": false,
           "error": null,
           "input_available": false,
@@ -722,6 +746,10 @@
           "volume_percent": 0
         },
         "battery": {
+          "_publication": {
+            "epoch": "fixture-publication-5",
+            "revision": 1
+          },
           "available": false,
           "charging": false,
           "critical": false,
@@ -805,6 +833,10 @@
           "warning": false
         },
         "brightness": {
+          "_publication": {
+            "epoch": "fixture-publication-6",
+            "revision": 1
+          },
           "available": false,
           "brightness": 0,
           "device": "",
@@ -813,12 +845,20 @@
           "percent": 0
         },
         "compositor": {
+          "_publication": {
+            "epoch": "fixture-publication-7",
+            "revision": 1
+          },
           "animations_enabled": null,
           "available": false,
           "error": null,
           "revision": 0
         },
         "display_policy": {
+          "_publication": {
+            "epoch": "fixture-publication-8",
+            "revision": 1
+          },
           "available": false,
           "baseline": "",
           "docking_state": "settled",
@@ -843,6 +883,10 @@
           "status": ""
         },
         "media": {
+          "_publication": {
+            "epoch": "fixture-publication-9",
+            "revision": 1
+          },
           "active_player": null,
           "available": false,
           "error": null,
@@ -850,6 +894,10 @@
           "players": []
         },
         "notification_active": {
+          "_publication": {
+            "epoch": "fixture-publication-1",
+            "revision": 2
+          },
           "available": true,
           "error": null,
           "notifications": [
@@ -896,6 +944,10 @@
           "revision": 1
         },
         "notifications": {
+          "_publication": {
+            "epoch": "fixture-publication-2",
+            "revision": 2
+          },
           "alt": "notification",
           "app_policies": {},
           "available": true,
@@ -924,6 +976,10 @@
           "tooltip": "1 Notification"
         },
         "osd_hardware": {
+          "_publication": {
+            "epoch": "fixture-publication-10",
+            "revision": 1
+          },
           "available": false,
           "camera_privacy": false,
           "caps_lock": false,
@@ -933,6 +989,10 @@
           "num_lock": false
         },
         "power_profile": {
+          "_publication": {
+            "epoch": "fixture-publication-11",
+            "revision": 1
+          },
           "actions": [],
           "active_holds": [],
           "available": false,
@@ -951,6 +1011,10 @@
           "version": ""
         },
         "power_sleep": {
+          "_publication": {
+            "epoch": "fixture-publication-12",
+            "revision": 1
+          },
           "available": false,
           "can_hibernate": "",
           "can_suspend": "",
@@ -978,6 +1042,10 @@
           "resume_generation": 0
         },
         "sleep_policy": {
+          "_publication": {
+            "epoch": "fixture-publication-13",
+            "revision": 1
+          },
           "active_profile": "",
           "available": false,
           "critical_battery": {
@@ -1014,6 +1082,10 @@
           }
         },
         "theme": {
+          "_publication": {
+            "epoch": "fixture-publication-14",
+            "revision": 1
+          },
           "error": "#ba1a1a",
           "errorContainer": "#ffdad6",
           "onError": "#ffffff",
@@ -1046,6 +1118,10 @@
           "warning": "#78590c"
         },
         "timezone": {
+          "_publication": {
+            "epoch": "fixture-publication-15",
+            "revision": 1
+          },
           "abbreviation": "",
           "available": false,
           "city": "",
@@ -1055,6 +1131,10 @@
           "utc_offset_seconds": 0
         },
         "updates": {
+          "_publication": {
+            "epoch": "fixture-publication-16",
+            "revision": 1
+          },
           "available": false,
           "error": null,
           "jobs": [],
@@ -1063,12 +1143,20 @@
           "state_directory": ""
         },
         "workarea": {
+          "_publication": {
+            "epoch": "fixture-publication-17",
+            "revision": 1
+          },
           "available": false,
           "error": null,
           "monitors": {},
           "revision": 0
         },
         "workspaces": {
+          "_publication": {
+            "epoch": "fixture-publication-18",
+            "revision": 1
+          },
           "active_window": null,
           "available": false,
           "error": null,

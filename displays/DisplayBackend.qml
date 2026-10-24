@@ -32,6 +32,8 @@ Io.BarDaemonBackend {
             controller.requestFailed(id, message);
             return;
         }
+        // Keep the receipt's transaction identity separate from current state.
+        controller.acceptPreviewReceipt(id, envelope.data || {});
         // Apply authoritative state before releasing pending-operation guards.
         applyData(envelope.data || {});
         controller.requestFinished(id);
