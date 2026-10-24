@@ -54,7 +54,7 @@ Item {
     signal uiDeactivated
     signal focusSearchRequested
 
-    function focusedScreen() {
+    function focusedScreen(): ShellScreen {
         if (Theme.hyprland) {
             const monitor = Hyprland.focusedMonitor;
             if (monitor) {
@@ -74,21 +74,13 @@ Item {
         return String(Hyprland.focusedWorkspace.id);
     }
 
-    function screenValue(key, fallback) {
+    function screenGeometry(): var {
         const screen = placementScreen || focusedScreen();
-        const value = screen ? screen[key] : undefined;
-        return value === undefined || value === null ? fallback : value;
-    }
-    function screenDimension(key, fallback) {
-        const value = screenValue(key, fallback);
-        return value > 0 ? value : fallback;
-    }
-    function screenGeometry() {
         return {
-            x: screenValue("x", 0),
-            y: screenValue("y", 0),
-            width: screenDimension("width", 1280),
-            height: screenDimension("height", 960)
+            x: screen ? screen.x : 0,
+            y: screen ? screen.y : 0,
+            width: screen && screen.width > 0 ? screen.width : 1280,
+            height: screen && screen.height > 0 ? screen.height : 960
         };
     }
 
@@ -230,7 +222,7 @@ Item {
     Io.HyprlandWorkAreaClient {
         id: workspaceClient
         active: Theme.hyprland && host.uiActive
-        monitorName: host.screenValue("name", "")
+        monitorName: (host.placementScreen || host.focusedScreen())?.name || ""
     }
     Connections {
         target: host.placementScreen

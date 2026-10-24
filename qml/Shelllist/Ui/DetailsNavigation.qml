@@ -500,8 +500,6 @@ FocusScope {
     }
 
     function closeCommandMenu(): void { commands.closeMenu(); }
-    function openCommandMenu(): void { commands.openMenu(null); }
-    function openCommandMenuFor(root: Item): void { commands.openMenu(root); }
     DetailsCommands {
         id: commands
         menuParent: navigation

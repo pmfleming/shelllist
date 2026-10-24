@@ -13,7 +13,6 @@ Ui.DetailFlickable {
     readonly property var display: weather.display || ({})
     readonly property int offsetSeconds: clockAvailable ? city.utc_offset_seconds : 0
     readonly property bool hasSunTimes: display.sun_available === true
-    readonly property var solarNoonMetadata: weather.solar_noon || null
     readonly property real sunProgress: display.sun_progress || 0
     readonly property var moon: city.lunar || null
 

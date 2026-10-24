@@ -184,6 +184,18 @@ DaemonTestCase {
         compare(calls[2].method, "powerSleep.cancelCritical");
         verify(!findChild(panel, "criticalBatteryCancel").enabled, "pending cancellation cannot be repeated");
     }
+    function test_lidFieldUsesSharedSaveAndDiscard() {
+        const panel = make("power");
+        const lid = browse(panel, "lidCloseAction");
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Home);
+        compare(calls.length, 0);
+        keyClick(Qt.Key_Escape);
+        compare(lid.value, "suspend");
+        keyClick(Qt.Key_Return); keyClick(Qt.Key_Home); keyClick(Qt.Key_Tab);
+        compare(calls.length, 1);
+        compare(calls[0].method, "powerSleep.setPolicy");
+        compare(calls[0].params.lid_action, "system");
+    }
     function test_linkedSleepSavesOneDerivedPairAndRetainsRetry() {
         const panel = make("power");
         const suspend = browse(panel, "suspendDelay-battery");

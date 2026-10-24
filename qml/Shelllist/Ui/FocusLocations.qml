@@ -56,15 +56,13 @@ QtObject {
         const tile = target as IconTile;
         if ((action && !action.interactive) || (tile && !tile.clickable) || (field && (field.sensitive || field.readOnly)) || (ip && !ip.editSession.available))
             return false;
-        if (field) {
+        if (field)
             field.focusInput(false);
-            restoreSelection(field, state.selection);
-        } else if (ip) {
+        else if (ip)
             ip.focusInput(false);
-            restoreSelection(ip, state.selection);
-        } else {
+        else
             target.forceActiveFocus(Qt.OtherFocusReason);
-        }
+        restoreSelection(target, state.selection);
         return true;
     }
 }

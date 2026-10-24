@@ -230,24 +230,6 @@ function queryRequest(input) {
     };
 }
 
-function resultBatch(input) {
-    const source = objectOrEmpty(input);
-    const providerId = identifier(source.providerId, "batch.providerId");
-    const results = resultList(source.results);
-    results.forEach(function (item) {
-        if (item.providerId !== providerId)
-            fail("batch.results", "result provider " + JSON.stringify(item.providerId) + " does not match batch provider " + JSON.stringify(providerId));
-    });
-    return {
-        schemaVersion: schemaVersion,
-        providerId: providerId,
-        queryId: stringValue(source.queryId, ""),
-        replace: booleanValue(source.replace, true),
-        complete: booleanValue(source.complete, true),
-        results: results
-    };
-}
-
 function executionRequest(input) {
     const source = objectOrEmpty(input);
     const selectedResult = result(source.result);

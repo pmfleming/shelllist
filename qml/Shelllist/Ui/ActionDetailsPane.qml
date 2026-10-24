@@ -21,7 +21,6 @@ DetailsPane {
     // Content/footer sizing is independent of the standard surface action row.
     property int controlHeight: Math.max(36, Math.round(Theme.controlHeight * uiScale))
     property alias secondaryVisible: header.secondaryVisible
-    readonly property real bodyHeight: body.height
     default property alias bodyContent: body.data
 
     signal actionTriggered(string actionId)

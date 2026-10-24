@@ -4,7 +4,6 @@ import "../Bar/BarProtocol.generated.js" as Protocol
 // Qt supplies desktop preferences only. All HCT, tones and semantic roles are
 // computed by bar-daemon. Preview clients never publish to the shared stream.
 BarDaemonBackend {
-    id: backend
     property color seedColor: "#6750a4"
     property bool dark: false
     property bool publishTheme: false

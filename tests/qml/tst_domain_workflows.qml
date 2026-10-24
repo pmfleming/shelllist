@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
+import Shelllist.Core as Core
 
 DaemonTestCase {
     id: testCase
@@ -30,6 +31,36 @@ DaemonTestCase {
                 Ui.TextField { objectName: "ordinary"; width: parent.width; text: "ordinary value" }
             }
         }
+    }
+    Component {
+        id: registryFactory
+        Core.ProviderRegistry {
+            id: registry
+            property string rejection: ""
+            property int calls: 0
+            onActionRejected: function (error) { rejection = error.code; }
+            Core.Provider {
+                providerId: "test"
+                displayName: "Test"
+                function execute(request: var): bool { registry.calls++; return false; }
+            }
+        }
+    }
+    function test_providerDispatchFailsClosed() {
+        const registry = createTemporaryObject(registryFactory, testCase);
+        compare(registry.providerById("absent"), null);
+        verify(!registry.execute(null, "", {}));
+        compare(registry.rejection, "missing-result");
+        const provider = registry.providerById("test");
+        const result = provider.makeResult({id: "one", title: "One", actions: [Core.Model.keepOpenAction("open", "Open", {})]});
+        provider.providerEnabled = false;
+        verify(!registry.execute(result, "open", {}));
+        compare(registry.rejection, "provider-unavailable");
+        compare(registry.calls, 0);
+        provider.providerEnabled = true;
+        verify(!registry.execute(result, "open", {}));
+        compare(registry.rejection, "provider-rejected");
+        compare(registry.calls, 1);
     }
     function init() { failOnWarning(/.*/); }
     Component {

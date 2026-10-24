@@ -29,7 +29,8 @@ TestCase {
             {epoch: "e", initial: true, base_revision: 0, revision: 1.5},
             {epoch: "e", initial: true, base_revision: -1, revision: 0},
             {epoch: "e", initial: false, base_revision: 9007199254740991, revision: 9007199254740992},
-            record("e", 1, false), record("", 0, true)].map((value, index) => ({tag: String(index), value: value}));
+            record("e", 1, false), record("e", 1, true), record("e", 0, false),
+            record("", 0, true)].map((value, index) => ({tag: String(index), value: value}));
     }
     function test_missingBaselineAndMalformedCountersFailClosed(data) {
         const cursor = createTemporaryObject(factory, tests);
@@ -45,9 +46,15 @@ TestCase {
         cursor.reset();
         verify(cursor.accept("owned", record("epoch", 0, true)));
         cursor.revision = cursor.maximumRevision;
-        verify(cursor.accept("owned", record("rollover", 0, true)));
+        verify(!cursor.accept("owned", record("rollover", 0, false)));
+        compare(cursor.revision, cursor.maximumRevision);
+        compare(cursor.epoch, "epoch");
+        verify(!cursor.accept("owned", record("rollover", 0, true)), "recovery still requires replacement ownership");
+        verify(cursor.accept("replacement", record("epoch", 0, true)));
+        cursor.revision = cursor.maximumRevision;
+        verify(cursor.accept("replacement", record("rollover", 0, true)));
         compare(cursor.revision, 1);
-        verify(!cursor.accept("owned", record("epoch", 0, true)));
+        verify(!cursor.accept("replacement", record("epoch", 0, true)));
         compare(cursor.epoch, "rollover");
     }
 }

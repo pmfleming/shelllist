@@ -136,8 +136,9 @@ ColumnLayout {
             onClicked: section.controller.setAdapterPower(section.controller.selectedAdapter, !section.controller.selectedAdapter.powered)
         }
 
-        Ui.SettingRow {
-            title: qsTr("Login state")
+        Ui.FormField {
+            label: qsTr("Login state")
+            showHelpButton: true
             Layout.fillWidth: true
             Ui.SegmentedControl {
             objectName: "bluetoothLoginState"

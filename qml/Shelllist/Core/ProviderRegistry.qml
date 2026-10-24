@@ -10,11 +10,8 @@ Item {
     signal actionDispatched(var request)
     signal actionRejected(var rejection)
 
-    function providerById(providerId: string): var {
-        for (let index = 0; index < providers.length; index++)
-            if (providers[index].providerId === providerId)
-                return providers[index];
-        return null;
+    function providerById(providerId: string): Provider {
+        return providers.find(provider => provider.providerId === providerId) || null;
     }
 
     function descriptors(): var {
@@ -78,15 +75,6 @@ Item {
         }) || null;
     }
 
-    function executionProvider(result: var, actionId: string): var {
-        if (!result)
-            return reject("missing-result", "No result is selected", "", actionId);
-        const itemProvider = providerById(result.providerId);
-        if (!itemProvider || !itemProvider.providerEnabled)
-            return reject("provider-unavailable", "Provider " + result.providerId + " is unavailable", result.key, actionId);
-        return itemProvider;
-    }
-
     function executionAction(result: var, actionId: string): var {
         const actions = actionsFor(result);
         const action = actionId ? Model.actionById(actions, actionId) : defaultActionFor(result);
@@ -98,9 +86,11 @@ Item {
     }
 
     function execute(result: var, actionId: string, context: var): bool {
-        const itemProvider = executionProvider(result, actionId);
-        if (!itemProvider)
-            return false;
+        if (!result)
+            return reject("missing-result", "No result is selected", "", actionId);
+        const itemProvider = providerById(result.providerId);
+        if (!itemProvider || !itemProvider.providerEnabled)
+            return reject("provider-unavailable", "Provider " + result.providerId + " is unavailable", result.key, actionId);
         const selectedAction = executionAction(result, actionId);
         if (!selectedAction)
             return false;

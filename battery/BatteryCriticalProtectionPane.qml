@@ -42,12 +42,11 @@ Ui.DetailColumnCard {
         }
     }
 
-    Ui.SettingRow {
+    Ui.FormField {
         Layout.fillWidth: true
-        title: qsTr("At or below")
+        label: qsTr("At or below")
         accessibleName: qsTr("Critical-battery hibernation threshold")
         showHelpButton: false
-        compact: true
         visible: pane.criticalPolicy.enabled
         Ui.DropDownList {
             objectName: "criticalBatteryPercent"
@@ -68,12 +67,11 @@ Ui.DetailColumnCard {
         }
     }
 
-    Ui.SettingRow {
+    Ui.FormField {
         Layout.fillWidth: true
-        title: qsTr("Warn for")
+        label: qsTr("Warn for")
         accessibleName: qsTr("Critical-battery warning period")
         showHelpButton: false
-        compact: true
         visible: pane.criticalPolicy.enabled
         Ui.DropDownList {
             objectName: "criticalBatteryGrace"

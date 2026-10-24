@@ -3,7 +3,6 @@ import QtQuick
 // Ordering only, not a domain projection. The caller must validate the payload
 // and fence subscription ownership before presenting a record here.
 QtObject {
-    id: cursor
     property string source: ""
     property string epoch: ""
     property double revision: 0
@@ -37,25 +36,18 @@ QtObject {
         // A renewal accepts only a new subscription's authoritative baseline.
         if (recovering && source === subscription)
             return false;
-        if (!initialized || source !== subscription) {
-            if (!data.initial || data.base_revision !== 0) {
-                invalidate();
-                return false;
-            }
-        } else if (epoch !== data.epoch) {
-            // Native counter exhaustion is the only same-subscription epoch
-            // transition. Other changes require a newly owned subscription.
-            if (revision !== maximumRevision || !data.initial || data.base_revision !== 0) {
-                invalidate();
-                return false;
-            }
-        } else {
-            if (data.revision <= revision)
-                return false; // duplicate/older record, never roll back
-            if (data.initial || data.base_revision !== revision) {
-                invalidate();
-                return false;
-            }
+        const sameSource = initialized && source === subscription;
+        const sameEpoch = sameSource && epoch === data.epoch;
+        if (sameEpoch && data.revision <= revision)
+            return false; // duplicate/older record, never roll back
+        // New subscriptions need a baseline. A same-source epoch change also
+        // requires exact native counter exhaustion, never an unsolicited reset.
+        const baseline = data.initial && data.base_revision === 0;
+        const ordered = sameEpoch ? !data.initial && data.base_revision === revision
+            : baseline && (!sameSource || revision === maximumRevision);
+        if (!ordered) {
+            invalidate();
+            return false;
         }
         source = subscription;
         epoch = data.epoch;

@@ -19,14 +19,13 @@ Ui.DetailColumnCard {
         helpText: qsTr("Suspend at and Hibernate at use total uninterrupted idle time. Changing suspend keeps the hibernate endpoint fixed and changes the time spent suspended, including the delay used by the lid profile. With inactivity set to Never, Then hibernate is the delay after a lid-triggered suspend. The non-linear sliders run from 5 minutes to 12 hours, with progressively larger steps. Alt+V enters exact minutes or selects Never; longer existing settings are preserved. Hatching marks unavailable choices, and the thin line marks the other endpoint. Same settings shares one profile between battery and AC. The lid action is ignored while docked or using an external display; System default delegates to the system. The profile action uses this power source’s hibernate delay, even with inactivity set to Never. Waking cancels delayed hibernation; low battery may hibernate sooner. Keep awake blocks suspend and hibernate, not locking or screen blanking. Use only one automatic power manager.")
     }
 
-    Ui.SettingRow {
+    Ui.FormField {
         Layout.fillWidth: true
-        title: qsTr("Lid closed")
+        label: qsTr("Lid closed")
         accessibleName: qsTr("Action when the laptop lid is closed")
         showHelpButton: false
-        compact: true
-        subtitle: (pane.controller.suspendPolicyState.lid || {}).error || ""
-        subtitleColor: (pane.controller.suspendPolicyState.lid || {}).error ? Ui.Theme.warning : Ui.Theme.mutedText
+        statusText: (pane.controller.suspendPolicyState.lid || {}).error || ""
+        statusTone: "warning"
 
         Ui.DropDownList {
             objectName: "lidCloseAction"

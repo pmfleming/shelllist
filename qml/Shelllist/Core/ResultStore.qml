@@ -160,10 +160,6 @@ SelectionModel {
         return true;
     }
 
-    function applyBatch(value: var): bool {
-        return applyNormalizedBatch(Model.resultBatch(value));
-    }
-
     function clear(): void {
         hasRankedResults = false;
         rustRankedResults = [];

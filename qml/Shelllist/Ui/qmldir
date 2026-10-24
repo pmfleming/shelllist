@@ -104,7 +104,6 @@ SectionLabel 1.0 SectionLabel.qml
 SaveStatusLabel 1.0 SaveStatusLabel.qml
 ScrollableListView 1.0 list/ScrollableListView.qml
 SegmentedControl 1.0 SegmentedControl.qml
-SettingRow 1.0 SettingRow.qml
 ShelllistGlobalShortcut 1.0 ShelllistGlobalShortcut.qml
 internal ShortcutBadge ShortcutBadge.qml
 internal ShortcutHints ShortcutHints.qml
