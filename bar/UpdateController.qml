@@ -292,23 +292,28 @@ Ui.ProviderChooserController {
                 + (entries.length > 0 ? " · " + qsTr("Showing cached runs") : "");
             return;
         }
-        if (runId && !page.entries.length && page.error) {
-            retireHistory();
+        if (acceptRunPage(page)) stageHistoryPage(page);
+    }
+    // Exact links are not ordinary history emptiness: unreadable runs retain
+    // their target, missing runs return to history, and other identities reject.
+    // Called only after wire validation and the availability check above.
+    function acceptRunPage(page: var): bool {
+        if (!runId) return true;
+        if (page.entries.length) {
+            if (page.entries.length === 1 && page.entries[0].job.id === runId) return true;
+            failHistory(qsTr("Update history reply targets another run"));
+            return false;
+        }
+        retireHistory();
+        if (page.error) {
             warningText = page.error;
             warningBrief = qsTr("Requested run could not be read");
-            return;
-        }
-        if (runId && !page.entries.length) {
-            retireHistory();
+        } else {
             runId = "";
             missingRun = true;
             refresh();
-            return;
         }
-        if (runId && (page.entries.length !== 1 || page.entries[0].job.id !== runId)) {
-            failHistory(qsTr("Update history reply targets another run")); return;
-        }
-        stageHistoryPage(page);
+        return false;
     }
     function stageHistoryPage(page: var): void {
         const transition = HistoryWindow.advance(historyWindow, page);

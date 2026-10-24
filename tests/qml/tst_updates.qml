@@ -337,6 +337,26 @@ DaemonTestCase {
         compare(root.controller.entries[0].job.id, "run-2");
         verify(root.controller.errorText.includes("cached"));
     }
+    function test_exactRunRejectsUnrelatedAndUnreadableReplies_data(): var {
+        return [
+            {tag: "other-target", ids: ["other"], error: null},
+            {tag: "mixed-targets", ids: ["wanted", "other"], error: null},
+            {tag: "unreadable-not-pruned", ids: [], error: "Run could not be read"}
+        ];
+    }
+    function test_exactRunRejectsUnrelatedAndUnreadableReplies(data): void {
+        const root = fixture();
+        reply(latest(), [entry("cached", "staged")]);
+        root.controller.openRun("wanted");
+        const owned = latest();
+        reply(owned, data.ids.map(id => entry(id, "staged")), null, true, data.error);
+        compare(root.controller.runId, "wanted");
+        compare(root.controller.entries.map(run => run.job.id), ["cached"]);
+        compare(root.controller.historyWindow, null);
+        verify(!root.controller.loading && !root.controller.detailsOpen && !root.controller.missingRun);
+        compare(latest().id, owned.id, "invalid/unreadable exact links do not query unrelated history");
+        verify(!!(root.controller.errorText || root.controller.warningText));
+    }
     function test_prunedDeepLinkReturnsToHistoryWithoutOpeningAnotherRun(): void {
         const root = fixture();
         root.controller.openRun("pruned-run");

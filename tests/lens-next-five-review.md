@@ -26,6 +26,23 @@ count/expiry/scope guards, explicit confirmation and no-replay policy remain.
 - Interaction contract: no new field stops, commands or automatic deletion.
   Rejected tokens are released, never accepted as permission to delete.
 
+## 2. Exact-run history ownership
+
+`UpdateController.acceptRunPage` separates exact-link outcomes from paged history:
+only the requested single identity can publish; unreadable targets remain selected
+for explicit retry; genuinely missing targets return to recent history. Empty-run
+handling shares one retirement point. Wire validation, one stale-cursor restart,
+continuation staging and atomic publication are unchanged.
+
+- `finishHistory` cyclomatic **21 → 14**, cognitive **22 → 15**, effort **102 → 66**.
+  Including the new helper: **20 / 21 / 100**, versus **21 / 22 / 102** originally.
+- Actual Qt Updates suite: **38 passed**, strict qmllint: pass.
+- Added unrelated/mixed/unreadable exact-link replies retaining cached rows without
+  opening or requesting unrelated history; retained missing-link, stale-cursor,
+  continuation, filter-key and selection/viewport journeys.
+- Interaction contract: read-only inspection still cannot run an update. No key,
+  field, focus-restoration or request-ownership changes.
+
 ## Measurement limits
 
 Lens metrics are advisory, not developer-hour or correctness estimates. Source
