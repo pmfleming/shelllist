@@ -16,8 +16,9 @@ Item {
     property var queuedLines: []
     property int maximumQueuedRequests: 256
     property bool retiring: false
-    // Bluetooth prototype only. No automatic bridge fallback/replay on failure.
-    property bool useSocket: daemonName === "bt-daemon" && Quickshell.env("SHELLLIST_BT_SOCKET") === "1"
+    // Staged opt-ins only. No automatic bridge fallback/replay on failure.
+    property bool useSocket: (daemonName === "bt-daemon" && Quickshell.env("SHELLLIST_BT_SOCKET") === "1")
+        || (daemonName === "nm-daemon" && Quickshell.env("SHELLLIST_NM_SOCKET") === "1")
     property string socketPath: Quickshell.env("XDG_RUNTIME_DIR") ? Quickshell.env("XDG_RUNTIME_DIR") + "/" + daemonName + ".sock" : ""
     readonly property var transportBackend: useSocket ? socketTransport : process
     // A frontend transport generation, never the resident daemon's lifetime.

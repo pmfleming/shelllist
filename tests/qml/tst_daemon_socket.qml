@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "imports/Quickshell" as QuickshellFixture
 import Shelllist.Io as Io
 
 TestCase {
@@ -36,6 +37,33 @@ TestCase {
             streams: []
             automaticSubscribe: false
             recoverProtocolErrors: true
+        }
+    }
+    Component {
+        id: optInFactory
+        Io.JsonlDaemonClient {
+            daemonName: "nm-daemon"
+            active: false
+            streams: []
+            recoverProtocolErrors: true
+            automaticSubscribe: false
+        }
+    }
+    function test_optInsAreExplicitAndDaemonScoped() {
+        const original = QuickshellFixture.Quickshell.environment;
+        try {
+            for (const enabled of ["", "SHELLLIST_NM_SOCKET", "SHELLLIST_BT_SOCKET"]) {
+                QuickshellFixture.Quickshell.environment = Object.assign({XDG_RUNTIME_DIR: "/isolated"}, enabled ? {[enabled]: "1"} : {});
+                for (const daemon of ["nm-daemon", "bt-daemon", "bar-daemon"]) {
+                    const client = createTemporaryObject(optInFactory, testCase, {daemonName: daemon}) as Io.JsonlDaemonClient;
+                    verify(client !== null);
+                    compare(client.useSocket, (daemon === "nm-daemon" && enabled === "SHELLLIST_NM_SOCKET")
+                        || (daemon === "bt-daemon" && enabled === "SHELLLIST_BT_SOCKET"));
+                    compare(client.socketPath, "/isolated/" + daemon + ".sock");
+                }
+            }
+        } finally {
+            QuickshellFixture.Quickshell.environment = original;
         }
     }
     function test_declarativeStartupWaitsForAllBindings() {

@@ -22,16 +22,39 @@ The old jq/shell contract gates are removed, not retained as weaker parallel che
 regression vectors against actual QML objects in Qt; Nix's full QML suite includes
 them. Neither check starts a real daemon or changes hardware.
 
-## Native Unix socket prototype
+## Native Unix socket migration
 
-[`docs/unix-socket-migration.md`](../docs/unix-socket-migration.md) records the
-explicit Rust-driven Quickshell experiment and checked evidence. The Bluetooth
+The current [stream/recovery contract](../contracts/unix-jsonl-stream-recovery.md)
+records staged progress and remaining gates. The Bluetooth
 ignored test launches `tests/e2e/unix-jsonl.qml` with real Socket/Process plugins,
 a private bus/runtime and an in-memory producer. It covers native UTF-8/large-line
 parsing, bounded blocked writes, no replay, service recreation and comparative
 RPC latency/process-group memory. Do not launch it against live services.
 `tests/qml/tst_daemon_socket.qml` separately owns deterministic adapter regressions;
 its mock transport is not native backpressure or performance evidence.
+
+NM's `daemon::socket::tests` compares actual socket and D-Bus dispatch with a
+scripted NetworkManager, fences owners, cancels a private in-flight connect on
+disconnect, and recreates the listener without replay. The separately ignored
+native probe launches `tests/e2e/nm-unix-jsonl.qml` through real Quickshell 0.3.0:
+production shared-session routing, eight reads, an authoritative network baseline,
+and collection renewal without retiring the secret observer. From Shelllist:
+
+```sh
+nix develop . --no-write-lock-file --command bash -c '
+  set -e
+  export SHELLLIST_SOURCE="$PWD"
+  cd ../nm-daemon
+  cargo test --locked --lib native_quickshell_nm_socket_acceptance -- --ignored --nocapture
+'
+```
+
+The harness supplies a private 0700 runtime, private session bus, unavailable host
+system bus, scripted backend and bounded child/log lifetime. Do not launch these
+QML fixtures standalone against live services. Neither listener recreation nor
+this native smoke test establishes OS-process-crash, release/mixed-load, maximum
+NM payload or hardware acceptance. `SHELLLIST_NM_SOCKET=1` is opt-in only and needs
+a matching already-running daemon; socket activation/default switching is deferred.
 
 ## Panel standardization acceptance
 
