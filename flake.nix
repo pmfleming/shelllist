@@ -129,7 +129,10 @@
           # Development-only: never part of the resident host or installed bar.
           materialGallery = pkgs.writeShellApplication {
             name = "shelllist-material-gallery";
-            runtimeInputs = [ pkgs.quickshell ];
+            runtimeInputs = [
+              pkgs.quickshell
+              barDaemon
+            ];
             text = ''
               export FONTCONFIG_FILE=${fontsConf pkgs}
               export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml
@@ -607,13 +610,36 @@
                 touch $out
               '';
 
-          materialGallery = pkgs.runCommand "shelllist-material-gallery-smoke" { } ''
+          materialGallery = pkgs.runCommand "shelllist-material-gallery-smoke" {
+            nativeBuildInputs = [ pkgs.dbus ];
+          } ''
             export HOME="$TMPDIR/home"
             export XDG_RUNTIME_DIR="$TMPDIR/runtime"
             mkdir -p "$HOME" "$XDG_RUNTIME_DIR"
             chmod 700 "$XDG_RUNTIME_DIR"
             export QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software WAYLAND_DISPLAY=
             export SHELLLIST_GALLERY_SMOKE=1
+            # Theme generation now lives in bar-daemon. Use a private session so
+            # the gallery exercises the real producer without desktop services.
+            dbus-run-session --config-file=${pkgs.dbus}/share/dbus-1/session.conf -- bash -euo pipefail <<'SESSION'
+            ${barDaemon}/bin/bar-daemon daemon > daemon.log 2>&1 &
+            daemon_pid=$!
+            trap 'kill "$daemon_pid" 2>/dev/null || true; wait "$daemon_pid" || true' EXIT
+            ready=0
+            for attempt in {1..100}; do
+              if dbus-send --session --print-reply --reply-timeout=1000 \
+                --dest=org.freedesktop.DBus /org/freedesktop/DBus \
+                org.freedesktop.DBus.GetNameOwner string:org.laufan.BarDaemon >/dev/null 2>&1; then
+                ready=1
+                break
+              fi
+              if ! kill -0 "$daemon_pid" 2>/dev/null; then break; fi
+              sleep 0.05
+            done
+            if [ "$ready" -ne 1 ]; then
+              cat daemon.log
+              exit 1
+            fi
             for scheme in light dark; do
               status=0
               SHELLLIST_GALLERY_SCHEME="$scheme" timeout 30 ${
@@ -625,6 +651,7 @@
                 exit 1
               fi
             done
+            SESSION
             touch $out
           '';
 
@@ -808,6 +835,7 @@
                 ln -s ${./launcher} test-root/launcher
                 ln -s ${./shell} test-root/shell
                 ln -s ${./nix} test-root/nix
+                ln -s ${./contracts} test-root/contracts
                 export HOME=$TMPDIR
                 export XDG_CACHE_HOME=$TMPDIR/cache
                 export QT_PLUGIN_PATH=${pkgs.qt6.qtsvg}/lib/qt-6/plugins
