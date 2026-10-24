@@ -34,7 +34,7 @@ RPC names below are existing unless explicitly marked as needed.
 
 | Producer / streams | Class and current recovery | Open ordering / quiet-stream gate |
 | --- | --- | --- |
-| BT `bluetooth.changed`, `bluetooth.audio.changed` | Full watch replacements; current value is delivered on subscription. `bluetooth.snapshot` and `bluetooth.audio.snapshot` read cached state. | Share an atomic epoch/state watermark between watch values and reads, including loading/unavailable. Mutation/operation-embedded snapshots are separate observations and must not overwrite this state without the same ordering authority. Explicit refresh must repair a lost final replacement without replaying an effect. |
+| BT `bluetooth.changed`, `bluetooth.audio.changed` | Implemented: independent atomic `data.state` epoch/revision on watch values and cached reads, including loading/unavailable; explicit lineage for coalesced rollover. Frontend rejects stale reads/events and unwatermarked mutation observations. Explicit reads repair a lost final replacement without replay. | Full-state ordering is covered by native producer/Qt tests. Periodic liveness, release/load/OS-crash qualification and the separate lifecycle rows below remain open; no broader stream completion is implied. |
 | BT `pairing.request` | Private prompt/lifecycle content on a bounded broadcast with explicit gaps; `bluetooth.requests.snapshot` includes active pairing requests. | Audit observation versus response authority, filtered owners, stale prompt recovery and expiration. Never redisplay a closed secret draft or answer a prompt during recovery. |
 | BT `bluetooth.operation`, `bluetooth.scan` | Operation/lease lifecycle; explicit broadcast gaps; `bluetooth.requests.snapshot` exposes active/recent state. | Order status reads against transitions; preserve owner cancellation and terminal evidence. Lost final events require status recovery, not starting another operation/scan. |
 | BT `bluetooth.obex.transfer` | Transfer lifecycle and incoming authorization; explicit broadcast gaps. | Audit authoritative transfer outcome recovery separately from capability reads (`bluetooth.obex.snapshot`). An absent recovery API is a blocker, not assumed completion or permission to resend a file. |
@@ -82,5 +82,7 @@ RPC names below are existing unless explicitly marked as needed.
 
 Producer paths are relative to their sibling repository. Audited against framework
 `563e7f9`, BT `ecf65fc`, NM `0396f00`, app `2bf19d6`, bar `ba04a15`, clip `2c2cef3`
-and Shelllist `80b4662`. Subsequent stages must update this inventory with their
-actual implemented scope, not mark all ordering work complete after one stream.
+and Shelllist `80b4662`. BT full-state ordering subsequently landed in `962f5ee`
+and `3e0ecb4`, with matched frontend fencing in the linked recovery record.
+Subsequent stages must update this inventory with their actual implemented scope,
+not mark all ordering work complete after one stream.

@@ -37,6 +37,7 @@ DaemonTestCase {
     function snapshot(mode, settable, connected, key) {
         return {
             radio: {available: true, operational: true, powered: true, adapter_count: 1},
+            management: {},
             adapters: [{key: "adapter", alias: "Adapter", powered: true}],
             devices: [{
                 key: key || "buds", name: "Buds", device_type: "earbuds", paired: true, connected: connected !== false,
@@ -215,6 +216,9 @@ DaemonTestCase {
         verify(!controller.openNoiseControl(), "accepted operation is still pending");
         backend.handleOperationEvent({data: {request_id: "anc", device_key: "buds", state: "completed",
             operation: "set-noise-control", snapshot: snapshot("adaptive")}});
+        compare(findChild(panel, "noiseControlLabel").text, "Ambient", "operation observation is not a live-state watermark");
+        backend.acceptSharedResponse("snapshot", {protocol: "bt-api", version: 2, ok: true,
+            data: {state: {epoch: "noise-control-fixture", revision: 1}, snapshot: snapshot("adaptive")}}, "");
         tryCompare(findChild(panel, "noiseControlLabel"), "text", "Adaptive");
         openKeyboard(panel);
         compare(tray.currentIndex, 1, "open at device-confirmed mode");

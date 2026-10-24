@@ -99,6 +99,56 @@ Evidence at this checkpoint:
   alignment pass. The sibling-source snapshot preflight and Nix `buildInputs`
   check also pass without overrides/bypasses (Rust 1.95.0, ten locked roots).
 
+## Bluetooth full-state ordering stage
+
+`bluetooth.changed` and `bluetooth.audio.changed` now share `data.state` with
+`bluetooth.snapshot` and `bluetooth.audio.snapshot`, respectively. Each publisher
+owns an opaque epoch and positive exact revision. Payload plus watermark are one
+watch value, captured atomically for both reads and events; errors/loading carry
+the same metadata. Unchanged values do not advance. These are full replacements,
+so coalescing may skip revisions. Counter exhaustion starts a new epoch at 1;
+`previous_epoch` is retained throughout that epoch to verify coalesced rollover
+without requiring delivery of the old maximum. Independent publishers never use
+each other's cursor. A transport failure resets frontend cursors; route/owner
+fences still reject retired-generation traffic before publication.
+
+The shared `SnapshotCursor` rejects duplicate/older/unrelated-epoch records and
+missing/malformed metadata. Boundary payload checks run before publication, and
+the cursor advances only after successful synchronous publication. An old
+loading/unavailable reply cannot invalidate newer state, nor can an old available
+reply resurrect state after a newer outage. Explicit reads repair quiet loss of
+a final full replacement; this is not a promise of periodic background liveness
+checks or terminal-operation recovery.
+
+Unwatermarked snapshots embedded in mutation acknowledgements, device operations,
+scan outcomes and adapter batches no longer replace live state. Their original
+acknowledgements/partial outcomes remain authoritative for the effect; a coalesced
+cached-state read reconciles observations without starting another scan or
+mutation. Audio mutation observations follow the same rule. Missing metadata in
+an old producer fails closed on both transports, never enables raw-snapshot
+fallback. Field-local drafts, confirmation, cancellation and explicit retry stay
+with their existing owners.
+
+Producer stage: BT `962f5ee` and `3e0ecb4`. Validation: 74 library passes, two private
+OS-process integration passes, one ordinarily ignored native experiment; strict
+all-target Clippy and formatting. New producer tests cover atomic captured reads,
+coalescing, rollover lineage, and actual Unix/D-Bus success/error watermark parity.
+Live-constructor fixtures normalize only generated epochs. Actual Qt tests cover
+read/event races, old/duplicate/malformed records, independent audio state,
+quiet-final-loss read recovery, mutation observation fencing, retained prompt
+drafts and retired routes. The whole frontend suite passes **398 / one existing
+renderer skip**; strict QML lint, generated contracts, BT offline contract parity,
+surface catalog and build-input audit pass. The explicitly invoked seven-case
+Bluetooth native Quickshell 0.3.0 experiment also passes with a matching rebuilt
+bridge. Current sibling-source preflight and Nix `qmlTests`, `btDaemonContract`
+(including the release BT package/tests) and `buildInputs` checks also pass.
+The native experiment's debug/private scope remains unchanged; a release package
+build is not a matched release performance, process-crash, sustained-load or
+hardware acceptance result.
+
+Request/pairing/scan/OBEX lifecycle snapshots are **not** ordered by these two
+state cursors. Their status races and quiet terminal loss remain in the matrix.
+
 ## Remaining scope
 
 This closes NM's network delta-chain gap, not the entire multi-daemon revision

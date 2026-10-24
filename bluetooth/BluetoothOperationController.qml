@@ -57,10 +57,10 @@ Item {
         errorsByDevice = operation.state === "failed" ? copyWith(errorsByDevice, operation.device_key, operation.error || ({
                 message: "Bluetooth operation failed"
             })) : copyWithout(errorsByDevice, operation.device_key);
-        if (operation.snapshot)
-            controller.applySnapshot(operation.snapshot);
-        else
-            controller.rebuildResults(false);
+        controller.rebuildResults(false);
+        // Completion acknowledges the operation, not an ordering watermark on
+        // its embedded observation. Never replace a newer watch with that data.
+        backend.reconcileSnapshot();
     }
     function closePairing(operation: var): void {
         controller.closePairingForDevice(operation.device_key);

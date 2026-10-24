@@ -245,6 +245,10 @@ DaemonTestCase {
             adapters: [{key: "adapter", alias: "My adapter", powered: true}]};
         backend.acceptSharedResponse("adapter-batch", partial, "");
         verify(controller.status.includes("not fully confirmed"), "snapshot status must not hide a partial outcome");
+        verify(backend.isPending("snapshot"), "reconcile unwatermarked mutation observations by read");
+        backend.acceptSharedResponse("snapshot", {protocol: "bt-api", version: 2, ok: true,
+            data: {state: {epoch: "adapter-fixture", revision: 1},
+                snapshot: Object.assign({}, partial.data.snapshot, {management: controller.management})}}, "");
         compare(edits.draft("adapter").fields.alias, undefined);
         compare(edits.draft("adapter").fields.discoverableTimeout, 120.4);
         compare(edits.draft("adapter").fields.pairableTimeout, 0);

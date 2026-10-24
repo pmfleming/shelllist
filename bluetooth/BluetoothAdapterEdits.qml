@@ -113,14 +113,10 @@ Core.DraftStore {
         if (!key)
             return;
         let message = finish(key, data.adapter_batch, error);
-        // Observations follow acknowledgement: a bad snapshot cannot undo a write.
-        if (!error && data.snapshot) {
-            try {
-                controller.applySnapshot(data.snapshot);
-            } catch (snapshotError) {
-                message += "; could not read adapter snapshot: " + snapshotError;
-            }
-        }
+        // Write acknowledgements are independent of observation order. The
+        // embedded snapshot has no live-state watermark; reconcile by read.
+        if (!error && data.snapshot)
+            controller.reconcileSnapshot();
         if (message)
             controller.status = message;
     }

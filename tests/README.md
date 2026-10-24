@@ -33,6 +33,27 @@ RPC latency/process-group memory. Do not launch it against live services.
 `tests/qml/tst_daemon_socket.qml` separately owns deterministic adapter regressions;
 its mock transport is not native backpressure or performance evidence.
 
+Reproduce Bluetooth from Shelllist using its native build dependencies plus the
+frontend's matching Quickshell (the Shelllist shell alone lacks `dbus-1.pc`):
+
+```sh
+export SHELLLIST_SOURCE="$PWD"
+export SHELLLIST_QUICKSHELL="$(nix develop . --no-write-lock-file --command bash -c 'command -v quickshell')"
+export BT_DAEMON_BIN="$PWD/../bt-daemon/target/debug/bt-daemon"
+export SOCKET_PROBE_REPORT="$(mktemp -d)/bt-socket.json"
+nix develop ../bt-daemon --no-write-lock-file --command bash -c '
+  set -e
+  export PATH="$(dirname "$SHELLLIST_QUICKSHELL"):$PATH"
+  cd ../bt-daemon
+  cargo build --locked --bin bt-daemon
+  cargo test --locked --lib unix_socket_acceptance_probe -- --ignored --nocapture
+'
+```
+
+`tst_snapshot_cursor.qml` and `tst_bluetooth_stream_recovery.qml` separately cover
+full-state ordering through actual Qt, with producer-owned fixtures and shared
+session routing. They are not additional native backpressure/performance probes.
+
 NM's `daemon::socket::tests` compares actual socket and D-Bus dispatch with a
 scripted NetworkManager, fences owners, cancels a private in-flight connect on
 disconnect, and recreates the listener without replay. The separately ignored

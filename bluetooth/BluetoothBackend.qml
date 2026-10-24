@@ -11,6 +11,9 @@ Io.DaemonBackend {
     property var finishedOperations: ({})
     property string nameRequestKey: ""
 
+    Io.SnapshotCursor { id: radioCursor; objectName: "bluetoothRadioCursor" }
+    Io.SnapshotCursor { id: audioCursor; objectName: "bluetoothAudioCursor" }
+
     daemonName: "bt-daemon"
     expectedProtocol: BtApi.protocol
     expectedVersion: BtApi.version
@@ -28,10 +31,12 @@ Io.DaemonBackend {
     }
     readonly property var responseHandlers: ({
             scan: function (id, data) {
-                backend.acceptScan(data.scan, data.snapshot);
+                backend.acceptScan(data.scan);
             },
             audio_devices: function (id, data) {
-                backend.controller.applyAudioSnapshot(data.audio_devices);
+                // Mutation observations have no publication watermark. Keep the
+                // acknowledgement, but reconcile state through its cached read.
+                backend.refreshAudio();
                 if (id === "audio-set-default")
                     backend.controller.status = "Default Bluetooth audio route updated";
             },
@@ -45,6 +50,8 @@ Io.DaemonBackend {
 
     function resetTransportState() {
         nameRequestKey = "";
+        radioCursor.reset();
+        audioCursor.reset();
         pending = ({});
         operations = ({});
         finishedOperations = ({});
@@ -76,6 +83,22 @@ Io.DaemonBackend {
     }
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Bluetooth operation failed");
+        if (id === "snapshot" || id === "audio-snapshot") {
+            if (transportError) {
+                showFailure(id, error);
+                return;
+            }
+            try {
+                if (!envelope || envelope.protocol !== BtApi.protocol || envelope.version !== BtApi.version
+                        || typeof envelope.ok !== "boolean")
+                    throw new Error("Incompatible Bluetooth snapshot envelope");
+                const phase = !error ? "available" : envelope?.error?.code === "snapshot-loading" ? "loading" : "unavailable";
+                acceptState(envelope?.data, phase, error, id === "audio-snapshot");
+            } catch (snapshotError) {
+                showFailure(id, "Invalid Bluetooth snapshot: " + snapshotError);
+            }
+            return;
+        }
         finishDeviceRequest(id, error);
         if (id === "adapter-batch") {
             controller.adapterEdits.receive(envelope?.data || ({}), error);
@@ -113,14 +136,59 @@ Io.DaemonBackend {
             return;
         }
         if (data.snapshot)
-            controller.applySnapshot(data.snapshot);
+            reconcileSnapshot();
         if (id !== "snapshot")
             controller.status = controller.statusForCompletedCall(id);
     }
-    function acceptScan(scan, snapshot) {
+    function acceptScan(scan) {
         controller.handleScanEvent(scan);
-        if (snapshot)
-            controller.applySnapshot(snapshot);
+    }
+    function reconcileSnapshot() {
+        return !isPending("snapshot") && refresh();
+    }
+    function objectValue(value) {
+        return !!value && typeof value === "object" && !Array.isArray(value);
+    }
+    function acceptState(data, phase, message, audio) {
+        if (!objectValue(data))
+            throw new Error("Missing native snapshot metadata; matching daemon required");
+        if (phase === "available") {
+            if (audio) {
+                if (!Array.isArray(data.audio_devices) || !data.audio_devices.every(device =>
+                        objectValue(device) && typeof device.device_key === "string" && !!device.device_key
+                        && Array.isArray(device.profiles)))
+                    throw new Error("Malformed Bluetooth audio snapshot");
+            } else {
+                const snapshot = data.snapshot;
+                if (!objectValue(snapshot) || !objectValue(snapshot.radio) || !objectValue(snapshot.management)
+                        || typeof snapshot.radio.available !== "boolean" || typeof snapshot.radio.operational !== "boolean"
+                        || typeof snapshot.radio.powered !== "boolean" || !Array.isArray(snapshot.adapters)
+                        || !Array.isArray(snapshot.devices)
+                        || !snapshot.adapters.concat(snapshot.devices).every(item => objectValue(item)
+                            && typeof item.key === "string" && !!item.key))
+                    throw new Error("Malformed Bluetooth radio snapshot");
+            }
+        }
+        const cursor = audio ? audioCursor : radioCursor;
+        const accepted = cursor.accept(data.state, function() {
+            if (audio) {
+                if (phase === "available")
+                    controller.applyAudioSnapshot(data.audio_devices);
+                else
+                    controller.invalidateAudio(message || "Bluetooth audio is unavailable");
+            } else if (phase === "available") {
+                controller.applySnapshot(data.snapshot);
+            } else {
+                controller.invalidateBluetooth(message || "Bluetooth is unavailable");
+                if (phase === "loading") {
+                    controller.listError = "";
+                    controller.backendLoading = true;
+                }
+            }
+        });
+        if (cursor.error)
+            throw new Error(cursor.error);
+        return accepted;
     }
     function acceptOperation(operation) {
         if (finishedOperations[operation.request_id]) {
@@ -132,16 +200,11 @@ Io.DaemonBackend {
     }
 
     function applyUnhandledEvent(event) {
-        if (event.event === "unavailable" || event.event === "loading") {
-            controller.invalidateBluetooth((event.error && event.error.message) || (event.event === "loading" ? "Bluetooth is loading…" : "BlueZ is unavailable"));
-            if (event.event === "loading") {
-                controller.listError = "";
-                controller.backendLoading = true;
-            }
-            return;
-        }
-        if (event.data && event.data.snapshot) {
-            controller.applySnapshot(event.data.snapshot);
+        if (event.stream === BtApi.streams.changed) {
+            if (!["subscribed", "changed", "loading", "unavailable"].includes(event.event))
+                throw new Error("Unknown Bluetooth snapshot event");
+            const phase = event.event === "loading" || event.event === "unavailable" ? event.event : "available";
+            acceptState(event.data, phase, event.error?.message || "", false);
             return;
         }
         console.warn("shelllist bluetooth event ignored stream=" + (event.stream || "unknown") + " event=" + (event.event || "unknown"));
@@ -166,10 +229,9 @@ Io.DaemonBackend {
         controller.handleScanEvent(event.data || ({}));
     }
     function handleAudioEvent(event) {
-        if (event.event === "unavailable")
-            controller.invalidateAudio((event.error && event.error.message) || "Bluetooth audio is unavailable");
-        else
-            controller.applyAudioSnapshot((event.data && event.data.audio_devices) || []);
+        if (!["subscribed", "changed", "unavailable"].includes(event.event))
+            throw new Error("Unknown Bluetooth audio event");
+        acceptState(event.data, event.event === "unavailable" ? "unavailable" : "available", event.error?.message || "", true);
     }
     function handleOperationEvent(event) {
         const operation = event.data || ({});

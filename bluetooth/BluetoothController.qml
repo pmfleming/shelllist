@@ -189,6 +189,10 @@ Ui.ProviderChooserController {
         status = scanning ? "Scanning for Bluetooth devices…" : "Refreshing Bluetooth devices…";
         backend.refresh();
     }
+    // Reconcile observations only; unlike refreshList this never starts a scan.
+    function reconcileSnapshot() {
+        return backend.reconcileSnapshot();
+    }
     function refreshList() {
         if (searchAllDevices)
             toggleScan();
@@ -304,7 +308,7 @@ Ui.ProviderChooserController {
             return;
         activeScan = transition.activeScan;
         if (transition.snapshot)
-            applySnapshot(transition.snapshot);
+            reconcileSnapshot();
         if (scan.state === "failed" && !transition.activeScan)
             listError = transition.status;
         else if (scan.state === "running")
