@@ -43,6 +43,24 @@ continuation staging and atomic publication are unchanged.
 - Interaction contract: read-only inspection still cannot run an update. No key,
   field, focus-restoration or request-ownership changes.
 
+## 3. Bluetooth saved-patch normalization
+
+`BluetoothAdapterEdits.savedChanges` is a side-effect-free all-or-nothing conversion
+of saved fields. Submission now owns only availability/pending/error guards and
+request capture. Normalization leaves raw drafts intact for partial acknowledgement
+and explicit retry. Both edit admission and conversion reject inherited map names
+such as `toString`, rather than treating them as supported wire fields.
+
+- `saveBatch` cyclomatic **14 → 8**, cognitive **17 → 7**, effort **72 → 37**.
+  Including normalization: **16 / 19 / 80** (a small aggregate increase for the
+  explicit validation boundary/allowlist); maximum cognitive falls **17 → 12**.
+- Actual Qt Bluetooth recovery suite: **9 passed**, strict qmllint: pass.
+- Invalid aliases/timeouts/foreign fields cannot emit a partial patch or enter
+  pending state. Existing partial-ack/retry coverage now also checks trimming and
+  rounding without rewriting the retained raw draft.
+- Interaction contract: field-local drafts still enter the owner only on save;
+  no per-keystroke writes, automatic retries or acknowledgement changes.
+
 ## Measurement limits
 
 Lens metrics are advisory, not developer-hour or correctness estimates. Source

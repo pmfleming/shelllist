@@ -204,13 +204,33 @@ DaemonTestCase {
             }))
         } } };
     }
+    function test_adapterPatchRejectsEntireInvalidDraft_data() {
+        return [
+            {tag: "blank-alias", fields: {alias: "  ", pairableTimeout: 0}},
+            {tag: "invalid-timeout", fields: {alias: "Valid", discoverableTimeout: "not a number"}},
+            {tag: "negative-timeout", fields: {alias: "Valid", pairableTimeout: -2}},
+            {tag: "inherited-field", fields: {alias: "Valid", toString: 2}}
+        ];
+    }
+    function test_adapterPatchRejectsEntireInvalidDraft(data) {
+        const controller = makePanel().controller;
+        const edits = controller.adapterEdits;
+        edits.edit("adapter", "toString", 2);
+        compare(Object.keys(edits.draft("adapter").fields).length, 0);
+        edits.put("adapter", {fields: data.fields, error: "", pending: false});
+        verify(!edits.saveBatch("adapter"));
+        compare(adapterCalls().length, 0, "a valid sibling field cannot leak a partial patch");
+        compare(edits.draft("adapter").fields, data.fields);
+        verify(!edits.draft("adapter").pending);
+        compare(edits.requestKey, "");
+    }
     function test_adapterBatchPartialOutcomeAndExplicitRetry() {
         const panel = makePanel();
         const controller = panel.controller;
         const edits = controller.adapterEdits;
         const backend = findChild(controller, "bluetoothBackend");
-        edits.edit("adapter", "alias", "My adapter");
-        edits.edit("adapter", "discoverableTimeout", 120);
+        edits.edit("adapter", "alias", "  My adapter  ");
+        edits.edit("adapter", "discoverableTimeout", 120.4);
         edits.edit("adapter", "pairableTimeout", 0);
         verify(edits.saveBatch("adapter"));
         compare(adapterCalls().length, 1);
@@ -218,7 +238,7 @@ DaemonTestCase {
         compare(submitted, {key: "adapter", changes: {alias: "My adapter", discoverable_timeout: 120, pairable_timeout: 0}});
         edits.edit("adapter", "alias", "Cannot retarget a submitted value");
         edits.discard("adapter");
-        compare(edits.draft("adapter").fields.alias, "My adapter");
+        compare(edits.draft("adapter").fields.alias, "  My adapter  ");
         const partial = batchReply("adapter", submitted.changes,
             {discoverable_timeout: "unknown", pairable_timeout: "not-attempted"});
         partial.data.snapshot = {radio: controller.radio, devices: controller.allDevices,
@@ -226,7 +246,7 @@ DaemonTestCase {
         backend.acceptSharedResponse("adapter-batch", partial, "");
         verify(controller.status.includes("not fully confirmed"), "snapshot status must not hide a partial outcome");
         compare(edits.draft("adapter").fields.alias, undefined);
-        compare(edits.draft("adapter").fields.discoverableTimeout, 120);
+        compare(edits.draft("adapter").fields.discoverableTimeout, 120.4);
         compare(edits.draft("adapter").fields.pairableTimeout, 0);
         verify(edits.draft("adapter").error.length > 0);
         // Saving another field must not silently retry the uncertain earlier write.

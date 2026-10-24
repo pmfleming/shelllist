@@ -15,7 +15,7 @@ Core.DraftStore {
         return drafts[key] || { fields: {}, error: "", pending: false };
     }
     function edit(key: string, field: string, value: var): void {
-        if (!key || draft(key).pending || !wireFields[field])
+        if (!key || draft(key).pending || !Object.prototype.hasOwnProperty.call(wireFields, field))
             return;
         put(key, {
             fields: Object.assign({}, draft(key).fields, { [field]: value }),
@@ -35,21 +35,25 @@ Core.DraftStore {
         if (!draft(key).pending)
             put(key, null);
     }
+    // Normalize a complete saved draft atomically. Null means no safe patch;
+    // this never modifies drafts, pending state or an acknowledged observation.
+    function savedChanges(fields: var): var {
+        const changes = ({});
+        for (const field of Object.keys(fields)) {
+            if (!Object.prototype.hasOwnProperty.call(wireFields, field)) return null;
+            const value = field === "alias" ? String(fields[field]).trim() : Math.round(Number(fields[field]));
+            if (field === "alias" ? !value : !Number.isFinite(value) || value < 0) return null;
+            changes[wireFields[field]] = value;
+        }
+        return Object.keys(changes).length ? changes : null;
+    }
     function saveBatch(key: string): bool {
         const current = draft(key);
         const adapter = controller.adapters.find(entry => entry.key === key);
         if (!adapter || !controller.backendAvailable || controller.globalRequestInFlight || current.error || current.pending)
             return false;
-        const fields = Object.keys(current.fields);
-        if (!fields.length)
-            return false;
-        const changes = ({});
-        for (const field of fields) {
-            const value = field === "alias" ? String(current.fields[field]).trim() : Math.round(Number(current.fields[field]));
-            if (!wireFields[field] || (field === "alias" ? !value : !Number.isFinite(value) || value < 0))
-                return false;
-            changes[wireFields[field]] = value;
-        }
+        const changes = savedChanges(current.fields);
+        if (!changes) return false;
         // Only saved field values enter this immutable submission, never editor buffers.
         patch(key, { pending: true, pendingValues: changes });
         requestKey = key;
