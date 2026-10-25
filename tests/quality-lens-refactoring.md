@@ -34,3 +34,23 @@ Extended the existing native stream-recovery journey with malformed adapter/audi
 rows; rejected rows do not consume the subsequent valid revision. Full Qt suite:
 **419 passed, zero failures, one existing renderer skip**. Strict `qmllint` passes
 for the changed Bluetooth/VPN QML against real Quickshell/Qt import metadata.
+
+## Shared field publication guard
+
+Expressed the existing boolean publication rule once: changed deferred fields
+publish on save, changed live-preview fields publish on rollback (`save !==
+livePreview`). Restoration still precedes rollback publication; binding restoration,
+reentrancy and finished-signal ordering are unchanged. The existing field-interaction
+owner remains primary; no lower-level truth-table suite or test deletion was added.
+Full Qt suite: **419 passed, zero failures, one existing renderer skip**. Strict
+lint passes for `FieldEditSession.qml`.
+
+In a disposable archive, bypassing Bluetooth snapshot validation caused the native
+stream-recovery owner to fail on consumed malformed radio/audio revisions (2
+failures). Removing the field publication guard caused deferred/live slider and
+Escape-discard journeys to fail (3 failures). Each fault was then removed and its
+suite passed all 8 checks, including lifecycle hooks. The restored implementation
+files byte-match the working source; no faults were injected into the checkout.
+An initial exploratory invocation ran the whole suite with both faults because
+`run-qml-tests.sh` does not forward arguments; the isolated runs above used
+`run-qmlquality-tests.sh -input ...` instead.

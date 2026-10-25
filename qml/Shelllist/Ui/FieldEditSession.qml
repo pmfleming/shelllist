@@ -77,9 +77,10 @@ QtObject {
         // updating Binding, so synchronize it before releasing the override.
         if (save)
             bindingValue = value;
-        if (!save)
+        else
             restoreRequested(originalValue);
-        if (changed && ((save && !livePreview) || (!save && livePreview)))
+        // Deferred fields publish on save; live previews publish on rollback.
+        if (changed && save !== livePreview)
             publishRequested(value);
         finished(save);
         active = false;
