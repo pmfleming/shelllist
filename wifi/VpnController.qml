@@ -10,7 +10,6 @@ Item {
     property var profiles: []
     property var active: []
     property string requestId: ""
-    property string connectingUuid: ""
 
     readonly property bool connecting: requestId.length > 0
     readonly property bool busy: connecting || backend.isPending("vpn-connect") || backend.isPending("vpn-disconnect")
@@ -29,7 +28,6 @@ Item {
             controller.status = "A VPN connection is already starting.";
             return false;
         }
-        connectingUuid = profile.uuid;
         return backend.connectVpn({
             uuid: profile.uuid
         });
@@ -71,7 +69,6 @@ Item {
         if (event.event !== "succeeded" && !Api.isTerminalEvent(event))
             return;
         requestId = "";
-        connectingUuid = "";
         controller.status = event.event === "succeeded" ? ((event.data.result && event.data.result.message) || "VPN connected") : failureMessage(event);
         refresh();
     }
