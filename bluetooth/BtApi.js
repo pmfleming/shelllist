@@ -20,6 +20,25 @@ var subscribedStreams = Object.keys(streams).map(function (name) {
     return streams[name];
 });
 
+// Wire shape only. Ordering and synchronous publication remain in the backend.
+function objectValue(value) {
+    return !!value && typeof value === "object" && !Array.isArray(value);
+}
+function keyedItems(items) {
+    return Array.isArray(items) && items.every(item => objectValue(item)
+        && typeof item.key === "string" && !!item.key);
+}
+function validSnapshot(data, audio) {
+    if (audio)
+        return Array.isArray(data.audio_devices) && data.audio_devices.every(device =>
+            objectValue(device) && typeof device.device_key === "string" && !!device.device_key
+            && Array.isArray(device.profiles));
+    const snapshot = data.snapshot;
+    return objectValue(snapshot) && objectValue(snapshot.radio) && objectValue(snapshot.management)
+        && typeof snapshot.radio.available === "boolean" && typeof snapshot.radio.operational === "boolean"
+        && typeof snapshot.radio.powered === "boolean" && keyedItems(snapshot.adapters) && keyedItems(snapshot.devices);
+}
+
 var responseKeys = ["scan", "audio_devices", "operation", "requests"];
 
 function responseKind(data) {

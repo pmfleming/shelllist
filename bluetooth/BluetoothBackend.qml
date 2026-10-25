@@ -31,7 +31,7 @@ Io.DaemonBackend {
     }
     readonly property var responseHandlers: ({
             scan: function (id, data) {
-                backend.acceptScan(data.scan);
+                backend.controller.handleScanEvent(data.scan);
             },
             audio_devices: function (id, data) {
                 // Mutation observations have no publication watermark. Keep the
@@ -81,22 +81,25 @@ Io.DaemonBackend {
         if (id === "pairing-response")
             controller.finishPairingResponse(error.length === 0);
     }
+    function finishSnapshot(id: string, envelope: var, transportError: string, error: string): void {
+        if (transportError) {
+            showFailure(id, error);
+            return;
+        }
+        try {
+            if (!envelope || envelope.protocol !== BtApi.protocol || envelope.version !== BtApi.version
+                    || typeof envelope.ok !== "boolean")
+                throw new Error("Incompatible Bluetooth snapshot envelope");
+            const phase = !error ? "available" : envelope?.error?.code === "snapshot-loading" ? "loading" : "unavailable";
+            acceptState(envelope?.data, phase, error, id === "audio-snapshot");
+        } catch (snapshotError) {
+            showFailure(id, "Invalid Bluetooth snapshot: " + snapshotError);
+        }
+    }
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Bluetooth operation failed");
         if (id === "snapshot" || id === "audio-snapshot") {
-            if (transportError) {
-                showFailure(id, error);
-                return;
-            }
-            try {
-                if (!envelope || envelope.protocol !== BtApi.protocol || envelope.version !== BtApi.version
-                        || typeof envelope.ok !== "boolean")
-                    throw new Error("Incompatible Bluetooth snapshot envelope");
-                const phase = !error ? "available" : envelope?.error?.code === "snapshot-loading" ? "loading" : "unavailable";
-                acceptState(envelope?.data, phase, error, id === "audio-snapshot");
-            } catch (snapshotError) {
-                showFailure(id, "Invalid Bluetooth snapshot: " + snapshotError);
-            }
+            finishSnapshot(id, envelope, transportError, error);
             return;
         }
         finishDeviceRequest(id, error);
@@ -140,35 +143,14 @@ Io.DaemonBackend {
         if (id !== "snapshot")
             controller.status = controller.statusForCompletedCall(id);
     }
-    function acceptScan(scan) {
-        controller.handleScanEvent(scan);
-    }
     function reconcileSnapshot() {
         return !isPending("snapshot") && refresh();
     }
-    function objectValue(value) {
-        return !!value && typeof value === "object" && !Array.isArray(value);
-    }
     function acceptState(data, phase, message, audio) {
-        if (!objectValue(data))
+        if (!BtApi.objectValue(data))
             throw new Error("Missing native snapshot metadata; matching daemon required");
-        if (phase === "available") {
-            if (audio) {
-                if (!Array.isArray(data.audio_devices) || !data.audio_devices.every(device =>
-                        objectValue(device) && typeof device.device_key === "string" && !!device.device_key
-                        && Array.isArray(device.profiles)))
-                    throw new Error("Malformed Bluetooth audio snapshot");
-            } else {
-                const snapshot = data.snapshot;
-                if (!objectValue(snapshot) || !objectValue(snapshot.radio) || !objectValue(snapshot.management)
-                        || typeof snapshot.radio.available !== "boolean" || typeof snapshot.radio.operational !== "boolean"
-                        || typeof snapshot.radio.powered !== "boolean" || !Array.isArray(snapshot.adapters)
-                        || !Array.isArray(snapshot.devices)
-                        || !snapshot.adapters.concat(snapshot.devices).every(item => objectValue(item)
-                            && typeof item.key === "string" && !!item.key))
-                    throw new Error("Malformed Bluetooth radio snapshot");
-            }
-        }
+        if (phase === "available" && !BtApi.validSnapshot(data, audio))
+            throw new Error(audio ? "Malformed Bluetooth audio snapshot" : "Malformed Bluetooth radio snapshot");
         const cursor = audio ? audioCursor : radioCursor;
         const accepted = cursor.accept(data.state, function() {
             if (audio) {

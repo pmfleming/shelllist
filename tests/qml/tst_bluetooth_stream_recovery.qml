@@ -71,7 +71,10 @@ DaemonTestCase {
         broken.data.snapshot.devices = {};
         send(f, broken);
         compare(findChild(f.b, "bluetoothRadioCursor").revision, 2);
-        delete broken.data.snapshot;
+        broken.data = JSON.parse(JSON.stringify(f.records.changed.data));
+        broken.data.snapshot.adapters = [{key: 7}];
+        send(f, broken);
+        compare(findChild(f.b, "bluetoothRadioCursor").revision, 2);
         broken.data = JSON.parse(JSON.stringify(f.records.changed.data));
         delete broken.data.state;
         send(f, broken);
@@ -83,6 +86,10 @@ DaemonTestCase {
     function test_audioIsIndependentAndLateReadCannotUndoUnavailable() {
         const f = setup();
         send(f, f.records.changed);
+        const malformed = JSON.parse(JSON.stringify(f.records.audio_event));
+        malformed.data.audio_devices = [{device_key: "buds", profiles: {}}];
+        send(f, malformed);
+        compare(findChild(f.b, "bluetoothAudioCursor").revision, 0);
         send(f, f.records.audio_event);
         const read = JSON.parse(JSON.stringify(f.data.audio_snapshot));
         read.data.state.revision = 2;
