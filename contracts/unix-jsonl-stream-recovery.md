@@ -274,11 +274,42 @@ and private producer evidence, not native bar socket, installed-session, sustain
 load, release-performance or OS-process-crash acceptance. The frontend bar socket
 flag remains absent at this checkpoint.
 
+## Bar socket opt-in and private native acceptance
+
+`SHELLLIST_BAR_SOCKET=1` now independently selects the shared Unix adapter.
+The bridge stays default; a rebuild is not selection, activation or deployment.
+The matching bar daemon must already be listening. Requests, route generations,
+admission credits and cancellation use the existing shared client, with no fallback
+or effect replay. There is no second state producer or policy implementation.
+
+Real Quickshell 0.3.0 passes a private production-path probe: two shared bar
+consumers, eight cached reads, a new native audio publication racing an older
+captured read, independent subscription renewal, consumer destruction and a ninth
+read by the surviving battery/work-area observer. The producer records one owner,
+three subscriptions and cancellation; work-area demand is two before renewal,
+one for the surviving read and zero after frontend exit, before listener shutdown.
+The exported service is in-process on a private bus; the frontend receives
+nonexistent bus addresses. A test-only gate refuses effects, and no host monitors
+or hardware helpers run. This is not a daemon OS-process crash experiment.
+
+Producer fixture commit `cca6041` adds the explicit `native-quickshell-socket`
+Cargo feature, separating the probe from the
+bar release package's `--include-ignored` suite. Required source/Quickshell inputs
+are checked, never silently treated as success. See `tests/README.md` for the
+reproduction command. Default all-target Rust tests, all-target/all-feature Clippy,
+formatting, strict QML lint and generated contracts pass; actual Qt reports 419
+passes / one existing renderer skip. Sibling-aware Nix `barDaemonContract`,
+`qmlTests`, `materialGallery` (bridge) and `buildInputs` pass; release producer
+checks run 223 library, 30 update-worker and two existing isolated native cases.
+The separate Quickshell socket probe passes three explicit reruns. Its evidence
+is debug/private, not release
+performance, maximum payload, sustained load or installed-session acceptance.
+
 ## Remaining scope
 
 This closes NM's network delta-chain gap, not the entire multi-daemon revision
 migration. Other streams' content identities/internal counters are not claimed as
-uniform wire watermarks. Bar socket opt-in/native acceptance and clipboard direct ingress, full runtime
+uniform wire watermarks. Clipboard direct ingress, full runtime
 packaging, release/mixed-load, maximum NM payload and real process-crash acceptance
 remain staged work. NM's test recreates a listener, not an OS process. D-Bus remains
 supported and the bridge remains the frontend default.

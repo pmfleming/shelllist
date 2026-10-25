@@ -14,6 +14,21 @@ Development tooling uses [`cargo xtask`](tools/xtask/README.md): surface catalog
 generation, build-input checks, dry-run-first cache trimming, typed producer
 contracts, and Qt boundary/IP regression checks.
 
+## Daemon transport migration
+
+The retained `<daemon> client` bridge is still the default. Independent frontend
+opt-ins are `SHELLLIST_BT_SOCKET=1`, `SHELLLIST_NM_SOCKET=1`,
+`SHELLLIST_APP_SOCKET=1` and `SHELLLIST_BAR_SOCKET=1`; other values do not enable
+sockets. Rebuilding alone does not select them. Each requires a matching,
+already-running producer and its private, UID-owned canonical `0700`
+`$XDG_RUNTIME_DIR/<daemon>.sock`. There is no automatic bridge fallback or effect
+replay. D-Bus remains supported for external tools and daemon-to-daemon calls.
+
+Cold-start activation, default rollout and installed-session acceptance are not
+complete. See the [stream gates](contracts/unix-jsonl-stream-matrix.md) and
+[scoped evidence](contracts/unix-jsonl-stream-recovery.md); private test success
+is not deployment or hardware acceptance.
+
 ## Top bar
 
 The adaptive 51 px bar uses a balanced, icon-only layout: fixed **Shell, Browser, Code, Media, Text** workspace tiles at the left, independently centered **Media**, and **Network, Bluetooth, Battery, Notifications, Tray, Clock/date** at the right. One continuous rounded surface has no floating pods, workspace labels or hover tooltips. Narrow bars reduce spacing/date content and expose horizontal overflow, never hiding transport. Battery charge fills an upright icon continuously; charging/power-state marks remain outside its outline. The numeric clock/date is one direct action. Accessible metadata and choosers retain detailed values.

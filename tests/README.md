@@ -118,10 +118,49 @@ producer-generated contracts; **221 debug library passes / two normally ignored*
 and all-target Clippy. The sibling-source release package ran **223 library,
 30 update-worker and two isolated native passes**, including ignored cases.
 `barDaemonContract`, `qmlTests`, `materialGallery` and `buildInputs` are the matched
-Nix gates. The gallery uses the **bridge**, not a bar socket. The bar socket flag
-and private shared-Quickshell socket probe remain next-stage work; these results
+Nix gates. The gallery uses the **bridge**, not a bar socket. At that ordering
+checkpoint the bar socket flag and native probe remained next-stage work; those results
 are not installed-session, sustained-load, maximum-payload, release-performance
 or OS-process-crash acceptance. No live service or hardware changes were made.
+
+### Bar native socket opt-in
+
+`SHELLLIST_BAR_SOCKET=1` independently selects the production shared socket client.
+Producer fixture `cca6041` supplies the feature-gated acceptance harness. The private Quickshell 0.3.0 probe now exercises two real `BarDaemonBackend`
+consumers, eight cached reads, a native publication racing a captured read,
+subscription renewal, consumer destruction and a ninth read by the surviving peer.
+The producer checks one socket owner, three subscriptions, cancellation and
+work-area demand dropping from two consumers to one to zero before listener
+shutdown. Both consumers use native publication cursors, not raw DTO fallback.
+
+```sh
+# From Shelllist. This does not set the socket flag in your desktop environment.
+export SHELLLIST_SOURCE="$PWD"
+export SHELLLIST_QUICKSHELL="$(nix develop . --no-write-lock-file --command bash -c 'command -v quickshell')"
+nix develop ../bar-daemon --no-write-lock-file --command bash -c '
+  set -e
+  cd ../bar-daemon
+  cargo test --locked --features native-quickshell-socket --lib native_quickshell_bar_socket_acceptance -- --nocapture
+'
+```
+
+The fixture uses the real listener/exported in-process service on a private bus,
+with no host monitors. Its test-only read gate rejects effects before dispatch.
+Quickshell receives an empty inherited environment, private HOME/runtime,
+nonexistent bus addresses, the bar opt-in and a private-probe guard. Do not run
+`tests/e2e/bar-unix-jsonl.qml` standalone against live services. Missing inputs
+fail the explicitly enabled test; the non-default Cargo feature excludes it from
+the ordinary package's `--include-ignored` suite rather than silently skipping it.
+
+The ordinary Qt suite passes **419 / one existing renderer skip**, with explicit
+flag-isolation/exact-value tests. Rust formatting, all-target/all-feature Clippy
+and the default all-target test suite pass. Sibling-aware Nix `barDaemonContract`,
+`qmlTests`, `materialGallery` and `buildInputs` pass; release checks include 223
+library, 30 update-worker and two existing isolated native cases. The separate
+Quickshell socket probe passes three explicit reruns. This probe is debug/private,
+not an actual bar daemon OS-process crash, sustained load, maximum payload,
+matched release performance or installed-session acceptance. The gallery remains
+bridge compatibility evidence, and the bridge remains the default.
 
 ## Panel standardization acceptance
 
