@@ -26,6 +26,7 @@ var methods = ({
     "clipboard.settings.update": "clipboard.settings.update",
     "clipboard.history.wipe.prepare": "clipboard.history.wipe.prepare",
     "clipboard.history.wipe.commit": "clipboard.history.wipe.commit",
+    "clipboard.operation.status": "clipboard.operation.status",
 });
 var streams = ({
     "clipboard.history.changed": "clipboard.history.changed",

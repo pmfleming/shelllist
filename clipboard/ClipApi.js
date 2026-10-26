@@ -22,6 +22,7 @@ var methods = {
     sessionHidden: Protocol.methods["clipboard.session.hidden"],
     historyQuery: Protocol.methods["clipboard.history.query"],
     historyRevision: Protocol.methods["clipboard.history.revision"],
+    operationStatus: Protocol.methods["clipboard.operation.status"],
     entryDetails: Protocol.methods["clipboard.entry.details"],
     entryThumbnail: Protocol.methods["clipboard.entry.thumbnail"],
     entryAction: Protocol.methods["clipboard.entry.action"],
