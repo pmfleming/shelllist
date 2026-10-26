@@ -402,12 +402,58 @@ it is separate from the release package suite. See the
 and limits. All five daemon paths now have scoped opt-ins/private acceptance;
 this does not close the remaining BT/NM rows or global rollout gates.
 
+## Reviewed follow-up: owned NM connect and private runtime fixtures
+
+The scoped NM connect checkpoint adds one owner/request-local `operation_revision`
+to stored progress, emitted events and atomic `operation.status` reads. Terminal
+publication is immutable; retention stays 256 results/five minutes. Expiry/eviction
+during teardown cannot resurrect running work or permit cancellation of a completed
+link. Frontend validation rejects stale/duplicate/malformed observations, cancellation
+intent is monotone, and a timed-out status read keeps its outstanding identity until
+reply or owner loss. Recovery never reconnects, submits credentials or infers success
+from link state. Other NM operations, full-status ordering and private prompt recovery
+remain open. See [connect evidence](../tests/networking-recovery-qualification.md).
+
+The clipboard follow-up is test-only: separate fake-backed service processes run
+real admission/ownership/ingress, are killed at eight accepted-work/receipt/paste
+phases and restart with fresh authority. An additional 64-global/16-owner admission
+case retains committing work through owner loss. Actual Qt tests separately protect
+drafts, explicit fresh-lease retry and retired paste intent. This is **not** one
+combined Quickshell-plus-producer crash test or the packaged daemon main. See
+[clipboard process evidence](../tests/clipboard-process-crash-qualification.md).
+
+The bar follow-up is also test-only: four private lib-test process crash positions,
+owned battery cancellation/reconciliation, fresh epochs and unknown outcomes, plus
+exact/over-limit request (1 MiB), API-result (16 MiB) and event (32 MiB) boundaries.
+A real stalled reader loses only its owner while admission remains held through
+reconciliation. Fixture battery starts replace authorization/effect work; they do
+not qualify production helper validation or durable display/hardware outcomes.
+See [bar runtime evidence](../tests/bar-runtime-qualification.md).
+
+The application follow-up is test-only: exact 1 MiB structured input and one-byte-over
+pre-effect rejection, exact 16 MiB admitted-service results and non-retryable +1
+unknown responses across private socket/retained bridge/D-Bus, near-limit UTF-8
+actual-process delivery and healthy owned-work isolation under a stalled reader
+with one/two producer workers. Exact sizing uses a tracker-free synthetic catalog;
+actual-process reads allow headroom for independent resource metadata. Shared
+private-bus setup verifies there are no external activatable services. These are
+not large-record Qt/Quickshell, effect-receipt-loss or sustained-load qualifications.
+See [application runtime evidence](../tests/application-runtime-qualification.md).
+
+These checkpoints underwent their applicable Lens check/refactor loops and scoped
+functional checks. Analyzer limitations remain explicit; a completed review is not
+compiler-complete analysis or a blanket quality certification. The coordinator's
+[integration record](../tests/worker-integration-review.md) distinguishes accepted
+checkpoints, partial evidence, blockers, matching checks and still-active work.
+
 ## Remaining scope
 
-This closes NM's network delta-chain gap, not the entire multi-daemon revision
-migration. Other streams' content identities/internal counters are not claimed as
-uniform wire watermarks. Full runtime
-packaging, release/mixed-load, maximum payload and real process-crash acceptance
-remain staged work. NM's test recreates a listener, not an OS process. D-Bus remains
-supported and the bridge remains the frontend default.
+NM collection/connect progress does not complete the multi-daemon revision
+migration. Other streams' content identities/internal counters are not uniform
+wire watermarks. The new private Clip/bar OS-process fixtures do not establish
+packaged-main startup, combined native frontend crash, durable hardware recovery,
+full payload parity or release/mixed-load acceptance. NM native tests still use
+in-process services, not daemon OS-process death. D-Bus remains supported and the
+bridge remains the frontend default. Startup strategy/compatibility gates and
+upgrade/rollback need separate implementation and qualification.
 No deployment, live service restart, or hardware acceptance is implied.

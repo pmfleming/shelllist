@@ -251,6 +251,17 @@ integration tests**, including the heavy framing cases; the packaged Qt check
 retains **429 / one skip**. See the [qualification record](clipboard-socket-qualification.md)
 for tested commits, commands, evidence limits and remaining rollout gates.
 
+### Reviewed worker recovery/runtime checkpoints
+
+The [integration review](worker-integration-review.md) records the scoped NM connect,
+clipboard process-crash, bar runtime/payload and application retained-transport
+checkpoints, applicable Lens
+check/refactor evidence, partial-analysis limits and explicitly unintegrated work.
+See the [connect](networking-recovery-qualification.md),
+[clipboard process](clipboard-process-crash-qualification.md) and
+[bar runtime](bar-runtime-qualification.md) and
+[application runtime](application-runtime-qualification.md) records for per-lane reproduction.
+
 ### Startup/readiness design review
 
 The [coordinator review](startup-readiness-review.md) records the source-checked

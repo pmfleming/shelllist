@@ -20,6 +20,8 @@ Item {
     property string recoveryId: ""
     property string recoveryRequestId: ""
     property int recoveryFailures: 0
+    property bool recoveryTimedOut: false
+    property double operationRevision: 0
     property bool cancellationRequested: false
     // Only unsaved connection intentions are local. Existing profiles always
     // reflect NM's acknowledged retention, including pending deletion.
@@ -122,9 +124,32 @@ Item {
         if (succeeded)
             controller.refresh();
     }
+    function eventError(event) {
+        if (!event || event.request_id !== requestId || event.stream !== NmApi.streams.wifi_connect
+                || !["started", "progress", "succeeded", "failed", "cancelled"].includes(event.event)
+                || !event.data || typeof event.data !== "object" || Array.isArray(event.data))
+            return "The daemon returned an invalid connection event.";
+        if (!Number.isSafeInteger(event.operation_revision) || event.operation_revision < 1)
+            return "Missing native connection revision; matching nm-daemon required.";
+        const result = event.data.result;
+        if (result !== undefined && result !== null && (typeof result !== "object" || Array.isArray(result)))
+            return "The daemon returned an invalid connection outcome.";
+        if ((event.event === "succeeded" && (!result || result.status !== "connected"))
+                || (event.event === "failed" && result && result.status !== "error"))
+            return "The daemon returned an invalid connection outcome.";
+        return "";
+    }
     function handleEvent(event) {
         if (!Api.requestMatches(event, requestId))
             return;
+        const error = eventError(event);
+        if (error) {
+            controller.setHeldStatus(error + " Connection outcome is unconfirmed; use Check status or Cancel.", 15000);
+            return;
+        }
+        if (event.operation_revision <= operationRevision)
+            return;
+        operationRevision = event.operation_revision;
         if (event.event === "cancelled") {
             requestId = "";
             resetProgress();
@@ -134,6 +159,8 @@ Item {
         }
         const state = Api.connectEventState(event);
         if (state === "progress") {
+            if (cancellationRequested)
+                return;
             controller.setHeldStatus(event.data.message || "Connecting to " + networkName + "…", 15000);
             return;
         }
@@ -277,6 +304,7 @@ Item {
             backend.setPending(recoveryId, false);
         recoveryId = "";
         recoveryRequestId = "";
+        recoveryTimedOut = false;
         recoveryReplyTimer.stop();
     }
     function checkStatus(manual) {
@@ -297,6 +325,15 @@ Item {
         if (requestId && recoveryFailures < 3)
             recoveryTimer.restart();
     }
+    function statusTimedOut() {
+        if (!recoveryId || recoveryRequestId !== requestId)
+            return;
+        // A deadline is not cancellation of the transport read. Retain its
+        // identity/admission until reply or owner loss; never overlap polls.
+        recoveryTimedOut = true;
+        recoveryTimer.stop();
+        controller.setHeldStatus("Connection status check timed out. Outcome is unconfirmed; waiting for the outstanding read or Cancel.", 15000);
+    }
     function receiveStatus(id, envelope, transportError) {
         if (!recoveryId || id !== recoveryId || recoveryRequestId !== requestId)
             return;
@@ -312,9 +349,22 @@ Item {
     function statusError(result) {
         if (!result || result.request_id !== requestId || result.stream !== NmApi.streams.wifi_connect || !["running", "finished"].includes(result.status))
             return "The daemon could not confirm this connection operation.";
+        if (!Number.isSafeInteger(result.operation_revision) || result.operation_revision < 1)
+            return "Missing native connection revision; matching nm-daemon required.";
         const event = result.event;
-        if (result.status === "finished" && (!event || event.request_id !== requestId || !["succeeded", "failed", "cancelled"].includes(event.event)))
+        if (event) {
+            const error = eventError(event);
+            if (error)
+                return error;
+            // eventError already restricts the native event vocabulary. Reuse
+            // the live-event phase classification rather than a second table.
+            const terminalEvent = Api.connectEventState(event) !== "progress";
+            if (event.operation_revision !== result.operation_revision
+                    || (result.status === "finished") !== terminalEvent)
+                return "The daemon returned an invalid connection result.";
+        } else if (result.status === "finished" || result.operation_revision !== 1) {
             return "The daemon returned an invalid connection result.";
+        }
         return "";
     }
     function applyStatus(result) {
@@ -323,12 +373,17 @@ Item {
         recoveryFailures = 0;
         if (result.status === "finished") {
             handleEvent(event);
+            if (requestId)
+                recoveryTimer.restart(); // An older terminal cannot release newer work.
             return;
         }
         // A progress snapshot is not completion, even if wifi.status is active.
-        if (event && event.request_id === requestId && ["started", "progress"].includes(event.event))
+        // Cancellation is monotone: an older read cannot revoke local intent.
+        cancellationRequested = cancellationRequested || result.cancellation_requested === true;
+        if (event)
             handleEvent(event);
-        cancellationRequested = !!result.cancellation_requested;
+        else
+            operationRevision = Math.max(operationRevision, result.operation_revision);
         if (cancellationRequested) {
             controller.setHeldStatus(result.timed_out ? "Connection timed out; waiting for cancellation acknowledgement…" : "Waiting for connection cancellation acknowledgement…", 15000);
         }
@@ -337,6 +392,7 @@ Item {
     onRequestIdChanged: {
         retireRecovery();
         recoveryFailures = 0;
+        operationRevision = 0;
         cancellationRequested = false;
         if (requestId.length > 0)
             recoveryTimer.restart();
@@ -353,7 +409,7 @@ Item {
         id: recoveryReplyTimer
         objectName: "connectionRecoveryReplyDeadline"
         interval: 10000
-        onTriggered: connection.recoveryFailed("Connection status check timed out.")
+        onTriggered: connection.statusTimedOut()
     }
     Timer {
         id: progressTimer

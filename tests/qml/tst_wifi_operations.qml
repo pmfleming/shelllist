@@ -111,14 +111,15 @@ DaemonTestCase {
         tryVerify(function () { return panel.page.detailsNavigation.commandButtons.some(function (button) { return button.accessKey === "K"; }); });
         keyClick(Qt.Key_K, Qt.AltModifier);
         compare(calls.slice(-1)[0].method, "operation.status");
-        statusReply(c, {request_id: "connect-owned", status: "running", stream: "wifi.connect", event: {request_id: "connect-owned", event: "progress", data: {message: "Verifying Wi-Fi activation"}}});
+        statusReply(c, {request_id: "connect-owned", status: "running", stream: "wifi.connect", operation_revision: 2,
+            event: {request_id: "connect-owned", stream: "wifi.connect", operation_revision: 2, event: "progress", data: {message: "Verifying Wi-Fi activation"}}});
         compare(c.status, "Verifying Wi-Fi activation");
         keyClick(Qt.Key_X, Qt.AltModifier);
         verify(c.connection.cancellationRequested, "active link must not hide pending cancellation");
         verify(c.actionInFlight, "cancel dispatch is not acknowledgement");
         c.connection.handleEvent({request_id: "other", event: "cancelled", data: {}});
         verify(c.actionInFlight, "foreign cancellation cannot release the guard");
-        c.connection.handleEvent({request_id: "connect-owned", event: "cancelled", data: {}});
+        c.connection.handleEvent({request_id: "connect-owned", stream: "wifi.connect", operation_revision: 3, event: "cancelled", data: {}});
         verify(!c.actionInFlight);
         panel.page.listItem.focusList();
         keyClick(Qt.Key_D, Qt.AltModifier);
@@ -249,7 +250,7 @@ DaemonTestCase {
             verify(c.prompt.credentialOpen, "only NetworkManager's live request collects credentials");
         }
         const terminal = ["cancelled", "succeeded"].includes(data.outcome) ? data.outcome : "failed";
-        c.connection.handleEvent({request_id: "clicked-connect", event: terminal, data: {
+        c.connection.handleEvent({request_id: "clicked-connect", stream: "wifi.connect", operation_revision: 2, event: terminal, data: {
             message: "Native " + data.outcome, result: {
                 status: terminal === "succeeded" ? "connected" : "error", reason: data.outcome,
                 message: "Native " + data.outcome,
