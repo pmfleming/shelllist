@@ -162,6 +162,26 @@ not an actual bar daemon OS-process crash, sustained load, maximum payload,
 matched release performance or installed-session acceptance. The gallery remains
 bridge compatibility evidence, and the bridge remains the default.
 
+### Clipboard producer ownership prerequisite
+
+Clipboard still has no socket opt-in. The producer's
+`daemon::owner::tests` uses real private D-Bus with a fake clipboard to exercise
+exported calls, private session receipts, foreign lease rejection, peer survival
+and disconnect/reconnect cleanup. A blocked edit read tests late registration
+after owner loss, owner-monitor failure and explicit shutdown. Unit tests retain
+edit/paste publication guards and cancel a fake delayed paste without hardware.
+See `../clip-daemon/docs/transport-ownership.md` from the Shelllist repository root
+for isolated reproduction and the remaining operation/recovery blockers.
+
+This stage passes 48 producer library tests / one existing benchmark ignored,
+five API integration tests and one retained-client integration test, plus strict
+Clippy/formatting. The unchanged frontend suite passes 419 Qt cases / one existing
+renderer skip, lint/generated contracts and surface/build-input checks.
+Sibling-source Nix `clipDaemonContract`, `qmlTests` and `buildInputs` pass; release
+producer tests run 48 library, five API and one retained-client integration case.
+This is D-Bus ownership evidence, not clipboard native socket, payload/load, process-crash
+or rollout acceptance. No frontend transport default is changed.
+
 ## Panel standardization acceptance
 
 `docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,

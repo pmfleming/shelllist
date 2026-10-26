@@ -305,6 +305,29 @@ The separate Quickshell socket probe passes three explicit reruns. Its evidence
 is debug/private, not release
 performance, maximum payload, sustained load or installed-session acceptance.
 
+## Clipboard ownership prerequisite (not socket acceptance)
+
+The clipboard producer now scopes paste sessions, text edit leases and wipe
+challenges to the caller. Foreign use cannot publish, arm paste, commit an edit
+or consume the rightful owner's challenge. Hidden acknowledgement is single-use;
+its delayed task remains owned and is cancelled on session/owner release. Cleanup
+is not rollback of an already published selection or injected input.
+
+The retained D-Bus service observes owner loss before export, preserves peers,
+reconciles missed owner losses and closes resource admission on monitor failure or
+shutdown. Accepted calls finish without replay; post-dispatch liveness checks
+release leases created after earlier disconnect cleanup. API-generated lifecycle
+receipts are owner-filtered; shared capture configuration and history invalidations
+remain shared. Backend asynchronous operation events/cleanup still need migration.
+
+Private real-D-Bus fixtures cover exported dispatch, receipt isolation, reconnect,
+peer survival and late edit registration after disconnect/monitor failure/shutdown.
+Producer unit tests cover owner scope, single-use authority and fake delayed-paste
+cancellation. This adds no authoritative recovery API, wire publication clock,
+clipboard listener or frontend opt-in. Quiet terminal loss stays uncertain; never
+recover by publishing or acknowledging hidden again. See the producer's
+`docs/transport-ownership.md` for scope and reproduction.
+
 ## Remaining scope
 
 This closes NM's network delta-chain gap, not the entire multi-daemon revision
