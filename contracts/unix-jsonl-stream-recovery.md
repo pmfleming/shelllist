@@ -391,6 +391,17 @@ sustained mixed load, matched release performance, process crash,
 activation/cold-start or installed-session acceptance. No deployment or host state
 changes are authorized by opt-in implementation.
 
+Final matched-source qualification for producer `a017338` / frontend `0b2c848`
+passes sibling-source preflight and Nix `clipDaemonContract`, `qmlTests` and
+`buildInputs`: 57 release library + six integration passes (heavy framing included),
+429 actual Qt passes / one existing renderer skip. Strict Clippy/formatting,
+QML lint, generated/offline contract parity and surface/build-input checks pass.
+The explicitly invoked native probe passes both ordinary and large-record cases;
+it is separate from the release package suite. See the
+[qualification record](../tests/clipboard-socket-qualification.md) for commands
+and limits. All five daemon paths now have scoped opt-ins/private acceptance;
+this does not close the remaining BT/NM rows or global rollout gates.
+
 ## Remaining scope
 
 This closes NM's network delta-chain gap, not the entire multi-daemon revision

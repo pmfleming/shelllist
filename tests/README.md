@@ -245,6 +245,12 @@ generated contracts, offline clipboard parity, surface/build-input checks;
 all-target/all-feature Clippy/formatting, plus both explicitly run heavy payload
 cases and both subcases of the actual native Quickshell probe.
 
+Step-5 matched-source qualification also passes Nix `clipDaemonContract`,
+`qmlTests` and `buildInputs`. The release producer runs **57 library + six
+integration tests**, including the heavy framing cases; the packaged Qt check
+retains **429 / one skip**. See the [qualification record](clipboard-socket-qualification.md)
+for tested commits, commands, evidence limits and remaining rollout gates.
+
 ## Panel standardization acceptance
 
 `docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,
