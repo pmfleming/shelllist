@@ -1,5 +1,9 @@
 # Test scope
 
+The [project-completion queue](completion-orchestration.md) records the current
+worker isolation, two-commit quality workflow and orchestration checks. It is not
+runtime acceptance or approval of unfinished worker changes.
+
 Prefer end-to-end user journeys and public-boundary integration tests. Keep local
 tests for unique failure modes that those flows cannot reasonably exercise; do
 not mirror implementation tables or freeze visual choices unnecessarily.
