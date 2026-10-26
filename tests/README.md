@@ -164,7 +164,7 @@ bridge compatibility evidence, and the bridge remains the default.
 
 ### Clipboard producer ownership prerequisite
 
-Clipboard still has no socket opt-in. The producer's
+At this historical checkpoint clipboard had no socket opt-in. The producer's
 `daemon::owner::tests` uses real private D-Bus with a fake clipboard to exercise
 exported calls, private session receipts, foreign lease rejection, peer survival
 and disconnect/reconnect cleanup. A blocked edit read tests late registration
@@ -181,6 +181,69 @@ Sibling-source Nix `clipDaemonContract`, `qmlTests` and `buildInputs` pass; rele
 producer tests run 48 library, five API and one retained-client integration case.
 This is D-Bus ownership evidence, not clipboard native socket, payload/load, process-crash
 or rollout acceptance. No frontend transport default is changed.
+
+### Clipboard native opt-in and recovery
+
+`SHELLLIST_CLIP_SOCKET=1` independently selects the shared Unix adapter; the bridge
+remains default. Matching producers are required on either path. The
+`tst_clipboard_stream_recovery.qml` suite covers initial/reset/lag/read barriers,
+sensitive detail invalidation, malformed/older/duplicate publication metadata,
+owned operation status recovery, quiet terminal loss, deadlines/unknown outcomes,
+peer isolation and preserved controller drafts/accepted-work guards. Existing
+clipboard save, preview and recovery tests continue to own field transactions and
+the captured save-and-paste/session handshake. No recovery request repeats effects.
+
+The producer's real socket tests cover D-Bus parity, ownership, peer survival,
+reconnect isolation and late acceptance. Its separately feature-gated native test
+uses actual Quickshell 0.3.0, production shared routing and clipboard recovery,
+two consumers, repeated reads, a native invalidation racing an older reply,
+independent renewal and consumer release followed by a surviving peer's read.
+The producer audits one socket owner, three subscriptions and disconnect before
+listener shutdown. Isolated settings and an in-memory clipboard avoid host data;
+a read-only gate rejects effects. Quickshell receives a cleared environment,
+private HOME/runtime and nonexistent bus addresses. Never run the QML fixture
+standalone against live services.
+
+```sh
+# From Shelllist; no desktop environment variable or service is changed.
+export SHELLLIST_SOURCE="$PWD"
+export SHELLLIST_QUICKSHELL="$(nix develop . --no-write-lock-file --command bash -c 'command -v quickshell')"
+nix develop ../clip-daemon --no-write-lock-file --command bash -c '
+  set -e
+  cd ../clip-daemon
+  cargo test --locked --features native-quickshell-socket --lib native_quickshell_clip_socket_acceptance -- --ignored --nocapture
+'
+```
+
+Required inputs fail explicitly. The non-default feature and ignore marker keep
+this native probe separate from ordinary package checks. Its second case sends
+16 MiB of control characters in an ignored read-only parameter (96 MiB escaped
+JSON) and validates a near-32 MiB UTF-8 response. It does not publish that content.
+Clipboard alone has the bounded write reservation needed for these records; other
+daemon budgets are unchanged.
+
+Producer `daemon::socket::tests::payload` separately exercises exact 128 MiB input
+and 32 MiB output ceilings, one byte over each, rejection without the fixture
+effect, and real kernel backpressure from a non-reading peer. Writer failure
+cancels only that owner's fake work and preserves the healthy owner. The stalled
+case uses a shortened 100 ms deadline, not a production timing assertion.
+
+```sh
+# From clip-daemon's development shell, with the private environment documented
+# in its docs/transport-ownership.md:
+cargo test --locked --lib payload_qualification -- --ignored --nocapture
+```
+
+These heavy cases are normally ignored but included in the release package's
+`--include-ignored` suite. This is private framing/read/recovery evidence, not
+maximum-content hardware publication, sustained load, matched release performance,
+daemon OS-process crash, startup or installed-session acceptance.
+
+Step-4 validation: **429 Qt passes / one existing renderer skip**, strict lint,
+generated contracts, offline clipboard parity, surface/build-input checks;
+**55 ordinary producer library passes / six integration passes**, strict
+all-target/all-feature Clippy/formatting, plus both explicitly run heavy payload
+cases and both subcases of the actual native Quickshell probe.
 
 ## Panel standardization acceptance
 

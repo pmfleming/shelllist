@@ -50,18 +50,18 @@ DaemonTestCase {
         const firstRead = controller.activeHistoryQueryId;
         verify(firstRead.length > 0);
         const firstPage = Array.from({length: 8}, (_, i) => entry("entry-" + i));
-        reply(controller, firstRead, {history: {entries: firstPage, snapshot_revision: "v1", next_cursor: "next", offset: 0, total: 9}});
+        reply(controller, firstRead, {_history: {epoch: "fixture", revision: 1}, history: {entries: firstPage, snapshot_revision: "v1", next_cursor: "next", offset: 0, total: 9}});
         compare(controller.filteredResults.length, 8);
         controller.select(2);
         const selected = controller.selectedResult.key;
         controller.loadMoreHistory();
         const appendRead = controller.activeHistoryQueryId;
         verify(appendRead.length > 0 && appendRead !== firstRead);
-        reply(controller, appendRead, {history: {entries: [entry("last")], snapshot_revision: "v1", offset: 8, total: 9}});
+        reply(controller, appendRead, {_history: {epoch: "fixture", revision: 1}, history: {entries: [entry("last")], snapshot_revision: "v1", offset: 8, total: 9}});
         compare(controller.filteredResults.length, 9);
         compare(controller.selectedResult.key, selected);
         verify(controller.filteredResults.some(result => result.id === "last"));
-        reply(controller, firstRead, {history: {entries: [entry("obsolete")], snapshot_revision: "v1", offset: 0, total: 1}});
+        reply(controller, firstRead, {_history: {epoch: "fixture", revision: 1}, history: {entries: [entry("obsolete")], snapshot_revision: "v1", offset: 0, total: 1}});
         compare(controller.filteredResults.length, 9);
         compare(controller.selectedResult.key, selected);
     }

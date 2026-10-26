@@ -265,9 +265,22 @@ Ui.ProviderChooserController {
         if (session.state === "hidden")
             hideRequested();
     }
+    function discardHistoryRead(id: string): void {
+        if (id === detailState.requestId || id === detailState.thumbnailRequestId)
+            detailState.clearPreview();
+        if (id !== activeHistoryQueryId && id !== revisionRequestId)
+            return;
+        if (id === revisionRequestId) revisionRequestId = "";
+        if (id === activeHistoryQueryId) activeHistoryQueryId = "";
+        appendingHistory = false;
+        historyCursor = "";
+        scheduleRefresh();
+    }
     function handleHistoryChanged(revision: var): void {
-        if (revision !== historyRevision)
+        if (revision !== historyRevision) {
             detailState.clearCache();
+            detailState.clearPreview();
+        }
         if (revisionRequestId.length > 0)
             return;
         scheduleRefresh();
@@ -567,7 +580,7 @@ Ui.ProviderChooserController {
                 screenshotInFlight = false;
         }
         if (id === activeHistoryQueryId || isActiveQuery(id)) {
-            const staleCursor = message.indexOf("stale-cursor") >= 0;
+            const staleCursor = message.indexOf("stale-cursor") >= 0 || message.indexOf("stale-history") >= 0;
             // Keep the page cursor and existing rows for an explicit retry.
             // Stale snapshots instead require a fresh first-page query.
             historyReadError = message;
@@ -583,12 +596,24 @@ Ui.ProviderChooserController {
             status = message;
         }
     }
+    function handleOperationUncertain(id: string, message: string): void {
+        if (activeOperationId.length && activeOperationId !== id) return;
+        actionInFlight = false;
+        screenshotInFlight = false;
+        activeAction = "";
+        activeOperationId = "";
+        activeAnnotationSelectionIndex = -1;
+        status = message;
+    }
     function handleEventGap(stream: string): void {
         detailState.clearCache();
         if (stream === "clipboard.operation") {
-            actionInFlight = false;
-            activeAction = "";
-            activeOperationId = "";
+            backend.requestPolicy.poll();
+            return; // An invalidation is not an operation outcome.
+        }
+        if (stream === "clipboard.session") {
+            sessionId = "";
+            detailState.pasteAfterSave = false;
         }
         status = "Clipboard events were missed; refreshing current state…";
         scheduleRefresh();

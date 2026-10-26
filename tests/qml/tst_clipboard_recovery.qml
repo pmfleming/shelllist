@@ -131,6 +131,7 @@ DaemonTestCase {
         });
         const queryId = controller.activeHistoryQueryId;
         reply(controller, queryId, {
+            _history: {epoch: "fixture", revision: 2},
             history: {
                 revision: 2,
                 snapshot_revision: "2",

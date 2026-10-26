@@ -328,12 +328,75 @@ clipboard listener or frontend opt-in. Quiet terminal loss stays uncertain; neve
 recover by publishing or acknowledging hidden again. See the producer's
 `docs/transport-ownership.md` for scope and reproduction.
 
+## Clipboard ownership, recovery and socket opt-in
+
+Subsequent producer stages `dce191f`, `1fb1f07` and `c18c018` supersede the
+prerequisite's open implementation gates. Async operations now have caller scope,
+owner-filtered receipts and disconnect/late-acceptance cleanup. Admission includes
+pending dispatch (64 global / 16 per owner); 256 terminal results survive for five
+minutes. Backend broadcasts invalidate authoritative snapshots, including early
+completion and dropped terminal records. The screenshot CLI keeps its connection
+through completion and polls status, rather than exiting at acceptance.
+
+`clipboard.operation.status {operation_id}` is read-only and owner-scoped.
+Responses/events carry atomic `operation._publication {epoch, revision}`. Missing,
+foreign, expired or lost-before-ack IDs are unknown, not retry authority. The
+frontend tracks only operations acknowledged to its consumer, rejects stale or
+malformed observations, and polls at one-second intervals with one status read
+outstanding and a five-second uncertainty deadline. Timeout never launches another
+read while the previous one remains outstanding. Terminal/unknown local records
+cannot reopen. Gaps retain accepted-work guards while requesting status; another
+consumer sharing the connection cannot have its operations applied here.
+
+History reads are sealed by equal content tokens around dispatch, under the same
+observation barrier as invalidations; concurrent changes return `stale-history`.
+Queries/revision reads/baselines carry `_history {epoch, revision}`. Tokens remain
+opaque equality identities. The frontend invalidates pending history/detail reads
+on initial/reset/lag before replacement dispatch, validates metadata and collection
+identities before publication, and clears sensitive previews/caches. Fresh reads
+and view warmup recover quiet loss, not lost historical edges. Configuration is
+not capture completion evidence. Synchronous publication or paste without a
+receipt stays unknown. Session discontinuity forgets paste authority; recovery
+never publishes, captures, commits, invokes hidden or retries a failed save.
+Draft/save-and-paste ownership and the original hidden-session handshake remain.
+
+`SHELLLIST_CLIP_SOCKET=1` is independent and exact-value opt-in. Socket ingress
+reuses the admitted exported service, domain coordinators and shared observers;
+there is no D-Bus proxy, extra capture monitor or fallback. Socket lifetime owns
+cleanup, separately from the D-Bus owner monitor. The private real-listener tests
+cover parity, foreign ownership, reconnect isolation and late acceptance.
+
+Actual Qt covers history/detail races, malformed/older/duplicate metadata, owned
+status recovery, lost terminal delivery, deadline/unknown outcomes, peer isolation
+and retained drafts. The separate real Quickshell 0.3.0 probe uses the production
+shared client and clipboard recovery policy: two consumers, repeated reads, a
+native invalidation racing an older reply, subscription renewal, consumer release
+and a healthy final peer read. The producer records one owner and final disconnect
+before listener shutdown. Its private bus/in-memory clipboard/isolated settings
+and read-only gate cannot invoke host capture or clipboard helpers. See
+`tests/README.md` for explicit feature-gated reproduction.
+
+Clipboard framing qualification accepts exact 128 MiB requests and exact 32 MiB
+responses (including output LF), rejects one-byte-over records, and proves that a
+stalled reader retires only its owner and cancels its owned work. The real native
+probe additionally carries a 16 MiB control-character fixture input (96 MiB JSON)
+and a near-32 MiB UTF-8 response through a read-only path. Clipboard alone uses a
+bounded three-bytes-per-UTF-16-unit reservation for the 128 MiB record allowance,
+with four calls; other daemon budgets are unchanged. The native producer ceiling
+is not raised. These are private framing boundaries, not clipboard publication
+or maximum-content hardware tests.
+
+The bridge remains default. This debug/private evidence does not establish
+sustained mixed load, matched release performance, process crash,
+activation/cold-start or installed-session acceptance. No deployment or host state
+changes are authorized by opt-in implementation.
+
 ## Remaining scope
 
 This closes NM's network delta-chain gap, not the entire multi-daemon revision
 migration. Other streams' content identities/internal counters are not claimed as
-uniform wire watermarks. Clipboard direct ingress, full runtime
-packaging, release/mixed-load, maximum NM payload and real process-crash acceptance
+uniform wire watermarks. Full runtime
+packaging, release/mixed-load, maximum payload and real process-crash acceptance
 remain staged work. NM's test recreates a listener, not an OS process. D-Bus remains
 supported and the bridge remains the frontend default.
 No deployment, live service restart, or hardware acceptance is implied.

@@ -8,6 +8,7 @@ DaemonBackend 1.0 DaemonBackend.qml
 BarDaemonBackend 1.0 BarDaemonBackend.qml
 MaterialTheme 1.0 MaterialTheme.qml
 BarStateRecovery 1.0 BarStateRecovery.qml
+ClipboardStateRecovery 1.0 ClipboardStateRecovery.qml
 BarProjectionBackend 1.0 BarProjectionBackend.qml
 ClipboardPublisher 1.0 ClipboardPublisher.qml
 ClipboardScreenshotCapture 1.0 ClipboardScreenshotCapture.qml

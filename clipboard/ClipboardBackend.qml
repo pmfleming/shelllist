@@ -2,14 +2,21 @@ import Shelllist.Io as Io
 import "ClipApi.js" as ClipApi
 
 Io.DaemonBackend {
+    id: clipboardBackend
     required property ClipboardController controller
     objectName: "clipboardBackend"
     daemonName: "clip-daemon"
     expectedProtocol: ClipApi.protocol
     expectedVersion: ClipApi.version
     streams: ClipApi.subscribedStreams
-    // Annotation continues after the picker hides. Keep the bridge alive until
-    // its terminal event arrives, otherwise bridge shutdown cancels Satty.
+    requestPolicy: Io.ClipboardStateRecovery {
+        backend: clipboardBackend
+        onHistoryInvalidated: clipboardBackend.controller.handleHistoryChanged(undefined)
+        onReadDiscarded: function(id) { clipboardBackend.controller.discardHistoryRead(id); }
+        onOperationUncertain: function(id, message) { clipboardBackend.controller.handleOperationUncertain(id, message); }
+    }
+    // Annotation continues after the picker hides. Keep its connection alive
+    // until a terminal observation; owner loss requests Satty cancellation.
     active: controller.uiActive || controller.backgroundOperationInFlight
     readonly property var eventHandlers: {
         const handlers = ({});
@@ -180,7 +187,10 @@ Io.DaemonBackend {
         routeEvent(event, eventHandlers);
     }
     onSendFailed: function (id, message) {
-        controller.handleFailure(id, message);
+        // A failed status read says nothing about the accepted effect. Its
+        // recovery policy already reports uncertainty, not "effect not sent".
+        if (!id.startsWith("clip-status-"))
+            controller.handleFailure(id, message);
     }
     onTransportFailed: function (message) {
         controller.handleTransportFailure(message);
