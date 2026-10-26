@@ -29,7 +29,7 @@ this later documentation-only acceptance record does not change their source bas
 
 `python3 -m py_compile` for the run's Python files and `bash -n check.sh` pass.
 Through the private shared-lock wrapper, `python3 -m unittest -v test_quality
-test_pipeline` passes **11 tests**:
+test_pipeline` initially passed **11 tests**:
 
 - Lens applicability vs docs/unsupported languages; combined phase and conservative
   heartbeat projection; total slot reservation; surviving-group exclusion.
@@ -38,6 +38,35 @@ test_pipeline` passes **11 tests**:
   commit, and rejection of absent or empty second quality commits.
 - Offline fake-CLI end-to-end implementation/archive/exact-session continuation,
   wrong-model rejection before quality and missing-quality-commit rejection.
+
+### Detached-tool correction
+
+Subsequent observation and Pi source inspection demonstrated that Bash tools use
+separate process groups; an exited Pi parent group alone was an incomplete departure
+check. The still-unused quality observer was paused, while all six implementation
+sessions continued unchanged. A bounded read-only Linux census now checks task
+markers, task-local working directories and birth-identified observed descendants
+(including reparenting) before quality can start. Quality completion also waits for
+those processes. PID reuse does not inherit an old observed identity.
+
+The expanded `test_quality test_pipeline test_process_guard` suite passes **15 tests**,
+including a real detached private-child interlock, marker/cleared-environment cases,
+reparenting/birth mismatch and unused-observer continuation without restarting workers.
+These lightweight offline Python/Git/process fixtures ran with private HOME/TMPDIR
+and unavailable buses, without occupying the heavy-build lock or executing a model,
+compiler, native service or benchmark. `control/process-guard-tests.log` retains them.
+
+The old observer state/logs are archived under `control/quality-observer-pauses/`.
+Explicit `--continue-waiting-observer` accepts only an exited observer with no prepared
+or launched quality phase; it cannot retry a worker. Continued observer launch PID:
+`899495`. The first BT implementation finished normally during this maintenance;
+its first authorized quality continuation then began after guarded departure.
+
+This census does not terminate detached groups, observe Nix-daemon-owned builders,
+or constitute an OS sandbox. A completely environment-cleared, reparented child
+outside task directories that was never observed still depends on fixture cleanup.
+Workers must await/reap all checks; integration must recheck process quiescence.
+The initial parent-group-only evidence is retained, not rebranded as that guarantee.
 
 The fake-CLI tests are **orchestration fixtures**, not actual model, Rust/QML Lens,
 Qt, native daemon or performance passes. Python/shell orchestration is not covered
