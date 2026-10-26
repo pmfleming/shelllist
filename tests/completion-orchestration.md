@@ -94,3 +94,41 @@ must use accepted refreshed source tuples. Startup strategy and rollout remain
 explicit decisions; bridge default, services, deployment and live effects unchanged.
 The existing `/etc/nixos` dashboard work is dirty and outside these worker families;
 no changes there were staged, overwritten or committed by this orchestration.
+
+## Focused repair checkpoint — 20261026T232107Z
+
+All six original implementation/quality sessions finished. The coordinator accepted
+bounded framework/application changes after matching checks, retained partial
+analysis, and withheld BT for two concrete actual-Qt authority/draft failures; see
+[Wave 1 integration](wave-one-integration-review.md). Original task process censuses
+were empty before launching a **new** focused BT repair assignment, not retrying or
+resuming the completed worker.
+
+Run `/home/laufan/Projects/shelllist-orchestration/20261026T232107Z` freezes one fresh
+eight-repository family from Shelllist `ecf9819`, framework `aeb58d3`, app `2e1ac24`
+and the unchanged other originals. Bootstrap alone applies the full unapproved BT
+implementation/quality seed lineage; source/applied mappings are retained. Exact
+path inventory and stricter incremental edit scope are in its task manifest/prompt.
+No W2 pairing/scan/OBEX, production contract relocation, policy-rule tuning or
+startup/default/rollout authority is added.
+
+Control code was copied unchanged from the tested previous run; only the worker
+instruction's check-wrapper path changes. The same 15 offline tests passed again
+in **29.444 seconds**, now under this run's shared private wrapper, along with
+Python compilation/Bash syntax and pinned-tool provenance reuse verification.
+Fake-CLI tests remain distinct from model/semantic/runtime acceptance.
+
+A fresh no-tools preflight returned READY with actual Sol 6.1/high/stop and
+non-aborted settlement; the new worker's actual assistant events independently
+verified the same identity after launch. Historical launch PIDs are implementation
+`1030318`, quality observer `1030319`; current status, not those numbers, establishes
+liveness. At observation there is one active implementation session, below the
+cross-run six-session limit. Its mandatory exact-session quality phase remains
+queued behind committed handoff and guarded departure; coordinator review and
+integration still follow. Ninety-minute checkpoints, shared lock, child cleanup
+limits, no implicit retries, and separate nonempty commits remain mandatory.
+
+New evidence: `control/{bootstrap,orchestration-tests}.log`,
+`control/{inherited-orchestration,preflight-result,launch-pids}.json`, real
+`control/model-preflight.jsonl`, `manifest.json`, and actual task event/identity
+records. This later documentation commit does not change the frozen family.
