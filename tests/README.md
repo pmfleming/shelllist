@@ -251,6 +251,12 @@ integration tests**, including the heavy framing cases; the packaged Qt check
 retains **429 / one skip**. See the [qualification record](clipboard-socket-qualification.md)
 for tested commits, commands, evidence limits and remaining rollout gates.
 
+### Startup/readiness design review
+
+The [coordinator review](startup-readiness-review.md) records the source-checked
+startup proposal, readiness/dispatch requirements and outstanding strategy decision.
+It is documentation-only evidence, not cold-start, package or rollout acceptance.
+
 ## Panel standardization acceptance
 
 `docs/panel-ui-standardization.md` records current roles, the twelve-panel matrix,
