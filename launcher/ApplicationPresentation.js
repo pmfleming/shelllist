@@ -4,10 +4,6 @@ function runningWindowIcon(instanceCount) {
     return Number(instanceCount || 0) > 1 ? "󰖲" : "󰖯";
 }
 
-function isCloseAction(actionId) {
-    return actionId === "close" || String(actionId || "").indexOf("close-window-") === 0;
-}
-
 function categoryFilterOptions(categories) {
     return [
         {

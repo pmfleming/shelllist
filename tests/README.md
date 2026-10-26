@@ -2,7 +2,9 @@
 
 The [project-completion queue](completion-orchestration.md) records the current
 worker isolation, two-commit quality workflow and orchestration checks. It is not
-runtime acceptance or approval of unfinished worker changes.
+runtime acceptance or approval of unfinished worker changes. The
+[Wave 1 integration record](wave-one-integration-review.md) accepts bounded framework
+and application checkpoints, retains partial analysis, and records withheld work.
 
 Prefer end-to-end user journeys and public-boundary integration tests. Keep local
 tests for unique failure modes that those flows cannot reasonably exercise; do

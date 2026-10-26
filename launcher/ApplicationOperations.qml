@@ -1,6 +1,5 @@
 import QtQuick
 import "ApplicationLifecycle.js" as Lifecycle
-import "ApplicationPresentation.js" as Presentation
 
 // Resident request ownership is independent of the selected result and panel
 // visibility. Only the owning operation may retire its pending target.
@@ -26,7 +25,7 @@ Item {
     function focusSucceeded(targetId: string, windowId: string): bool {
         const record = forTarget(targetId) || feedback[targetId];
         return !!record && record.status === "completed"
-            && Lifecycle.expectedOperationAction(record.request.actionId) === "focus-window"
+            && record.request.operationAction === "focus-window"
             && record.windowIds.includes(windowId);
     }
     function publish(record: var): void {
@@ -63,8 +62,10 @@ Item {
             return false;
         const windows = request.result.payload.instances || [];
         const windowId = (request.action.metadata || {}).windowId;
+        // Keep the submitted native action, not the decorated UI command ID.
+        // The same captured identity validates receipts and forbids Close handoff.
         const record = {
-            request: {id: request.id, actionId: request.actionId,
+            request: {id: request.id, actionId: request.actionId, operationAction: params.action,
                 result: {id: request.result.id, title: request.result.title},
                 action: {label: request.action.label}},
             operationId: "", statusRequestId: "", status: "", checks: 0, revision: 0,
@@ -106,7 +107,7 @@ Item {
             placement: operation.placement || null, close: operation.close || null,
             windowIds: Array.isArray(operation.close?.targeted_window_ids) ? operation.close.targeted_window_ids : original.windowIds,
             checks: original.operationId ? original.checks : 0});
-        const closing = Presentation.isCloseAction(record.request.actionId);
+        const closing = ["close", "close-window"].includes(record.request.operationAction);
         if (transition.stage === "active")
             updateActive(record, operation, closing);
         else
@@ -127,7 +128,7 @@ Item {
         const completed = record.status === "completed";
         const warning = !completed || (closing
             ? record.close?.status !== "closed"
-            : ["activate", "launch", "desktop-action"].includes(Lifecycle.expectedOperationAction(record.request.actionId))
+            : ["activate", "launch", "desktop-action"].includes(record.request.operationAction)
                 && ["unavailable", "failed"].includes(record.placement?.status));
         record.message = completed && closing && !record.close
             ? "Close outcome unconfirmed; check windows before trying again"

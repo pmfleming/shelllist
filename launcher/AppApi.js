@@ -3,6 +3,10 @@
 
 var protocol = Protocol.protocol;
 var version = Protocol.version;
+// Expose the same generated boundary through the Launcher QML module as well
+// as relative imports (native entrypoints have an isolated configuration root).
+var requestError = Protocol.requestError;
+var eventError = Protocol.eventError;
 var methods = ({
         query: Protocol.methods["applications.query"],
         revision: Protocol.methods["applications.revision"],

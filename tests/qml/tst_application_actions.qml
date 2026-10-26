@@ -180,6 +180,64 @@ DaemonTestCase {
         keyClick(Qt.Key_A, Qt.AltModifier);
         compare(lastCall(Api.methods.execute).params.action, "activate", "Launch remains reachable after the last close");
     }
+    function test_closeCanonicalAction_data() {
+        const cases = [];
+        for (const action of ["close", "close-window-0"]) {
+            for (const outcome of ["closed", "still-open", "unknown", "missing", "malformed", "failed", "cancelled"])
+                cases.push({tag: action + "-" + outcome, action: action, outcome: outcome});
+        }
+        return cases;
+    }
+    function test_closeCanonicalAction(data) {
+        const panel = makePanel();
+        const c = panel.controller;
+        verify(c.triggerDetailAction(data.action));
+        const call = lastCall(Api.methods.execute);
+        compare(c.operations.forTarget("Alpha").request.operationAction, call.params.action);
+        accept(call);
+        // Close never inherits handoff authority from irrelevant launch metadata.
+        const launch = {launch_backend: "uwsm", launch_scope: "fixture.scope", revision: 2};
+        event(call, "running", Object.assign({}, launch, {action: "launch"}));
+        event(call, "running", Object.assign({}, launch, {target_id: "Beta"}));
+        event(call, "running", Object.assign({}, launch, {id: "foreign-operation"}));
+        compare(c.operations.forTarget("Alpha").revision, 1);
+        event(call, "running", launch);
+        compare(c.operations.forTarget("Alpha").revision, 2);
+        compare(panel.dismissals, 0);
+        const targets = call.params.window_id ? [call.params.window_id] : ["w1", "w2"];
+        const observation = data.outcome === "missing" ? undefined : data.outcome === "malformed" ? {} : {
+            status: ["failed", "cancelled"].includes(data.outcome) ? "unknown" : data.outcome,
+            targeted_window_ids: targets, dispatched_window_ids: targets,
+            remaining_window_ids: data.outcome === "closed" ? [] : targets, dispatch_error: null
+        };
+        const status = ["failed", "cancelled"].includes(data.outcome) ? data.outcome : "completed";
+        // A captured status read can finish after browsing away and reopening.
+        c.operations.check("Alpha");
+        const read = lastCall(Api.methods.operationStatus);
+        c.select(c.filteredResults.findIndex(r => r.id === "Beta"));
+        keyClick(Qt.Key_Escape);
+        compare(panel.dismissals, 1);
+        c.activateUiState("1");
+        const terminal = Object.assign({}, launch, {revision: 3, close: observation});
+        reply(read, {operation_status: operation(call, status, terminal)});
+        verify(!c.operations.busy("Alpha"));
+        compare(panel.dismissals, 1);
+        verify(c.uiActive);
+        compare(c.filteredResults.find(r => r.id === "Alpha").payload.instances.length, 2);
+        const feedback = JSON.stringify(c.operations.feedback.Alpha);
+        event(call, status, terminal);
+        event(call, "running", {revision: 4});
+        compare(JSON.stringify(c.operations.feedback.Alpha), feedback, "late outcomes cannot reopen or rewrite retired work");
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+        c.select(c.filteredResults.findIndex(r => r.id === "Alpha"));
+        verify(c.triggerDetailAction(data.action), "only explicit retry starts another Close");
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 2);
+        const retry = lastCall(Api.methods.execute);
+        accept(retry);
+        event(call, status, Object.assign({}, terminal, {revision: 99}));
+        compare(c.operations.forTarget("Alpha").operationId, operation(retry, "accepted").id,
+            "a late old receipt cannot retire the explicit retry");
+    }
     function test_reopenedPanelIsNotDismissedByOldOperation() {
         const panel = makePanel();
         keyClick(Qt.Key_Return);

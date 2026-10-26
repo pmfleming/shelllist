@@ -436,9 +436,17 @@ unknown responses across private socket/retained bridge/D-Bus, near-limit UTF-8
 actual-process delivery and healthy owned-work isolation under a stalled reader
 with one/two producer workers. Exact sizing uses a tracker-free synthetic catalog;
 actual-process reads allow headroom for independent resource metadata. Shared
-private-bus setup verifies there are no external activatable services. These are
-not large-record Qt/Quickshell, effect-receipt-loss or sustained-load qualifications.
-See [application runtime evidence](../tests/application-runtime-qualification.md).
+private-bus setup verifies there are no external activatable services. Those
+producer-only checks did not qualify large-record Qt/Quickshell, effect-receipt
+loss or sustained load. See [application runtime evidence](../tests/application-runtime-qualification.md).
+
+The subsequent [frontend checkpoint](../tests/application-frontend-acceptance.md)
+adds actual private Quickshell near-16-MiB UTF-8 reads through shared routing with
+healthy logical/native peers, plus canonical submitted-action Close no-handoff
+classification. Exact frontend ceilings, whole-panel maximum rendering, large
+effect receipts, effect-timing and sustained-load acceptance remain open.
+The [Wave 1 review](../tests/wave-one-integration-review.md) also accepts the bounded
+shared qualification scaffold, not producer adapter adoption or final measurements.
 
 These checkpoints underwent their applicable Lens check/refactor loops and scoped
 functional checks. Analyzer limitations remain explicit; a completed review is not

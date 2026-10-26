@@ -15,6 +15,12 @@ Do not redo completed adapters or treat old worker commits as approved integrati
 [conversion tickets](rust-qml-conversion-audit.md) and
 [startup design](socket-startup-design.md) define scope and evidence limits.
 
+Current progress is recorded in the [Wave 1 integration review](../tests/wave-one-integration-review.md):
+bounded framework/application changes are integrated; BT requires a focused
+consumer-authority/draft repair; other Wave 1 handoffs remain unintegrated pending
+review. Historical missing-extraction blockers are not substitutes for reviewing
+fresh evidence, and partial implementation/analysis does not close the project.
+
 There are three distinct exits:
 
 1. **Implementation complete:** all required recovery and selected semantic/schema

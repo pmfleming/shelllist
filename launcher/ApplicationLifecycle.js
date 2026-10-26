@@ -39,21 +39,11 @@ function expectedRevision(value) {
     return isFinite(value) && value >= 0 && Math.floor(value) === value && value <= 9007199254740991 ? value : null;
 }
 
-function expectedOperationAction(actionId) {
-    const value = String(actionId || "");
-    if (value.indexOf("focus-window-") === 0)
-        return "focus-window";
-    if (value.indexOf("close-window-") === 0)
-        return "close-window";
-    if (value.indexOf("desktop-action-") === 0)
-        return "desktop-action";
-    return value;
-}
-
 function operationMatches(activeRequest, activeTargetId, operation) {
     if (!activeRequest || !operation)
         return false;
-    return operation.target_id === activeTargetId && operation.action === expectedOperationAction(activeRequest.actionId);
+    return typeof activeRequest.operationAction === "string" && activeRequest.operationAction.length > 0
+        && operation.target_id === activeTargetId && operation.action === activeRequest.operationAction;
 }
 
 function acceptedOperationMatches(activeRequest, responseId) {
