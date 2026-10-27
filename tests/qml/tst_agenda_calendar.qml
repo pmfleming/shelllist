@@ -31,7 +31,7 @@ DaemonTestCase {
         calls = []; views = []; clientReady = true;
         Activity.AgendaRepository.catalogRevision = -1;
         Activity.AgendaRepository.records = ({});
-        failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop).*/);
+        failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop|Cannot assign|Unable to assign|Type .* unavailable).*/);
     }
     function cleanup() { for (const content of views) content.destroy(); wait(0); views = []; }
     function typeText(text) { for (const character of text) keyClick(character); }
@@ -39,7 +39,7 @@ DaemonTestCase {
     function owner() {
         const result = createTemporaryObject(factory, testCase, {availableScreenWidth: 1900, availableScreenHeight: 740});
         verify(result !== null);
-        result.today = "2026-10-27";
+        result.markerWindow.today = "2026-10-27";
         result.focusedDate = result.today;
         result.windowStart = result.monthFor(result.today) - 4;
         return result;
@@ -56,6 +56,7 @@ DaemonTestCase {
         const agenda = Catalog.descriptors.find(item=>item.id === "agenda");
         const calendar = Catalog.descriptors.find(item=>item.id === "calendar");
         verify(agenda !== undefined && calendar !== undefined);
+        compare(agenda.icon,"view_list","Agenda route uses a registered Material symbol");
         for (const symbol of [agenda.icon,calendar.icon,"today","chevron_left","chevron_right","arrow_back"])
             verify(Ui.MaterialIcons.name(symbol).length > 0,"calendar commands/routes must resolve icon glyphs: " + symbol);
         verify(!Catalog.initiallyLoaded().agenda && !Catalog.initiallyLoaded().calendar);
@@ -64,6 +65,7 @@ DaemonTestCase {
         verify(Catalog.requiresResidentState("notifications"));
         const registry=createTemporaryObject(registryFactory,testCase,{});
         verify(registry !== null);
+        compare(Ui.MaterialIcons.name(registry.descriptorFor("agenda").icon),"view_list");
         verify(!registry.isLoaded("agenda") && !registry.isLoaded("calendar"));
         verify(registry.select("activity"));
         compare(registry.currentId,"agenda","legacy IPC route canonicalizes before controller lookup");
@@ -95,16 +97,115 @@ DaemonTestCase {
         verify(current !== undefined && current.id !== old.id);
         const data={days:[{date:"2026-10-27",event:true,task:true}],catalog_revision:1,today:"2026-10-27",timezone:"UTC"};
         const session=Io.DaemonSessions.sessions["bar-daemon"];
+        const reader=controller.markerWindow;
+        const consumer=session.consumers[reader.sharedConsumerId];
+        compare(consumer.active,true,"extracted reader retains native subscription lifecycle");
         session.client.response(old.id,{protocol:"bar-api",version:2,ok:true,data:data},"",old.route);
         compare(Object.keys(controller.markers).length,0);
         session.client.response(current.id,{protocol:"bar-api",version:2,ok:true,data:data},"",current.route);
         compare(controller.markers["2026-10-27"].task,true);
         controller.refresh();wait(100);
+        const invalidated=calls.filter(call=>call.method==="agenda.markers").slice(-1)[0];
+        Activity.AgendaRepository.invalidated();
+        session.client.response(invalidated.id,{protocol:"bar-api",version:2,ok:true,data:{days:[],catalog_revision:2,today:"2026-10-27",timezone:"UTC"}},"",invalidated.route);
+        compare(controller.markerWindow.catalogRevision,1,"invalidation fences the old same-range read before debounce");
+        wait(100);
+        const eventInvalidated=calls.filter(call=>call.method==="agenda.markers").slice(-1)[0];
+        verify(eventInvalidated.id !== invalidated.id);
+        const subscription=session.client.subscriptions.find(item=>item.route.consumerId===reader.sharedConsumerId);
+        verify(subscription !== undefined);
+        emitBaseEvent("bar-daemon",subscription.route,{protocol:"bar-api",version:2,stream:"activity.changed",event:"changed",data:{}});
+        compare(reader.latestRead,"","native events also fence the pending read immediately");
+        wait(100);
         const late=calls.filter(call=>call.method==="agenda.markers").slice(-1)[0];
+        verify(late.id !== eventInvalidated.id);
         controller.deactivateUi();
+        compare(consumer.active,false);
         session.client.response(late.id,{protocol:"bar-api",version:2,ok:true,data:{days:[],catalog_revision:2,today:"2026-10-27",timezone:"UTC"}},"",late.route);
-        compare(controller.catalogRevision,1);
+        compare(controller.markerWindow.catalogRevision,1);
         compare(calls.filter(call=>["agenda.patch","agenda.create","agenda.delete"].includes(call.method)).length,0);
+    }
+    function markerCalls() { return calls.filter(call=>call.method==="agenda.markers"); }
+    function replyMarkers(request, revision, days) {
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(request.id,
+            {protocol:"bar-api",version:2,ok:true,data:{days:days,catalog_revision:revision,today:"2026-10-27",timezone:"UTC"}},"",request.route);
+    }
+    function test_markerBridgeBoundsStaleRecoveryAndPolling() {
+        const controller=owner();controller.activateUi("");
+        const reader=controller.markerWindow;
+        const presence=[{date:"2026-10-27",event:true,task:true}];
+        wait(100);replyMarkers(markerCalls().slice(-1)[0],9,presence);
+        Activity.AgendaRepository.catalogRevision=10;
+        const episodeStart=markerCalls().length;
+        controller.refresh();wait(100);
+        replyMarkers(markerCalls().slice(-1)[0],9,[]);
+        wait(100);
+        compare(markerCalls().length-episodeStart,2,"one explicit read plus one automatic stale restart");
+        replyMarkers(markerCalls().slice(-1)[0],9,[]);
+        wait(100);
+        compare(markerCalls().length-episodeStart,2,"repeatedly stale replies cannot spin reads");
+        verify(reader.error.length>0);
+        compare(reader.catalogRevision,9);
+        compare(controller.markers["2026-10-27"].task,true);
+        reader.poll();wait(100);
+        compare(markerCalls().length-episodeStart,2,"periodic fallback cannot renew a rejected episode's budget");
+        controller.refresh();wait(100);
+        compare(markerCalls().length-episodeStart,3,"explicit refresh starts a new bounded episode");
+        replyMarkers(markerCalls().slice(-1)[0],10,[{date:"2026-10-27",event:true,task:1}]);
+        reader.poll();wait(100);
+        compare(markerCalls().length-episodeStart,3,"malformed replies pause instead of retrying");
+        const session=Io.DaemonSessions.sessions["bar-daemon"];
+        const subscription=session.client.subscriptions.find(item=>item.route.consumerId===reader.sharedConsumerId);
+        verify(subscription !== undefined);
+        emitBaseEvent("bar-daemon",subscription.route,{protocol:"bar-api",version:2,stream:"activity.changed",event:"gap",data:{}});
+        wait(100);
+        compare(markerCalls().length-episodeStart,4,"an acknowledged stream gap invalidates and re-enables reading");
+        replyMarkers(markerCalls().slice(-1)[0],10,presence);
+        compare(reader.error,"");compare(reader.catalogRevision,10);
+        controller.deactivateUi();
+    }
+    function test_markerReconnectResetsAuthorityNotPresentation() {
+        const controller=owner();controller.activateUi("");
+        const reader=controller.markerWindow;
+        const session=Io.DaemonSessions.sessions["bar-daemon"];
+        const presence=[{date:"2026-10-27",event:true,task:true}];
+        wait(100);replyMarkers(markerCalls().slice(-1)[0],9,presence);
+        const repositoryConsumer=Object.values(session.consumers).find(consumer=>consumer.backend instanceof Activity.AgendaTransport);
+        verify(repositoryConsumer !== undefined && !repositoryConsumer.active,"calendar-only first open does not activate the list repository transport");
+        controller.refresh();wait(100);
+        const old=markerCalls().slice(-1)[0];
+        const acceptedDays=controller.markers;
+        const generation=session.generation;
+        clientReady=false;session.client.transportFailed("Daemon restarted from a verified older backup");
+        compare(session.generation,generation+1);
+        compare(reader.catalogRevision,9,"transport loss retains the accepted presentation revision");
+        compare(controller.markers,acceptedDays,"disconnect does not replace the accepted day window");
+        compare(reader.today,"2026-10-27");compare(reader.timezone,"UTC");
+        compare(controller.markers["2026-10-27"].task,true);
+        clientReady=true;wait(100);
+        const fresh=markerCalls().slice(-1)[0];
+        verify(fresh.route.generation !== old.route.generation);
+        replyMarkers(fresh,3,[]);
+        compare(reader.catalogRevision,3,"a fresh transport may accept the restored lower native revision");
+        compare(Activity.AgendaRepository.catalogRevision,3);
+        compare(Object.keys(controller.markers).length,0);
+        replyMarkers(old,99,presence);
+        compare(reader.catalogRevision,3,"an old transport cannot raise or replace the new authority");
+        controller.deactivateUi();controller.activateUi("");wait(100);
+        compare(session.generation,generation+1);
+        replyMarkers(markerCalls().slice(-1)[0],2,presence);
+        compare(reader.catalogRevision,3,"ordinary same-session activation must preserve the revision floor");
+        clientReady=false;clientReady=true;wait(100);
+        replyMarkers(markerCalls().slice(-1)[0],2,presence);
+        compare(reader.catalogRevision,3,"ready toggles alone are not a new transport generation");
+        controller.deactivateUi();
+        clientReady=false;session.client.transportFailed("Inactive calendar missed the daemon restart");
+        compare(reader.catalogRevision,3);
+        clientReady=true;controller.activateUi("");wait(100);
+        replyMarkers(markerCalls().slice(-1)[0],1,presence);
+        compare(reader.catalogRevision,1,"inactive reader also adopts the actual new transport authority");
+        compare(calls.filter(call=>["agenda.patch","agenda.create","agenda.delete"].includes(call.method)).length,0,"reconnect never replays a mutation");
+        controller.deactivateUi();
     }
     function test_measuredFitExactBoundaries() {
         const fit = createTemporaryObject(fitFactory, testCase, {baseWidth: 453, adjacentWidth: 976, edgeMargin: 16, gap: 12, daySelected: true});
@@ -191,6 +292,62 @@ DaemonTestCase {
         compare(controller.focusedDate, controller.today);
         compare(grid.dateNavigation.dateKey, controller.today);
     }
+    function calendarRecord(id) {
+        return {id:id,kind:"event",source_id:"local",source_uid:null,revision:1,title:"Native title",notes:"",links:[],
+            schedule:{mode:"date",start_date:"2026-10-27",end_date:"2026-10-27",start_unix_ms:null,end_unix_ms:null,timezone:null},
+            created_unix_ms:1,modified_unix_ms:2,capabilities:{write:true,delete:true,complete:false},event:{location:"",people:[],status:"confirmed"},task:null};
+    }
+    function test_sourceDiagnosticVisibleBeforeDaySelectionAndNonfatal() {
+        const controller=owner();const content=view(controller);controller.activateUi("");
+        tryVerify(()=>markerCalls().length>0,5000,"marker-only first open dispatches its native read");
+        const request=markerCalls().slice(-1)[0];
+        const sourceError="unsupported iCalendar recurrence; previous import retained: "+"旅行".repeat(40);
+        const presence=[{date:"2026-10-27",event:true,task:false}];
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(request.id,
+            {protocol:"bar-api",version:2,ok:true,data:{days:presence,catalog_revision:1,today:"2026-10-27",timezone:"UTC",failing_source_count:1,source_error:sourceError}},"",request.route);
+        compare(controller.selectedDate,"");compare(controller.agendaController.uiActive,false);
+        const feedback=findChild(content.calendarGrid,"panelFeedback");
+        tryCompare(feedback,"visible",true);
+        const label=findChild(feedback,"feedbackText");
+        tryVerify(()=>label.text.includes("unsupported iCalendar recurrence"));
+        verify(label.implicitHeight <= label.height,"long native source labels use a measured one-line summary");
+        compare(controller.markers["2026-10-27"].event,true);
+        compare(controller.markerWindow.error,"");compare(controller.navigationBlocked,false);
+        capture(content,"calendar-source-warning");
+        controller.availableScreenWidth=600;
+        compare(content.calendarGrid.width,453);
+        verify(waitForPolish(testCase.Window.window));
+        verify(label.text.includes("unsupported iCalendar recurrence"));
+        verify(label.implicitHeight <= label.height);
+        capture(content,"calendar-source-warning-W");
+        controller.availableScreenWidth=1900;
+        controller.chooseDay("2026-10-27");
+        const agenda=controller.agendaController;
+        agenda.receiveList({generation:agenda.readGeneration,query:agenda.filterText,day:agenda.dayScope,epoch:Activity.AgendaRepository.epoch,append:false},
+            {items:[calendarRecord("usable-local")],next_cursor:null,catalog_revision:1,today:"2026-10-27",timezone:"UTC",failing_source_count:1,source_error:sourceError},"");
+        compare(agenda.items.length,1);compare(agenda.canWrite(agenda.selectedItem),true,"nonfatal imported-source error does not disable local edits");
+        content.agendaContent.listItem.focusList();keyClick(Qt.Key_Right);
+        tryCompare(agenda,"detailsExpansionProgress",1);
+        tryVerify(()=>findChild(content,"agendaTitle") !== null);
+        const title=findChild(content,"agendaTitle");
+        tryVerify(()=>content.agendaContent.detailsNavigation.targets.indexOf(title)>=0);
+        wait(0);
+        title.focusInput(true);
+        tryCompare(title.editSession,"active",true);
+        compare(content.agendaContent.detailsNavigation.editorTarget,title);
+        keySequence("Ctrl+A");typeText("Usable local draft");
+        compare(title.text,"Usable local draft");keyClick(Qt.Key_Escape);tryCompare(title,"text","Native title");
+        compare(calls.filter(call=>["agenda.patch","agenda.create","agenda.delete"].includes(call.method)).length,0);
+        const previous=markerCalls().slice(-1)[0].id;
+        controller.refresh();
+        tryVerify(()=>markerCalls().slice(-1)[0]?.id !== previous);
+        const healthy=markerCalls().slice(-1)[0];
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(healthy.id,
+            {protocol:"bar-api",version:2,ok:true,data:{days:presence,catalog_revision:2,today:"2026-10-27",timezone:"UTC",failing_source_count:0,source_error:null}},"",healthy.route);
+        compare(controller.markerWindow.sourceError,"");compare(controller.markerWindow.failingSourceCount,0);
+        compare(feedback.visible,false);compare(agenda.items.length,1);
+        controller.deactivateUi();
+    }
     function test_sharedInspectorEditorSurvivesMeasuredResizeAndReturn() {
         const controller = owner();
         const content = view(controller);
@@ -201,12 +358,11 @@ DaemonTestCase {
         verify(dayLabel !== null && dayLabel.text.includes("27") && dayLabel.text.includes("2026"));
         compare(dayLabel.activeFocusOnTab,false,"selected day is passive context, not an editor");
         if (captureDirectory) {
-            controller.latestRead="capture";controller.latestRange=JSON.stringify(controller.range());
-            controller.acceptMarkers("capture",{days:[{date:"2026-10-27",event:true,task:true},{date:"2026-10-28",event:false,task:true},{date:"2026-10-29",event:true,task:false}],catalog_revision:1,today:"2026-10-27",timezone:"UTC"},"");
+            const reader=controller.markerWindow;
+            reader.latestRead="capture";reader.latestRange=reader.rangeKey;
+            reader.accept("capture",{days:[{date:"2026-10-27",event:true,task:true},{date:"2026-10-28",event:false,task:true},{date:"2026-10-29",event:true,task:false}],catalog_revision:1,today:"2026-10-27",timezone:"UTC"},"");
         }
-        const record = {id:"resize",kind:"event",source_id:"local",source_uid:null,revision:1,title:"Native title",notes:"",links:[],
-            schedule:{mode:"date",start_date:"2026-10-27",end_date:"2026-10-27",start_unix_ms:null,end_unix_ms:null,timezone:null},
-            created_unix_ms:1,modified_unix_ms:2,capabilities:{write:true,delete:true,complete:false},event:{location:"",people:[],status:"confirmed"},task:null};
+        const record = calendarRecord("resize");
         agenda.receiveList({generation:agenda.readGeneration,query:agenda.filterText,day:agenda.dayScope,epoch:Activity.AgendaRepository.epoch,append:false},
             {items:[record],next_cursor:null,catalog_revision:1,today:"2026-10-27",timezone:"UTC"}, "");
         content.agendaContent.listItem.focusList();
@@ -224,7 +380,12 @@ DaemonTestCase {
             controller.availableScreenWidth=1900;controller.chooseDay("2026-10-27");
             wait(0);content.agendaContent.listItem.focusList();
         }
-        title.focusInput(true); keySequence("Ctrl+A"); typeText("Unsubmitted title");
+        tryVerify(()=>content.agendaContent.detailsNavigation.targets.indexOf(title)>=0);
+        wait(0);
+        title.focusInput(true);
+        tryCompare(title.editSession,"active",true);
+        compare(content.agendaContent.detailsNavigation.editorTarget,title);
+        keySequence("Ctrl+A"); typeText("Unsubmitted title");
         compare(controller.composition.calendarWidth, 679.5);
         compare(content.calendarGrid.width,679.5);
         compare(content.agendaContent.x,679.5 + agenda.detailsGapWidth);
@@ -238,12 +399,14 @@ DaemonTestCase {
         compare(content.agendaContent.x,453 + agenda.detailsGapWidth);
         compare(findChild(content,"agendaTitle"),title);
         compare(title.text,"Unsubmitted title"); verify(title.inputActiveFocus);
+        verify(title.editSession.active);compare(content.agendaContent.detailsNavigation.editorTarget,title);
         controller.availableScreenWidth = 1280;
         compare(controller.composition.calendarWidth,0);
         compare(content.calendarGrid.visible,false);
         compare(content.agendaContent.x,0);
         compare(content.agendaContent.width,agenda.currentWindowWidth);
         compare(findChild(content,"agendaTitle"),title); verify(title.inputActiveFocus);
+        verify(title.editSession.active);compare(content.agendaContent.detailsNavigation.editorTarget,title);
         compare(title.text,"Unsubmitted title");
         compare(calls.filter(call=>call.method==="agenda.patch").length,0,"fit never saves drafts");
         keyClick(Qt.Key_Escape);
@@ -266,18 +429,43 @@ DaemonTestCase {
     function test_markerAtomicOwnershipRetainsCompletedPresence() {
         const controller = owner();
         controller.uiActive = true;
-        controller.latestRead = "owned";
-        controller.latestRange = JSON.stringify(controller.range());
+        const reader = controller.markerWindow;
+        reader.latestRead = "owned";
+        reader.latestRange = reader.rangeKey;
         const data = {days: [{date: "2026-10-27", event: true, task: true}], catalog_revision: 9, today: "2026-10-27", timezone: "Europe/Amsterdam"};
-        verify(!controller.acceptMarkers("old", data, ""));
-        verify(controller.acceptMarkers("owned", data, ""));
+        verify(!reader.accept("old", data, ""));
+        verify(reader.accept("owned", data, ""));
+        verify(!reader.accept("owned", data, ""), "an accepted read is consumed once");
+        verify(!reader.accept("", data, ""), "empty response ID is never an owned read");
         compare(controller.markers["2026-10-27"].task, true, "native presence includes completed tasks, no QML filtering");
-        controller.latestRead = "bad";
-        verify(!controller.acceptMarkers("bad", {days: [{date: "2026-10-27", event: true, task: 1}], catalog_revision: 10, today: "2026-10-27", timezone: "UTC"}, ""));
-        compare(controller.catalogRevision, 9);
-        compare(controller.markers["2026-10-27"].event, true);
-        controller.latestRead = "failure";
-        verify(!controller.acceptMarkers("failure", null, "offline"));
+        const freshDay = {date: "2026-10-28", event: false, task: true};
+        const invalidWindows = [
+            {days: [freshDay, freshDay]},
+            {days: [freshDay, {date: "2026-10-29", event: true, task: 1}]},
+            {days: [freshDay, {date: "2030-01-01", event: true, task: false}]},
+            {days: [freshDay, {date: "2026-10-7", event: true, task: false}]},
+            {today: "2026-02-30"}, {timezone: null}, {catalog_revision: 9007199254740992},
+            {failing_source_count: -1, source_error: "failure"}, {failing_source_count: 1, source_error: null},
+            {failing_source_count: 1, source_error: "x".repeat(1025)}
+        ];
+        for (const patch of invalidWindows) {
+            reader.latestRead = "bad";
+            verify(!reader.accept("bad", Object.assign({}, data, patch), ""));
+            compare(reader.latestRead, "", "malformed owned replies still retire only their read");
+            compare(reader.catalogRevision, 9);
+            compare(reader.timezone, "Europe/Amsterdam");
+            compare(controller.today, "2026-10-27");
+            compare(Object.keys(controller.markers).length, 1, "invalid suffix cannot publish a valid prefix");
+            compare(controller.markers["2026-10-27"].event, true);
+        }
+        Activity.AgendaRepository.catalogRevision = 10;
+        reader.latestRead = "stale-revision";
+        verify(!reader.accept("stale-revision", data, ""));
+        compare(reader.catalogRevision, 9, "another view's newer revision fences this read");
+        reader.latestRead = "failure";
+        verify(!reader.accept("failure", null, "offline"));
+        compare(reader.error, "offline");
         compare(controller.markers["2026-10-27"].task, true);
+        controller.deactivateUi();
     }
 }

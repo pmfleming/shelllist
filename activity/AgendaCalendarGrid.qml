@@ -17,6 +17,28 @@ Ui.PanelSurface {
     navigationEnabled: visible && detailsNavigation.activeFocus
     readonly property bool blocked: controller.navigationBlocked || inputBlocked || detailsNavigation.commandMenuOpen
     clip: true
+    feedbackEnabled: controller.markerWindow.error.length > 0 || controller.markerWindow.sourceError.length > 0
+    FontMetrics {
+        id: feedbackMetrics
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.statusTextSize
+    }
+    Ui.FeedbackSource {
+        objectName: "calendarSourceFeedback"
+        text: grid.controller.markerWindow.sourceError
+            + (grid.controller.markerWindow.failingSourceCount > 1 ? qsTr(" (%n failing calendar sources)", "", grid.controller.markerWindow.failingSourceCount) : "")
+        summaryText: grid.controller.markerWindow.sourceError
+        // Keep the native cause-first prefix visible at supported pane sizes;
+        // the full diagnostic/count remains in the shared accessible feedback.
+        briefText: feedbackMetrics.elidedText(grid.controller.markerWindow.sourceError, Text.ElideRight, grid.width / 2)
+        tone: "warning"
+    }
+    Ui.FeedbackSource {
+        text: grid.controller.markerWindow.error
+        summaryText: text
+        briefText: feedbackMetrics.elidedText(text, Text.ElideRight, grid.width / 2)
+        tone: "error"
+    }
 
     function restoreViewport(): void {
         restoring = true;

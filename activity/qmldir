@@ -40,9 +40,11 @@ AgendaListRow 1.0 AgendaListRow.qml
 AgendaItemDetails 1.0 AgendaItemDetails.qml
 AgendaCreateDialog 1.0 AgendaCreateDialog.qml
 AgendaScheduleEditor 1.0 AgendaScheduleEditor.qml
+AgendaInlineEdit 1.0 AgendaInlineEdit.qml
 AgendaCollectionDialog 1.0 AgendaCollectionDialog.qml
 AgendaTransport 1.0 AgendaTransport.qml
 singleton AgendaRepository 1.0 AgendaRepository.qml
+internal AgendaCalendarMarkers AgendaCalendarMarkers.qml
 AgendaCalendarController 1.0 AgendaCalendarController.qml
 AgendaCalendarContent 1.0 AgendaCalendarContent.qml
 AgendaCalendarGrid 1.0 AgendaCalendarGrid.qml

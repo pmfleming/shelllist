@@ -71,18 +71,54 @@ titles or task completion. Events are dots; tasks are squares. Completed tasks s
 represented because completion is not a frontend presence predicate. No titles,
 counts, legend, range heading or hover previews appear in the grid.
 
-Owned request ID + requested range + active invocation fence publication. A full
-validated response publishes atomically; malformed/out-of-range/duplicate dates,
+`AgendaCalendarMarkers` is the internal native-read owner, exposed by the calendar
+controller as `markerWindow`; selection, fit and viewport remain in the controller.
+It owns the daemon subscription, pending read and accepted marker window, with a
+separate transport-authority state. Cached `catalogRevision`, days, today and timezone
+remain presentation through a disconnect. Only an actual shared daemon session
+`generation` change resets the authoritative revision floor, never ordinary activation
+or a ready notification alone. `AgendaRepository.synchronizeTransportAuthority()`
+idempotently qualifies the shared floor with that same actual generation, including
+calendar-only use while the repository transport is inactive. Pending replies must
+still match the actual generation when consumed. Fresh lower revisions after a
+verified backup/restart can replace old presentation; older same-session replies
+cannot. Its non-mutating metadata/day validators build an unpublished candidate;
+validation cannot partially replace an accepted prefix. The controller consumes
+read-only presence/today instead of duplicating this transport state.
+
+A nonempty owned request ID + requested range + active invocation fence publication.
+An accepted or failed owned reply consumes its read once; empty/unknown/duplicate
+IDs cannot publish or retire another read. Invalidation clears ownership before
+its debounce, including native activity/timezone events and repository changes.
+A full validated response publishes atomically; malformed/out-of-range/duplicate dates,
 nonboolean presence, stale revisions and failures retain accepted markers. Activity,
-timezone and accepted-mutation invalidation request new native projections; active
-periodic reads cover midnight/resume without storing inferred dates. No mutation
-replay is involved.
+timezone, acknowledged stream gaps and accepted-mutation invalidation request new native projections; active
+periodic healthy/idle reads cover midnight/resume without storing inferred dates.
+One stale-window response may restart its read once. Repeated stale responses,
+malformed windows or read errors retain presentation/error and pause automatic
+polling until an external invalidation or explicit fresh read request. The periodic
+fallback cannot refill the retry budget. No mutation replay is involved.
+
+Additive native `failing_source_count` and cause-first `source_error` describe nonfatal
+provider health on the same successful marker snapshot. Omitted legacy metadata is
+healthy; present malformed metadata rejects the entire read. These accepted fields
+survive failed reads/disconnects with the marker presentation and clear only on an
+accepted healthy window. `AgendaCalendarGrid` contributes through shared
+`FeedbackSource`/`PanelSurface` fixed feedback, including before any selected-day list
+is active. Full bounded native text/count stay accessible; measured compact prefixes
+keep the actual cause visible for long configured source labels. No frontend error
+classification, source-management controls, editable stops or local-write blocking
+is added. Unsupported recurrence cannot masquerade as complete single-event support.
 
 ## Evidence
 
 `tests/qml/tst_agenda_calendar.qml` exercises real Qt date keys/pointer/accessibility,
 modal blocking, both-direction bounded rebasing, first-open/reopen memory, exact
-measured thresholds, malformed/stale/error retention, identical shared inspector
+measured thresholds, malformed/stale/error retention, empty/duplicate ID rejection,
+native reader subscription activation and immediate invalidation fences, lower-revision
+reconnect/inactive recovery, same-session floor retention, bounded stale retries and
+paused polling, direct native source-warning feedback with retained local editability,
+actual registry icon resolution, identical shared inspector
 editor retention on resize, Return and disabled horizontal overflow. The existing
 `tst_agenda.qml` owns full shared list/inspector transactions and domain acknowledgements.
 `tests/surface-catalog.nix` checks separate nullable defaults and configured commands;
