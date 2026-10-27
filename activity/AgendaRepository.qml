@@ -71,15 +71,27 @@ Item {
         return integer(data.failing_source_count) && data.failing_source_count <= 2147483647
             && (data.failing_source_count === 0 ? data.source_error === null : text(data.source_error) && data.source_error.length > 0 && data.source_error.length <= 1024);
     }
+    // Full documents and summaries share one wire header, not document fields.
+    // Keep these shape predicates independent of request/authority ownership.
+    function validRecordIdentity(item: var): bool {
+        return !!item && identity(item.id) && identity(item.source_id) && (item.source_uid === null || text(item.source_uid))
+            && ["event", "task"].includes(item.kind) && integer(item.revision);
+    }
+    function validCapabilities(capabilities: var): bool {
+        return !!capabilities && typeof capabilities.write === "boolean" && typeof capabilities.delete === "boolean" && typeof capabilities.complete === "boolean";
+    }
+    function validRecordHeader(item: var): bool {
+        return validRecordIdentity(item) && text(item.title) && validSchedule(item.schedule)
+            && Number.isSafeInteger(item.created_unix_ms) && Number.isSafeInteger(item.modified_unix_ms) && validCapabilities(item.capabilities);
+    }
+    function validEventSummary(event: var): bool { return !!event && text(event.status) && text(event.location); }
+    function validTaskSummary(task: var): bool {
+        return !!task && Number.isSafeInteger(task.priority) && text(task.status) && typeof task.completed === "boolean"
+            && (task.completed_unix_ms === null || Number.isSafeInteger(task.completed_unix_ms));
+    }
     function validSummary(item: var): bool {
         if (item?.summary !== true) return validItem(item);
-        return identity(item.id) && identity(item.source_id) && (item.source_uid === null || text(item.source_uid))
-            && ["event", "task"].includes(item.kind) && integer(item.revision) && text(item.title) && validSchedule(item.schedule)
-            && Number.isSafeInteger(item.created_unix_ms) && Number.isSafeInteger(item.modified_unix_ms)
-            && typeof item.capabilities?.write === "boolean" && typeof item.capabilities.delete === "boolean" && typeof item.capabilities.complete === "boolean"
-            && (item.kind === "event" ? !!item.event && text(item.event.status) && text(item.event.location)
-                : !!item.task && Number.isSafeInteger(item.task.priority) && text(item.task.status) && typeof item.task.completed === "boolean"
-                    && (item.task.completed_unix_ms === null || Number.isSafeInteger(item.task.completed_unix_ms)));
+        return validRecordHeader(item) && (item.kind === "event" ? validEventSummary(item.event) : validTaskSummary(item.task));
     }
     function summaryOf(item: var): var {
         const summary = Object.assign({}, item, {summary: true});
@@ -88,17 +100,41 @@ Item {
         if (summary.task) { summary.task = Object.assign({}, summary.task); delete summary.task.checklist; }
         return summary;
     }
+    function validDocumentContent(item: var): bool {
+        return text(item.notes) && uniqueChildren(item.links) && item.links.every(link => text(link.label) && text(link.url));
+    }
+    function validEventDocument(item: var): bool {
+        return item.task === null && validEventSummary(item.event) && Array.isArray(item.event.people) && item.event.people.every(text);
+    }
+    function validTaskDocument(item: var): bool {
+        return item.event === null && validTaskSummary(item.task) && uniqueChildren(item.task.checklist)
+            && item.task.checklist.every(step => text(step.text) && typeof step.checked === "boolean");
+    }
     function validItem(item: var): bool {
-        if (!item || item.summary === true || !identity(item.id) || !identity(item.source_id) || !(item.source_uid === null || text(item.source_uid))
-            || !["task", "event"].includes(item.kind) || !integer(item.revision) || !text(item.title) || !text(item.notes)
-            || !Number.isSafeInteger(item.created_unix_ms) || !Number.isSafeInteger(item.modified_unix_ms) || !validSchedule(item.schedule)
-            || !uniqueChildren(item.links) || !item.links.every(link => text(link.label) && text(link.url)) || !item.capabilities
-            || typeof item.capabilities.write !== "boolean" || typeof item.capabilities.delete !== "boolean" || typeof item.capabilities.complete !== "boolean") return false;
-        if (item.kind === "event") return item.task === null && !!item.event && text(item.event.location) && text(item.event.status)
-            && Array.isArray(item.event.people) && item.event.people.every(text);
-        return item.event === null && !!item.task && Number.isSafeInteger(item.task.priority) && text(item.task.status)
-            && typeof item.task.completed === "boolean" && (item.task.completed_unix_ms === null || Number.isSafeInteger(item.task.completed_unix_ms))
-            && uniqueChildren(item.task.checklist) && item.task.checklist.every(step => text(step.text) && typeof step.checked === "boolean");
+        return validRecordHeader(item) && item.summary !== true && validDocumentContent(item)
+            && (item.kind === "event" ? validEventDocument(item) : validTaskDocument(item));
+    }
+    function validListPage(data: var, limit: int): bool {
+        return !!data && validSourceDiagnostics(data) && Array.isArray(data.items) && data.items.length <= limit && data.items.every(validSummary)
+            && integer(data.catalog_revision) && text(data.today) && text(data.timezone) && (data.next_cursor === null || text(data.next_cursor));
+    }
+    function projection(data: var): var { return {revision: data.catalog_revision, today: data.today, timezone: data.timezone}; }
+    function sameProjection(data: var, fence: var): bool {
+        return data.catalog_revision === fence.revision && data.today === fence.today && data.timezone === fence.timezone;
+    }
+    function pageAdvances(values: var, cursor: var, previousCursor: var): bool {
+        return new Set(values.map(item => item.id)).size === values.length && (!previousCursor || cursor !== previousCursor);
+    }
+    function obsoleteSummary(item: var): bool {
+        const acceptedItem = records[item.id];
+        return !!acceptedItem && (acceptedItem.revision > item.revision || acceptedItem.kind !== item.kind);
+    }
+    function validMutationResult(draft: var, data: var): bool {
+        if (!data || data.request_id !== draft.request_id || !integer(data.catalog_revision)) return false;
+        if (draft.kind === "delete") return data.item === null && data.deleted_id === draft.id;
+        if (!validItem(data.item)) return false;
+        if (draft.kind === "patch") return data.item.id === draft.id && data.item.revision > draft.expected_revision && data.item.kind === draft.recordKind;
+        return data.item.kind === draft.item.kind;
     }
     function accept(item: var, revision: var): bool {
         synchronizeTransportAuthority();

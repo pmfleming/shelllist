@@ -309,31 +309,42 @@ Ui.ChooserController {
         resultsChanged();
         if (!selectedItem) closeDetails();
     }
-    function receiveList(context: var, data: var, message: string): void {
-        AgendaRepository.synchronizeTransportAuthority();
-        if (context.generation !== readGeneration || context.query !== filterText || context.day !== dayScope || context.epoch !== AgendaRepository.epoch || !uiActive) return;
-        loading = false;
-        if (message) { error = message; return; }
-        if (!data || !AgendaRepository.validSourceDiagnostics(data) || !Array.isArray(data.items) || data.items.length > 50 || !data.items.every(AgendaRepository.validSummary)
-            || !AgendaRepository.integer(data.catalog_revision) || typeof data.today !== "string" || typeof data.timezone !== "string"
-            || !(data.next_cursor === null || typeof data.next_cursor === "string")) { error = qsTr("Invalid agenda window"); return; }
-        if (data.catalog_revision < AgendaRepository.catalogRevision) { refresh(); return; }
-        if (context.append && (data.catalog_revision !== windowRevision || data.today !== windowToday || data.timezone !== windowTimezone)) { refresh(); return; }
-        if (context.fence && (data.catalog_revision !== context.fence.revision || data.today !== context.fence.today || data.timezone !== context.fence.timezone)) { refresh(); return; }
-        const values = context.append ? items.concat(data.items) : (context.staging || []).concat(data.items);
-        if (new Set(values.map(item => item.id)).size !== values.length || (context.cursor && data.next_cursor === context.cursor)) { error = qsTr("Agenda page did not advance"); return; }
-        if (data.items.some(item => AgendaRepository.records[item.id] && (AgendaRepository.records[item.id].revision > item.revision || AgendaRepository.records[item.id].kind !== item.kind))) { error = qsTr("Obsolete agenda record revision"); return; }
-        // Refresh previously loaded pages into an unpublished window, retaining
-        // selection/viewport until all needed pages succeed at one revision.
-        if (!context.append && acceptedWindow && acceptedQuery === filterText && acceptedDay === dayScope && values.length < items.length && data.next_cursor) {
-            requestPage(false, data.next_cursor, values, {revision: data.catalog_revision, today: data.today, timezone: data.timezone}); return;
-        }
+    function ownsListRead(context: var): bool {
+        return context.generation === readGeneration && context.query === filterText && context.day === dayScope
+            && context.epoch === AgendaRepository.epoch && uiActive;
+    }
+    function staleListProjection(context: var, data: var): bool {
+        if (data.catalog_revision < AgendaRepository.catalogRevision) return true;
+        if (context.append && !AgendaRepository.sameProjection(data, {revision: windowRevision, today: windowToday, timezone: windowTimezone})) return true;
+        return !!context.fence && !AgendaRepository.sameProjection(data, context.fence);
+    }
+    function refreshNeedsContinuation(context: var, count: int, cursor: var): bool {
+        return !context.append && acceptedWindow && acceptedQuery === filterText && acceptedDay === dayScope && count < items.length && !!cursor;
+    }
+    function acceptListWindow(data: var, values: var): void {
         values.filter(item => item.summary !== true).forEach(item => AgendaRepository.accept(item, data.catalog_revision));
         AgendaRepository.catalogRevision = data.catalog_revision;
         windowRevision = data.catalog_revision; windowToday = data.today; windowTimezone = data.timezone; windowEpoch = AgendaRepository.epoch;
         nextCursor = data.next_cursor || ""; acceptedWindow = true; acceptedQuery = filterText; acceptedDay = dayScope; error = "";
         failingSourceCount = data.failing_source_count || 0; sourceError = data.source_error || "";
         publish(values.map(AgendaRepository.summaryOf));
+    }
+    function receiveList(context: var, data: var, message: string): void {
+        AgendaRepository.synchronizeTransportAuthority();
+        if (!ownsListRead(context)) return;
+        loading = false;
+        if (message) { error = message; return; }
+        if (!AgendaRepository.validListPage(data, 50)) { error = qsTr("Invalid agenda window"); return; }
+        if (staleListProjection(context, data)) { refresh(); return; }
+        const values = context.append ? items.concat(data.items) : (context.staging || []).concat(data.items);
+        if (!AgendaRepository.pageAdvances(values, data.next_cursor, context.cursor)) { error = qsTr("Agenda page did not advance"); return; }
+        if (data.items.some(AgendaRepository.obsoleteSummary)) { error = qsTr("Obsolete agenda record revision"); return; }
+        // Only the final, fully validated replacement publishes records/metadata.
+        // Partial refresh failures retain the accepted selection/editor window.
+        if (refreshNeedsContinuation(context, values.length, data.next_cursor)) {
+            requestPage(false, data.next_cursor, values, AgendaRepository.projection(data)); return;
+        }
+        acceptListWindow(data, values);
     }
     function confirmRebase(): void {
         if (!rebaseTarget || mutationBusy) return;
@@ -365,15 +376,11 @@ Ui.ChooserController {
         operation = draft;
         receiveMutation(draft, data.receipt, "");
     }
-    function receiveMutation(draft: var, data: var, message: string): void {
-        if (!operation || operation.request_id !== draft.request_id) return;
-        operation = null;
-        if (!message && (!data || data.request_id !== draft.request_id || !AgendaRepository.integer(data.catalog_revision)
-            || (draft.kind === "delete" ? data.item !== null || data.deleted_id !== draft.id : !AgendaRepository.validItem(data.item)
-                || (draft.kind === "patch" ? data.item.id !== draft.id || data.item.revision <= draft.expected_revision || data.item.kind !== draft.recordKind : data.item.kind !== draft.item.kind)))) message = qsTr("Unconfirmed agenda operation; review before retry");
-        if (message) { failedOperation = draft; error = message; return; }
-        if (failedOperation?.request_id === draft.request_id || (draft.kind === "patch" && failedOperation?.id === draft.id && failedOperation?.key === draft.key)) failedOperation = null;
-        error = "";
+    function clearsFailedOperation(draft: var): bool {
+        return failedOperation?.request_id === draft.request_id
+            || (draft.kind === "patch" && failedOperation?.id === draft.id && failedOperation?.key === draft.key);
+    }
+    function publishMutation(draft: var, data: var): void {
         if (draft.kind === "delete") { AgendaRepository.removeRecord(draft.id, data.catalog_revision); deleteTarget = null; }
         else {
             AgendaRepository.accept(data.item, data.catalog_revision);
@@ -386,6 +393,15 @@ Ui.ChooserController {
             const next = Object.assign({}, savedDrafts); delete next[draft.id + ":" + draft.key]; savedDrafts = next;
         }
         AgendaRepository.invalidated();
+    }
+    function receiveMutation(draft: var, data: var, message: string): void {
+        if (!operation || operation.request_id !== draft.request_id) return;
+        operation = null;
+        if (!message && !AgendaRepository.validMutationResult(draft, data)) message = qsTr("Unconfirmed agenda operation; review before retry");
+        if (message) { failedOperation = draft; error = message; return; }
+        if (clearsFailedOperation(draft)) failedOperation = null;
+        error = "";
+        publishMutation(draft, data);
     }
     function activateUi(workspaceId): void { activateUiState(workspaceId); refresh(); }
     function deactivateUi(): void { closeModals(); readGeneration++; detailGeneration++; detailLoading = false; loading = false; debounce.stop(); deactivateUiState(); }

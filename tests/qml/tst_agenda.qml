@@ -314,6 +314,55 @@ DaemonTestCase {
         clickRevealed(s,"agendaRemoveStep::step1");compare(mutations().length,3);
         compare(mutations()[2].params.patch.task.checklist.length,2);verify(!mutations()[2].params.patch.task.checklist.some(step=>step.id==="step1"));compare(mutations()[2].params.patch.task.completed,false);
     }
+    function test_wireHeaderAndDocumentGuardsRetainAcceptedWindow_data() {
+        return [
+            {tag:"nullable-source-uid-must-be-present",fault:"source-uid"},
+            {tag:"capability-must-be-boolean",fault:"capability"},
+            {tag:"provenance-must-be-integer",fault:"provenance"},
+            {tag:"schedule-representation-is-exclusive",fault:"schedule"},
+            {tag:"full-task-has-no-event",fault:"opposite-kind"},
+            {tag:"full-document-cannot-omit-notes",fault:"notes"},
+            {tag:"link-identities-are-unique",fault:"links"}
+        ];
+    }
+    function test_wireHeaderAndDocumentGuardsRetainAcceptedWindow(data) {
+        const s=start([item("a")]);
+        tryVerify(()=>calls.some(call=>call.method==="agenda.list"));
+        const read=calls.filter(call=>call.method==="agenda.list").slice(-1)[0];
+        const malformed=["opposite-kind","notes","links"].includes(data.fault)?item("bad"):Agenda.AgendaRepository.summaryOf(item("bad"));
+        if(data.fault==="source-uid") delete malformed.source_uid;
+        else if(data.fault==="capability") malformed.capabilities.complete="false";
+        else if(data.fault==="provenance") malformed.created_unix_ms=null;
+        else if(data.fault==="schedule") malformed.schedule.start_unix_ms=1;
+        else if(data.fault==="opposite-kind") malformed.event={location:"",people:[],status:""};
+        else if(data.fault==="notes") delete malformed.notes;
+        else malformed.links=[{id:"duplicate",label:"A",url:"https://a.example"},{id:"duplicate",label:"B",url:"https://b.example"}];
+        respond(read,windowData([malformed],2));
+        compare(s.owner.items.length,1);compare(s.owner.selectedItem.id,"a");compare(s.owner.selectedItem.revision,1);
+        compare(Agenda.AgendaRepository.catalogRevision,1);verify(s.owner.error.includes("Invalid agenda window"));compare(mutations().length,0);
+    }
+    function test_mutationWireGuardsRetainOwnedDraftAndAcceptedRecord_data() {
+        return [{tag:"revision-must-advance",fault:"revision"},{tag:"record-kind-is-immutable",fault:"kind"},{tag:"request-must-match",fault:"request"},{tag:"deleted-id-must-match",fault:"delete"}];
+    }
+    function test_mutationWireGuardsRetainOwnedDraftAndAcceptedRecord(data) {
+        const s=start([item("a")]);open(s);
+        if(data.fault==="delete") {
+            s.view.listItem.focusList();keyClick(Qt.Key_D,Qt.AltModifier);
+            mouseClick(findChild(field(s,"agendaDeleteDialog"),"detailAction:accept"));
+        } else edit(s,"agendaTitle","Saved local value",Qt.Key_Return);
+        compare(mutations().length,1);const request=mutations()[0];
+        const result={request_id:request.params.request_id,item:item("a","task",2),catalog_revision:2};
+        if(data.fault==="revision") result.item.revision=1;
+        else if(data.fault==="kind") result.item=item("a","event",2);
+        else if(data.fault==="request") result.request_id="another-operation";
+        else {result.item=null;result.deleted_id="another-item";}
+        respond(request,result);
+        compare(s.owner.operation,null);verify(s.owner.failedOperation!==null);
+        compare(s.owner.items.length,1);compare(s.owner.selectedItem.id,"a");compare(s.owner.selectedItem.revision,1);compare(Agenda.AgendaRepository.catalogRevision,1);
+        if(data.fault!=="delete") compare(s.owner.valueFor(s.owner.selectedItem,"title",""),"Saved local value");
+        else verify(s.owner.deleteTarget!==null);
+        compare(mutations().length,1,"a rejected acknowledgement cannot replay the operation");
+    }
     function test_lazySummaryDetailsAndMalformedMutationTarget() {
         const full=item("lazy");
         const s=start([Agenda.AgendaRepository.summaryOf(full)]);
