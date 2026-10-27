@@ -14,7 +14,7 @@ function batteryStateMark(battery) {
         return "help_outline";
     if (battery.charging)
         return "bolt";
-    if (battery.state === "fully-charged" || (battery.plugged && batteryFraction(battery) === 1))
+    if (battery.state === "fully-charged")
         return "check";
     if (battery.plugged)
         return "power";
@@ -23,7 +23,7 @@ function batteryStateMark(battery) {
 function batteryStateLabel(battery) {
     if (battery.charging)
         return "Charging";
-    if (battery.state === "fully-charged" || (battery.plugged && batteryFraction(battery) === 1))
+    if (battery.state === "fully-charged")
         return "Fully charged";
     if (battery.state === "charge-paused")
         return "Charging paused at limit";
@@ -35,23 +35,17 @@ function batteryTooltip(battery) {
     if (!batteryKnown(battery))
         return "Battery reading unavailable";
     const value = battery;
-    const seconds = value.charging ? value.time_to_full_seconds : value.time_to_empty_seconds;
-    const estimate = value.plugged && !value.charging ? "" : " · " + Duration.estimate(seconds);
-    return Math.round(batteryFraction(value) * 100) + "% · " + batteryStateLabel(value) + estimate
+    const display = value.display;
+    const estimate = display?.estimate ? " · " + display.estimate : "";
+    return (display?.percentage || "—%") + " · " + batteryStateLabel(value) + estimate
         + (value.critical ? ". Critical" : value.warning ? ". Low battery" : "")
-        + "\n" + Number(value.power_watts || 0).toFixed(1) + " W"
-        + "\nHealth " + (value.health_percent ?? "—") + "% · " + (value.cycles ?? "—") + " cycles";
-}
-function orderedPowerProfiles(profile) {
-    const preferred = ["power-saver", "balanced", "performance"];
-    const available = (profile?.profiles || []).map(entry => entry.name || "").filter(Boolean);
-    return preferred.filter(name => available.includes(name)).concat(available.filter(name => !preferred.includes(name)));
+        + "\n" + (display?.power || "— W")
+        + "\nHealth " + (display?.health || "—%") + " · " + (display?.cycles || "— cycles");
 }
 function nextPowerProfile(profile) {
-    const profiles = orderedPowerProfiles(profile);
-    if (profiles.length < 2)
-        return "";
-    return profiles[(Math.max(0, profiles.indexOf(profile?.profile || "")) + 1) % profiles.length];
+    // Consume a projection, never reconstruct eligibility from a local ordering.
+    const target = profile?.available ? profile.next_manual_profile : null;
+    return typeof target === "string" && ["power-saver", "balanced", "performance"].includes(target) ? target : "";
 }
 function networkKind(status) {
     if (!status?.active)

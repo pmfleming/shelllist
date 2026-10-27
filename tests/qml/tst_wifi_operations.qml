@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Wifi as Wifi
 import Shelllist.Ui as Ui
+import Shelllist.Io as Io
 
 DaemonTestCase {
     id: testCase
@@ -41,7 +42,15 @@ DaemonTestCase {
     }
     function openNetwork(panel, active) {
         const c = panel.controller;
+        const request = new XMLHttpRequest();
+        request.open("GET", Qt.resolvedUrl("../../contracts/nm-api-ui-contract.fixture.json"), false);
+        request.send();
+        const nativeStatus = JSON.parse(request.responseText).data.fixture.status_stream.initial.data.status;
         c.uiActive = true;
+        tryVerify(() => calls.some(call => call.method === "wifi.status" && call.route.consumerId === c.backend.sharedConsumerId));
+        const baseline = calls.find(call => call.method === "wifi.status" && call.route.consumerId === c.backend.sharedConsumerId);
+        Io.DaemonSessions.sessions["nm-daemon"].client.response(baseline.id,
+            {protocol: "nm-api", version: 2, ok: true, data: {status: nativeStatus}}, "", baseline.route);
         c.applyNetworks([{key: "cafe", ssid: "Cafe", active: active, strength: 70, security: "Open", capabilities: {can_connect: true}}], true, {});
         tryVerify(function () { return panel.page.listItem !== null; });
         c.backend.pending = ({});

@@ -22,18 +22,6 @@ function mergeNetworkChanges(currentNetworks, event) {
     return retained;
 }
 
-function powerStatus(activeStatus, radios, enabled) {
-    const nextRadios = Object.assign({}, radios, {
-        wireless_enabled: enabled
-    });
-    const current = activeStatus || ({});
-    return Object.assign({}, current, {
-        enabled: enabled,
-        radios: nextRadios,
-        active: enabled ? !!current.active : false
-    });
-}
-
 function bandTransition(event, requestId) {
     if (event.event === "subscribed" || (requestId && event.request_id !== requestId))
         return {

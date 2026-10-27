@@ -49,6 +49,11 @@ Item {
             pendingRefresh = false;
             return;
         }
+        if (!controller.activeStatus) {
+            pendingRefresh = false;
+            controller.status = "Wi-Fi status is unavailable; check status and retry explicitly.";
+            return;
+        }
         if (!controller.powered) {
             pendingRefresh = false;
             controller.status = "Wi-Fi is off";

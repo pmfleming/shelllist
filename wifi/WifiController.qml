@@ -2,6 +2,7 @@ import QtQuick
 import "WifiFlow.js" as Flow
 import "process"
 import "NmApi.js" as NmApi
+import "NmApiClient.js" as Api
 import "."
 import Shelllist.Io as Io
 import Shelllist.Ui
@@ -48,11 +49,11 @@ ProviderChooserController {
     property var scannedQr: null
     property string bandRequestId: ""
     readonly property var radios: activeStatus && activeStatus.radios ? activeStatus.radios : ({
-            wireless_enabled: !activeStatus || activeStatus.enabled !== false,
-            wireless_hardware_enabled: true,
-            wireless_available: true
+            wireless_enabled: false,
+            wireless_hardware_enabled: false,
+            wireless_available: false
         })
-    readonly property bool powered: radios.wireless_enabled !== false && radios.wireless_hardware_enabled !== false
+    readonly property bool powered: radioPowered(radios)
     property double statusHoldUntil: 0
     readonly property WifiBackend backend: services.backend
     readonly property bool screenshotInFlight: sharedScreenshotInFlight
@@ -95,6 +96,9 @@ ProviderChooserController {
 
     signal advancedSectionLeaving(string section)
 
+    function radioPowered(value) {
+        return !!value && value.wireless_enabled === true && value.wireless_hardware_enabled === true;
+    }
     function activeAccessPoint() {
         return activeStatus ? (activeStatus.access_point || activeStatus.network || null) : null;
     }
@@ -150,6 +154,7 @@ ProviderChooserController {
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
         scan.activate();
+        backend.recoverStatus();
         connection.activate();
         // Hotspot and VPN state is cheap to read and needed the moment their
         // controls are shown; the inventory stream stays unsubscribed until a
@@ -246,6 +251,7 @@ ProviderChooserController {
     }
 
     function refresh() {
+        backend.recoverStatus();
         scan.refresh();
     }
     function copyText(text, message) {
@@ -260,7 +266,7 @@ ProviderChooserController {
         scan.maybeRefresh();
     }
     function setPower() {
-        if (!beginAction())
+        if (!activeStatus || !beginAction())
             return;
         const enabled = !powered;
         status = enabled ? "Turning Wi-Fi on…" : "Turning Wi-Fi off…";
@@ -269,9 +275,9 @@ ProviderChooserController {
         backend.setPowered(enabled);
     }
     function applyPowerResult(result) {
-        const enabled = !!result.enabled;
-        activeStatus = Flow.powerStatus(activeStatus, radios, enabled);
-        status = result.message || (enabled ? "Wi-Fi turned on" : "Wi-Fi turned off");
+        // The effect receipt owns its message, not the observed status clock.
+        status = result.message || "Wi-Fi radio request completed";
+        backend.recoverStatus();
     }
 
     function loadBandStatus(path) {
@@ -346,7 +352,21 @@ ProviderChooserController {
     }
 
     function applyRecoveredStatus(value: var): void {
-        activeStatus = value || null;
+        // Validate before consuming the only recoverable revision. Missing native
+        // metadata is a producer mismatch, never a legacy/raw-status fallback.
+        const error = Api.statusPayloadError(value);
+        if (error) {
+            status = error;
+            return;
+        }
+        // Commit the cursor without emitting a UI property change inside its
+        // callback: activeStatusChanged may synchronously deliver a newer event.
+        if (!backend.statusCursor.accept(value._publication, function () {})) {
+            if (backend.statusCursor.error)
+                status = backend.statusCursor.error;
+            return;
+        }
+        activeStatus = value.available ? value : null;
     }
 
     function applyStatusEvent(event: var): void {
@@ -387,6 +407,10 @@ ProviderChooserController {
             return;
         }
         status = "Network events were missed; recovering current state…";
+        if (stream === NmApi.streams.wifi_status) {
+            backend.recoverStatus();
+            return;
+        }
         if (stream === NmApi.streams.network_inventory) {
             inventory.refresh();
             return;
@@ -427,7 +451,8 @@ ProviderChooserController {
         if (id === "share")
             services.share.fail(message);
         status = message;
-        maybeRunPendingRefresh();
+        if (id !== "status-recovery")
+            maybeRunPendingRefresh();
     }
 
     function requireIdle(ready) {
@@ -505,15 +530,17 @@ ProviderChooserController {
         if (detailsOpen)
             Qt.callLater(services.share.refresh);
     }
-    onActiveStatusChanged: connection.updateVisibleProgress()
-    onPoweredChanged: {
-        if (!powered) {
+    onActiveStatusChanged: {
+        connection.updateVisibleProgress();
+        // Unavailable is not an observed power-off: retain drafts and accepted
+        // scan work. Check each accepted observation, including off after an
+        // unavailable baseline where the derived powered flag remains false.
+        if (activeStatus && !radioPowered(activeStatus.radios)) {
             detailsOpen = false;
             scan.cancelForPowerOff();
             status = "Wi-Fi is off";
-        } else if (uiActive) {
-            Qt.callLater(scan.refresh);
         }
+        // Restoring an observation never authorizes a new scan.
     }
 
     Io.ClipboardPublisher {

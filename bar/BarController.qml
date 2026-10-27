@@ -203,8 +203,10 @@ Item {
     function cyclePowerProfile(): bool {
         if (!powerProfile.available || backend.requestRunning)
             return false;
-        const profile = StatusPresentation.nextPowerProfile(powerProfile);
-        return profile.length > 0 && backend.setPowerProfile(profile);
+        // Capture the native target once for this explicit command. A later
+        // observation/error must not advance the cycle or retry the effect.
+        const target = StatusPresentation.nextPowerProfile(powerProfile);
+        return target.length > 0 && backend.setPowerProfile(target);
     }
     function dismissNotification(notificationId: int): bool {
         return !!notificationState && notificationState.dismissNotification(notificationId);

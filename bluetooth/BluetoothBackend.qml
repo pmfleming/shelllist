@@ -7,8 +7,16 @@ Io.DaemonBackend {
     id: backend
 
     required property BluetoothController controller
-    property var operations: ({})
-    property var finishedOperations: ({})
+    readonly property alias operations: operationRecovery.operations
+    readonly property alias finishedOperations: operationRecovery.finishedOperations
+    readonly property bool foregroundRequestRunning: Object.keys(pending).some(id => !id.startsWith("operation-status-"))
+
+    BluetoothOperationRecovery {
+        id: operationRecovery
+        objectName: "bluetoothOperationRecovery"
+        backend: backend
+        controller: backend.controller
+    }
     property string nameRequestKey: ""
 
     Io.SnapshotCursor { id: radioCursor; objectName: "bluetoothRadioCursor" }
@@ -53,23 +61,10 @@ Io.DaemonBackend {
         radioCursor.reset();
         audioCursor.reset();
         pending = ({});
-        operations = ({});
-        finishedOperations = ({});
+        operationRecovery.reset();
     }
     function restoreRequestState(requests) {
-        const operationSnapshot = (requests || {}).operations || ({});
-        const active = ({});
-        (operationSnapshot.active || []).forEach(function (operation) {
-            if (operation && operation.request_id)
-                active[operation.request_id] = operation;
-        });
-        const recent = ({});
-        (operationSnapshot.recent || []).forEach(function (operation) {
-            if (operation && operation.request_id)
-                recent[operation.request_id] = true;
-        });
-        operations = active;
-        finishedOperations = recent;
+        operationRecovery.restore((requests || {}).operations);
         controller.applyRequestSnapshot(requests || ({}));
     }
     function finishDeviceRequest(id: string, error: string): void {
@@ -98,6 +93,10 @@ Io.DaemonBackend {
     }
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Bluetooth operation failed");
+        if (operationRecovery.finishStatus(id, envelope?.data?.operation_status, error))
+            return;
+        if (id.startsWith("operation-status-"))
+            return; // Unowned/retired status replies cannot enter mutation handling.
         if (id === "snapshot" || id === "audio-snapshot") {
             finishSnapshot(id, envelope, transportError, error);
             return;
@@ -173,12 +172,7 @@ Io.DaemonBackend {
         return accepted;
     }
     function acceptOperation(operation) {
-        if (finishedOperations[operation.request_id]) {
-            finishedOperations = BtApi.copyWithout(finishedOperations, operation.request_id);
-            return;
-        }
-        operations = BtApi.copyWith(operations, operation.request_id, operation);
-        controller.handleOperationAccepted(operation);
+        operationRecovery.apply(operation, true, false);
     }
 
     function applyUnhandledEvent(event) {
@@ -191,8 +185,14 @@ Io.DaemonBackend {
         }
         console.warn("shelllist bluetooth event ignored stream=" + (event.stream || "unknown") + " event=" + (event.event || "unknown"));
     }
-    function recoverEventGap(): void {
+    function recoverEventGap(stream: string): void {
         controller.status = "Bluetooth events were missed; recovering current state…";
+        if (stream === BtApi.streams.operation) {
+            // Operation loss has its own owned read. Do not replace unrelated
+            // private prompts or discovery leases with an aggregate observation.
+            operationRecovery.poll();
+            return;
+        }
         recoverRequests();
         if (!isPending("snapshot"))
             refresh();
@@ -216,11 +216,7 @@ Io.DaemonBackend {
         acceptState(event.data, event.event === "unavailable" ? "unavailable" : "available", event.error?.message || "", true);
     }
     function handleOperationEvent(event) {
-        const operation = event.data || ({});
-        const next = BtApi.lifecycleState(operation, operations, finishedOperations, operation.state, ["completed", "failed", "cancelled"]);
-        operations = next.active;
-        finishedOperations = next.finished;
-        controller.handleOperationEvent(operation);
+        operationRecovery.apply(event.data, false, false);
     }
 
     Component.onCompleted: resetTransportState()
@@ -341,7 +337,7 @@ Io.DaemonBackend {
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }
-    onEventGapDetected: recoverEventGap()
+    onEventGapDetected: function (stream) { recoverEventGap(stream); }
     onEventReceived: function (event) {
         handleEvent(event);
     }

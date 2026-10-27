@@ -109,7 +109,7 @@ Ui.ProviderChooserController {
     readonly property var selectedOperation: operationForDevice(selectedDevice.key)
     readonly property var selectedOperationError: operationErrorForDevice(selectedDevice.key)
     readonly property bool selectedDeviceBusy: !!selectedOperation
-    readonly property bool globalRequestInFlight: !backendAvailable || backend.requestRunning
+    readonly property bool globalRequestInFlight: !backendAvailable || backend.foregroundRequestRunning
     actionInFlight: globalRequestInFlight || selectedDeviceBusy || screenshotInFlight
     readonly property bool anyActionInFlight: backend.running || screenshotInFlight
 
@@ -172,7 +172,7 @@ Ui.ProviderChooserController {
         respondingPairingId = "";
         activeScan = null;
         scanRequested = false;
-        operationState.reset();
+        // A radio publication outage is not cancellation of accepted work.
         rebuildResults(false);
         status = message;
     }
@@ -183,6 +183,7 @@ Ui.ProviderChooserController {
     function handleTransportFailure(message) {
         nameEditState.transportFailed(message);
         adapterEditState.transportFailed(message);
+        operationState.reset();
         invalidateBluetooth(message);
     }
     function refresh() {
@@ -225,7 +226,8 @@ Ui.ProviderChooserController {
     }
     function applyRequestSnapshot(requests: var): void {
         const state = BluetoothFlow.requestState(requests);
-        operationState.restore(state.operations);
+        // The backend merges ordered operation records separately. Never replace
+        // accepted operations with an unversioned aggregate collection.
         activeScan = state.activeScan;
         scanRequested = !!activeScan;
         replacePairingPrompts(state.pairingPrompts || []);
@@ -234,7 +236,7 @@ Ui.ProviderChooserController {
         if (pairingPrompt) {
             status = pairingPrompt.response_required ? "Recovered Bluetooth pairing confirmation" : "Recovered active Bluetooth pairing";
             pairingInteractionRequested();
-        } else if (state.operations.length > 0) {
+        } else if (Object.values(activeOperations).some(BluetoothFlow.isActiveOperation)) {
             status = "Recovered active Bluetooth operation";
         }
     }
@@ -288,7 +290,7 @@ Ui.ProviderChooserController {
         return backend.setPowered(!powered, null);
     }
     function setAdapterPower(adapter, value) {
-        if (!adapter || !adapter.key || backend.requestRunning)
+        if (!adapter || !adapter.key || backend.foregroundRequestRunning)
             return false;
         status = (value ? "Turning on " : "Turning off ") + BluetoothFlow.adapterLabel(adapter) + "…";
         return backend.setPowered(!!value, adapter.key);
@@ -316,7 +318,7 @@ Ui.ProviderChooserController {
         status = transition.status;
     }
     function updateManagement(values) {
-        if (backend.requestRunning)
+        if (backend.foregroundRequestRunning)
             return false;
         status = "Saving Bluetooth management settings…";
         return backend.updateManagement(values);
@@ -339,9 +341,12 @@ Ui.ProviderChooserController {
         operationState.accept(operation);
         nameEditState.observe(operation);
     }
-    function handleOperationEvent(operation) {
-        operationState.handle(operation);
+    function handleOperationEvent(operation, recovered) {
+        operationState.handle(operation, recovered);
         nameEditState.observe(operation);
+    }
+    function handleOperationUnknown(operation, message) {
+        operationState.unknown(operation, message);
     }
     function dismissNavigation(): bool {
         if (modalPromptOpen)
@@ -419,8 +424,8 @@ Ui.ProviderChooserController {
         return sent;
     }
     function adapterOperation(operation, values) {
-        if (!selectedAdapter.key || backend.requestRunning) {
-            status = backend.requestRunning ? "Wait for the current Bluetooth setting to finish…" : "No Bluetooth adapter is selected.";
+        if (!selectedAdapter.key || backend.foregroundRequestRunning) {
+            status = backend.foregroundRequestRunning ? "Wait for the current Bluetooth setting to finish…" : "No Bluetooth adapter is selected.";
             return false;
         }
         status = "Updating Bluetooth adapter…";
@@ -545,7 +550,7 @@ Ui.ProviderChooserController {
     function executeDeviceAction(actionId, device) {
         if (actionId === "noise-control")
             return device.key === selectedDevice.key && openNoiseControl();
-        if (deviceBusy(device.key) || backend.requestRunning)
+        if (deviceBusy(device.key) || backend.foregroundRequestRunning)
             return false;
         if (actionId === "reset-policy") {
             status = "Saving device policy…";

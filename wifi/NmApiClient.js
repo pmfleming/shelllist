@@ -32,6 +32,26 @@ function apiData(response, key) {
         throw new Error(apiErrorMessage(response));
     return pick(data, key);
 }
+// Wire shape only. The consumer still owns routing, SnapshotCursor ordering and
+// synchronous UI publication; this does not infer missing native status facts.
+function statusPayloadError(value) {
+    const object = v => v && typeof v === "object" && !Array.isArray(v);
+    const invalid = "Invalid native Wi-Fi status; matching nm-daemon required.";
+    if (!object(value) || typeof value.available !== "boolean")
+        return invalid;
+    if (!value.available)
+        return "";
+    if (typeof value.active !== "boolean" || typeof value.enabled !== "boolean" || !object(value.radios))
+        return invalid;
+    const radioFlags = ["wireless_enabled", "wireless_hardware_enabled", "wireless_available",
+        "wwan_enabled", "wwan_hardware_enabled", "wwan_available", "airplane_mode"];
+    if (!radioFlags.every(key => typeof value.radios[key] === "boolean"))
+        return invalid;
+    const projections = ["access_point", "network", "profile", "connectivity", "ip4", "ip6", "wireless", "metered", "link"];
+    if (!projections.every(key => value[key] === null || object(value[key])))
+        return invalid;
+    return "";
+}
 function apiResult(response, key) {
     const data = apiPayload(response);
     if (!response.ok)

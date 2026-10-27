@@ -5,6 +5,9 @@ interface AudioIndicator {
 }
 
 // Shared bounds and glyph thresholds for the bar and its OSDs.
+function knownPercent(value: unknown): value is number {
+    return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100;
+}
 function percent(value: unknown): number {
     return Math.max(0, Math.min(100, Number(value) || 0));
 }

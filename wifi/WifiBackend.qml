@@ -14,6 +14,7 @@ Io.DaemonBackend {
     expectedVersion: NmApi.version
     streams: NmApi.subscribedStreams.filter(stream => stream !== NmApi.streams.wifi_networks)
     recoverProtocolErrors: false
+    readonly property Io.SnapshotCursor statusCursor: Io.SnapshotCursor {}
     readonly property Io.DeltaCursor networkCursor: Io.DeltaCursor {
         onGapDetected: {
             backend.controller.status = "Network events were missed; recovering current state…";
@@ -391,12 +392,26 @@ Io.DaemonBackend {
             console.error("shelllist nm request failed id=" + id + " stage=parse error=" + error);
             controller.failCall(kind, "Could not parse nm-daemon " + id + " response: " + error);
         }
-        controller.maybeRunPendingRefresh();
+        if (kind !== "status-recovery")
+            controller.maybeRunPendingRefresh();
     }
 
+    function warmStatus() {
+        if (ready && (controller.statusMonitorActive || controller.uiActive) && !isPending("status-recovery"))
+            recoverStatus();
+    }
     function handleTransportReady() {
         console.info("shelllist nm transport ready");
+        // A ready callback can run inside the shared ready binding. Dispatch
+        // after that transaction, using current UI/monitor intent, not a retired
+        // readiness notification or an otherwise inactive secret-only consumer.
+        Qt.callLater(backend.warmStatus);
         controller.handleTransportReady();
+    }
+    Connections {
+        target: backend.controller
+        function onUiActiveChanged() { Qt.callLater(backend.warmStatus); }
+        function onStatusMonitorActiveChanged() { Qt.callLater(backend.warmStatus); }
     }
 
     function executePortal(intent, workspace) {
@@ -450,6 +465,8 @@ Io.DaemonBackend {
     }
     onTransportFailed: function (message, lostRequestIds) {
         networkCursor.reset();
+        statusCursor.reset();
+        controller.activeStatus = null;
         console.error("shelllist nm transport failed error=" + message + " lost_requests=" + (lostRequestIds.length > 0 ? lostRequestIds.join(",") : "none"));
         controller.handleTransportFailure(message, lostRequestIds.map(id => (requestMetadata[id] || ({})).responseHandler || ""));
     }

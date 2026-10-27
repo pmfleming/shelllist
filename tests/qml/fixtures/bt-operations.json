@@ -1,0 +1,121 @@
+{
+  "cancelled": {
+    "device_key": "device-opaque",
+    "event": "cancelled",
+    "operation": "connect",
+    "request_id": "fixture-operation",
+    "revision": 4,
+    "stage": "cancelled",
+    "state": "cancelled"
+  },
+  "completed": {
+    "device_key": "device-opaque",
+    "event": "completed",
+    "operation": "connect",
+    "request_id": "fixture-operation",
+    "revision": 4,
+    "snapshot": {
+      "adapters": [],
+      "devices": [],
+      "management": {
+        "launch_state": "remember",
+        "preferred_adapter_key": "",
+        "reconnect_on_resume": true,
+        "show_blocked_devices": false,
+        "show_recent_devices": false,
+        "trust_after_pair": true,
+        "version": 1
+      },
+      "radio": {
+        "adapter_count": 0,
+        "available": false,
+        "hard_blocked": false,
+        "operational": false,
+        "powered": false,
+        "rfkill_present": false,
+        "soft_blocked": false
+      }
+    },
+    "stage": "completed",
+    "state": "completed"
+  },
+  "failed": {
+    "device_key": "device-opaque",
+    "error": {
+      "code": "operation-failed",
+      "message": "fixture failure",
+      "retryable": false
+    },
+    "event": "failed",
+    "operation": "connect",
+    "request_id": "fixture-operation",
+    "revision": 4,
+    "stage": "failed",
+    "state": "failed"
+  },
+  "progress": {
+    "device_key": "device-opaque",
+    "event": "progress",
+    "operation": "connect",
+    "request_id": "fixture-operation",
+    "revision": 3,
+    "stage": "connecting",
+    "state": "running"
+  },
+  "queued": {
+    "device_key": "device-opaque",
+    "event": "queued",
+    "operation": "connect",
+    "request_id": "fixture-operation",
+    "revision": 1,
+    "stage": "queued",
+    "state": "queued"
+  },
+  "started": {
+    "device_key": "device-opaque",
+    "event": "started",
+    "operation": "connect",
+    "request_id": "fixture-operation",
+    "revision": 2,
+    "stage": "running",
+    "state": "running"
+  },
+  "status": {
+    "data": {
+      "operation_status": {
+        "device_key": "device-opaque",
+        "event": "completed",
+        "operation": "connect",
+        "request_id": "fixture-operation",
+        "revision": 4,
+        "snapshot": {
+          "adapters": [],
+          "devices": [],
+          "management": {
+            "launch_state": "remember",
+            "preferred_adapter_key": "",
+            "reconnect_on_resume": true,
+            "show_blocked_devices": false,
+            "show_recent_devices": false,
+            "trust_after_pair": true,
+            "version": 1
+          },
+          "radio": {
+            "adapter_count": 0,
+            "available": false,
+            "hard_blocked": false,
+            "operational": false,
+            "powered": false,
+            "rfkill_present": false,
+            "soft_blocked": false
+          }
+        },
+        "stage": "completed",
+        "state": "completed"
+      }
+    },
+    "ok": true,
+    "protocol": "bt-api",
+    "version": 2
+  }
+}

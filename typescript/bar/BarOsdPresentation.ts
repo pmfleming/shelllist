@@ -44,6 +44,7 @@ type Maybe<T> = T | null | undefined;
 
 declare const Indicators: {
     percent(value: unknown): number;
+    knownPercent(value: unknown): boolean;
     audioIcon(audio: Maybe<AudioState>): string;
     powerProfileIcon(profile: Maybe<PowerProfileState>): string;
 };
@@ -70,13 +71,14 @@ function osd(kind: string, presentation: Partial<Omit<Osd, "kind">>): Osd {
 
 function outputOsd(audio: Maybe<AudioState>): Osd {
     const value: AudioState = audio || ({});
+    const known = value.available === true && Indicators.knownPercent(value.volume_percent);
     const percent = Indicators.percent(value.volume_percent);
     return osd("audio", {
         icon: Indicators.audioIcon(value),
         label: value.sink_description || "Volume",
-        valueLabel: value.muted ? "Muted" : percent + "%",
+        valueLabel: !known ? "Unavailable" : value.muted ? "Muted" : percent + "%",
         percent: percent,
-        progressVisible: true
+        progressVisible: known
     });
 }
 
@@ -91,15 +93,16 @@ function inputOsd(audio: Maybe<AudioState>): Osd {
     });
 }
 
-function brightnessOsd(brightness: Maybe<{ percent?: number }>): Osd {
-    const value: { percent?: number } = brightness || ({});
+function brightnessOsd(brightness: Maybe<{ available?: boolean; percent?: number }>): Osd {
+    const value = brightness || ({});
+    const known = value.available === true && Indicators.knownPercent(value.percent);
     const percent = Indicators.percent(value.percent);
     return osd("brightness", {
         icon: "󰃠",
         label: "Brightness",
-        valueLabel: percent + "%",
+        valueLabel: known ? percent + "%" : "Unavailable",
         percent: percent,
-        progressVisible: true
+        progressVisible: known
     });
 }
 
@@ -133,13 +136,14 @@ function lockKeyOsd(kind: string, enabled: boolean): Osd {
 }
 
 function keyboardBacklightOsd(percent: unknown): Osd {
+    const known = Indicators.knownPercent(percent);
     const value = Indicators.percent(percent);
     return osd("keyboard-backlight", {
         icon: "󰌌",
         label: "Keyboard backlight",
-        valueLabel: value + "%",
+        valueLabel: known ? value + "%" : "Unavailable",
         percent: value,
-        progressVisible: true
+        progressVisible: known
     });
 }
 

@@ -19,6 +19,7 @@ var methods = ({
     "bluetooth.audio.setProfile": "bluetooth.audio.setProfile",
     "bluetooth.audio.setDefault": "bluetooth.audio.setDefault",
     "bluetooth.requests.snapshot": "bluetooth.requests.snapshot",
+    "bluetooth.operation.status": "bluetooth.operation.status",
     "bluetooth.device.operation": "bluetooth.device.operation",
     "bluetooth.pairing.respond": "bluetooth.pairing.respond",
 });

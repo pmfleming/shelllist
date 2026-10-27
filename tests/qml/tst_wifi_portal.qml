@@ -47,6 +47,10 @@ DaemonTestCase {
         const panel = createTemporaryObject(panelFactory, testCase);
         verify(panel !== null);
         panel.controller.backend.portalExecutor = panel.executor;
+        const request = new XMLHttpRequest();
+        request.open("GET", Qt.resolvedUrl("../../contracts/nm-api-ui-contract.fixture.json"), false);
+        request.send();
+        panel.controller.applyRecoveredStatus(JSON.parse(request.responseText).data.fixture.status_stream.initial.data.status);
         calls = [];
         return panel;
     }

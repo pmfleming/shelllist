@@ -335,6 +335,7 @@
           "battery_aware": null,
           "driver": "",
           "error": null,
+          "next_manual_profile": "balanced",
           "performance_degraded": "high-operating-temperature",
           "profile": "power-saver",
           "profiles": [
@@ -384,6 +385,7 @@
           "battery_aware": false,
           "driver": "",
           "error": null,
+          "next_manual_profile": "balanced",
           "performance_degraded": "",
           "profile": "power-saver",
           "profiles": [
@@ -445,6 +447,7 @@
           "battery_aware": null,
           "driver": "",
           "error": null,
+          "next_manual_profile": "power-saver",
           "performance_degraded": "high-operating-temperature",
           "profile": "performance",
           "profiles": [
@@ -504,6 +507,7 @@
           "battery_aware": false,
           "driver": "",
           "error": null,
+          "next_manual_profile": "power-saver",
           "performance_degraded": "",
           "profile": "performance",
           "profiles": [
@@ -566,6 +570,7 @@
           "battery_aware": null,
           "driver": "",
           "error": null,
+          "next_manual_profile": "performance",
           "performance_degraded": "high-operating-temperature",
           "profile": "balanced",
           "profiles": [
@@ -626,6 +631,7 @@
           "battery_aware": false,
           "driver": "",
           "error": null,
+          "next_manual_profile": "performance",
           "performance_degraded": "",
           "profile": "balanced",
           "profiles": [
@@ -687,6 +693,7 @@
           "battery_aware": null,
           "driver": "",
           "error": null,
+          "next_manual_profile": "performance",
           "performance_degraded": "high-operating-temperature",
           "profile": "balanced",
           "profiles": [
@@ -746,6 +753,7 @@
           "battery_aware": true,
           "driver": "",
           "error": null,
+          "next_manual_profile": "performance",
           "performance_degraded": "",
           "profile": "balanced",
           "profiles": [

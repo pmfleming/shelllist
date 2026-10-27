@@ -211,10 +211,10 @@ DaemonTestCase {
         const backend = findChild(controller, "bluetoothBackend");
         backend.acceptSharedResponse("device-set-noise-control", {
             protocol: "bt-api", version: 2, ok: true,
-            data: {operation: {request_id: "anc", device_key: "buds", state: "running", operation: "set-noise-control"}}
+            data: {operation: {request_id: "anc", device_key: "buds", revision: 1, stage: "queued", state: "queued", operation: "set-noise-control"}}
         }, "");
         verify(!controller.openNoiseControl(), "accepted operation is still pending");
-        backend.handleOperationEvent({data: {request_id: "anc", device_key: "buds", state: "completed",
+        backend.handleOperationEvent({data: {request_id: "anc", device_key: "buds", revision: 4, stage: "completed", state: "completed",
             operation: "set-noise-control", snapshot: snapshot("adaptive")}});
         compare(findChild(panel, "noiseControlLabel").text, "Ambient", "operation observation is not a live-state watermark");
         backend.acceptSharedResponse("snapshot", {protocol: "bt-api", version: 2, ok: true,

@@ -519,6 +519,9 @@
           }
         ],
         "display": {
+          "cycles": "101 cycles",
+          "estimate": "4h 0m",
+          "health": "85%",
           "percentage": "80%",
           "power": "8.2 W"
         },
@@ -947,6 +950,7 @@
         "battery_aware": true,
         "driver": "amd_pstate",
         "error": null,
+        "next_manual_profile": null,
         "performance_degraded": "",
         "profile": "balanced",
         "profiles": [
@@ -1963,6 +1967,9 @@
             }
           ],
           "display": {
+            "cycles": "101 cycles",
+            "estimate": "4h 0m",
+            "health": "85%",
             "percentage": "80%",
             "power": "8.2 W"
           },
@@ -2335,6 +2342,7 @@
           "battery_aware": true,
           "driver": "amd_pstate",
           "error": null,
+          "next_manual_profile": null,
           "performance_degraded": "",
           "profile": "balanced",
           "profiles": [
@@ -2915,6 +2923,7 @@
         "battery_aware": null,
         "driver": "",
         "error": null,
+        "next_manual_profile": null,
         "performance_degraded": "",
         "profile": "",
         "profiles": [],

@@ -1005,6 +1005,7 @@
           "battery_aware": null,
           "driver": "",
           "error": null,
+          "next_manual_profile": null,
           "performance_degraded": "",
           "profile": "",
           "profiles": [],

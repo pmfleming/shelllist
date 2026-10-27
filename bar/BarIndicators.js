@@ -2,6 +2,9 @@
 
 "use strict";
 // Shared bounds and glyph thresholds for the bar and its OSDs.
+function knownPercent(value) {
+    return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100;
+}
 function percent(value) {
     return Math.max(0, Math.min(100, Number(value) || 0));
 }

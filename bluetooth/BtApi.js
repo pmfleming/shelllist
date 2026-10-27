@@ -39,6 +39,18 @@ function validSnapshot(data, audio) {
         && typeof snapshot.radio.powered === "boolean" && keyedItems(snapshot.adapters) && keyedItems(snapshot.devices);
 }
 
+function activeOperation(operation) {
+    return operation.state === "queued" || operation.state === "running";
+}
+function validOperation(operation) {
+    return objectValue(operation) && typeof operation.request_id === "string" && !!operation.request_id
+        && Number.isSafeInteger(operation.revision) && operation.revision > 0
+        && typeof operation.device_key === "string" && !!operation.device_key
+        && typeof operation.operation === "string" && !!operation.operation
+        && typeof operation.stage === "string" && !!operation.stage
+        && ["queued", "running", "completed", "failed", "cancelled"].includes(operation.state);
+}
+
 var responseKeys = ["scan", "audio_devices", "operation", "requests"];
 
 function responseKind(data) {
@@ -59,24 +71,6 @@ function copyWith(values, key, value) {
     return result;
 }
 
-function lifecycleState(item, activeItems, finishedItems, state, terminalStates) {
-    const id = item.request_id;
-    if (!id)
-        return {
-            active: activeItems,
-            finished: finishedItems
-        };
-    if (!terminalStates.includes(state))
-        return {
-            active: copyWith(activeItems, id, item),
-            finished: finishedItems
-        };
-    return {
-        active: copyWithout(activeItems, id),
-        finished: activeItems[id] ? finishedItems : copyWith(finishedItems, id, true)
-    };
-}
-
 var methods = {
     snapshot: Protocol.methods["bluetooth.snapshot"],
     setPowered: Protocol.methods["bluetooth.setPowered"],
@@ -89,6 +83,7 @@ var methods = {
     audioSnapshot: Protocol.methods["bluetooth.audio.snapshot"],
     audioSetProfile: Protocol.methods["bluetooth.audio.setProfile"],
     requestsSnapshot: Protocol.methods["bluetooth.requests.snapshot"],
+    operationStatus: Protocol.methods["bluetooth.operation.status"],
     pairingRespond: Protocol.methods["bluetooth.pairing.respond"],
     deviceOperation: Protocol.methods["bluetooth.device.operation"]
 };

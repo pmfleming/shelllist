@@ -116,8 +116,16 @@ DaemonTestCase {
         f.c.handleOperationEvent({request_id: "operation", device_key: "buds", state: "completed", operation: "connect", snapshot: f.records.old_read.data.snapshot});
         f.c.handleScanEvent({request_id: "scan", state: "completed", snapshot: f.records.old_read.data.snapshot});
         verify(f.c.radio.powered);
-        // Operation completion may close its own device prompt; use a distinct
-        // identity for unrelated prompt retention in the state-only path below.
+        // Neither operation/scan completion nor another prompt's lifecycle owns this draft.
+        compare(f.c.pairingPrompt.request_id, "prompt");
+        compare(f.c.pairingInput, "fixture-draft");
+        f.c.handlePairingEvent({event: "cancelled", data: {request_id: "unrelated-prompt"}});
+        compare(f.c.pairingPrompt.request_id, "prompt");
+        compare(f.c.pairingInput, "fixture-draft");
+        // Retire only the explicitly identified prompt before the next snapshot case.
+        f.c.handlePairingEvent({event: "cancelled", data: {request_id: "prompt"}});
+        verify(!f.c.pairingPrompt);
+        compare(f.c.pairingInput, "");
         f.c.handlePairingEvent({event: "requested", data: {request_id: "other-prompt", device_key: "other", kind: "pin-code", response_required: true}});
         f.c.pairingInput = "retained-draft";
         reply(f, f.records.old_read);

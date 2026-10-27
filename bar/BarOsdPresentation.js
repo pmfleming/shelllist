@@ -24,13 +24,14 @@ function osd(kind, presentation) {
 }
 function outputOsd(audio) {
     const value = audio || ({});
+    const known = value.available === true && Indicators.knownPercent(value.volume_percent);
     const percent = Indicators.percent(value.volume_percent);
     return osd("audio", {
         icon: Indicators.audioIcon(value),
         label: value.sink_description || "Volume",
-        valueLabel: value.muted ? "Muted" : percent + "%",
+        valueLabel: !known ? "Unavailable" : value.muted ? "Muted" : percent + "%",
         percent: percent,
-        progressVisible: true
+        progressVisible: known
     });
 }
 function inputOsd(audio) {
@@ -45,13 +46,14 @@ function inputOsd(audio) {
 }
 function brightnessOsd(brightness) {
     const value = brightness || ({});
+    const known = value.available === true && Indicators.knownPercent(value.percent);
     const percent = Indicators.percent(value.percent);
     return osd("brightness", {
         icon: "󰃠",
         label: "Brightness",
-        valueLabel: percent + "%",
+        valueLabel: known ? percent + "%" : "Unavailable",
         percent: percent,
-        progressVisible: true
+        progressVisible: known
     });
 }
 function brightnessErrorOsd() {
@@ -81,13 +83,14 @@ function lockKeyOsd(kind, enabled) {
     });
 }
 function keyboardBacklightOsd(percent) {
+    const known = Indicators.knownPercent(percent);
     const value = Indicators.percent(percent);
     return osd("keyboard-backlight", {
         icon: "󰌌",
         label: "Keyboard backlight",
-        valueLabel: value + "%",
+        valueLabel: known ? value + "%" : "Unavailable",
         percent: value,
-        progressVisible: true
+        progressVisible: known
     });
 }
 function privacyOsd(device, active) {
