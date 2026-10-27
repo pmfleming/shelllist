@@ -143,14 +143,22 @@ Ui.ChooserController {
         if (selectedSummary?.id === context.id) detailItem = data.item;
         AgendaRepository.accept(data.item, data.catalog_revision);
         if (context.reviewDraft && context.selectionSerial === selectionSerial) rebaseTarget = {draft: context.reviewDraft, item: data.item};
-        if (context.completeAfter && context.selectionSerial === selectionSerial && context.readGeneration === readGeneration) complete(data.item);
+        if (context.completeAfter && context.selectionSerial === selectionSerial && context.readGeneration === readGeneration) {
+            // Accept fresh inspection data, but never rebase the captured action.
+            if (data.item.revision !== context.revision) error = qsTr("Agenda item changed; review before trying again");
+            else complete(data.item);
+        }
         if (detailsOpen && selectedSummary?.id !== context.id) requestSelected();
     }
     function complete(item: var): void {
         if (!canComplete(item)) return;
         if (item.summary === true) {
             const full = AgendaRepository.records[item.id];
-            if (full && full.revision >= item.revision) complete(full); else requestItem(item, true);
+            if (full && full.revision > item.revision) {
+                if (selectedSummary?.id === item.id) detailItem = full;
+                error = qsTr("Agenda item changed; review before trying again");
+            } else if (full && full.revision === item.revision) complete(full);
+            else requestItem(item, true);
             return;
         }
         const task = Object.assign({}, item.task, {completed: !item.task.completed, completed_unix_ms: null});

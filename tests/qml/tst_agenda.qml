@@ -382,6 +382,51 @@ DaemonTestCase {
         else verify(s.owner.deleteTarget!==null);
         compare(mutations().length,1,"a rejected acknowledgement cannot replay the operation");
     }
+    function test_primaryCompletionKeepsActionRevision_data() {
+        return [
+            {tag:"deferred-newer-completed",cached:false,revision:2,completed:true},
+            {tag:"deferred-newer-still-open",cached:false,revision:2,completed:false},
+            {tag:"cached-newer-completed",cached:true,revision:2,completed:true},
+            {tag:"cached-newer-still-open",cached:true,revision:2,completed:false},
+            {tag:"deferred-exact-revision",cached:false,revision:1,completed:false},
+            {tag:"cached-exact-revision",cached:true,revision:1,completed:false}
+        ];
+    }
+    function test_primaryCompletionKeepsActionRevision(data) {
+        const summary=Agenda.AgendaRepository.summaryOf(item("completion"));const s=start([summary]);
+        if(data.cached) open(s);
+        else {s.view.listItem.focusList();keyClick(Qt.Key_Return);}
+        tryVerify(()=>calls.some(call=>call.method==="agenda.get"));
+        const get=calls.filter(call=>call.method==="agenda.get").slice(-1)[0];compare(get.params.id,summary.id);
+        const fresh=item(summary.id,"task",data.revision);fresh.task.completed=data.completed;
+        respond(get,{item:fresh,catalog_revision:data.revision});
+        if(data.cached) {
+            compare(mutations().length,0,"ordinary inspector read has no completion intent");
+            s.owner.complete(summary); // A retained row action still owns revision1, not the newer cache.
+        }
+        compare(Agenda.AgendaRepository.records[summary.id].revision,data.revision);
+        compare(s.owner.selectedItem.revision,data.revision);compare(s.owner.selectedItem.task.completed,data.completed);
+        if(data.revision!==summary.revision) {
+            compare(mutations().length,0,"changed action revision must not toggle the fresh completed value");
+            compare(s.owner.operation,null);compare(Object.keys(s.owner.savedDrafts).length,0);
+            verify(s.owner.error.includes("changed")&&s.owner.error.includes("review"));compare(s.owner.detailError,"");
+            const feedback=field(s,"feedbackText");tryVerify(()=>feedback.text.includes("changed")&&feedback.text.includes("review"));
+            s.view.listItem.focusList();keyClick(Qt.Key_Return); // Only a new explicit intent may toggle the reviewed record.
+        }
+        compare(mutations().length,1);compare(mutations()[0].params.id,summary.id);
+        compare(mutations()[0].params.expected_revision,data.revision);
+        compare(mutations()[0].params.patch.task.completed,!data.completed);
+    }
+    function test_ordinaryInspectorGetAcceptsNewerRevisionWithoutCompleting() {
+        const summary=Agenda.AgendaRepository.summaryOf(item("inspection"));const s=start([summary]);open(s);
+        tryVerify(()=>calls.some(call=>call.method==="agenda.get"));
+        const get=calls.filter(call=>call.method==="agenda.get").slice(-1)[0];
+        const fresh=item(summary.id,"task",2);fresh.task.completed=true;
+        respond(get,{item:fresh,catalog_revision:2});
+        tryCompare(s.owner.selectedItem,"revision",2);compare(s.owner.selectedItem.task.completed,true);
+        compare(Agenda.AgendaRepository.records[summary.id].revision,2);compare(mutations().length,0);
+        compare(s.owner.detailError,"");compare(s.owner.error,"");verify(s.owner.canWrite(s.owner.selectedItem));
+    }
     function test_lazySummaryDetailsAndMalformedMutationTarget() {
         const full=item("lazy");
         const s=start([Agenda.AgendaRepository.summaryOf(full)]);
