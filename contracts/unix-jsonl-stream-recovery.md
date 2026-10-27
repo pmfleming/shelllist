@@ -454,9 +454,44 @@ compiler-complete analysis or a blanket quality certification. The coordinator's
 [integration record](../tests/worker-integration-review.md) distinguishes accepted
 checkpoints, partial evidence, blockers, matching checks and still-active work.
 
+## Subsequent bounded work-branch integration
+
+The [remaining-branch review](../tests/remaining-work-integration-review.md) accepts
+Bluetooth device-operation recovery with consumer-local acknowledgement authority:
+status/aggregate/live reconciliation cannot adopt an unacknowledged peer ID, and
+live/recovered terminals cannot close an independent same-device prompt. Prompt-ID
+and captured request-window authority remain separate. Native operations retain
+64 terminal results for five minutes under the active/terminal publication lock;
+absence or expiry never implies success or permits replay. Scan, pairing and OBEX
+lifecycle expansion and unknown/tombstone retirement remain separate work.
+
+Only NM `wifi.status` adds authoritative serialized payload/publication captures,
+invalidation-generation and unique-owner fences, rollover lineage and ordered
+unavailable state. Fresh explicit reads replace TTL-cache recovery; stale/malformed
+observations cannot displace current state or consume its revision. Recovery keeps
+prompts, drafts and accepted work, and cannot scan/reconnect/submit credentials or
+revive previous scan intentions. Connectivity/inventory and other NM streams remain
+open, rather than inheriting acceptance from this one projection.
+
+Bar adds native finite-percent display facts and the next supported advertised
+manual profile target; the frontend captures one explicit target and native code
+revalidates before persistence/hold release. This is not completion of missing/
+nonfinite acquisition validity. Clipboard adds isolated Python/Nix smoke tests and
+static rendered-package inspection, with non-reaping process-group cleanup and
+no implicit activation retry. Its real packaged-main/engine/rollback gate stays
+explicitly NOT RUN. These changes do not choose startup strategy or change defaults.
+
+Fourteen matching serialized integration gates pass, including development/Nix
+Qt **522 passes, zero failures, one existing skip**. Private BT authority probes
+pass twice; NM/bar and the existing application native probes pass against combined
+sources. The separate clipboard lifetime quality refactor passes 23 private Python
+tests in development/Nix and affected Qt checks. Worker full-baseline Lens evidence
+and fresh coordinator QML extraction retain explicit partial/static-model limits;
+no universal semantic or release-performance acceptance is claimed.
+
 ## Remaining scope
 
-NM collection/connect progress does not complete the multi-daemon revision
+NM collection/connect/status progress does not complete the multi-daemon revision
 migration. Other streams' content identities/internal counters are not uniform
 wire watermarks. The new private Clip/bar OS-process fixtures do not establish
 packaged-main startup, combined native frontend crash, durable hardware recovery,

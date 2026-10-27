@@ -6,6 +6,11 @@ Only the framework and application checkpoints below are integrated here.
 Bridge remains default; no deployment, live service/hardware action, startup
 selection, final performance measurement or rollout approval occurred.
 
+**Subsequent disposition:** the [remaining-branch review](remaining-work-integration-review.md)
+integrates the focused BT repair and bounded NM/clipboard/bar checkpoints after
+matching checks and separate quality closure. The withheld statuses below describe
+this earlier batch and its original unsafe BT heads, not the repaired candidate.
+
 ## Reviewed source and scope
 
 | Component | Implementation lineage | Separate quality | Coordinator integration |

@@ -15,11 +15,15 @@ Do not redo completed adapters or treat old worker commits as approved integrati
 [conversion tickets](rust-qml-conversion-audit.md) and
 [startup design](socket-startup-design.md) define scope and evidence limits.
 
-Current progress is recorded in the [Wave 1 integration review](../tests/wave-one-integration-review.md):
-bounded framework/application changes are integrated; BT requires a focused
-consumer-authority/draft repair; other Wave 1 handoffs remain unintegrated pending
-review. Historical missing-extraction blockers are not substitutes for reviewing
-fresh evidence, and partial implementation/analysis does not close the project.
+Current progress is recorded in the [first Wave 1 review](../tests/wave-one-integration-review.md)
+and [remaining-branch integration review](../tests/remaining-work-integration-review.md).
+All delivered checkpoints are now integrated in their reviewed bounded scopes,
+including the focused Bluetooth authority/draft repair, `wifi.status`, clipboard
+private smoke/CI safety and bar semantic presentation/manual profile targets.
+Connectivity/inventory and other unfinished NM streams, CQ-10 acquisition validity,
+broader BT lifecycle and real packaged-main/rollback acceptance remain open.
+Historical missing-extraction blockers are not substitutes for fresh evidence;
+partial implementation/analysis and integration do not close the project.
 
 There are three distinct exits:
 
@@ -124,7 +128,7 @@ Any unfinished Wave 1 scope stays explicitly open and precedes dependent work.
 - **OPS-STATUS:** project tooling follow-up: show coordinator dispositions separately
   from original worker/quality status in the read-only dashboard. Preserve raw
   partial/blocked evidence; do not paint every terminal task green. `/etc/nixos`
-  has pre-existing dashboard edits, so establish/review that baseline separately
+  is a separate configuration repository: establish/review its fresh baseline
   before assigning an isolated tooling worker. Not a daemon rollout prerequisite.
 
 Bar work is deliberately serialized across W1-BAR → W2-UPDATES → W3-MEDIA →

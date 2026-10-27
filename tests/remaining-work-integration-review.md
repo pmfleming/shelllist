@@ -1,7 +1,10 @@
 # Remaining work branches — coordinator integration
 
-2026-10-27: implementation integration checkpoint after review and matching checks.
-**Coordinator quality closure is pending below; this is not rollout approval.**
+2026-10-27: **accepted for the bounded scopes below**, after implementation,
+matching checks, implementation commits and a separate coordinator quality pass.
+Frontend implementation is `60678b2`; clipboard quality refactor is `c943625`.
+The commit containing this final record is the separate frontend quality/evidence
+commit. Partial implementation/analysis remains partial; this is not rollout approval.
 Bridge remains default, with five independent socket opt-ins. No service restart,
 deployment, user-domain effect or push occurred during this integration.
 
@@ -98,18 +101,57 @@ preserved, not converted into a pass. After an empty process census and unchange
 source seal, an explicit fresh attempt reran all fourteen gates successfully.
 Correctness durations are not performance measurements.
 
-## Quality review and remaining closure
+## Completed quality review and retained limits
 
 The original worker Rust/QML BEFORE/AFTER loops and separate nonempty quality
 commits remain the full-baseline evidence. Extraction is partial where declared;
 Python, TypeScript, shell and Nix checks are not Lens certifications. No thresholds,
 exclusions, analyzer sources, binaries, versions or dependency locks were changed.
 
-Coordinator review found a further Python harness lifetime issue: cleanup can
-signal a process-group ID after its leader was already reaped. A separate quality
-refactor, safe negative witness and affected tests are required before final
-acceptance. The coordinator's Bluetooth test correction also receives a fresh,
-unchanged-rule QML Lens comparison; justified no-refactor evidence is acceptable.
+Coordinator review found and repaired a further Python harness lifetime issue:
+cleanup could signal a process-group ID after its leader was already reaped.
+The safe BEFORE witness used inert children with every group signal mocked. Normal
+completion and external reaping both requested signals after reaping. Two new
+regression cases fail against the exact archived implementation helper (three
+assertions including Popen/raw-waitpid subcases), without actual PID reuse or any
+foreign-process signal.
+
+The separate quality refactor retains the leader through non-reaping `waitid`
+observations and signals before final wait, preserves one deadline after EOF,
+rejects externally reaped identities and makes cleanup idempotent. AFTER observes
+an unreaped leader during normal cleanup and no signal requests after external
+reaping. This is owned-group cleanup for inspected non-detaching tools/fixtures,
+not generic containment. No activation retry or domain effects were added.
+
+Affected checks pass: Python 3.13.13 syntax; **23 private Python tests, zero skips**
+in development and matching Nix `packageSmoke`; Nix parsing and real-package static
+wiring. The package rebuild passes 59 Rust library + six integration tests. Full
+Qt and QML lint pass again: **522 / zero failures / one existing renderer skip**.
+Real packaged-main/engine/rollback remains explicitly NOT RUN. Executable source
+seals matched after checks; only documentation was subsequently added.
+
+The coordinator Bluetooth test correction received five fresh QML Lens producers
+BEFORE and AFTER with identical source/evaluator fingerprints, analysis rules,
+findings, metrics and rule coverage. The source hash is `053a8d2b…`, across 38 files,
+374 functions and 1,040 bindings. QML Lens 0.5.0 / Node 24.16.0 reports 212 findings;
+the semantic subset has 60 findings (four medium, 56 low), 27 unresolved imports,
+78 unresolved types and 548 skipped evaluations. This remains **partial**.
+
+The corrected test's 30-line advisory is explicitly retained: cyclomatic 1,
+cognitive 0, one cohesive sequence proving prompt identity across operations,
+wrong-ID cancellation, matching-ID cancellation and stale observation. Splitting
+those ordered assertions only to avoid a length warning would obscure the safety
+witness. The unresolved `Shelllist.Io` static-model warning is not suppressed;
+actual matching Qt/lint checks supply separate execution/import evidence. No QML
+refactor is justified. Rust executable bytes remain identical to the reviewed
+worker trees, so their full-baseline Rust Lens loops remain applicable; this
+coordinator pass adds no Rust code or claim of complete macro/identity extraction.
+
+Python/Nix are unsupported by those Lenses: manual lifecycle review, actual Python
+syntax/tests, Nix parsing/build and explicit limits are the evidence, not a fake
+Lens pass. The isolated Nix check needs no further refactor after its real-package
+and negative fixture tests. Pinned analyzer source, CLI/dist and lock hashes were
+reverified; no analyzer, dependency lock, rule, threshold or exclusion changed.
 
 Evidence root:
 `/home/laufan/Projects/shelllist-orchestration/20261026T232107Z/integration-review/remaining/`.

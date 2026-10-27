@@ -3,8 +3,11 @@
 The [project-completion queue](completion-orchestration.md) records the current
 worker isolation, two-commit quality workflow and orchestration checks. It is not
 runtime acceptance or approval of unfinished worker changes. The
-[Wave 1 integration record](wave-one-integration-review.md) accepts bounded framework
-and application checkpoints, retains partial analysis, and records withheld work.
+[first Wave 1 record](wave-one-integration-review.md) accepts framework/application;
+the [remaining-branch review](remaining-work-integration-review.md) integrates the
+focused BT repair and bounded Wi-Fi status, clipboard package-safety and bar facts.
+All delivered checkpoints are integrated, not all project scope completed. Partial
+analysis, unfinished streams and packaged/startup/rollout gates remain explicit.
 
 Prefer end-to-end user journeys and public-boundary integration tests. Keep local
 tests for unique failure modes that those flows cannot reasonably exercise; do
@@ -262,7 +265,10 @@ for tested commits, commands, evidence limits and remaining rollout gates.
 The [integration review](worker-integration-review.md) records the scoped NM connect,
 clipboard process-crash, bar runtime/payload and application retained-transport
 checkpoints, applicable Lens
-check/refactor evidence, partial-analysis limits and explicitly unintegrated work.
+check/refactor evidence and the limits at that historical checkpoint. The
+[remaining-branch review](remaining-work-integration-review.md) records subsequent
+bounded integration, 522 Qt passes (one existing skip), fourteen matching gates
+and the separate clipboard lifetime quality fix with 23 private Python tests.
 See the [connect](networking-recovery-qualification.md),
 [clipboard process](clipboard-process-crash-qualification.md) and
 [bar runtime](bar-runtime-qualification.md) and
