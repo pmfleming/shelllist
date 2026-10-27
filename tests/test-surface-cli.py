@@ -95,6 +95,18 @@ exec() {
                     self.assertEqual(self.calls[-1]["args"][-2:], [action, ident])
                     self.assertTrue(all(call["program"] == "quickshell" for call in self.calls))
 
+    def test_legacy_activity_alias_only_opens_agenda(self):
+        self.assertNotIn("activity", [entry["id"] for entry in CATALOG["surfaces"]])
+        for args, action in [(["activity"], "toggle"), (["activity", "open"], "open"),
+                             (["open", "activity"], "open"), (["toggle", "activity"], "toggle")]:
+            with self.subTest(args=args):
+                self.run_cli(args)
+                self.assertEqual(self.calls[-1]["args"][-2:], [action, "agenda"])
+        self.env["CATALOG_TEST_RUNNING"] = "0"
+        self.run_cli(["floating", "activity"])
+        self.assertEqual(self.calls[-1]["initial"], "agenda")
+        self.assertEqual(self.calls[-1]["mode"], "floating")
+
     def test_update_run_deep_link_is_data_not_a_command(self):
         self.run_cli(["updates", "run", "boot-123-run-456"])
         self.assertEqual(self.calls[-1]["args"][-2:], ["openUpdateRun", "boot-123-run-456"])

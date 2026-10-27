@@ -192,6 +192,7 @@
                 shelllist run                     Run the resident host in the foreground
 
               Surfaces: ${builtins.concatStringsSep ", " surfaceCatalog.ids}
+              Legacy alias: activity opens Agenda (no separate scheduling surface).
 
               Clipboard settings:
                 shelllist clipboard pause
@@ -260,6 +261,7 @@
               surface_call() {
                 action=$1
                 surface=$2
+                [ "$surface" != activity ] || surface=agenda
                 valid_surface "$surface" || {
                   echo "Unknown Shelllist surface: $surface" >&2
                   return 2
@@ -370,6 +372,7 @@
                   ;;
                 floating)
                   surface=''${2:-${surfaceCatalog.defaultId}}
+                  [ "$surface" != activity ] || surface=agenda
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
                   valid_surface "$surface" || { echo "Unknown Shelllist surface: $surface" >&2; exit 2; }
                   if current_daemon_running; then
@@ -409,7 +412,7 @@
                     case "$action" in open|toggle) surface_call "$action" updates ;; *) usage >&2; exit 2 ;; esac
                   fi
                   ;;
-                ${builtins.concatStringsSep "|" (builtins.filter (id: id != "updates") surfaceCatalog.directIds)})
+                activity|${builtins.concatStringsSep "|" (builtins.filter (id: id != "updates") surfaceCatalog.directIds)})
                   action=''${2:-toggle}
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
                   case "$action" in open|toggle) surface_call "$action" "$command" ;; *) usage >&2; exit 2 ;; esac

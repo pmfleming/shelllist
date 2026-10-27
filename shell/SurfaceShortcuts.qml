@@ -10,6 +10,15 @@ Item {
     id: shortcuts
     signal surfaceRequested(string surfaceId)
 
+    // Preserve existing compositor registrations without advertising or loading
+    // the retired Glance/Schedule surface.
+    Ui.ShelllistGlobalShortcut {
+        objectName: "surfaceShortcut-activity-compatibility"
+        shortcutName: "activity"
+        description: "Agenda (legacy Activity shortcut)"
+        onTriggered: shortcuts.surfaceRequested("agenda")
+    }
+
     Repeater {
         model: Catalog.shortcuts
         delegate: Ui.ShelllistGlobalShortcut {

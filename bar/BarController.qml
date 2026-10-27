@@ -281,8 +281,8 @@ Item {
             sharingPromptOpen = !sharingPromptOpen;
             return true;
         }
-        if (["wifi", "bluetooth", "displays", "battery", "activity"].includes(action)) {
-            openSurface(action);
+        if (["wifi", "bluetooth", "displays", "battery", "agenda", "calendar", "activity"].includes(action)) {
+            openSurface(action === "activity" ? "agenda" : action);
             return true;
         }
         const actions = ({

@@ -297,6 +297,7 @@ Item {
 
         VisualSurface {
             id: popoverVisualSurface
+            horizontalOverflowAllowed: host.geometry.horizontalOverflowAllowed
             contentWidth: host.renderContentWidth
             canvasWidth: host.currentWindowWidth
             minimumContentHeight: host.geometry.minimumContentHeight
@@ -332,6 +333,7 @@ Item {
 
         VisualSurface {
             id: floatingVisualSurface
+            horizontalOverflowAllowed: host.geometry.horizontalOverflowAllowed
             contentWidth: host.renderContentWidth
             canvasWidth: host.currentWindowWidth
             minimumContentHeight: host.geometry.minimumContentHeight

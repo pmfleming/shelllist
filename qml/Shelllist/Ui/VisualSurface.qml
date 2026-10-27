@@ -5,6 +5,7 @@ Item {
 
     required property real contentWidth
     property real canvasWidth: contentWidth
+    property bool horizontalOverflowAllowed: true
     property real minimumContentHeight: 0
     required property bool loadWhen
     required property Component content
@@ -25,6 +26,7 @@ Item {
         id: viewport
         anchors.fill: parent
         canvasWidth: surface.canvasWidth
+        horizontalOverflowAllowed: surface.horizontalOverflowAllowed
         canvasHeight: Math.max(height, surface.minimumContentHeight)
 
         Loader {

@@ -26,10 +26,13 @@ Item {
     property real availableScreenWidth: 0
     property real availableScreenHeight: 0
     property bool expandable: true
+    // Optional measured multi-pane host; provider list/detail widths stay intact.
+    property real compositionWidth: 0
     readonly property PopoverGeometry geometry: PopoverGeometry {
         availableWidth: root.availableScreenWidth > 0 ? root.availableScreenWidth : 1280
         availableHeight: root.availableScreenHeight > 0 ? root.availableScreenHeight : 960
         expandable: root.expandable
+        compositionWidth: root.compositionWidth
     }
     property double lastSearchRankLatencyMs: -1
     property double lastCatalogToModelLatencyMs: -1
@@ -47,7 +50,7 @@ Item {
     readonly property real detailsPaneWidth: detailsPaintProgress * detailsPaneFullWidth
     readonly property real detailsPaneGapWidth: detailsPaintProgress * detailsGapWidth
     readonly property bool detailsRendered: detailsOpen || detailsExpansionProgress > detailsRenderCutoff
-    readonly property int currentWindowWidth: Math.round(closedWindowWidth + detailsPaintProgress * (openWindowWidth - closedWindowWidth))
+    readonly property int currentWindowWidth: compositionWidth > 0 ? Math.ceil(compositionWidth) : Math.round(closedWindowWidth + detailsPaintProgress * (openWindowWidth - closedWindowWidth))
 
     signal resultsAboutToChange(bool preserveViewport)
     signal resultsChanged

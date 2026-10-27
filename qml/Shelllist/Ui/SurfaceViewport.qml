@@ -7,9 +7,10 @@ Flickable {
     id: viewport
 
     property real canvasWidth: width
+    property bool horizontalOverflowAllowed: true
     property real canvasHeight: height
     readonly property Item focusedItem: Window.window ? Window.window.activeFocusItem : null
-    contentWidth: Math.max(width, canvasWidth)
+    contentWidth: horizontalOverflowAllowed ? Math.max(width, canvasWidth) : width
     contentHeight: Math.max(height, canvasHeight)
     boundsBehavior: Flickable.StopAtBounds
     flickableDirection: Flickable.HorizontalAndVerticalFlick

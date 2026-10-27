@@ -23,7 +23,7 @@ Item {
         return items.filter((item, index) => items.indexOf(item) === index);
     }
     function collectActionRows(item: Item): var {
-        if (!item || !item.visible || item instanceof ModalFrame || (item as DetailSection)?.informationOnly)
+        if (!item || !item.visible || item instanceof ModalFrame || item instanceof DateGridNavigation || (item as DetailSection)?.informationOnly)
             return [];
         if (item instanceof SurfaceActionRow) return [item];
         let result = [];
@@ -31,7 +31,7 @@ Item {
         return result;
     }
     function collectCommands(item: Item): var {
-        if (!item || !item.visible || item instanceof DetailsHeader || item instanceof DetailsTabBar || item instanceof ModalFrame)
+        if (!item || !item.visible || item instanceof DetailsHeader || item instanceof DetailsTabBar || item instanceof ModalFrame || item instanceof DateGridNavigation)
             return [];
         const actionRow = item as SurfaceActionRow;
         if (actionRow && actionRow.headerCommands) return [];

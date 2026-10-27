@@ -36,9 +36,14 @@ var descriptors = [
         "icon": "󰂂"
     },
     {
-        "id": "activity",
-        "name": "Activity",
-        "icon": "󰃭"
+        "id": "agenda",
+        "name": "Agenda",
+        "icon": "view_list"
+    },
+    {
+        "id": "calendar",
+        "name": "Calendar",
+        "icon": "calendar_month"
     },
     {
         "id": "notifications",
@@ -107,8 +112,12 @@ var shortcuts = [
         "description": "Toggle Shelllist Battery"
     },
     {
-        "id": "activity",
-        "description": "Toggle Shelllist Activity"
+        "id": "agenda",
+        "description": "Toggle Shelllist Agenda"
+    },
+    {
+        "id": "calendar",
+        "description": "Toggle Shelllist Calendar"
     },
     {
         "id": "notifications",

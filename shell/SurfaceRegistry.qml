@@ -39,7 +39,6 @@ Item {
     readonly property Wifi.WifiController wifiController: controllerFor("wifi") as Wifi.WifiController
     readonly property Bluetooth.BluetoothController bluetoothController: controllerFor("bluetooth") as Bluetooth.BluetoothController
     readonly property Displays.DisplayController displayController: controllerFor("displays") as Displays.DisplayController
-    readonly property Activity.ActivityController activityController: controllerFor("activity") as Activity.ActivityController
     readonly property Activity.NotificationController notificationController: controllerFor("notifications") as Activity.NotificationController
 
     signal surfaceRequested(string surfaceId)
@@ -53,7 +52,9 @@ Item {
 
     function validSurfaceId(surfaceId: string): string {
         const requested = String(surfaceId || "").toLowerCase();
-        return descriptorFor(requested) ? requested : "";
+        // Compatibility only: no third scheduling surface or controller.
+        const canonical = requested === "activity" ? "agenda" : requested;
+        return descriptorFor(canonical) ? canonical : "";
     }
 
     function isLoaded(surfaceId: string): bool {
@@ -292,23 +293,22 @@ Item {
     }
 
     SurfaceSlot {
-        surfaceId: "activity"
+        surfaceId: "agenda"
         owner: registry
-        sourceComponent: Component {
-            SurfaceBundle {
-                controller: activityController
-                content: Component {
-                    Activity.ActivityContent {
-                        controller: activityController
-                    }
-                }
-                Activity.ActivityController {
-                    id: activityController
-                    onNotificationsRequested: function (groupKey, tab) {
-                        registry.openNotifications(groupKey, tab, "activity");
-                    }
-                }
-            }
+        sourceComponent: SurfaceBundle {
+            controller: agendaController
+            content: Activity.AgendaContent { controller: agendaController }
+            Activity.AgendaController { id: agendaController }
+        }
+    }
+
+    SurfaceSlot {
+        surfaceId: "calendar"
+        owner: registry
+        sourceComponent: SurfaceBundle {
+            controller: calendarController
+            content: Activity.AgendaCalendarContent { controller: calendarController }
+            Activity.AgendaCalendarController { id: calendarController }
         }
     }
 
@@ -326,7 +326,7 @@ Item {
                 Activity.NotificationController {
                     id: notificationController
                     notificationState: registry.notificationState
-                    onBackRequested: registry.surfaceRequested("activity")
+                    onBackRequested: registry.surfaceRequested("agenda")
                 }
             }
         }

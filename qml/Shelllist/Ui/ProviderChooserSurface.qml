@@ -9,13 +9,17 @@ ChooserSurface {
     required property Component listComponent
     required property Component detailsComponent
     property bool navigationEnabled: true
+    // Retain the provider without leaving window-wide shortcuts active while
+    // another scoped surface region owns input.
+    property bool hostNavigationEnabled: true
+    readonly property bool inputScopeActive: navigationEnabled && hostNavigationEnabled
     property Item additionalCommandItem: null
     property bool commandsWithoutDetails: false
     property bool sessionReady: true
     property string sessionContext: chooserController.viewMemory ? JSON.stringify([chooserController.viewMemory.key, chooserController.viewMemory.tab]) : ""
     readonly property DetailsNavigation detailsNavigation: chooser.detailsNavigation
-    property bool refreshEnabled: navigationEnabled && !chooserController.actionInFlight
-    property bool detailsTabEnabled: navigationEnabled && chooserController.detailsOpen && chooserController.hasSelection
+    property bool refreshEnabled: inputScopeActive && !chooserController.actionInFlight
+    property bool detailsTabEnabled: inputScopeActive && chooserController.detailsOpen && chooserController.hasSelection
     property bool refreshAutoRepeat: true
     readonly property real uiScale: 1
     readonly property ChooserListPane listItem: chooser.listItem
@@ -81,13 +85,13 @@ ChooserSurface {
         objectName: "shortcutHints"
         scope: surface
         navigation: surface.detailsNavigation
-        enabled: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && surface.navigationEnabled && !surface.chooserController.navigationBlocked
+        enabled: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && surface.inputScopeActive && !surface.chooserController.navigationBlocked
         tabsEnabled: surface.detailsTabEnabled
     }
 
     ChooserShortcuts {
         controller: surface.chooserController
-        navigationEnabled: surface.navigationEnabled
+        navigationEnabled: surface.inputScopeActive
         refreshEnabled: surface.refreshEnabled
         detailsTabEnabled: surface.detailsTabEnabled && !surface.detailsNavigation.popupOpen
         refreshAutoRepeat: surface.refreshAutoRepeat
@@ -100,12 +104,12 @@ ChooserSurface {
 
     Shortcut {
         sequence: "Tab"
-        enabled: surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.commandMenuOpen
+        enabled: surface.chooserController.uiActive && surface.inputScopeActive && !surface.detailsNavigation.commandMenuOpen
         onActivated: surface.cycleRegion(false)
     }
     Shortcut {
         sequence: "Shift+Tab"
-        enabled: surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.commandMenuOpen
+        enabled: surface.chooserController.uiActive && surface.inputScopeActive && !surface.detailsNavigation.commandMenuOpen
         onActivated: surface.cycleRegion(true)
     }
 
@@ -116,8 +120,8 @@ ChooserSurface {
         detailsNavigation.visible: surface.chooserController.detailsRendered || surface.commandsWithoutDetails
         detailsNavigation.enabled: surface.chooserController.detailsOpen || surface.commandsWithoutDetails
         detailsNavigation.fieldController: surface.chooserController
-        detailsNavigation.headerShortcutsEnabled: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && (surface.chooserController.detailsOpen || surface.commandsWithoutDetails) && surface.navigationEnabled && !surface.chooserController.navigationBlocked
-        navigationAllowed: surface.navigationEnabled
+        detailsNavigation.headerShortcutsEnabled: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && (surface.chooserController.detailsOpen || surface.commandsWithoutDetails) && surface.inputScopeActive && !surface.chooserController.navigationBlocked
+        navigationAllowed: surface.inputScopeActive
         sessionContext: surface.sessionContext
         sessionReady: surface.sessionReady
         listComponent: surface.listComponent

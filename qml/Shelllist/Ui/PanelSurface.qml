@@ -7,6 +7,10 @@ ChooserSurface {
     required property ChooserController chooserController
     readonly property DetailsNavigation detailsNavigation: navigation
     default property alias panelContent: body.data
+    // Non-field regions share surface lifecycle, commands and modal guards.
+    property DateGridNavigation scopedNavigation: null
+    property bool navigationEnabled: true
+    property bool focusOnActivation: true
     property int region: 0
     property Item navigationContent: body
     property bool pendingFocus: false
@@ -25,7 +29,7 @@ ChooserSurface {
         return memory ? JSON.stringify([memory.key, memory.tab]) : "";
     }
     function requestFocus(): void {
-        if (consumed || !chooserController.uiActive || chooserController.uiSuspending || chooserController.navigationBlocked)
+        if (!focusOnActivation || consumed || !chooserController.uiActive || chooserController.uiSuspending || chooserController.navigationBlocked)
             return;
         consumed = true;
         pendingFocus = true;
@@ -38,6 +42,7 @@ ChooserSurface {
     onFocusReadyChanged: if (focusReady && pendingFocus)
         Qt.callLater(restore, chooserController.uiGeneration)
     function restore(generation: int): void {
+        if (!focusOnActivation) { pendingFocus = false; return; }
         if (!pendingFocus || !focusReady || generation !== chooserController.uiGeneration || !chooserController.uiActive || chooserController.uiSuspending)
             return;
         pendingFocus = false;
@@ -45,6 +50,10 @@ ChooserSurface {
             chooserController.viewMemory.synchronize();
         const saved = chooserController.focusMemory;
         region = Number.isFinite(saved.region) ? saved.region : 0;
+        if (scopedNavigation) {
+            scopedNavigation.focusContent();
+            return;
+        }
         if (saved.context === context())
             navigation.focusSessionLocation(saved.location);
         else
@@ -52,7 +61,8 @@ ChooserSurface {
     }
     function cycleRegion(backwards: bool): void {
         pendingFocus = false;
-        navigation.cycleFocus(backwards);
+        if (scopedNavigation) scopedNavigation.focusContent();
+        else navigation.cycleFocus(backwards);
     }
     function changeTab(backwards: bool): void {
         chooserController.navigationInteracted();
@@ -64,8 +74,8 @@ ChooserSurface {
         objectName: "shortcutHints"
         scope: surface
         navigation: surface.detailsNavigation
-        enabled: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && !surface.chooserController.navigationBlocked
-        tabsEnabled: true
+        enabled: surface.navigationEnabled && surface.chooserController.uiActive && !surface.chooserController.uiSuspending && !surface.chooserController.navigationBlocked
+        tabsEnabled: surface.scopedNavigation === null
     }
     DetailsNavigation {
         id: navigation
@@ -73,7 +83,7 @@ ChooserSurface {
         contentItem: surface.navigationContent
         fieldController: surface.chooserController
         headerContentItem: body
-        headerShortcutsEnabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked
+        headerShortcutsEnabled: surface.navigationEnabled && surface.chooserController.uiActive && !surface.chooserController.navigationBlocked
         restorationAllowed: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && !surface.chooserController.navigationBlocked
         viewMemory: surface.chooserController.viewMemory
         onInteractionRequested: surface.pendingFocus = false
@@ -100,17 +110,17 @@ ChooserSurface {
     }
     Shortcut {
         sequence: "Escape"
-        enabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked
+        enabled: surface.navigationEnabled && surface.chooserController.uiActive && !surface.chooserController.navigationBlocked
         onActivated: navigation.retreat()
     }
     Shortcut {
         sequence: "Tab"
-        enabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked && !navigation.commandMenuOpen
+        enabled: surface.navigationEnabled && surface.chooserController.uiActive && !surface.chooserController.navigationBlocked && !navigation.commandMenuOpen
         onActivated: surface.cycleRegion(false)
     }
     Shortcut {
         sequence: "Shift+Tab"
-        enabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked && !navigation.commandMenuOpen
+        enabled: surface.navigationEnabled && surface.chooserController.uiActive && !surface.chooserController.navigationBlocked && !navigation.commandMenuOpen
         onActivated: surface.cycleRegion(true)
     }
     Connections {

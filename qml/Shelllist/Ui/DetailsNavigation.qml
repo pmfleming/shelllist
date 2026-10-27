@@ -188,7 +188,7 @@ FocusScope {
     // fields. Use the same boundary for discovery and incubation readiness.
     function fieldBoundary(item: Item): bool {
         return item instanceof ActionControl || item instanceof IconTile
-            || item instanceof CommandGroup || item instanceof ModalFrame
+            || item instanceof CommandGroup || item instanceof ModalFrame || item instanceof DateGridNavigation
             || item instanceof DetailsHeader || item instanceof DetailsTabBar
             || item instanceof SurfaceActionRow || (item as DetailSection)?.informationOnly === true;
     }

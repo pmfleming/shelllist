@@ -8,7 +8,20 @@
     { "id": "clipboard", "name": "Clipboard", "icon": "󰅇", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
     { "id": "displays", "name": "Displays", "icon": "󰍹", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
     { "id": "battery", "name": "Battery", "icon": "󰂂", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
-    { "id": "activity", "name": "Activity", "icon": "󰃭", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
+    {
+      "id": "agenda", "name": "Agenda", "icon": "view_list", "loading": "lazy", "resident_state": null,
+      "home_manager_shortcut": {
+        "option": "agendaShortcut", "default": null,
+        "description": "Hyprland modifiers and key for Agenda. No default binding; set null to disable."
+      }
+    },
+    {
+      "id": "calendar", "name": "Calendar", "icon": "calendar_month", "loading": "lazy", "resident_state": null,
+      "home_manager_shortcut": {
+        "option": "calendarShortcut", "default": null,
+        "description": "Hyprland modifiers and key for Calendar. No default binding; set null to disable."
+      }
+    },
     {
       "id": "notifications", "name": "Notifications", "icon": "", "loading": "lazy", "resident_state": "notifications",
       "home_manager_shortcut": {
