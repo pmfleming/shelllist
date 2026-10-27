@@ -7,6 +7,7 @@ var methods = ({
     "clipboard.session.begin": "clipboard.session.begin",
     "clipboard.session.end": "clipboard.session.end",
     "clipboard.session.hidden": "clipboard.session.hidden",
+    "clipboard.session.wait": "clipboard.session.wait",
     "clipboard.history.query": "clipboard.history.query",
     "clipboard.history.revision": "clipboard.history.revision",
     "clipboard.entry.details": "clipboard.entry.details",

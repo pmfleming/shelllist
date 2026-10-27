@@ -202,6 +202,58 @@ DaemonTestCase {
         verify(!details.saveInFlight);
     }
 
+    function test_pasteKeepsOwnerAliveAfterHiding_data() {
+        return [{tag: "file", action: "image-as-file"},
+            {tag: "normal", action: "paste"},
+            {tag: "reopened", action: "image-as-file", reopen: true},
+            {tag: "disconnect", action: "image-as-file", disconnect: true},
+            {tag: "failed-wait", action: "image-as-file", error: "Session cancelled"}];
+    }
+    function test_pasteKeepsOwnerAliveAfterHiding(data) {
+        const controller = makeController();
+        const backend = findChild(controller, "clipboardBackend");
+        const entry = {id: "image", revision: 1, kind: "image", preview: "Image", byte_size: 8};
+        controller.replaceProviderResults(controller.provider.resultsForEntries([entry]), true);
+        controller.sessionId = "paste-session";
+        controller.hideRequested.connect(() => controller.deactivateUi());
+        const panel = createTemporaryObject(contentFactory, testCase, {controller: controller, width: 650, height: 900});
+        views = views.concat([panel]);
+        tryVerify(() => panel.listItem !== null);
+        panel.listItem.focusList();
+        keyClick(Qt.Key_Return, data.action === "image-as-file" ? Qt.ShiftModifier : Qt.NoModifier);
+        const action = calls.find(call => call.method === "clipboard.entry.action");
+        verify(!!action);
+        compare(action.params.action, data.action);
+        reply(controller, "action-" + data.action, {operation: {
+            id: "paste-operation", action: data.action, status: "paste-prepared",
+            _publication: {epoch: "fixture", revision: 1}
+        }});
+        verify(controller.uiActive, "publication alone does not hide the picker");
+        reply(controller, "session-hidden", {session: {id: "paste-session", state: "hidden"}});
+        verify(!controller.uiActive);
+        verify(backend.active, "hiding must not cancel delayed paste through owner loss");
+        compare(controller.sessionId, "");
+        const waitCall = calls.find(call => call.method === "clipboard.session.wait");
+        verify(!!waitCall);
+        compare(waitCall.params.session_id, "paste-session");
+        verify(!calls.some(call => call.method === "clipboard.session.end"));
+        if (data.reopen) {
+            controller.uiActive = true;
+            controller.sessionId = "new-session";
+        }
+        if (data.disconnect) {
+            backend.failSharedTransport("Disconnected during paste");
+            calls = [];
+            backend.transportReady();
+            compare(calls.length, 0, "hidden recovery must not replay paste or wait");
+        }
+        reply(controller, waitCall.route.localId, {session: {id: "paste-session", state: "finished"}}, data.error);
+        compare(Object.keys(backend.pasteDispatches).length, 0);
+        compare(backend.active, !!data.reopen);
+        compare(controller.sessionId, data.reopen ? "new-session" : "");
+        if (data.error) compare(controller.status, data.error);
+    }
+
     function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft_data() {
         return [{tag: "enter", key: Qt.Key_Return}];
     }

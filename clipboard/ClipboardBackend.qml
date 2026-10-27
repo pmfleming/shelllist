@@ -15,9 +15,10 @@ Io.DaemonBackend {
         onReadDiscarded: function(id) { clipboardBackend.controller.discardHistoryRead(id); }
         onOperationUncertain: function(id, message) { clipboardBackend.controller.handleOperationUncertain(id, message); }
     }
-    // Annotation continues after the picker hides. Keep its connection alive
-    // until a terminal observation; owner loss requests Satty cancellation.
-    active: controller.uiActive || controller.backgroundOperationInFlight
+    // Both annotation and delayed paste outlive the picker. Disconnecting their
+    // owner cancels them, so hiding alone must not retire this connection.
+    property var pasteDispatches: ({})
+    active: controller.uiActive || controller.backgroundOperationInFlight || Object.keys(pasteDispatches).length > 0
     readonly property var eventHandlers: {
         const handlers = ({});
         handlers[ClipApi.streams.history] = function (event) {
@@ -40,6 +41,8 @@ Io.DaemonBackend {
 
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Clipboard operation failed");
+        if (finishPasteWait(id, envelope ? envelope.data : null, error))
+            return;
         if (error) {
             controller.handleFailure(id, error);
             return;
@@ -111,6 +114,25 @@ Io.DaemonBackend {
         return call("session-hidden", ClipApi.methods.sessionHidden, {
             session_id: sessionId
         });
+    }
+    function waitForPaste(sessionId: string): void {
+        const id = nextRequestId("paste-wait");
+        pasteDispatches = Object.assign({}, pasteDispatches, {[id]: sessionId});
+        if (!call(id, ClipApi.methods.sessionWait, {session_id: sessionId}))
+            finishPasteWait(id, null, "Paste dispatch outcome is unknown; paste manually if needed");
+    }
+    function finishPasteWait(id: string, data: var, error: string): bool {
+        if (!id.startsWith("paste-wait-"))
+            return false;
+        const sessionId = pasteDispatches[id];
+        if (!sessionId)
+            return true; // A retired receipt must not affect a reopened picker.
+        if (error || data?.session?.id !== sessionId || data?.session?.state !== "finished")
+            controller.status = error || "Paste dispatch outcome is unknown; paste manually if needed";
+        const next = Object.assign({}, pasteDispatches);
+        delete next[id];
+        pasteDispatches = next;
+        return true;
     }
     function endSession(sessionId: string): bool {
         return call("session-end", ClipApi.methods.sessionEnd, {
@@ -189,10 +211,11 @@ Io.DaemonBackend {
     onSendFailed: function (id, message) {
         // A failed status read says nothing about the accepted effect. Its
         // recovery policy already reports uncertainty, not "effect not sent".
-        if (!id.startsWith("clip-status-"))
+        if (!finishPasteWait(id, null, message) && !id.startsWith("clip-status-"))
             controller.handleFailure(id, message);
     }
     onTransportFailed: function (message) {
+        pasteDispatches = ({});
         controller.handleTransportFailure(message);
     }
     onTransportReady: controller.handleTransportReady()

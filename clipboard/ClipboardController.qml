@@ -261,9 +261,16 @@ Ui.ProviderChooserController {
         detailState.scheduleLoad();
     }
     function applySession(session) {
-        sessionId = ["hidden", "ended"].includes(session.state) ? "" : (session.id || "");
-        if (session.state === "hidden")
+        if (session.state === "hidden") {
+            if (session.id !== sessionId)
+                return;
+            // Keep the owner alive before hiding deactivates this consumer.
+            backend.waitForPaste(session.id);
+            sessionId = "";
             hideRequested();
+            return;
+        }
+        sessionId = session.state === "ended" ? "" : (session.id || "");
     }
     function discardHistoryRead(id: string): void {
         if (id === detailState.requestId || id === detailState.thumbnailRequestId)

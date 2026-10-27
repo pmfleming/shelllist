@@ -359,6 +359,15 @@ not capture completion evidence. Synchronous publication or paste without a
 receipt stays unknown. Session discontinuity forgets paste authority; recovery
 never publishes, captures, commits, invokes hidden or retries a failed save.
 Draft/save-and-paste ownership and the original hidden-session handshake remain.
+After the hidden acknowledgement, the clipboard backend retains its connection
+through `clipboard.session.wait` while hiding the picker. Otherwise ordinary
+view deactivation releases the owner and cancels the daemon's delayed paste.
+The wait only observes dispatch-task completion, not target consumption; it never
+arms or replays input. Its receipt cannot replace a reopened picker session.
+Errors/disconnect release the hold without retry. Normal paste, image-as-file and
+save-and-paste share this handoff; owner loss still cancels pending input. Matching
+frontend/daemon packages are required. `tst_clipboard_recovery.qml` covers native
+Return/Shift+Return, hiding, reopen and uncertainty paths.
 
 `SHELLLIST_CLIP_SOCKET=1` is independent and exact-value opt-in. Socket ingress
 reuses the admitted exported service, domain coordinators and shared observers;

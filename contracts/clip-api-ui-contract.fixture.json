@@ -51,6 +51,14 @@
         "stream": "clipboard.session"
       },
       {
+        "name": "clipboard.session.wait",
+        "params_example": {
+          "session_id": "session-opaque"
+        },
+        "response_key": "session",
+        "stream": null
+      },
+      {
         "name": "clipboard.history.query",
         "pagination": {
           "expires_seconds": 120,
