@@ -25,6 +25,12 @@ broader BT lifecycle and real packaged-main/rollback acceptance remain open.
 Historical missing-extraction blockers are not substitutes for fresh evidence;
 partial implementation/analysis and integration do not close the project.
 
+The [refreshed Wave 2 assignments](completion-wave-two.md) start six bounded
+parallel checkpoints from the integrated family, including the later delayed-paste
+handoff fix. The user's separate live-session socket opt-in does not change package
+defaults or authorize workers to affect that session. Startup-policy selection and
+private qualification gates remain explicit; later tasks use refreshed dependencies.
+
 There are three distinct exits:
 
 1. **Implementation complete:** all required recovery and selected semantic/schema
