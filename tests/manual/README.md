@@ -86,11 +86,18 @@ The HTML's images are historical and remain embedded. The original builder
 
 # Circular-action visual review
 
-`tests/manual/tst_action_review.qml` loads all 12 actual registered surfaces with
-synthetic data and recording transports. It checks visible command circles,
+`tests/manual/tst_action_review.qml` loads 12 registered list/detail surfaces with
+synthetic data and recording transports. Agenda replaces the retired Activity
+seed and uses actual list/get bridge replies. It checks visible command circles,
 icon presence and nonvisual button labels, and captures normal/minimum geometry
-in both themes, plus Activity/Bluetooth/Notifications subpages, prompts, toasts
+in both themes, plus Agenda/Bluetooth/Notifications subpages, prompts, toasts
 and the compact bar. No real settings or actions are submitted.
+
+Calendar's distinct grid/composition captures and measured fallback journeys are
+owned by `tests/qml/tst_agenda_calendar.qml`; shared editor journeys and captures
+are in `tests/qml/tst_agenda.qml`. See `tests/agenda-calendar-release.md` for the
+combined release evidence. The generic list/detail fixture does not substitute
+for Calendar's three-pane, W-width and hidden-grid acceptance.
 
 ```sh
 mkdir -p target/circular-action-review

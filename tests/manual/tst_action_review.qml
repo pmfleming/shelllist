@@ -6,11 +6,13 @@ import Shelllist.Bar as Bar
 import Shelllist.Io as Io
 import "../../bar/BarApi.js" as BarApi
 import "../../shell" as Shell
+import Shelllist.Activity as Agenda
 import "../qml" as Tests
 import "../qml/imports/Quickshell/Services/SystemTray" as Tray
 
-// Explicit visual review of the actual 12 registered surfaces, using synthetic
-// snapshots and recording transports only. No live services or compositor.
+// Visual review of 12 registered list/detail surfaces (including Agenda).
+// Calendar's grid/fallback captures live in tests/qml/tst_agenda_calendar.qml.
+// Synthetic snapshots and recording transports only; no live services.
 Tests.DaemonTestCase {
     id: tests
     name: "CircularActionReview"
@@ -18,6 +20,7 @@ Tests.DaemonTestCase {
     visible: true
     width: 1100
     height: 780
+    property int agendaSequence: 0
     Component {
         id: factory
         Rectangle {
@@ -92,6 +95,31 @@ Tests.DaemonTestCase {
             measurement: {coverage: 1, memory_source: "pss", gpu_available: true, storage_available: true,
                 network_bytes_available: false, disk_space_scope: "identified-app-directories", attribution_method: "application-cgroup"}};
     }
+    function seedAgenda(controller) {
+        controller.uiActive = true;
+        const day = "2026-10-27";
+        const record = {id: "review-task-" + (++agendaSequence), kind: "task", source_id: "local", source_uid: null,
+            revision: 1, title: "Review a long translated task description without shrinking its switch",
+            notes: "Synthetic Agenda notes. No mutation is dispatched during capture.", links: [],
+            schedule: {mode: "date", start_date: day, end_date: day, start_unix_ms: null, end_unix_ms: null, timezone: null},
+            created_unix_ms: Date.now(), modified_unix_ms: Date.now(),
+            capabilities: {write: true, delete: true, complete: true}, event: null,
+            task: {priority: 3, status: "needs-action", completed: false, completed_unix_ms: null,
+                checklist: [{id: "review-step", text: "Review the native shared editor", checked: false}]}};
+        tryVerify(() => calls.some(call => call.method === "agenda.list"));
+        const list = calls.filter(call => call.method === "agenda.list").pop();
+        const client = Io.DaemonSessions.sessions["bar-daemon"].client;
+        client.response(list.id, {protocol: BarApi.protocol, version: BarApi.version, ok: true,
+            data: {items: [Agenda.AgendaRepository.summaryOf(record)], next_cursor: null,
+                catalog_revision: 1, today: day, timezone: "UTC", source_error: null, failing_source_count: 0}}, "", list.route);
+        tryVerify(() => controller.hasSelection);
+        controller.openDetails();
+        tryVerify(() => calls.some(call => call.method === "agenda.get"));
+        const get = calls.filter(call => call.method === "agenda.get").pop();
+        client.response(get.id, {protocol: BarApi.protocol, version: BarApi.version, ok: true,
+            data: {item: record, catalog_revision: 1}}, "", get.route);
+        tryVerify(() => controller.selectedItem?.summary !== true);
+    }
     function seed(panel, id) {
         const c = panel.registry.controllerFor(id);
         if (id === "applications") {
@@ -118,22 +146,15 @@ Tests.DaemonTestCase {
             c.applyPowerProfile({available: true, profile: "balanced", profiles: [{name: "power-saver"}, {name: "balanced"}, {name: "performance"}]});
             c.applyPowerSuspend({available: true, can_suspend: "yes", can_hibernate: "yes", keep_awake: false, lock_before_sleep: true, inhibitors: []});
             c.selectViewTab("power");
-        } else if (id === "activity" || id === "time-weather") {
+        } else if (id === "agenda") {
+            seedAgenda(c);
+        } else if (id === "time-weather") {
             const weather = {available: true, location: "Amsterdam", temperature_c: 18, high_c: 20, low_c: 12,
                 condition: "Partly cloudy", condition_code: 2, utc_offset_seconds: 7200, updated_unix_ms: Date.now(), hourly: [], daily: []};
             c.applySnapshot({timezone: {available: true, timezone: "Europe/Amsterdam", city: "Amsterdam", abbreviation: "CEST", utc_offset_seconds: 7200},
                 activity: {available: true, syncing: false, event_count: 0, incomplete_todo_count: 0, sources: [], world_clocks: [], weather_locations: [], weather: weather,
                     locations: [{id: "native-amsterdam", label: "Amsterdam", city: "Amsterdam", timezone: "Europe/Amsterdam", abbreviation: "CEST",
                         utc_offset_seconds: 7200, timezone_region_ids: [], has_coordinates: false, home: true, has_weather: true, weather: weather, lunar: null}]}});
-            if (id === "activity") {
-                const now = Date.now();
-                const day = c.selectedDateKey;
-                const days = {}; days[day] = {event_ids: ["review-event"], todo_ids: ["review-todo"]};
-                c.applyRange({events: [{id: "review-event", title: "A deliberately long event title from the native day projection",
-                    calendar_name: "Synthetic calendar", location: "A deliberately long meeting room location", start_unix_ms: now, end_unix_ms: now + 3600000}],
-                    todos: [{id: "review-todo", title: "Review a long translated task description without shrinking its switch", completed: false}],
-                    busy_dates: [day], local_date: day, from_unix_ms: now - 86400000, to_unix_ms: now + 86400000, days: days});
-            }
         } else if (id === "notifications") {
             const message = {id: 101, app_key: "named:Mail", app_name: "Mail", app_icon: "", summary: "Notification with a deliberately long summary to check title elision", body: "Synthetic native-catalog preview. No sender actions in the center.", created_unix_ms: Date.now()};
             c.notificationState.applySummary({available: true, backend: "native", count: 1, dnd: false, history_revision: 1, app_policies: {}});
@@ -150,7 +171,7 @@ Tests.DaemonTestCase {
         c.availableScreenHeight = Qt.binding(() => panel.height);
         c.uiActive = true;
         if (["audio", "media", "tray"].includes(id)) c.refresh();
-        if (id !== "activity" && id !== "battery") {
+        if (id !== "battery") {
             tryVerify(() => c.hasSelection, 5000, id + " must have a real selected result");
             c.openDetails();
             tryVerify(() => panel.surface.detailsItem !== null);
@@ -246,7 +267,7 @@ Tests.DaemonTestCase {
     }
     function test_panels_data() {
         const rows = [];
-        for (const id of ["applications", "wifi", "bluetooth", "clipboard", "displays", "audio", "media", "tray", "activity", "time-weather", "battery", "notifications"])
+        for (const id of ["applications", "wifi", "bluetooth", "clipboard", "displays", "audio", "media", "tray", "agenda", "time-weather", "battery", "notifications"])
             for (const scheme of [Qt.Light, Qt.Dark]) rows.push({tag: id + (scheme === Qt.Light ? "-light" : "-dark"), id: id, scheme: scheme});
         return rows;
     }
@@ -272,10 +293,11 @@ Tests.DaemonTestCase {
         panel.width = tests.width;
         panel.height = tests.height;
         const controller = panel.registry.controllerFor(data.id);
-        if (data.id === "activity") {
-            controller.openSection("schedule");
+        if (data.id === "agenda") {
+            controller.triggerDetailAction("schedule");
             save(panel, data.tag + "-schedule");
             checkCircles(panel.surface);
+            controller.closeModals();
         } else if (data.id === "notifications") {
             controller.openSettings();
             save(panel, data.tag + "-settings");
@@ -287,7 +309,7 @@ Tests.DaemonTestCase {
         }
         const tabs = ({applications: ["application", "resources", "settings"], bluetooth: ["device", "settings", "information"],
             clipboard: ["data", "info"], displays: ["settings", "information"], "time-weather": ["time", "weather"],
-            notifications: ["notifications", "controls"]})[data.id] || [];
+            notifications: ["notifications", "controls"], agenda: ["details", "notes", "information"]})[data.id] || [];
         if (data.id === "notifications") controller.settingsOpen = false;
         for (const tab of tabs) {
             controller.detailsTab = tab;
@@ -320,8 +342,9 @@ Tests.DaemonTestCase {
         verify(waitForPolish(panel.Window.window));
         const beforeFeedback = fieldGeometry(panel.surface);
         const error = "The requested change could not be confirmed. The previous acknowledged state is retained. Check the service connection and retry; this deliberately long diagnostic must remain readable.";
-        if (data.id === "activity" || data.id === "battery") {
-            controller.lastError = error;
+        if (data.id === "agenda" || data.id === "battery") {
+            if (data.id === "agenda") controller.error = error;
+            else controller.lastError = error;
             save(panel, data.tag + "-error");
             compare(fieldGeometry(panel.surface), beforeFeedback, "Standalone feedback does not move fields");
         } else if (data.id === "audio" || data.id === "media") {
@@ -343,6 +366,7 @@ Tests.DaemonTestCase {
             controller.notificationState.policyPending = pending;
             save(panel, data.tag + "-pending");
         }
-        verify(!calls.some(call => /\.(set|connect$|disconnect$|commit|invoke|preview|confirm|reply|dismiss|launch|activate|rename)/.test(call.method)), "captures never dispatch mutations");
+        verify(!calls.some(call => /\.(set|connect$|disconnect$|commit|invoke|preview|confirm|reply|dismiss|launch|activate|rename)/.test(call.method)
+            || /^agenda\.(create|patch|delete)$/.test(call.method)), "captures never dispatch mutations");
     }
 }
