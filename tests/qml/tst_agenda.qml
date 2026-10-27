@@ -13,6 +13,8 @@ DaemonTestCase {
     height: 700
     Component { id: ownerFactory; Agenda.AgendaController {} }
     Component { id: viewFactory; Agenda.AgendaContent {} }
+    Component { id: feedbackFontFactory; FontInfo {} }
+    Component { id: feedbackMetricsFactory; FontMetrics {} }
     Component {
         id: earlierConsumerFactory
         Io.DaemonBackend {
@@ -191,10 +193,27 @@ DaemonTestCase {
         tryVerify(()=>calls.some(call=>call.method==="agenda.list"));
         const read=calls.filter(call=>call.method==="agenda.list").slice(-1)[0];
         const data=windowData([Agenda.AgendaRepository.summaryOf(record)],1);data.failing_source_count=2;data.source_error="unsupported iCalendar recurrence; previous import retained: "+"長い名前".repeat(50);
+        const footerHeight=field(s,"feedbackText").parent.height;
         respond(read,data);compare(s.owner.failingSourceCount,2);compare(s.owner.sourceError,data.source_error);
         compare(s.owner.items[0].id,"usable");verify(s.owner.canWrite(s.owner.selectedItem));
         const feedback=field(s,"agendaSourceFeedback");verify(feedback.active);compare(feedback.tone,"warning");verify(feedback.text.includes("2"));
-        const visible=field(s,"feedbackText");tryVerify(()=>visible.text.includes("recurrence"));verify(visible.visible);capture(s,"agenda-source-diagnostic");
+        const visible=field(s,"feedbackText");verify(waitForPolish(s.view.Window.window));wait(0);
+        const resolvedFont=createTemporaryObject(feedbackFontFactory,testCase,{font:visible.font});
+        console.info("Agenda source feedback render",JSON.stringify({text:visible.text,width:visible.width,height:visible.height,font:visible.font.family,pixelSize:visible.font.pixelSize,resolvedFamily:resolvedFont.family,resolvedPixelSize:resolvedFont.pixelSize,brief:feedback.briefText,paneWidth:s.owner.listPaneWidth}));
+        tryVerify(()=>visible.text.includes("recurrence"));verify(visible.visible);capture(s,"agenda-source-diagnostic");
+        const metrics=createTemporaryObject(feedbackMetricsFactory,testCase,{font:visible.font});
+        compare(s.view.listItem.feedbackTextWidth,visible.width);
+        compare(feedback.briefText,metrics.elidedText(data.source_error,Text.ElideRight,visible.width));
+        verify(visible.parent.Accessible.name.includes(feedback.text),"full native diagnostic/count stay accessible");
+        compare(visible.parent.height,footerHeight,"feedback cannot grow the footer");
+        verify(visible.implicitHeight<=visible.height);
+        const originalAvailableWidth=s.owner.availableScreenWidth;const originalTextWidth=visible.width;
+        s.owner.availableScreenWidth=1000;verify(waitForPolish(s.view.Window.window));wait(0);
+        verify(visible.width!==originalTextWidth,"shared inset changes reallocate the actual label");
+        compare(s.view.listItem.feedbackTextWidth,visible.width);
+        compare(feedback.briefText,metrics.elidedText(data.source_error,Text.ElideRight,visible.width));
+        compare(visible.parent.height,footerHeight);verify(visible.text.includes("recurrence"));
+        s.owner.availableScreenWidth=originalAvailableWidth;verify(waitForPolish(s.view.Window.window));
         s.view.listItem.focusSearch();keyClick(Qt.Key_G,Qt.AltModifier);tryCompare(s.owner,"settingsOpen",true);
         verify(field(s,"agendaSettingsDialog").detail.includes(data.source_error));verify(field(s,"agendaSettingsDialog").detail.includes("2 source issue(s)"));keyClick(Qt.Key_Escape);
         s.view.listItem.focusList();keyClick(Qt.Key_Return);compare(mutations().length,1,"nonfatal source diagnostic cannot block local CRUD");

@@ -14,6 +14,8 @@ Item {
     property string tone: "info"
     property bool backgroundVisible: true
     property real padding: Theme.spacingSm
+    // Presentation budgets follow the actual label, including shared padding.
+    readonly property real textWidth: label.width
     readonly property var contributions: {
         const entries = collect(scope);
         if (text.length && !entries.some(entry => entry.text === text) && (tone !== "info" || entries.length === 0))

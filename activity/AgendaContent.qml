@@ -85,7 +85,7 @@ Ui.ProviderChooserSurface {
         summaryText: content.controller.sourceError
         // Native cause comes first. Elide presentation, never classify errors;
         // the full diagnostic/count remain accessible and in Information.
-        briefText: sourceFeedbackMetrics.elidedText(content.controller.sourceError, Text.ElideRight, content.controller.listPaneWidth / 2)
+        briefText: sourceFeedbackMetrics.elidedText(content.controller.sourceError, Text.ElideRight, content.listItem ? content.listItem.feedbackTextWidth : 0)
         tone: "warning"
     }
     AgendaCreateDialog { controller: content.controller }

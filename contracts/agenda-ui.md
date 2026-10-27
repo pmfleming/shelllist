@@ -76,6 +76,11 @@ Successful list reads also accept native nonfatal `failing_source_count` and
 modal disclose the bounded native source diagnostic (including unsupported
 recurrence) without clearing accepted rows or blocking local CRUD. Read failures
 retain previous accepted diagnostics; a healthy accepted read clears them.
+Cause-first compact text is measured against the actual shared feedback label:
+`FeedbackSlot.textWidth` is read-only and forwarded as `feedbackTextWidth` through
+`StatusPanel` and the chooser/standalone surface owners. Agenda and Calendar use
+that allocation, never a fraction of the pane width. Full accessible diagnostic
+and count, shared status typography and fixed footer height are unchanged.
 
 Geometry uses the shared measured chooser split. Agenda disables horizontal
 emergency panning and shows an explicit unsupported-width state instead.

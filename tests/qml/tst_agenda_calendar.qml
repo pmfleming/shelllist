@@ -16,6 +16,7 @@ DaemonTestCase {
     Component { id: viewFactory; Activity.AgendaCalendarContent { anchors.fill: undefined } }
     Component { id: fitFactory; Ui.CalendarComposition {} }
     Component { id: viewportFactory; Ui.SurfaceViewport {} }
+    Component { id: feedbackMetricsFactory; FontMetrics {} }
     property var views: []
     // Optional external review harness; normal interaction tests write no files.
     property string captureDirectory: ""
@@ -311,6 +312,12 @@ DaemonTestCase {
         const label=findChild(feedback,"feedbackText");
         tryVerify(()=>label.text.includes("unsupported iCalendar recurrence"));
         verify(label.implicitHeight <= label.height,"long native source labels use a measured one-line summary");
+        const source=findChild(content.calendarGrid,"calendarSourceFeedback");
+        const metrics=createTemporaryObject(feedbackMetricsFactory,testCase,{font:label.font});
+        compare(content.calendarGrid.feedbackTextWidth,label.width);
+        compare(source.briefText,metrics.elidedText(sourceError,Text.ElideRight,label.width));
+        verify(label.parent.Accessible.name.includes(source.text));
+        const footerHeight=feedback.height;const textWidth=label.width;
         compare(controller.markers["2026-10-27"].event,true);
         compare(controller.markerWindow.error,"");compare(controller.navigationBlocked,false);
         capture(content,"calendar-source-warning");
@@ -319,6 +326,10 @@ DaemonTestCase {
         verify(waitForPolish(testCase.Window.window));
         verify(label.text.includes("unsupported iCalendar recurrence"));
         verify(label.implicitHeight <= label.height);
+        verify(label.width<textWidth,"the shared feedback allocation follows the W fallback");
+        compare(content.calendarGrid.feedbackTextWidth,label.width);
+        compare(source.briefText,metrics.elidedText(sourceError,Text.ElideRight,label.width));
+        compare(feedback.height,footerHeight);
         capture(content,"calendar-source-warning-W");
         controller.availableScreenWidth=1900;
         controller.chooseDay("2026-10-27");

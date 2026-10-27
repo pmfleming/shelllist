@@ -20,6 +20,7 @@ Item {
     property alias statusSummary: statusPanel.statusSummary
     property alias statusTone: statusPanel.statusTone
     property alias feedbackScope: statusPanel.feedbackScope
+    readonly property real feedbackTextWidth: statusPanel.feedbackTextWidth
     property alias icon: statusPanel.icon
     property alias signalIcon: statusPanel.signalIcon
     property alias powered: statusPanel.powered

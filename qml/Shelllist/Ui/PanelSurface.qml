@@ -20,6 +20,7 @@ ChooserSurface {
     property string feedbackText: ""
     property string feedbackSummary: qsTr("Operation needs attention")
     property string feedbackTone: "error"
+    readonly property real feedbackTextWidth: statusPanel.feedbackTextWidth
 
     function snapshot(): void {
         chooserController.focusMemory = {context: context(), region: region, location: navigation.activeFocus ? navigation.locationState() : navigation.lastLocation};
@@ -96,6 +97,7 @@ ChooserSurface {
         }
     }
     StatusPanel {
+        id: statusPanel
         objectName: "panelFeedback"
         anchors.left: parent.left
         anchors.right: parent.right

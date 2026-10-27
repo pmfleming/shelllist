@@ -30,13 +30,13 @@ Ui.PanelSurface {
         summaryText: grid.controller.markerWindow.sourceError
         // Keep the native cause-first prefix visible at supported pane sizes;
         // the full diagnostic/count remains in the shared accessible feedback.
-        briefText: feedbackMetrics.elidedText(grid.controller.markerWindow.sourceError, Text.ElideRight, grid.width / 2)
+        briefText: feedbackMetrics.elidedText(grid.controller.markerWindow.sourceError, Text.ElideRight, grid.feedbackTextWidth)
         tone: "warning"
     }
     Ui.FeedbackSource {
         text: grid.controller.markerWindow.error
         summaryText: text
-        briefText: feedbackMetrics.elidedText(text, Text.ElideRight, grid.width / 2)
+        briefText: feedbackMetrics.elidedText(text, Text.ElideRight, grid.feedbackTextWidth)
         tone: "error"
     }
 

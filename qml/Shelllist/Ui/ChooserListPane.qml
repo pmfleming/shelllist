@@ -42,6 +42,7 @@ ColumnLayout {
     property alias statusSummary: body.statusSummary
     property alias statusTone: body.statusTone
     property alias feedbackScope: body.feedbackScope
+    readonly property real feedbackTextWidth: body.feedbackTextWidth
     property int bodySpacing: Theme.verticalSpacing(Theme.spacingSm, densityScale)
     readonly property int resultCount: body.resultCount
     readonly property real delegateHeight: body.delegateHeight

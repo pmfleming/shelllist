@@ -9,6 +9,7 @@ Rectangle {
     property string statusSummary: qsTr("Status needs attention")
     property string statusTone: "info"
     property Item feedbackScope: null
+    readonly property real feedbackTextWidth: feedback.textWidth
     property string icon: ""
     property bool signalIcon: false
     property bool powered: false
@@ -60,6 +61,7 @@ Rectangle {
         }
 
         FeedbackSlot {
+            id: feedback
             Layout.fillWidth: true
             Layout.minimumWidth: 0
             text: panel.status

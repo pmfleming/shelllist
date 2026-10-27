@@ -82,6 +82,33 @@ Static reliability remains incomplete because this deliberately production-only
 scope does not discover tests and lacks imported tool/type context; it is not a
 claim of correctness. Actual native tests/lint above are separate evidence.
 
+## Final package feedback-width correction
+
+The first immutable frontend package check after quality commit `e00cbf1` failed
+one source-diagnostic case (588 passed, 1 failed, 1 existing RHI skip). Native
+checks with the same Fontconfig file still passed outside the sandbox: that file
+includes host `/etc/fonts/conf.d`. A private `FONTCONFIG_SYSROOT` excluding host
+configuration reproduces the failure without changing packaged fonts: requested
+and resolved Roboto Flex13px, label371px wide/30px high, guessed budget212.5px,
+actual text `unsupported iCalendar recurrenc…`.
+
+The correction forwards the actual `FeedbackSlot` label width read-only through
+shared footer/surface owners; Agenda and Calendar elide against that width rather
+than half a pane. No typography, padding, footer height, full accessible diagnostic
+or count changes. Existing native cases retain their cause assertions and now
+also check exact font-metric elision against the real allocation, accessibility
+and unchanged footer height through resize/fallback.
+
+Evidence: `target/agenda-final-feedback-fix-20261027/`. In the reproducing font
+sysroot, focused Agenda50/0/0 and Calendar12/0/0; full native suite589/0/1(existing
+RHI skip). Strict lint on all seven modified production QML files plus both
+native test owners is clean. Supplemental actual seven-file lens has identical
+before/after policy/evaluator: zero parser diagnostics,34 static review findings
+unchanged, no suppressions; advisory score77→76 with the additional forwarding
+bindings, not a correctness verdict. Raw reports and both-theme native captures
+are retained. The new immutable Nix frontend qualification is still the
+orchestrator's separate gate; these local runs do not claim it passed.
+
 ## Captures
 
 Actual production QML renders with synthetic native records/recording transport
