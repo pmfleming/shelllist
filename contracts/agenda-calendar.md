@@ -10,14 +10,16 @@ standalone Agenda. No duplicate day-list implementation or frontend membership.
 Weather and Notifications remain available. The legacy `activity` CLI/global/IPC
 name canonicalizes to Agenda, without an advertised Activity descriptor, separate
 controller or launchable old Glance/Schedule composition. Notifications back routes
-and old bar activity actions target Agenda. Old internal QML remains only for its
+target Agenda. The notification bell has no right-click action, including during
+screen sharing. Old internal QML remains only for its
 existing tests and Time/Weather's shared controller dependency.
 
 `agendaShortcut` and `calendarShortcut` are independent nullable Home Manager
 options, defaulting to null. Both named global routes remain available. The local
-Hyprland Lua binding audit found Super+A already assigned to Activity and Super+T
-to Time & Weather (along with the existing shell/system/application bindings);
-this change does not guess or replace a Super chord or edit user configuration.
+Hyprland Lua configuration explicitly binds Super+A to `shelllist:agenda` and
+Super+Shift+A to `shelllist:calendar`; Super+T remains Time & Weather. The retired
+Activity composition no longer registers Ctrl+2. Calendar is reached directly,
+not through the notification bell or a Schedule expansion shortcut.
 
 ## Measured fit
 

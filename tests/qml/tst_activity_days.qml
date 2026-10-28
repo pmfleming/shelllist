@@ -16,6 +16,9 @@ DaemonTestCase {
             from_unix_ms: 0, to_unix_ms: 1,
             days: {"2026-03-29": {event_ids: ["native"], todo_ids: ["native-todo"]}, "2026-03-30": {event_ids: [], todo_ids: []}}});
         const content = createTemporaryObject(contentFactory, testCase, {controller: owner, width: width, height: height});
+        content.forceActiveFocus();
+        keyClick(Qt.Key_2, Qt.ControlModifier);
+        compare(owner.detailsOpen, false, "Ctrl+2 must not open the retired Schedule view");
         owner.openSection("schedule");
         tryCompare(owner, "detailsExpansionProgress", 1);
         tryVerify(() => findChild(content, "activityNextDay") !== null);

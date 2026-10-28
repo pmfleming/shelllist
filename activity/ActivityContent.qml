@@ -111,11 +111,6 @@ Ui.PanelSurface {
         onActivated: content.controller.shiftMonth(1)
     }
     Shortcut {
-        sequence: "Ctrl+2"
-        enabled: content.controller.uiActive
-        onActivated: content.controller.openSection("schedule")
-    }
-    Shortcut {
         sequence: "Ctrl+T"
         enabled: content.controller.uiActive
         onActivated: content.controller.goToToday()

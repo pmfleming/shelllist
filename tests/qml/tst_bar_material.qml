@@ -37,6 +37,31 @@ TestCase {
             compare(bar.controller.updates, state); // Presentation cannot clear backend outcomes.
         }
     }
+    function test_notificationBellHasNoRightClickRoute(): void {
+        const bar = createTemporaryObject(barFactory, testCase, {width: 1200});
+        const routes = [];
+        bar.controller.surfaceRegistry = {
+            wifiController: null, bluetoothController: null, notificationState: null,
+            surfaceRequested: id => routes.push(id),
+            openNotifications: () => routes.push("notifications")
+        };
+        for (const sharing of [false, true]) {
+            bar.controller.notifications = {count: 1, dnd: false, sharing: {active: sharing}};
+            const module = bar.controller.statusModules(new Date()).find(item => item.id === "notifications");
+            compare(module.secondary, "");
+            verify(!bar.controller.triggerModuleAction(module.secondary));
+            tryVerify(() => findChild(bar, "bar:notifications") !== null);
+            const bell = findChild(bar, "bar:notifications");
+            verify(waitForPolish(testCase.Window.window));
+            const before = routes.length;
+            mouseClick(bell, bell.width / 2, bell.height / 2, Qt.RightButton);
+            compare(routes.length, before);
+            compare(bar.controller.sharingPromptOpen, false);
+            mouseClick(bell, bell.width / 2, bell.height / 2, Qt.LeftButton);
+            if (sharing) compare(bar.controller.sharingPromptOpen, true);
+            else compare(routes[routes.length - 1], "notifications");
+        }
+    }
     function test_unknownRoutesCannotCallObjectPrototypeMethods(): void {
         const bar = createTemporaryObject(barFactory, testCase, {width: 700});
         for (const name of ["missing", "__proto__", "constructor", "toString"])

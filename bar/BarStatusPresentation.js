@@ -109,13 +109,13 @@ function notificationsModule(state) {
     const sharing = state.notifications?.sharing;
     if (sharing?.active) {
         return statusModule("notifications", "󰂛", "Screen sharing detected. Choose notification snooze duration.", {
-            primary: "notifications-sharing", secondary: "notifications", middle: "notifications-dnd",
+            primary: "notifications-sharing", middle: "notifications-dnd",
             tone: sharing.prompt ? "warning" : "muted"
         });
     }
     const urgent = (state.notificationActive?.notifications || []).some(item => item.urgency === "critical" || Number(item.urgency) >= 2);
     return statusModule("notifications", dnd ? "󰂛" : count ? "" : "󰂚", "Notifications: " + count + (dnd ? ". Do not disturb" : "") + (urgent ? ". Urgent" : ""), {
-        primary: "notifications", secondary: "activity", middle: "notifications-dnd",
+        primary: "notifications", middle: "notifications-dnd",
         tone: urgent ? "danger" : dnd ? "muted" : count ? "accent" : "text"
     });
 }
