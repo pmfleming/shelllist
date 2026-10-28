@@ -1,5 +1,12 @@
 # Socket cold-start, packaging and safe rollback — decision proposal
 
+**Subsequent local decision (2026-10-28):** the user selected an
+[eager-login trial for all five daemons, including Applications](eager-startup-trial.md).
+The existing deployed configuration already implements that startup choice.
+An initial live resource observation is recorded there; it is not fresh-login,
+compatibility/readiness or general rollout acceptance. The frozen proposal below
+retains its original review/evidence limits.
+
 **2026-10-26 · coordinator-reviewed design / needs-decision · not rollout-approved.**
 See the [review findings and evidence limits](../tests/startup-readiness-review.md).
 Review and committing this document do not select or implement a startup strategy.
