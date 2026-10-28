@@ -20,12 +20,16 @@ TestCase {
             property bool active: false
             property bool ready: true
             property bool recoverProtocolErrors: true
+            property string lifecycle: "running"
+            property bool retiring: false
             property var subscriptions: []
             property var cancellations: []
             property var recoveries: []
+            property var calls: []
             signal response(string id, var envelope, string transportError, var route)
             signal eventReceived(var event, var route)
             signal transportFailed(string message)
+            signal ownerRetired()
             function subscribeExtra(id, streams, route) {
                 subscriptions = subscriptions.concat([
                     {
@@ -37,14 +41,18 @@ TestCase {
             }
             function cancel(id, requestId, route) {
                 cancellations = cancellations.concat([requestId]);
+                response(id, {protocol: "test-api", version: 1, ok: true, data: {cancelled: requestId, kind: "subscription"}}, "", route);
             }
             function call(id, method, params, route) {
+                calls = calls.concat([{id: id, method: method, route: route}]);
             }
             function release(id, route) {
+                response(id, {released: 0}, "", route);
             }
             function recover(message) {
                 recoveries = recoveries.concat([message]);
                 transportFailed(message);
+                ownerRetired();
             }
         }
     }
@@ -106,6 +114,8 @@ TestCase {
     }
     function reply(f, request, id) {
         f.client.response(request.id, {
+            protocol: "test-api",
+            version: 1,
             ok: true,
             data: {
                 subscription: {
@@ -190,6 +200,7 @@ TestCase {
         f.client.eventReceived(event, null);
         compare(f.view.events, 1);
         f.client.transportFailed("lost transport");
+        f.client.ownerRetired();
         Io.DaemonSessions.restoreSubscriptions("boundary-test");
         f.client.eventReceived(event, old.route);
         compare(f.view.events, 1);
@@ -251,6 +262,53 @@ TestCase {
         compare(f.view.events, 1);
         compare(f.view.gaps, 1);
     }
+    function test_retiredCallCannotCrossGenerationOrSubscriptionBoundaries() {
+        const f = fixture();
+        f.view.active = true;
+        reply(f, requests(f)[0], "owned");
+        compare(f.view.replies, 0, "subscription acknowledgements are not call replies");
+        verify(f.view.call("read", "typed.read", {}));
+        const old = f.client.calls[0];
+        f.client.transportFailed("lost transport");
+        f.client.ownerRetired();
+        f.client.response(old.id, {protocol: "test-api", version: 1, ok: true, data: {}}, "", old.route);
+        compare(f.view.replies, 0);
+        verify(f.resident.call("healthy", "bare.read", {}));
+        const peer = f.client.calls[1];
+        f.client.response(peer.id, {protocol: "test-api", version: 1, ok: true, data: {}}, "", peer.route);
+        compare(f.resident.replies, 1, "a healthy peer still receives its call reply");
+        compare(f.client.recoveries.length, 0);
+    }
+    function test_sharedBridgeDrainRejectsNewOwnerTransferBeforeReservation() {
+        const f = fixture();
+        f.client.lifecycle = "stopping";
+        const count = Object.keys(f.session.resources).length;
+        verify(!f.view.call("never", "effect.once", {}));
+        compare(f.view.subscribeStreams(["updates"]), "");
+        compare(f.client.calls.length, 0);
+        compare(Object.keys(f.session.resources).length, count);
+        compare(f.session.generation, 0);
+    }
+    function test_protocolFailureRetainsPhysicalOwnerCleanupWithoutViewAuthority() {
+        const f = fixture();
+        f.view.active = true;
+        const old = requests(f)[0];
+        f.client.transportFailed("protocol failure without physical exit");
+        verify(!!f.session.resources[old.id]);
+        verify(!f.session.resources[old.id].wanted);
+        reply(f, old, "late-old-window");
+        compare(f.client.cancellations, ["late-old-window"], "late acknowledgement creates only cleanup authority");
+        compare(f.view.events, 0);
+        compare(f.session.consumers[f.id].baseSubscriptionId, "");
+        verify(f.view.renewBaseSubscription());
+        const fresh = requests(f)[1];
+        reply(f, fresh, "fresh-logical-window");
+        compare(f.session.consumers[f.id].baseSubscriptionId, "fresh-logical-window");
+        compare(f.session.owner, 0, "healthy physical owner is retained");
+        f.client.ownerRetired();
+        compare(f.session.owner, 1);
+        verify(!Object.values(f.session.resources).some(row => row.nativeId));
+    }
     function test_routeKindRatherThanLocalIdControlsRecovery_data() {
         return [["base-subscription", "session-subscribe", false], ["base-subscription", "different-base-id", false], ["base-subscription", "session-subscribe", true], ["subscription", "subscribe-1", false], ["subscription", "session-subscribe", false], ["call", "session-subscribe", false], ["control", "cancel-1", false]].map((row, index) => ({
                     tag: String(index),
@@ -274,6 +332,9 @@ TestCase {
             error: "subscription refused",
             route: route,
             response: {
+                protocol: "test-api",
+                version: 1,
+                ok: true,
                 data: {
                     subscription: {
                         id: "sub"
@@ -282,12 +343,13 @@ TestCase {
             }
         }, "boundary-test");
         f.client.response(outcome.id, outcome.envelope, outcome.error, outcome.route);
-        const recover = data.kind === "base-subscription" && !data.ok;
-        compare(f.client.recoveries.length, recover ? 1 : 0);
-        if (recover) {
-            const before = requests(f).length;
-            Io.DaemonSessions.restoreSubscriptions("boundary-test");
-            compare(requests(f).length, before + 1);
+        compare(f.client.recoveries.length, 0, "resource failure is not owner retirement");
+        if (data.kind === "base-subscription" && !data.ok) {
+            const record = f.session.resources[requests(f)[0].id];
+            verify(!!record, "unknown resource responsibility stays charged");
+            compare(record.state, data.localId === "session-subscribe" ? "uncertain" : "pending",
+                "a mismatched logical request window cannot consume resource responsibility");
+            compare(f.session.generation, 0);
         }
     }
 }

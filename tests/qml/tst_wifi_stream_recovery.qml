@@ -31,7 +31,7 @@ DaemonTestCase {
             event.subscription_id += ":" + controller.backend.networkEvents.sharedConsumerId;
             event.data.epoch += ":" + controller.backend.networkEvents.sharedConsumerId;
         }
-        session.client.response(request.id, {ok: true, data: {subscription: {id: data.initial.subscription_id}}}, "", request.route);
+        acknowledgeSubscription(session, request, data.initial.subscription_id);
         calls = [];
         return {c: controller, session: session, consumer: consumer, request: request, data: data};
     }
@@ -67,7 +67,7 @@ DaemonTestCase {
         send(f, f.data.initial);
         compare(keys(c), old, "retired subscription traffic is fenced before projection");
         const current = f.session.client.subscriptions.find(r => r.id === f.consumer.baseSubscriptionRequestId);
-        f.session.client.response(current.id, {ok: true, data: {subscription: {id: f.data.replacement.subscription_id}}}, "", current.route);
+        acknowledgeSubscription(f.session, current, f.data.replacement.subscription_id);
         send(f, f.data.replacement, current);
         compare(keys(c), f.data.replacement.data.added.map(row => row.key));
         verify(!c.backend.networkCursor.recovering);

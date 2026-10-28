@@ -37,6 +37,13 @@ Item {
     signal response(string id, var envelope, string transportError, var route)
     signal eventReceived(var event, var route)
     signal transportFailed(string message)
+    signal requestUnsent(string id, string message, var route)
+    signal ownerRetired()
+
+    function discardQueued(consumerId) {
+        if (useSocket)
+            socketTransport.discardQueued(consumerId);
+    }
 
     function start() {
         if (!componentReady || !active || lifecycle !== "stopped" || transportBackend.running || retryTimer.running)
@@ -56,6 +63,7 @@ Item {
             const message = "Could not start " + daemonName + " client: " + error;
             console.error("shelllist transport failed daemon=" + daemonName + " stage=start error=" + error);
             transportFailed(message);
+            ownerRetired(); // failed startup never acquired a usable physical owner
             scheduleRetry();
         }
     }
@@ -91,7 +99,7 @@ Item {
             route: route
         });
     }
-    function cancel(idOrRequestId, optionalRequestId, route) {
+    function cancel(idOrRequestId, optionalRequestId, route, cleanup) {
         const requestId = optionalRequestId || idOrRequestId;
         if (!requestId)
             return;
@@ -101,22 +109,30 @@ Item {
             op: "cancel",
             request_id: requestId,
             route: route
-        });
+        }, cleanup);
     }
 
-    function release(id, route) {
+    function release(id, route, cleanup) {
         send({
             id: id,
             op: "release",
             route: route
-        });
+        }, cleanup);
     }
 
-    function send(message) {
+    function send(message, cleanup) {
         const line = JSON.stringify(message);
+        if (useSocket) {
+            // Socket admission owns connecting and ready queues in ONE bounded
+            // owner generation. Never move an unsent effect across retirement.
+            if (!ready)
+                start();
+            socketTransport.write(line + "\n", !!cleanup);
+            return;
+        }
         if (!ready) {
             if (queuedLines.length >= maximumQueuedRequests)
-                throw new Error("bridge startup queue capacity exceeded; request was not sent");
+                throw new Error("UNSENT: bridge startup queue capacity exceeded; request was not sent");
             queuedLines = queuedLines.concat([line]);
             start();
             return;
@@ -180,9 +196,11 @@ Item {
     }
     function recover(message) {
         retiring = true;
-        transportFailed(message);
+        // Close dispatch before public failure callbacks can submit replacement
+        // work. Resource retirement is signalled separately on actual exit.
+        stop(message);
         try {
-            stop(message);
+            transportFailed(message);
         } finally {
             ready = false;
             scheduleRetry();
@@ -248,20 +266,25 @@ Item {
         ready = false;
         lifecycle = "stopped";
         if (expected) {
+            ownerRetired(); // graceful close also ends native identity/resource authority
             start();
             return;
         }
         clearQueue();
         if (retiring) {
+            ownerRetired();
             start();
             return;
         }
-        if (!active)
+        if (!active) {
+            ownerRetired();
             return;
+        }
         const stderr = useSocket ? socketTransport.errorText : processError.text;
         const detail = stderr.length > 0 ? stderr : "exit " + exitCode;
         console.error("shelllist transport exited daemon=" + daemonName + " detail=" + detail);
         transportFailed(daemonName + " client stopped: " + detail);
+        ownerRetired();
         if (!retryTimer.running)
             scheduleRetry();
     }
@@ -277,6 +300,7 @@ Item {
         maximumCalls: client.daemonName === "clip-daemon" ? 4 : 64
         onStarted: client.transportStarted()
         onExited: function(exitCode) { client.transportExited(exitCode); }
+        onRequestUnsent: function(id, message, route) { client.requestUnsent(id, message, route); }
         onMessageReceived: function(message) {
             if (client.retiring)
                 return;

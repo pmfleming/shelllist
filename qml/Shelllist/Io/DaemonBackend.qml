@@ -24,6 +24,10 @@ Item {
         return ({});
     }
     property var requestMetadata: ({})
+    // Identity-scoped completion window. Policy callbacks such as readDiscarded
+    // may deliberately submit a replacement, after received() captured/forgot its
+    // original context but before the public pending notification is emitted.
+    property var completingRequests: ({})
 
     readonly property bool requestRunning: pendingCount > 0
     readonly property int pendingCount: Object.keys(pending).length
@@ -54,7 +58,8 @@ Item {
     }
 
     function isPending(id: string): bool {
-        return !!pending[id];
+        const completion = completingRequests[id];
+        return !!pending[id] && !(completion && completion.window === pending[id]);
     }
 
     /// The `prefix` a `callSequenced` id was built from.
@@ -86,7 +91,7 @@ Item {
     function setPending(id: string, value: bool): void {
         const next = Object.assign({}, pending);
         if (value)
-            next[id] = true;
+            next[id] = {}; // unique pending window, independent of consumer-owned metadata
         else
             delete next[id];
         pending = next;
@@ -120,17 +125,14 @@ Item {
         if (requestPolicy)
             params = requestPolicy.sending(id, method, params || ({}));
         setPending(id, true);
+        const window = pending[id];
         try {
             DaemonSessions.call(daemonName, sharedConsumerId, id, method, params || ({}));
             return true;
         } catch (error) {
-            setPending(id, false);
-            if (requestPolicy)
-                requestPolicy.sendFailed(id);
             const message = "Could not send " + daemonName + " request " + id + ": " + error;
             console.error("shelllist " + daemonName + " request failed id=" + id + " stage=send error=" + error);
-            sendFailed(id, message);
-            forgetRequestMetadata(id, metadata);
+            finishUnsent(id, metadata, window, message);
             return false;
         }
     }
@@ -166,6 +168,8 @@ Item {
     /// the request id; the resulting subscription id arrives asynchronously and
     /// is what `unsubscribe` cancels.
     function subscribeStreams(streamNames: var): string {
+        if (subscriptionSequence >= 2147483647)
+            return ""; // exhausted local windows must never alias a live resource
         const id = "subscribe-" + (++subscriptionSequence);
         const metadata = {kind: "subscription"};
         recordRequestMetadata(id, metadata);
@@ -189,13 +193,13 @@ Item {
         delete next[id];
         extraSubscriptions = next;
         if (subscriptionId.length > 0)
-            return cancel(subscriptionId);
+            return DaemonSessions.unsubscribe(daemonName, sharedConsumerId, id);
         if (!isPending(id))
             return false;
         const cancellations = Object.assign({}, extraSubscriptionCancellations);
         cancellations[id] = true;
         extraSubscriptionCancellations = cancellations;
-        return true;
+        return DaemonSessions.unsubscribe(daemonName, sharedConsumerId, id);
     }
 
     function extraSubscriptionId(envelope: var): string {
@@ -215,35 +219,95 @@ Item {
             return;
         }
         const subscriptionId = extraSubscriptionId(envelope);
-        if (cancelWhenReady) {
-            if (subscriptionId.length > 0)
-                cancel(subscriptionId);
-            return;
-        }
-        if (subscriptionId.length > 0) {
+        if (cancelWhenReady)
+            return; // session reservation owns cleanup, even after this view disappears
+        if (subscriptionId.length > 0 && DaemonSessions.ownsSubscription(daemonName, sharedConsumerId, id, subscriptionId)) {
             const next = Object.assign({}, extraSubscriptions);
             next[id] = subscriptionId;
             extraSubscriptions = next;
         }
     }
 
+    function withCompletionContext(id: string, metadata: var, window: var, deliver: var): void {
+        const replacement = requestMetadata[id];
+        const replacementWindow = pending[id];
+        const completion = replacementWindow === window ? {window: window} : null;
+        if (completion)
+            completingRequests[id] = completion;
+        if (replacement !== metadata)
+            recordRequestMetadata(id, metadata); // completion-time readers need the captured target
+        try {
+            deliver();
+        } finally {
+            if (completion && completingRequests[id] === completion)
+                delete completingRequests[id];
+            // A domain callback may consume the completing metadata itself.
+            // Restore the saved live context only while its exact window owns ID.
+            if (replacement !== metadata && pending[id] === replacementWindow
+                    && (requestMetadata[id] === metadata || requestMetadata[id] === undefined)) {
+                if (replacement === undefined)
+                    forgetRequestMetadata(id, metadata);
+                else
+                    recordRequestMetadata(id, replacement);
+            }
+        }
+    }
+
     function acceptSharedResponse(id: string, envelope: var, transportError: string): void {
         const metadata = requestMetadata[id];
-        setPending(id, false);
+        const window = pending[id];
+        const transportControl = isTransportControl(id);
+        const policy = requestPolicy;
         try {
+            if (!transportControl) {
+                if (policy) {
+                    // Consume the old policy transaction BEFORE pendingChanged
+                    // can replace requests[id]. Policy-originated replacement
+                    // callbacks remain allowed in this identity-scoped window.
+                    const completion = {window: window};
+                    completingRequests[id] = completion;
+                    try {
+                        envelope = policy.received(id, envelope, transportError);
+                    } finally {
+                        if (completingRequests[id] === completion)
+                            delete completingRequests[id];
+                    }
+                }
+            }
             if (metadata ? metadata.kind === "subscription" : id.startsWith("subscribe-")) {
+                if (pending[id] === window)
+                    setPending(id, false);
                 finishExtraSubscription(id, envelope, transportError);
                 return;
             }
-            if (!isTransportControl(id)) {
-                if (requestPolicy) {
-                    envelope = requestPolicy.received(id, envelope, transportError);
-                    if (envelope === undefined)
-                        return;
-                }
-                responseReceived(id, envelope, transportError);
-            }
+            // Deliver while the original metadata is still visible. Emitting
+            // pendingChanged first would let it replace the downstream target.
+            // Deliberate response-handler ID reuse remains allowed by isPending.
+            if (!transportControl && envelope !== undefined)
+                withCompletionContext(id, metadata, window, () => responseReceived(id, envelope, transportError));
         } finally {
+            if (window && pending[id] === window)
+                setPending(id, false);
+            forgetRequestMetadata(id, metadata);
+        }
+    }
+
+    function acceptSharedUnsent(id: string, message: string): void {
+        finishUnsent(id, requestMetadata[id], pending[id], message);
+    }
+
+    function finishUnsent(id: string, metadata: var, window: var, message: string): void {
+        try {
+            // Retire the original policy transaction before public notification.
+            // This is definitely unsent, never a dispatched uncertainty response.
+            if (metadata?.kind === "call" && requestPolicy)
+                requestPolicy.sendFailed(id);
+            if (metadata?.kind === "subscription")
+                finishExtraSubscription(id, null, message);
+            withCompletionContext(id, metadata, window, () => sendFailed(id, message));
+        } finally {
+            if (window && pending[id] === window)
+                setPending(id, false);
             forgetRequestMetadata(id, metadata);
         }
     }

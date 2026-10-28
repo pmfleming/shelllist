@@ -33,6 +33,13 @@ them. Neither check starts a real daemon or changes hardware.
 
 ## Native Unix socket migration
 
+[Control cleanup integration](control-cleanup-integration.md) records the bounded
+admission/cleanup repair and its negative-before/positive-after Qt and native
+full-control evidence. `tst_daemon_subscription_cleanup.qml` owns resource-ledger
+regressions; `tst_daemon_socket.qml` owns wire admission and queued-expiry fences.
+The private clipboard native fixture has an explicit `control` phase; never run
+it against an installed daemon or treat it as startup/default-rollout acceptance.
+
 The current [stream/recovery contract](../contracts/unix-jsonl-stream-recovery.md)
 records staged progress and remaining gates. The Bluetooth
 ignored test launches `tests/e2e/unix-jsonl.qml` with real Socket/Process plugins,

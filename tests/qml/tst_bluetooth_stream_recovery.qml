@@ -23,7 +23,7 @@ DaemonTestCase {
         const subscription = session.client.subscriptions.find(r => r.id === consumer.baseSubscriptionRequestId);
         verify(subscription !== undefined);
         const data = fixture();
-        session.client.response(subscription.id, {ok: true, data: {subscription: {id: "ordering-subscription"}}}, "", subscription.route);
+        acknowledgeSubscription(session, subscription, "ordering-subscription");
         wait(0);
         const read = calls.find(call => call.route.consumerId === backend.sharedConsumerId && call.method === "bluetooth.snapshot");
         verify(read !== undefined);

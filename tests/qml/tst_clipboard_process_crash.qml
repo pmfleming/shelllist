@@ -123,7 +123,7 @@ DaemonTestCase {
         const oldConsumer = session().consumers[oldCall.route.consumerId];
         const oldSubscriptionRequest = session().client.subscriptions.find(call => call.id === oldConsumer.baseSubscriptionRequestId);
         verify(oldSubscriptionRequest !== undefined);
-        session().client.response(oldSubscriptionRequest.id, {ok: true, data: {subscription: {id: "old-subscription"}}}, "", oldSubscriptionRequest.route);
+        acknowledgeSubscription(session(), oldSubscriptionRequest, "old-subscription");
         const oldEvent = {protocol: "clip-api", version: 2, stream: "clipboard.operation", event: "completed", subscription_id: "old-subscription",
             data: {operation: operation("old-operation", "completed", "old-epoch", 2)}};
         if (data.terminal) {
@@ -141,7 +141,7 @@ DaemonTestCase {
         const freshSubscriptionRequest = session().client.subscriptions.find(call => call.id === freshConsumer.baseSubscriptionRequestId);
         verify(freshSubscriptionRequest !== undefined);
         verify(freshSubscriptionRequest.route.generation > oldSubscriptionRequest.route.generation);
-        session().client.response(freshSubscriptionRequest.id, {ok: true, data: {subscription: {id: "new-subscription"}}}, "", freshSubscriptionRequest.route);
+        acknowledgeSubscription(session(), freshSubscriptionRequest, "new-subscription");
         compare(freshConsumer.baseSubscriptionId, "new-subscription");
         verify(controller.runAction("annotate", undefined, target), "only explicit new work may dispatch");
         const newCall = lastCall(controller, "clipboard.entry.action");
@@ -151,7 +151,7 @@ DaemonTestCase {
         response(oldCall, {operation: operation("old-operation", "started", "old-epoch", 1)});
         session().client.eventReceived(oldEvent, oldSubscriptionRequest.route);
         // A late old subscription acknowledgement cannot replace a fresh one.
-        session().client.response(oldSubscriptionRequest.id, {ok: true, data: {subscription: {id: "old-subscription"}}}, "", oldSubscriptionRequest.route);
+        acknowledgeSubscription(session(), oldSubscriptionRequest, "old-subscription");
         verify(controller.actionInFlight);
         compare(controller.activeOperationId, "new-operation");
         compare(session().consumers[oldCall.route.consumerId].baseSubscriptionId, "new-subscription");

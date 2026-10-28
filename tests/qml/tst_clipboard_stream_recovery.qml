@@ -69,6 +69,44 @@ DaemonTestCase {
         compare(b.replies[2].value.ok, false);
         compare(b.requestPolicy.historyRevision, 5);
     }
+    function test_pendingNotificationCannotReplaceCompletingPolicyContext() {
+        const b = make();
+        verify(b.call("same", "clipboard.history.query", {}));
+        event(b, "clipboard.history.changed", "reset", {_history: stamp(2)});
+        let replace = true;
+        b.pendingChanged.connect(function() {
+            if (replace && !b.isPending("same")) {
+                replace = false;
+                verify(b.call("same", "clipboard.history.query", {}));
+            }
+        });
+        // The old request predates the invalidation even if its native capture
+        // happens to share the latest watermark. Its request barrier still wins.
+        reply(b, "same", history(2));
+        compare(b.replies.length, 0, "old receipt must use its original policy transaction");
+        compare(b.discarded, ["same"]);
+        verify(b.isPending("same"));
+        verify(!!b.requestPolicy.requests.same, "completion must not consume the replacement policy context");
+        compare(b.requestPolicy.requests.same.barrier, b.requestPolicy.historyBarrier);
+        reply(b, "same", history(2));
+        compare(b.replies.length, 1);
+        compare(b.requestPolicy.requests.same, undefined);
+    }
+    function test_policyDiscardCallbackCanStillSubmitCapturedReplacement() {
+        const b = make();
+        verify(b.call("same", "clipboard.history.query", {}));
+        event(b, "clipboard.history.changed", "reset", {_history: stamp(2)});
+        b.requestPolicy.readDiscarded.connect(function(id) {
+            verify(b.call(id, "clipboard.history.query", {}));
+        });
+        reply(b, "same", history(2));
+        compare(b.replies.length, 0);
+        verify(b.isPending("same"), "old completion must not clear the policy callback's replacement");
+        compare(b.requestPolicy.requests.same.barrier, b.requestPolicy.historyBarrier);
+        reply(b, "same", history(2));
+        compare(b.replies.length, 1);
+        verify(!b.isPending("same"));
+    }
     function test_gracefulIdleShutdownPermitsNewEpochButFencesDrainedOldReads() {
         const b = make();
         b.call("before", "clipboard.history.query", {});

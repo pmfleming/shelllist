@@ -3,8 +3,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Io
 
-// Process-shaped lifecycle adapter only. Routing and domain policy remain in
-// JsonlDaemonClient/DaemonSessions. Each generation owns a fresh native Socket.
+// One bounded admission window per socket owner, shared by every logical view.
+// Native RequestSlots charges Call AND Subscribe to calls; cleanup is separate.
 QtObject {
     id: transport
     required property string socketPath
@@ -13,22 +13,30 @@ QtObject {
     property string errorText: ""
     property var endpoint: null
     property var pending: Object.create(null)
-    property int pendingBytes: 0
+    property var queue: []
+    property int pendingBytes: 0 // reservations include queued, never-written records
     property int pendingControlBytes: 0
-    property int pendingCalls: 0
+    property int pendingCalls: 0 // dispatched records only
     property int pendingControls: 0
     property int maximumPendingBytes: 4 * 1024 * 1024
     property int maximumPendingControlBytes: 64 * 1024
+    readonly property int reservedCleanupBytes: 24 * 1024
     property int maximumCalls: 64
     property int maximumControls: 16
+    property int maximumQueuedRequests: 256
+    property int maximumQueuedControls: 16
+    property int queueTimeout: 5000
     property int acknowledgementTimeout: 35000
     property bool stopping: false
+    property bool pumping: false
     property int generation: 0
+    property double sequence: 0
     readonly property string shutdownId: "__shelllist_socket_shutdown__"
 
     signal started()
     signal exited(int exitCode)
     signal messageReceived(var message)
+    signal requestUnsent(string id, string message, var route)
 
     function exec(command) {
         if (running)
@@ -48,20 +56,37 @@ QtObject {
         endpoint.connected = true;
     }
 
-    function forget(id) {
-        const record = pending[id];
+    function forget(wireId) {
+        const record = pending[wireId];
         if (!record)
             return;
+        delete pending[wireId]; // retire identity before any notifying counters
+        queue = queue.filter(id => id !== wireId);
         record.timer.stop();
         record.timer.destroy();
         pendingBytes -= record.bytes;
         if (record.control) {
             pendingControlBytes -= record.bytes;
-            pendingControls--;
-        } else {
+            if (record.dispatched) pendingControls--;
+        } else if (record.dispatched) {
             pendingCalls--;
         }
-        delete pending[id];
+    }
+
+    function rejectQueued(wireId, detail) {
+        const record = pending[wireId];
+        if (!record || record.dispatched)
+            return;
+        forget(wireId);
+        requestUnsent(record.id, "UNSENT: " + detail, record.route);
+    }
+
+    function discardQueued(consumerId) {
+        for (const wireId of queue.slice()) {
+            const record = pending[wireId];
+            if (record && !record.control && record.route?.consumerId === consumerId)
+                rejectQueued(wireId, "consumer released before socket dispatch");
+        }
     }
 
     function finish(code, detail) {
@@ -73,51 +98,114 @@ QtObject {
         running = false;
         const previous = endpoint;
         endpoint = null; // fence callbacks before closing/destroying the native object
-        for (const id of Object.keys(pending))
-            forget(id);
+        for (const wireId of Object.keys(pending)) {
+            rejectQueued(wireId, "socket generation retired before dispatch");
+            forget(wireId);
+        }
         pending = Object.create(null);
         if (previous) {
             previous.connected = false;
-            // disconnectFromServer may wait for writes. Destruction ensures a
-            // non-reading peer cannot retain this generation's buffered effects.
-            previous.destroy();
+            previous.destroy(); // discard Qt's opaque write buffer, never replay it
         }
         const retired = generation;
-        // Match asynchronous Process exit: recover() must establish its backoff
-        // before an exit can wake a replacement transport.
         Qt.callLater(function() {
             if (transport.generation === retired && !transport.running)
                 transport.exited(code);
         });
     }
 
-    function write(line) {
-        if (!running || stopping || !endpoint || !endpoint.connected)
-            throw new Error("socket is not accepting requests; request was not sent");
+    function write(line, reservedCleanup) {
+        if (!running || stopping || !endpoint)
+            throw new Error("UNSENT: socket is not accepting requests");
         const message = JSON.parse(line);
-        if (!message.id || message.id === shutdownId || pending[message.id])
-            throw new Error("invalid or duplicate pending request id; request was not sent");
-        const control = message.op === "subscribe" || message.op === "cancel" || message.op === "release";
-        // UTF-8 needs at most three bytes per UTF-16 code unit. Reserving until
-        // acknowledgement bounds Qt's otherwise opaque write buffer, including
-        // bytes already in the kernel. No partial-write guessing or replay.
-        const bytes = line.length * 3;
+        if (!message.id || message.id === shutdownId || Object.values(pending).some(record => record.id === message.id && !record.uncertain))
+            throw new Error("UNSENT: invalid or duplicate pending request id");
+        if (!Number.isSafeInteger(sequence) || sequence >= Number.MAX_SAFE_INTEGER)
+            throw new Error("UNSENT: socket wire identity space exhausted");
+        const control = message.op === "cancel" || message.op === "release";
+        if (message.op === "release")
+            discardQueued(message.route?.consumerId);
+        // A unique wire ID fences duplicate/late responses after local ID reuse.
+        // Retain a serialized snapshot, not a caller-mutable params/route object.
+        const id = message.id;
+        const wireId = "__shelllist_wire_" + generation + "_" + (++sequence);
+        message.id = wireId;
+        const capturedLine = JSON.stringify(message) + "\n";
+        const bytes = capturedLine.length * 3;
         const laneBytes = control ? pendingControlBytes : pendingBytes - pendingControlBytes;
         const laneLimit = control ? maximumPendingControlBytes : maximumPendingBytes;
-        if (laneBytes + bytes > laneLimit
-                || (control ? pendingControls >= maximumControls : pendingCalls >= maximumCalls))
-            throw new Error("socket request capacity exceeded; request was not sent");
-        const timer = requestDeadline.createObject(transport) as Timer;
-        pending[message.id] = {bytes: bytes, control: control, timer: timer};
+        // One of the existing control slots/queue entries is reserved for the
+        // session's captured resource transaction. No native ceiling is raised.
+        const cleanup = control && !!reservedCleanup; // local admission hint, never a wire/route extension
+        const controlLimit = cleanup ? maximumControls : Math.max(0, maximumControls - 1);
+        const queuedControlLimit = cleanup ? maximumQueuedControls : Math.max(0, maximumQueuedControls - 1);
+        const waiting = queue.filter(key => pending[key].control === control).length;
+        const slotsFull = control ? pendingControls >= controlLimit : pendingCalls >= maximumCalls;
+        const ordinaryControlBytes = control && !cleanup ? Object.values(pending)
+            .filter(record => record.control && !record.cleanup).reduce((total, record) => total + record.bytes, 0) : 0;
+        if ((control && !cleanup && ordinaryControlBytes + bytes > Math.max(0, maximumPendingControlBytes - reservedCleanupBytes))
+                || laneBytes + bytes > laneLimit || ((slotsFull || !endpoint.connected || waiting > 0)
+                && waiting >= (control ? queuedControlLimit : maximumQueuedRequests)))
+            throw new Error("UNSENT: socket admission queue or byte capacity exceeded");
+        const timer = requestDeadline.createObject(transport, {wireId: wireId}) as Timer;
+        pending[wireId] = {id: id, route: message.route || null, bytes: bytes, control: control,
+            timer: timer, line: capturedLine, dispatched: false, uncertain: false, cleanup: cleanup,
+            operation: message.op, lateResourceSeen: false,
+            expiresAt: Date.now() + queueTimeout};
         pendingBytes += bytes;
-        if (control) {
-            pendingControlBytes += bytes;
-            pendingControls++;
-        } else {
-            pendingCalls++;
-        }
+        if (control) pendingControlBytes += bytes;
+        queue = queue.concat([wireId]);
+        timer.interval = queueTimeout;
         timer.start();
-        endpoint.write(line);
+        pump();
+    }
+
+    function pump() {
+        if (pumping || !running || stopping || !endpoint?.connected)
+            return;
+        pumping = true;
+        try {
+            // FIFO within each lane; a blocked data lane never blocks cleanup.
+            for (const wireId of queue.slice()) {
+                const record = pending[wireId];
+                if (!record)
+                    continue;
+                // The timer callback may still be pending in this event turn.
+                // Newly available credit cannot extend the captured waiting age.
+                if (Date.now() >= record.expiresAt) {
+                    rejectQueued(wireId, "socket admission waiting deadline exceeded");
+                    continue;
+                }
+                if (record.control ? pendingControls >= (record.cleanup ? maximumControls : Math.max(0, maximumControls - 1)) : pendingCalls >= maximumCalls)
+                    continue;
+                queue = queue.filter(id => id !== wireId);
+                record.dispatched = true; // write may synchronously reenter receive
+                if (record.control) pendingControls++; else pendingCalls++;
+                record.timer.stop();
+                record.timer.interval = acknowledgementTimeout;
+                record.timer.start();
+                const line = record.line;
+                record.line = ""; // Qt now owns bytes; keep the reservation, not a copy
+                try {
+                    endpoint.write(line);
+                } catch (error) {
+                    finish(1, "Socket write failed; outcome unknown; do not replay");
+                    break;
+                }
+                if (!running || stopping) break;
+            }
+        } finally {
+            pumping = false;
+        }
+        // A synchronous response can enqueue a replacement during write().
+        if (queue.some(id => pending[id].control ? pendingControls < (pending[id].cleanup ? maximumControls : Math.max(0, maximumControls - 1)) : pendingCalls < maximumCalls))
+            Qt.callLater(transport.pump);
+    }
+
+    function sameRoute(left, right) {
+        if (!left || !right) return !left && !right;
+        return left.consumerId === right.consumerId && left.localId === right.localId
+            && left.kind === right.kind && left.generation === right.generation;
     }
 
     function receive(line) {
@@ -125,7 +213,7 @@ QtObject {
         try {
             message = JSON.parse(line);
         } catch (error) {
-            finish(1, "Invalid socket JSON: " + error);
+            finish(1, "Invalid socket JSON");
             return;
         }
         if (!message || typeof message !== "object" || Array.isArray(message)) {
@@ -137,11 +225,38 @@ QtObject {
                 finish(1, "Invalid socket response correlation");
                 return;
             }
-            if (stopping && message.id === shutdownId && message.ok && message.response && message.response.shutdown) {
+            if (stopping && message.id === shutdownId && message.ok && message.response?.shutdown) {
                 finish(0, "");
                 return;
             }
-            forget(message.id);
+            const wireId = message.id;
+            const record = pending[wireId];
+            if (!record || !record.dispatched)
+                return; // duplicate or never written; cannot grant credit/deliver
+            // A late resource receipt can establish cleanup responsibility only.
+            // It cannot release uncertain native credit or regain view authority.
+            const lateResource = record.uncertain && !record.lateResourceSeen && message.ok
+                && (record.operation === "subscribe" || record.cleanup);
+            if (record.uncertain && !lateResource)
+                return;
+            if (!sameRoute(record.route, message.route || null)
+                    || (message.ok ? !message.response || typeof message.response !== "object" || Array.isArray(message.response)
+                        : typeof message.error !== "string" || !["rejected-before-dispatch", "outcome-unknown"].includes(message.outcome))) {
+                finish(1, "Invalid socket response identity or outcome; outcome unknown");
+                return;
+            }
+            message.id = record.id;
+            // Timeout/error receipts do NOT prove the native retained work/permit
+            // ended. Keep its credit and original deadline until owner retirement.
+            if (lateResource)
+                record.lateResourceSeen = true;
+            else if (!message.ok && message.outcome === "outcome-unknown")
+                record.uncertain = true;
+            else
+                forget(wireId);
+            messageReceived(message); // captured identity retired before callbacks reuse IDs
+            pump();
+            return;
         }
         messageReceived(message);
     }
@@ -154,6 +269,8 @@ QtObject {
         if (!running || stopping)
             return;
         stopping = true;
+        for (const wireId of queue.slice())
+            rejectQueued(wireId, "socket stopped before dispatch");
         if (!endpoint || !endpoint.connected) {
             finish(0, "");
             return;
@@ -173,6 +290,7 @@ QtObject {
                 if (connected) {
                     transport.connectDeadline.stop();
                     transport.started();
+                    transport.pump();
                     if (!transport.stdinEnabled)
                         transport.requestStop();
                 } else {
@@ -194,8 +312,14 @@ QtObject {
     }
     property Component requestDeadline: Component {
         Timer {
-            interval: transport.acknowledgementTimeout
-            onTriggered: transport.finish(1, "Socket acknowledgement deadline exceeded; outcome unknown; do not replay")
+            required property string wireId
+            onTriggered: {
+                const record = transport.pending[wireId];
+                if (record?.dispatched)
+                    transport.finish(1, "Socket acknowledgement deadline exceeded; outcome unknown; do not replay");
+                else
+                    transport.rejectQueued(wireId, "socket admission waiting deadline exceeded");
+            }
         }
     }
     property Timer connectDeadline: Timer {

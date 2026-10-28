@@ -38,14 +38,27 @@ TestCase {
                 ]);
             }
             function subscribeExtra(id, streams, route) {
-                subscriptions = subscriptions.concat([{id: id, streams: streams, route: route}]);
+                const backend = Io.DaemonSessions.sessions[daemonName].consumers[route.consumerId].backend;
+                subscriptions = subscriptions.concat([{id: id, streams: streams, route: route,
+                    protocol: backend.expectedProtocol, version: backend.expectedVersion, nativeId: ""}]);
             }
             function cancel(id, requestId, route) {
                 cancellations = cancellations.concat([requestId]);
+                const request = subscriptions.find(row => row.nativeId === requestId);
+                if (request)
+                    response(id, {protocol: request.protocol, version: request.version, ok: true,
+                        data: {cancelled: requestId, kind: "subscription"}}, "", route);
             }
             function release(id, route) {
+                response(id, {released: 0}, "", route);
             }
         }
+    }
+
+    function acknowledgeSubscription(session, request, nativeId) {
+        request.nativeId = nativeId;
+        session.client.response(request.id, {protocol: request.protocol, version: request.version,
+            ok: true, data: {subscription: {id: nativeId}}}, "", request.route);
     }
 
     // Bind producer fixture data to an acknowledged live subscription. The
@@ -56,7 +69,7 @@ TestCase {
         if (!consumer.baseSubscriptionId) {
             const request = session.client.subscriptions.find(r => r.id === consumer.baseSubscriptionRequestId);
             verify(request !== undefined, "base subscription requested before event delivery");
-            session.client.response(request.id, {ok: true, data: {subscription: {id: "fixture-" + request.id}}}, "", request.route);
+            acknowledgeSubscription(session, request, "fixture-" + request.id);
         }
         session.client.eventReceived(Object.assign({}, envelope, {subscription_id: consumer.baseSubscriptionId}), route);
     }
