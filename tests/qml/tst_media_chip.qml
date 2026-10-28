@@ -4,6 +4,7 @@ import Shelllist.Bar as Bar
 import Shelllist.Ui as Ui
 import Shelllist.Io as Io
 import "../../bar/BarApi.js" as BarApi
+import "../../shell" as Shell
 
 DaemonTestCase {
     id: testCase
@@ -30,14 +31,22 @@ DaemonTestCase {
                 function surfaceRequested(name: string): void { opened = opened.concat([name]); }
             }
             controller: Bar.BarController { surfaceRegistry: bar.registry }
+            Shell.MediaShortcuts { controller: bar.controller }
         }
     }
+    TextInput { id: editor; visible: false }
     function init(): void {
+        clientReady = true;
         calls = [];
         previousScheme = Ui.Theme.previewColorScheme;
-        failOnWarning(/.*/);
+        // The negative command test deliberately emits this one backend error.
+        // Qt's ignoreWarning only handles warning severity, not console.error.
+        failOnWarning(/^(?!shelllist bar request failed id=media-play-pause-\d+ error=fixture failure$).*/);
     }
-    function cleanup(): void { Ui.Theme.previewColorScheme = previousScheme; }
+    function cleanup(): void {
+        editor.visible = false;
+        Ui.Theme.previewColorScheme = previousScheme;
+    }
     function acknowledge(bar, call): void {
         Io.DaemonSessions.sessions[bar.controller.backend.daemonName].client.response(call.id,
             {protocol: BarApi.protocol, version: BarApi.version, ok: true, data: {}}, "", call.route);
@@ -103,6 +112,89 @@ DaemonTestCase {
         compare(calls.length, 3, "disabled transport cannot dispatch through either route");
         click(opener);
         compare(bar.registry.opened, ["media"], "panel access does not require transport capability");
+    }
+    function shortcut(bar, name): var {
+        const registered = findChild(bar, "registeredShortcut-shelllist:media-" + name);
+        verify(registered !== null, "registered compositor action: " + name);
+        return registered;
+    }
+    function test_globalShortcutsMatchButtonsWithoutOpeningOrTakingFocus_data(): var {
+        return [{tag: "tracks", mode: "tracks", content: "music", operations: ["previous", "play-pause", "next"]},
+            {tag: "seek", mode: "seek", content: "music", operations: ["seek", "play-pause", "seek"]},
+            {tag: "automatic-spoken", mode: "automatic", content: "podcast", operations: ["seek", "play-pause", "seek"]}];
+    }
+    function test_globalShortcutsMatchButtonsWithoutOpeningOrTakingFocus(data): void {
+        const bar = fixture();
+        setPlayer(bar, player({id: "pinned-player", control_mode: data.mode, content_type: data.content}));
+        editor.visible = true;
+        editor.text = "unsaved text";
+        editor.forceActiveFocus();
+        const names = ["back", "play-pause", "forward"];
+        const buttons = ["mediaRewindButton", "mediaPlayPauseButton", "mediaForwardButton"];
+        for (let i = 0; i < names.length; ++i) {
+            // The compositor plugin is substituted; its real pressed signal
+            // still traverses the shared adapter and production controller.
+            shortcut(bar, names[i]).pressed();
+            compare(calls.length, i * 2 + 1);
+            const request = calls[i * 2];
+            compare(request.method, BarApi.methods.mediaOperation);
+            compare(request.params.player_id, "pinned-player");
+            compare(request.params.operation, data.operations[i]);
+            if (data.operations[i] === "seek") compare(request.params.offset_seconds, i === 0 ? -30 : 30);
+            verify(editor.activeFocus, "global transport cannot steal editor focus");
+            compare(editor.text, "unsaved text");
+            acknowledge(bar, request);
+            click(findChild(bar, buttons[i]));
+            compare(calls.length, i * 2 + 2);
+            compare(calls[i * 2 + 1].params, request.params, "shortcut and pointer share exactly one command path");
+            acknowledge(bar, calls[i * 2 + 1]);
+            editor.forceActiveFocus();
+        }
+        compare(bar.registry.opened, []);
+        compare(bar.controller.activePlayer.playback_status, "Playing", "no optimistic playback change");
+        setPlayer(bar, player({id: "new-active-player"}));
+        shortcut(bar, "play-pause").pressed();
+        compare(calls[calls.length - 1].params.player_id, "new-active-player", "do not capture the player at registration time");
+    }
+    function test_globalShortcutsRespectCapabilities_data(): var {
+        return [{tag: "no-control", key: "play-pause", state: {can_control: false}},
+            {tag: "cannot-pause", key: "play-pause", state: {can_pause: false}},
+            {tag: "cannot-play", key: "play-pause", state: {playback_status: "Paused", can_play: false}},
+            {tag: "cannot-previous", key: "back", state: {can_previous: false}},
+            {tag: "cannot-next", key: "forward", state: {can_next: false}},
+            {tag: "cannot-rewind", key: "back", state: {control_mode: "seek", can_seek: false}},
+            {tag: "cannot-forward", key: "forward", state: {control_mode: "seek", can_seek: false}}];
+    }
+    function test_globalShortcutsRespectCapabilities(data): void {
+        const bar = fixture();
+        setPlayer(bar, player(data.state));
+        shortcut(bar, data.key).pressed();
+        compare(calls.length, 0);
+        compare(bar.registry.opened, []);
+    }
+    function test_globalShortcutsNeverQueueWhenUnavailableOrReplayFailures(): void {
+        const bar = fixture();
+        shortcut(bar, "play-pause").pressed();
+        const request = calls[0];
+        Io.DaemonSessions.sessions[bar.controller.backend.daemonName].client.response(request.id,
+            {protocol: BarApi.protocol, version: BarApi.version, ok: false, error: {code: "unavailable", message: "fixture failure"}}, "", request.route);
+        wait(0);
+        compare(calls.length, 1, "a failed command is never retried");
+        compare(bar.controller.backend.operationError, "fixture failure");
+        verify(!bar.controller.performMediaTransport("unknown"));
+        compare(calls.length, 1);
+        calls = [];
+        setPlayer(bar, null);
+        for (const name of ["back", "play-pause", "forward"]) shortcut(bar, name).pressed();
+        setPlayer(bar, player({}));
+        bar.controller.media = Object.assign({}, bar.controller.media, {available: false});
+        for (const name of ["back", "play-pause", "forward"]) shortcut(bar, name).pressed();
+        setPlayer(bar, player({}));
+        clientReady = false;
+        for (const name of ["back", "play-pause", "forward"]) shortcut(bar, name).pressed();
+        verify(!bar.controller.performMediaTransport("unknown"));
+        compare(calls.length, 0, "no implicit-player fallback or queued transport effects");
+        compare(bar.registry.opened, []);
     }
     function test_artworkReallyClipsRoundedCorners(): void {
         const bar = fixture();

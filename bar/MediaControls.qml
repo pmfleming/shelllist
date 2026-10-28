@@ -9,14 +9,6 @@ Row {
     readonly property var forward: Presentation.transportAction(controller.activePlayer, true)
     spacing: 2
 
-    function perform(action: var): void {
-        if (!action.enabled)
-            return;
-        if (action.operation === "seek")
-            controller.seekMedia(action.offset);
-        else
-            controller.mediaOperation(action.operation);
-    }
     component Button: Ui.FlatIconButton {
         width: 30
         height: 30
@@ -34,9 +26,9 @@ Row {
     Button {
         objectName: "mediaRewindButton"
         icon: controls.back.icon
-        enabled: controls.back.enabled
+        enabled: controls.controller.backend.ready && controls.controller.media.available && controls.back.enabled
         accessibleName: controls.back.label
-        onClicked: controls.perform(controls.back)
+        onClicked: controls.controller.performMediaTransport("back")
     }
     Button {
         objectName: "mediaPlayPauseButton"
@@ -48,15 +40,15 @@ Row {
         highlightedBackgroundColor: Ui.Theme.accent
         highlightedIconColor: Ui.Theme.accentText
         icon: Presentation.playPauseActionIcon(controls.controller.activePlayer)
-        enabled: Presentation.canPlayPause(controls.controller.activePlayer)
+        enabled: controls.controller.backend.ready && controls.controller.media.available && Presentation.canPlayPause(controls.controller.activePlayer)
         accessibleName: String(controls.controller.activePlayer?.playback_status || "").toLowerCase() === "playing" ? qsTr("Pause") : qsTr("Play")
-        onClicked: controls.controller.mediaOperation("play-pause")
+        onClicked: controls.controller.performMediaTransport("play-pause")
     }
     Button {
         objectName: "mediaForwardButton"
         icon: controls.forward.icon
-        enabled: controls.forward.enabled
+        enabled: controls.controller.backend.ready && controls.controller.media.available && controls.forward.enabled
         accessibleName: controls.forward.label
-        onClicked: controls.perform(controls.forward)
+        onClicked: controls.controller.performMediaTransport("forward")
     }
 }

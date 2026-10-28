@@ -250,6 +250,9 @@ ShellRoot {
     SurfaceShortcuts {
         onSurfaceRequested: function (surfaceId) { shell.toggleSurface(surfaceId); }
     }
+    MediaShortcuts {
+        controller: barState
+    }
     Ui.ShelllistGlobalShortcut {
         shortcutName: "volume-up"
         description: "Raise Output Volume"

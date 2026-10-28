@@ -211,9 +211,22 @@ bindel = , XF86AudioRaiseVolume, global, shelllist:volume-up
 bindel = , XF86AudioLowerVolume, global, shelllist:volume-down
 bindl = , XF86AudioMute, global, shelllist:volume-mute
 bindl = , XF86AudioMicMute, global, shelllist:microphone-mute
+bind = , XF86AudioPlay, global, shelllist:media-play-pause
+bind = , XF86AudioPrev, global, shelllist:media-back
+bind = , XF86AudioNext, global, shelllist:media-forward
 bindel = , XF86MonBrightnessUp, global, shelllist:brightness-up
 bindel = , XF86MonBrightnessDown, global, shelllist:brightness-down
 ```
+
+The media shortcuts operate the bar's active/pinned player without opening Media.
+Back/forward match the bar buttons: previous/next track in track mode, or ±30 seconds
+in seek mode. Automatic mode follows the same content-based choice as the bar. Unsupported or
+disconnected controls do nothing. These are compositor bindings, so they also work
+while another application has focus; substitute your preferred keys if needed.
+Shelllist registers the actions but does not install these media-key bindings.
+Configure them in your Hyprland configuration and reload it after deploying the
+updated Shelllist. Avoid binding the same key to both Shelllist and another media
+handler, which would dispatch twice.
 
 ## Theme and motion
 

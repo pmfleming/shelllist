@@ -182,6 +182,20 @@ Item {
     function focusWorkspace(workspaceId: int): bool {
         return backend.focusWorkspace(workspaceId);
     }
+    // Pointer and compositor shortcuts share the same current-player policy.
+    // Capture the native player ID; never fall back to an implicit other player.
+    function performMediaTransport(action: string): bool {
+        const player = activePlayer;
+        if (!backend.ready || !media.available || !player)
+            return false;
+        if (action === "play-pause")
+            return MediaPresentation.canPlayPause(player) && backend.mediaOperationFor(player.id, "play-pause", null);
+        if (action !== "back" && action !== "forward")
+            return false;
+        const transport = MediaPresentation.transportAction(player, action === "forward");
+        return transport.enabled && backend.mediaOperationFor(player.id, transport.operation,
+            transport.operation === "seek" ? transport.offset : null);
+    }
     function mediaOperation(operation: string): bool {
         return backend.mediaOperation(operation);
     }
