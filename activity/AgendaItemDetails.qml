@@ -22,7 +22,7 @@ Ui.ActionDetailsPane {
     objectName: "agendaItemDetails"
     chooserController: controller
     emptyText: qsTr("Select an item")
-    title: item?.title || ""
+    title: pane.controller.creating ? qsTr("New item") : item?.title || ""
     subtitle: item?.kind === "task" ? qsTr("Task") : qsTr("Event")
     icon: item?.kind === "task" ? "checklist" : "calendar_month"
     actions: controller.detailActions
@@ -53,13 +53,17 @@ Ui.ActionDetailsPane {
         footerHeight: pane.controlHeight
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab
-        tabs: [{value: "details", icon: "edit", label: qsTr("Details")},
+        tabs: pane.controller.creating ? [] : [{value: "details", icon: "edit", label: qsTr("Details")},
             {value: "notes", icon: "article", label: qsTr("Notes")}, {value: "information", icon: "info", label: qsTr("Information")}]
         onSelected: function(value) { pane.controller.setDetailsTab(value); }
         Loader {
             anchors.fill: parent
-            sourceComponent: pane.item?.summary === true ? unavailable : pane.controller.detailsTab === "details" ? details : pane.controller.detailsTab === "notes" ? notes : information
+            sourceComponent: pane.controller.creating ? creation : pane.item?.summary === true ? unavailable : pane.controller.detailsTab === "details" ? details : pane.controller.detailsTab === "notes" ? notes : information
         }
+    }
+    Component {
+        id: creation
+        AgendaCreateEditor { controller: pane.controller }
     }
     Component {
         id: unavailable
@@ -92,12 +96,26 @@ Ui.ActionDetailsPane {
             }
             Ui.FormField {
                 width: parent.width
+                visible: !pane.controller.scheduleOpen
                 label: qsTr("Schedule")
                 supportingText: qsTr("Edit schedule (Alt+E) saves optional endpoints and timezone atomically. Blank endpoints remain blank.")
                 Ui.TextField {
                     Layout.fillWidth: true
                     readOnly: true
                     text: pane.item?.schedule.mode === "timed" ? [pane.item.schedule.start_unix_ms === null ? "" : new Date(pane.item.schedule.start_unix_ms).toISOString(), pane.item.schedule.end_unix_ms === null ? "" : new Date(pane.item.schedule.end_unix_ms).toISOString(), pane.item.schedule.timezone || ""].filter(Boolean).join(" — ") : [pane.item?.schedule.start_date || "", pane.item?.schedule.end_date || ""].filter(Boolean).join(" — ")
+                }
+            }
+            Loader {
+                width: parent.width
+                active: pane.controller.scheduleOpen
+                visible: active
+                sourceComponent: Component {
+                    AgendaScheduleEditor {
+                        enabled: !pane.controller.mutationBusy && !pane.controller.scheduleParsing
+                        schedule: pane.controller.scheduleDraft
+                        scheduleText: pane.controller.scheduleText
+                        onChanged: function(value) { pane.controller.scheduleRaw = value; }
+                    }
                 }
             }
             Repeater {

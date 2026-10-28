@@ -53,6 +53,7 @@ FieldFrame {
     signal editingFinished
     signal accepted
     signal keyPressed(var event)
+    signal keyShortcutOverride(var event)
     signal trailingActionRequested
 
     onPasswordChanged: if (!password)
@@ -140,6 +141,7 @@ FieldFrame {
         onTextEdited: if (!field.editSession.active) field.edited(text)
         onEditingFinished: if (!field.editSession.navigation) field.editingFinished()
         onAccepted: if (!field.editSession.navigation) field.accepted()
+        Keys.onShortcutOverride: function (event) { field.keyShortcutOverride(event); }
         Keys.onPressed: function (event) {
             field.keyPressed(event);
         }

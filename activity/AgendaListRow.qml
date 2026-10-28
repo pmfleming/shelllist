@@ -18,14 +18,14 @@ Ui.ResultRow {
     objectName: "agendaRow::" + item.id
     accessibleName: item.title + ". " + scheduleLabel + (item.task?.completed ? qsTr(". Completed") : "")
     leadingIcon: item.kind === "task" ? (item.task.completed ? "check" : "checklist") : "calendar_month"
-    primaryEnabled: item.kind === "event" || controller.canComplete(item)
+    primaryEnabled: item.draft === true || item.kind === "event" || controller.canComplete(item)
     Ui.ResultLabel {
         Layout.fillWidth: true
         title: row.item.title
-        subtitle: row.scheduleLabel + (row.item.task?.completed ? qsTr(" · Completed") : "")
+        subtitle: (row.item.draft ? qsTr("Unsaved · ") : "") + row.scheduleLabel + (row.item.task?.completed ? qsTr(" · Completed") : "")
     }
     Ui.FlatIconButton {
-        visible: row.item.kind === "task"
+        visible: row.item.kind === "task" && !row.item.draft
         enabled: row.controller.canComplete(row.item)
         icon: row.item.task?.completed ? "restore" : "check"
         accessibleName: row.item.task?.completed ? qsTr("Reopen task") : qsTr("Complete task")

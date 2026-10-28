@@ -3,19 +3,26 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-// Raw modal buffers only. agenda.schedule in Rust validates civil dates, RFC3339
+// Saved local field buffers only. agenda.schedule in Rust validates civil dates, RFC3339
 // offsets, IANA zones and DST before the parent submits one compound mutation.
 ColumnLayout {
     id: editor
     required property var schedule
     property var scheduleText: null
+    property var initialRaw: null
     property string mode: schedule.mode
     property string startText: endpoint(true)
     property string endText: endpoint(false)
     property string zoneText: schedule.timezone || ""
     readonly property bool timed: mode === "timed"
     property var originalText: null
-    Component.onCompleted: originalText = {mode: mode, start_text: startText, end_text: endText}
+    Component.onCompleted: {
+        originalText = {mode: mode, start_text: startText, end_text: endText};
+        if (initialRaw) {
+            mode = initialRaw.mode; startText = initialRaw.start_text;
+            endText = initialRaw.end_text; zoneText = initialRaw.timezone;
+        }
+    }
     signal changed(var value)
     spacing: Ui.Theme.spacingSm
     function endpoint(start: bool): string {
@@ -32,10 +39,11 @@ ColumnLayout {
     Ui.FormField {
         Layout.fillWidth: true
         label: qsTr("Mode")
-        Ui.DropDownList {
+        Ui.SegmentedControl {
             objectName: "agendaScheduleMode"
+            iconOnly: true
             Layout.fillWidth: true
-            options: [{value: "date", label: qsTr("Date only / all day")}, {value: "timed", label: qsTr("Timed")}]
+            options: [{value: "date", icon: "today", label: qsTr("Date only / all day")}, {value: "timed", icon: "schedule", label: qsTr("Timed")}]
             value: editor.mode
             onSelected: function(value) {
                 editor.startText = ""; editor.endText = ""; editor.mode = value; editor.update();
@@ -46,8 +54,9 @@ ColumnLayout {
         Layout.fillWidth: true
         label: qsTr("Start")
         supportingText: editor.timed ? qsTr("Optional ISO instant with explicit UTC offset") : qsTr("Optional YYYY-MM-DD; clear for no start")
-        Ui.TextField {
+        Ui.DateField {
             objectName: "agendaScheduleStart"
+            calendarEnabled: !editor.timed
             Layout.fillWidth: true
             text: editor.startText
             placeholder: editor.timed ? "YYYY-MM-DDTHH:MM:SS+HH:MM" : "YYYY-MM-DD"
@@ -58,8 +67,9 @@ ColumnLayout {
         Layout.fillWidth: true
         label: qsTr("End / due")
         supportingText: editor.timed ? qsTr("Optional ISO instant with explicit UTC offset") : qsTr("Optional inclusive YYYY-MM-DD; clear for no end")
-        Ui.TextField {
+        Ui.DateField {
             objectName: "agendaScheduleEnd"
+            calendarEnabled: !editor.timed
             Layout.fillWidth: true
             text: editor.endText
             placeholder: editor.timed ? "YYYY-MM-DDTHH:MM:SS+HH:MM" : "YYYY-MM-DD"

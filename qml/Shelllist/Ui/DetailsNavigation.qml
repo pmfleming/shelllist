@@ -41,7 +41,7 @@ FocusScope {
     property bool finishingEditor: false
     readonly property Flickable currentPage: pageForTarget(currentTarget)
     readonly property Item focusedTarget: targetForFocus(Window.window ? Window.window.activeFocusItem : null)
-    readonly property bool popupOpen: ((currentTarget as DropDownList)?.popup.visible ?? false) || commandMenuOpen || fieldModalOpen
+    readonly property bool popupOpen: ((currentTarget as DropDownList)?.popup.visible ?? false) || ((currentTarget as DateField)?.calendarVisible ?? false) || commandMenuOpen || fieldModalOpen
     readonly property bool editing: editorTarget !== null && (activeFocus || popupOpen)
     readonly property bool browsing: browseCursor.activeFocus && !editing
     readonly property Item highlightedControl: editable(currentTarget) && (available(currentTarget) || editorTarget === currentTarget) ? currentTarget : null

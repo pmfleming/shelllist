@@ -1,5 +1,38 @@
 # Agenda frontend evidence
 
+## Inline creation and schedule editor revision
+
+Create now adds an explicitly unsaved list row and opens the shared inspector.
+Title comes first; Type and Mode use the shared icon-only two-option segmented
+control. Dates default to today or Calendar's selected day. Schedule editing is
+inline too; native atomic validation, revision checks and receipt recovery remain.
+
+`Ui.DateField` composes the shared text-field transaction with Qt's standard
+MonthGrid/DayOfWeekRow. The calendar is not another field or modal form: arrows
+and month navigation select a local date, Enter/Tab save and Escape/blur discard.
+Shared navigation blocks commands while its popup owns the field. Weekday labels
+use Theme text roles in both schemes. Calendar geometry uses seven shared action
+widths and six day rows (shared UI owner: readable day hit targets), not panel-local
+font/spacing overrides.
+
+Focused Qt 6.11.1 offscreen/software evidence, using recording transports:
+
+- Agenda: **61 passed, 0 failed, 0 skipped** (including lifecycle hooks).
+- Calendar integration: **12/0/0**.
+- Shared field transactions: **8/0/0**; chooser keyboard **4/0/0**, memory **5/0/0**.
+- Strict lint over changed QML and the Agenda suite passes.
+- Light/dark creation and calendar captures reviewed in
+  `target/agenda-inline-review/`; generated images are not shipped assets.
+
+Coverage includes icon-choice discard, calendar pointer/keyboard transactions,
+month navigation, today/scoped defaults, title ordering, draft-row refresh and
+browsing retention, compound failures, unchanged timed endpoints, and cancellation
+of late validation after selection changes/collapse/discard. The capture fixture
+uses its existing `captureDirectory` override only during local capture runs.
+No live service mutation, deployment or production database verification performed.
+
+Historical evidence below describes the preceding modal implementation.
+
 ## Scope
 
 `contracts/agenda-ui.md` is the UI contract. The standalone route and Calendar's

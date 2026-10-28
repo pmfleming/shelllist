@@ -35,7 +35,7 @@ loaded window, expansion and shared chooser presentation memory independently.
   reopens a capable task, or inspects an event. Right/chevron inspect without
   invoking completion. Completion first obtains a full current task when the
   row is only a summary; it never changes checklist state or list position.
-- Exactly three icon-only shared tabs: Details, Notes, Information. Read-only
+- Persisted items have three icon-only shared tabs: Details, Notes, Information. Read-only
   metadata has only the shared non-highlighted scrolling fallback. Known unknown
   epoch-zero read-only import provenance is shown as Unknown; legitimate local
   epoch timestamps and known imported timestamps are not hidden.
@@ -48,22 +48,43 @@ loaded window, expansion and shared chooser presentation memory independently.
   re-entry still requires the existing explicit reviewed Retry to rebase.
   Cancellation/new target/finished session clears only the transient capture.
   Incoming revisions preserve keyed child editors and active buffers.
-- Schedule is one contained shared modal. Date-only endpoints are independent,
-  inclusive and clearable. Timed input requires explicit-offset RFC3339 text and
-  original IANA zone. Only explicit Save/Create invokes native `agenda.schedule`;
+- Schedule editing stays inside the expanded Details view (Alt+E), below Title,
+  never in a modal. Its shared icon-only Mode selector offers date-only/timed.
+  Field Enter/Tab saves a local compound draft; Escape discards the current field.
+  Save schedule (Alt+V) submits the compound draft; Discard (Alt+X), changing the
+  selected item, collapsing details or changing tabs cancels unsubmitted schedule
+  validation.
+  Date-only endpoints are independent, inclusive and clearable. Shared `DateField`
+  provides the standard Qt month/weekday calendar with month navigation and an
+  accessible date choice. Calendar clicks change the field buffer; Enter/Tab saves,
+  Escape/blur discards. Arrows browse dates and PageUp/PageDown browse months while
+  the calendar is open. The calendar is one field, not additional Tab stops.
+  Timed input requires explicit-offset RFC3339 text and original IANA zone.
+  Only explicit Save/Create invokes native `agenda.schedule`;
   successful native text validation precedes one atomic compound mutation.
   Untouched timed endpoints remain accepted instant facts, not reparsed display
   strings; only changed raw timed inputs enter the text parser. The mutation
   validates the complete final range atomically. Display can use explicit UTC/Z
   when original-zone native presentation is unavailable. There is no JS date
-  parser, timezone inference or persisted inferred endpoint.
+  domain parser, timezone inference or persisted inferred endpoint. The date
+  picker's civil-date parsing is presentation/navigation only; Rust still validates
+  every edited schedule and its complete range.
 - Event location/people/status and task priority/status/completion are editable
   where capable. Plain notes, links, and independently identified checklist text,
   checked state, insertion, deletion and ordering use the same shared controls.
   No rich text, invitations, recurrence, attachments or reminders are implied.
-- Shared Create/Cancel accepts title-only. Day context supplies visible clearable
-  dates. A created item outside scope opens the same inspector as a creation
-  result without inserting a false day-list row.
+- Create item (Alt+A/search plus) inserts one explicitly Unsaved list row and opens
+  its expanded editor, not a popout. Title is first, then the shared icon-only
+  Task/Event and date-only/timed selectors, then Start and End/due. Both dates
+  default to native today (local today before the first projection), or Calendar's
+  selected day, and remain clearable. Existing undated items remain undated.
+  Repeating Create returns to that draft; refresh and result browsing retain saved
+  local fields without inserting the draft into native membership/order data.
+  Save new item (Alt+V) validates/submits; Discard (Alt+X) removes only the local row.
+  Typing and field saves never create a backend item. Creation failure retains
+  the draft and receipt/retry guards; no optimistic persisted item is fabricated.
+  A created item outside scope opens the same inspector as a creation result
+  without inserting a false day-list row.
 - Delete is revision-checked and confirmed. Modal guards suspend underlying
   field, result, tab, calendar and Alt command navigation.
 - Saved invalid/failed values survive for explicit retry. Retry reads current
@@ -92,7 +113,9 @@ same instantiated AgendaContent and editor identities.
 `tests/qml/tst_agenda.qml` exercises real Qt pointer/key dispatch and the recording
 shared daemon bridge: primary/inspection, field transactions and incoming drafts,
 summary/lazy-get guards, malformed replies, query/reconnect/receipt ownership,
-page-51 atomic refresh, modal creation/schedule failures, read-only capabilities,
+page-51 atomic refresh, inline creation/schedule failures, icon-choice/calendar
+transactions, today/day defaults, draft-row retention, late validation cancellation,
+read-only capabilities,
 checklist independence, notes, tabs, confirmed deletion and light/dark long text.
 `tests/qml/tst_agenda_calendar.qml` owns calendar fit/focus/resize integration.
 These offscreen fixtures do not certify live compositor, hardware IME, human

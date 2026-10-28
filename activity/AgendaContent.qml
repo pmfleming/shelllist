@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
 Ui.ProviderChooserSurface {
@@ -88,7 +87,6 @@ Ui.ProviderChooserSurface {
         briefText: sourceFeedbackMetrics.elidedText(content.controller.sourceError, Text.ElideRight, content.listItem ? content.listItem.feedbackTextWidth : 0)
         tone: "warning"
     }
-    AgendaCreateDialog { controller: content.controller }
     Ui.ConfirmationDialog {
         objectName: "agendaRebaseDialog"
         visible: content.controller.rebaseTarget !== null
@@ -106,44 +104,6 @@ Ui.ProviderChooserSurface {
         acceptEnabled: !content.controller.mutationBusy
         onAccepted: content.controller.confirmDelete()
         onCancelled: content.controller.deleteTarget = null
-    }
-    Ui.PromptDialog {
-        id: scheduleDialog
-        objectName: "agendaScheduleDialog"
-        visible: content.controller.scheduleOpen
-        title: qsTr("Edit schedule")
-        inputVisible: false
-        actionsVisible: true
-        inlineHeaderActions: true
-        actionSummaryVisible: false
-        instruction: ""
-        acceptLabel: qsTr("Save schedule")
-        acceptEnabled: !content.controller.mutationBusy && !content.controller.scheduleParsing
-        // Enter belongs to the native editor; only explicit Save submits this
-        // compound modal. A field Enter cannot accidentally commit the group.
-        enterEnabled: false
-        onAccepted: content.controller.saveSchedule()
-        onCancelled: content.controller.scheduleOpen = false
-        Loader {
-            id: scheduleLoader
-            Layout.fillWidth: true
-            active: scheduleDialog.visible
-            enabled: !content.controller.mutationBusy && !content.controller.scheduleParsing
-            sourceComponent: Component {
-                AgendaScheduleEditor {
-                    schedule: content.controller.scheduleDraft
-                    scheduleText: content.controller.scheduleText
-                    onChanged: function(value) { content.controller.scheduleRaw = value; }
-                }
-            }
-        }
-        Ui.FlatIconButton {
-            visible: content.controller.failedOperation?.key === "schedule"
-            icon: "find_in_page"
-            accessibleName: qsTr("Check schedule outcome")
-            enabled: !content.controller.receiptBusy && !content.controller.mutationBusy
-            onClicked: content.controller.checkReceipt()
-        }
     }
     Ui.PromptDialog {
         objectName: "agendaSettingsDialog"

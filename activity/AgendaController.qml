@@ -11,12 +11,15 @@ Ui.ChooserController {
     property var items: []
     readonly property alias itemModel: rows
     property var creationResult: null
-    readonly property var selectedSummary: creationResult || (publishing ? selectionDuringPublish : items[selection.selectedIndex]) || null
+    readonly property var draftRow: Object.assign({}, createDraft, {id: "agenda-new-item", draft: true, title: createDraft.title || qsTr("New item"), capabilities: {write: false, complete: false, delete: false}, task: createDraft.kind === "task" ? {completed: false} : null})
+    readonly property var listItems: createOpen ? [draftRow].concat(items) : items
+    readonly property bool creating: selectedSummary?.draft === true
+    readonly property var selectedSummary: creationResult || (publishing ? selectionDuringPublish : listItems[selection.selectedIndex]) || null
     property var selectionDuringPublish: null
     property var detailItem: null
     property int detailEpoch: -1
     onDetailItemChanged: detailEpoch = AgendaRepository.epoch
-    readonly property var selectedItem: selectedSummary && detailItem?.id === selectedSummary.id ? detailItem : selectedSummary && AgendaRepository.records[selectedSummary.id]?.revision >= selectedSummary.revision ? AgendaRepository.records[selectedSummary.id] : selectedSummary
+    readonly property var selectedItem: selectedSummary?.draft ? selectedSummary : selectedSummary && detailItem?.id === selectedSummary.id ? detailItem : selectedSummary && AgendaRepository.records[selectedSummary.id]?.revision >= selectedSummary.revision ? AgendaRepository.records[selectedSummary.id] : selectedSummary
     property bool detailLoading: false
     property string detailError: ""
     property int detailGeneration: 0
@@ -26,7 +29,10 @@ Ui.ChooserController {
         if (cached && detailItem?.id !== selectedSummary.id && cached.revision >= selectedSummary.revision) detailItem = cached;
         if (detailsOpen) requestSelected();
     }
-    onDetailsOpenChanged: if (detailsOpen) requestSelected()
+    onDetailsOpenChanged: {
+        if (detailsOpen) requestSelected();
+        else { scheduleOpen = false; pendingSchedule = null; }
+    }
     property string retainedId: ""
     property bool publishing: false
     property bool loading: false
@@ -60,7 +66,11 @@ Ui.ChooserController {
     property var createScheduleRaw: null
     property var pendingSchedule: null
     readonly property bool scheduleParsing: pendingSchedule !== null
-    onCreateOpenChanged: if (!createOpen && pendingSchedule?.purpose === "create") pendingSchedule = null
+    onCreateOpenChanged: {
+        if (!createOpen && pendingSchedule?.purpose === "create") pendingSchedule = null;
+        publish(items);
+    }
+    onListItemsChanged: rows.values = listItems.map(item => ({key: item.id, payload: item}))
     onScheduleOpenChanged: if (!scheduleOpen && pendingSchedule?.purpose === "schedule") pendingSchedule = null
     // Only explicitly saved/submitted drafts live here, never native buffers.
     property var savedDrafts: ({})
@@ -69,7 +79,7 @@ Ui.ChooserController {
     property bool receiptBusy: false
     property var rebaseTarget: null
     readonly property bool mutationBusy: operation !== null
-    readonly property bool modalOpen: createOpen || deleteTarget !== null || scheduleOpen || settingsOpen || collectionOpen || rebaseTarget !== null
+    readonly property bool modalOpen: deleteTarget !== null || settingsOpen || collectionOpen || rebaseTarget !== null
     readonly property var failedDraft: Object.values(savedDrafts).find(draft => draft.id === selectedItem?.id) || null
     geometry.horizontalOverflowAllowed: false
     navigationBlocked: modalOpen
@@ -83,7 +93,15 @@ Ui.ChooserController {
         tabs: ["details", "notes", "information"]
         onRestoreRequested: function(open, tab) { controller.detailsTab = tab; }
     }
-    detailActions: [
+    detailActions: creating ? [
+        {id: "create", label: qsTr("Save new item"), icon: "check", accessKey: "V", enabled: !mutationBusy && !scheduleParsing && !!createDraft.title.trim(), presentation: {group: "primary"}},
+        {id: "cancel-create", label: qsTr("Discard new item"), icon: "close", accessKey: "X", enabled: !mutationBusy, presentation: {group: "toolbar"}},
+        {id: "receipt", label: qsTr("Check creation outcome"), icon: "find_in_page", accessKey: "K", enabled: !!failedOperation && !mutationBusy && !receiptBusy, presentation: {group: "toolbar"}}
+    ] : scheduleOpen ? [
+        {id: "save-schedule", label: qsTr("Save schedule"), icon: "check", accessKey: "V", enabled: !mutationBusy && !scheduleParsing && canWrite(scheduleTarget), presentation: {group: "primary"}},
+        {id: "cancel-schedule", label: qsTr("Discard schedule changes"), icon: "close", accessKey: "X", enabled: !mutationBusy, presentation: {group: "toolbar"}},
+        {id: "receipt", label: qsTr("Check schedule outcome"), icon: "find_in_page", accessKey: "K", enabled: !!failedOperation && !mutationBusy && !receiptBusy, presentation: {group: "toolbar"}}
+    ] : [
         {id: "complete", label: selectedItem?.task?.completed ? qsTr("Reopen task") : qsTr("Complete task"), icon: selectedItem?.task?.completed ? "restore" : "check", accessKey: "C", enabled: canComplete(selectedItem), presentation: {group: selectedItem?.kind === "task" ? "primary" : "toolbar"}},
         {id: "schedule", label: qsTr("Edit schedule"), icon: "today", accessKey: "E", enabled: canWrite(selectedItem), presentation: {group: "toolbar"}},
         {id: "delete", label: qsTr("Delete item"), icon: "delete", accessKey: "D", enabled: !!selectedItem?.capabilities.delete && !mutationBusy, presentation: {group: "toolbar", tone: "danger"}},
@@ -95,13 +113,13 @@ Ui.ChooserController {
     function copy(value: var): var { return JSON.parse(JSON.stringify(value)); }
     function canWrite(item: var): bool { return !!item?.capabilities.write && item.summary !== true && !mutationBusy && AgendaRepository.ready; }
     function canComplete(item: var): bool { return item?.kind === "task" && !!item.capabilities.complete && !mutationBusy && AgendaRepository.ready; }
-    function resultKeyAt(index: int): string { return items[index]?.id || ""; }
-    function resultIndexForKey(key: string): int { return items.findIndex(item => item.id === key); }
-    function setDetailsTab(tab: string): void { if (["details", "notes", "information"].includes(tab)) detailsTab = tab; }
-    function cycleDetailsTab(backwards: bool): void { detailsTab = tabAfter(["details", "notes", "information"], detailsTab, backwards); }
+    function resultKeyAt(index: int): string { return listItems[index]?.id || ""; }
+    function resultIndexForKey(key: string): int { return listItems.findIndex(item => item.id === key); }
+    function setDetailsTab(tab: string): void { if (!creating && ["details", "notes", "information"].includes(tab)) { scheduleOpen = false; detailsTab = tab; } }
+    function cycleDetailsTab(backwards: bool): void { setDetailsTab(tabAfter(["details", "notes", "information"], detailsTab, backwards)); }
     function select(index): void {
-        if (index < 0 || index >= items.length) return;
-        if ((selectedSummary?.id || "") !== (items[index]?.id || "")) detailsClosing();
+        if (index < 0 || index >= listItems.length) return;
+        if ((selectedSummary?.id || "") !== (listItems[index]?.id || "")) { scheduleOpen = false; pendingSchedule = null; detailsClosing(); }
         creationResult = null; selection.selectedIndex = index;
     }
     function selectFirst(): void { select(0); }
@@ -112,13 +130,15 @@ Ui.ChooserController {
         if (hasSelection) detailsOpen = true;
     }
     function primarySelected(): bool {
-        if (!items.length || modalOpen) return false;
+        if (!listItems.length || modalOpen) return false;
+        if (creating) { openDetails(); return true; }
         if (creationResult && items.length) { creationResult = null; selection.selectedIndex = Math.max(0, selection.selectedIndex); }
         if (!selectedItem || modalOpen) return false;
         if (selectedItem.kind === "task") { complete(selectedItem); return true; }
         openDetails(); return true;
     }
     function requestSelected(): void {
+        if (creating) return;
         if (selectedSummary && (selectedItem?.summary === true || detailEpoch !== AgendaRepository.epoch)) requestItem(selectedSummary, false);
         else if (selectedSummary && selectedItem?.revision < selectedSummary.revision) requestItem(selectedSummary, false);
     }
@@ -166,12 +186,16 @@ Ui.ChooserController {
     }
     function triggerDetailAction(action: string): void {
         if (modalOpen) return;
-        if (action === "complete") complete(selectedItem);
+        if (action === "create") create();
+        else if (action === "cancel-create") cancelCreation();
+        else if (action === "save-schedule") saveSchedule();
+        else if (action === "cancel-schedule") scheduleOpen = false;
+        else if (action === "complete") complete(selectedItem);
         else if (action === "schedule" && canWrite(selectedItem)) {
             scheduleTarget = selectedItem;
             scheduleDraft = copy(valueFor(selectedItem, "schedule", selectedItem.schedule));
             scheduleText = JSON.stringify(scheduleDraft) === JSON.stringify(selectedItem.schedule) ? selectedItem.schedule_text || null : null; scheduleRaw = null;
-            scheduleOpen = true;
+            detailsTab = "details"; detailsOpen = true; scheduleOpen = true;
         } else if (action === "delete" && selectedItem?.capabilities.delete && !mutationBusy) deleteTarget = selectedItem;
         else if (action === "retry" && failedDraft && !mutationBusy) requestItem(selectedSummary, false, copy(failedDraft));
         else if (action === "receipt") checkReceipt();
@@ -208,11 +232,19 @@ Ui.ChooserController {
     }
     function openCreation(): void {
         if (modalOpen || mutationBusy) return;
-        if (failedOperation?.kind === "create") {
-            createDraft = copy(failedOperation.item); createScheduleRaw = null; createOpen = true; return;
+        scheduleOpen = false; creationResult = null;
+        if (!createOpen) {
+            const schedule = emptySchedule();
+            const today = dayScope || windowToday || Qt.formatDate(new Date(), "yyyy-MM-dd");
+            schedule.start_date = today; schedule.end_date = today;
+            createDraft = failedOperation?.kind === "create" ? copy(failedOperation.item) : {kind: "task", title: "", schedule: schedule};
+            createScheduleRaw = null; createOpen = true; error = "";
         }
-        const schedule = emptySchedule(); schedule.start_date = dayScope || null; schedule.end_date = dayScope || null;
-        createDraft = {kind: "task", title: "", schedule: schedule}; createScheduleRaw = null; createOpen = true; error = "";
+        select(0); detailsTab = "details"; detailsOpen = true;
+    }
+    function cancelCreation(): void {
+        if (mutationBusy) return;
+        detailsClosing(); createOpen = false; createScheduleRaw = null;
     }
     function create(): void {
         if (!createOpen || mutationBusy) return;
@@ -301,17 +333,18 @@ Ui.ChooserController {
     function publish(values: var): void {
         const id = creationResult?.id || retainedId;
         const previousId = selectedSummary?.id || "";
-        const index = values.findIndex(item => item.id === id);
-        const nextIndex = index >= 0 ? index : creationResult ? -1 : Math.max(0, Math.min(selection.selectedIndex, values.length - 1));
-        const nextId = creationResult && index < 0 ? creationResult.id : values[nextIndex]?.id || "";
+        const displayed = createOpen ? [draftRow].concat(values) : values;
+        const index = displayed.findIndex(item => item.id === id);
+        const nextIndex = index >= 0 ? index : creationResult ? -1 : Math.max(0, Math.min(selection.selectedIndex, displayed.length - 1));
+        const nextId = creationResult && index < 0 ? creationResult.id : displayed[nextIndex]?.id || "";
         if (nextId !== previousId) detailsClosing();
         resultsAboutToChange(true);
         selectionDuringPublish = selectedSummary; publishing = true;
         items = values;
-        rows.values = values.map(item => ({key: item.id, payload: item}));
+        rows.values = displayed.map(item => ({key: item.id, payload: item}));
         selection.selectedIndex = nextIndex;
         if (creationResult && index >= 0) creationResult = null;
-        retainedId = values[selection.selectedIndex]?.id || "";
+        retainedId = displayed[selection.selectedIndex]?.id || "";
         publishing = false; selectionDuringPublish = null;
         if ((selectedSummary?.id || "") !== previousId) selectionSerial++;
         resultsChanged();
@@ -393,7 +426,6 @@ Ui.ChooserController {
         else {
             AgendaRepository.accept(data.item, data.catalog_revision);
             if (draft.kind === "create") {
-                publishing = true; selection.selectedIndex = -1; publishing = false;
                 creationResult = data.item; createOpen = false; detailsOpen = true;
             }
             if (draft.key === "schedule") scheduleOpen = false;
@@ -419,18 +451,20 @@ Ui.ChooserController {
         else { closeModals(); readGeneration++; detailGeneration++; loading = false; detailLoading = false; debounce.stop(); }
     }
     onFilterTextChanged: { if (selection.queryText !== filterText) selection.queryText = filterText; refresh(); }
-    onDayScopeChanged: { if (creationResult) detailsClosing(); creationResult = null; refresh(); }
+    onDayScopeChanged: { if (creationResult) detailsClosing(); creationResult = null; createOpen = false; scheduleOpen = false; refresh(); }
     Component.onDestruction: AgendaRepository.setActive(ownerId, false)
     Component.onCompleted: { ownerId = AgendaRepository.ownerId(); AgendaRepository.setActive(ownerId, uiActive); if (uiActive) refresh(); }
     Timer { id: debounce; interval: 100; onTriggered: controller.readPage(false) }
     Core.SelectionModel {
         id: selection
-        count: controller.items.length
+        count: controller.listItems.length
         onQueryTextChanged: controller.filterText = queryText
         onSelectedIndexChanged: if (!controller.publishing) {
             controller.selectionSerial++;
-            controller.retainedId = controller.items[selectedIndex]?.id || "";
+            controller.retainedId = controller.listItems[selectedIndex]?.id || "";
             controller.creationResult = null;
+            controller.scheduleOpen = false;
+            controller.pendingSchedule = null;
         }
     }
     Core.KeyedListModel { id: rows }

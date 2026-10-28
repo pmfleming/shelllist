@@ -463,38 +463,109 @@ DaemonTestCase {
         compare(mutations().length,0);keyClick(Qt.Key_Escape);tryCompare(title,"text","Backend51");
     }
     function chooseOption(s,name) {
-        const control=field(s,name);mouseClick(control);keyClick(Qt.Key_Down);keyClick(Qt.Key_Return);wait(0);
+        const control=field(s,name);
+        verify(control instanceof Ui.SegmentedControl);verify(control.iconOnly);
+        tryVerify(()=>s.view.detailsNavigation.targets.indexOf(control)>=0);
+        verify(waitForPolish(s.view.Window.window));
+        mouseClick(findChild(control,"segment-"+control.options[1].value));
+        tryVerify(()=>control.editSession.active);
+        keyClick(Qt.Key_Return);wait(0);
+    }
+    function beginCreation(s) {
+        s.view.listItem.focusSearch();keyClick(Qt.Key_A,Qt.AltModifier);
+        tryCompare(s.owner,"createOpen",true);tryCompare(s.owner,"detailsExpansionProgress",1);
+        tryVerify(()=>s.view.detailsNavigation.contentReady);
+        verify(!s.owner.modalOpen);verify(s.owner.creating);
+        compare(s.owner.itemModel.count,s.owner.items.length+1);
+        verify(field(s,"agendaRow::agenda-new-item").visible);
+        verify(findChild(s.view,"agendaCreateDialog")===null);
+    }
+    function saveCompound(s,create) { mouseClick(field(s,"detailAction:"+(create?"create":"save-schedule"))); }
+    function test_creationIconChoicesAndCalendarUseSharedFieldTransactions_data() { return [{tag:"light",scheme:Qt.Light},{tag:"dark",scheme:Qt.Dark}]; }
+    function test_creationIconChoicesAndCalendarUseSharedFieldTransactions(data) {
+        Ui.Theme.previewColorScheme=data.scheme;
+        const s=start();beginCreation(s);
+        edit(s,"agendaCreateTitle","Plan the next release",Qt.Key_Return);
+        tryCompare(field(s,"agendaRow::agenda-new-item").item,"title","Plan the next release");
+        capture(s,"agenda-inline-create-"+data.tag);
+        const kind=field(s,"agendaCreateKind");
+        mouseClick(findChild(kind,"segment-event"));compare(s.owner.createDraft.kind,"task");
+        keyClick(Qt.Key_Escape);compare(kind.value,"task");
+        const dateField=field(s,"agendaScheduleStart");
+        clickRevealed(s,"agendaScheduleStart");mouseClick(dateField.trailingAction);
+        tryCompare(dateField,"calendarVisible",true);
+        verify(waitForPolish(s.view.Window.window));
+        capture({view:s.view.Window.window.contentItem},"agenda-date-picker-"+data.tag);
+        keyClick(Qt.Key_D,Qt.AltModifier);verify(s.owner.deleteTarget===null);
+        const dateChoice=findChild(s.view.Window.window.contentItem,"dateChoice:2026-10-29");
+        verify(dateChoice!==null);mouseClick(dateChoice);
+        tryCompare(dateField,"calendarVisible",false);compare(dateField.text,"2026-10-29");
+        compare(s.owner.createScheduleRaw,null,"calendar choice is a local field draft");
+        keyClick(Qt.Key_Escape);compare(dateField.text,"2026-10-27");
+        mouseClick(dateField.trailingAction);tryCompare(dateField,"calendarVisible",true);
+        keyClick(Qt.Key_Right);keyClick(Qt.Key_Return);
+        compare(s.owner.createScheduleRaw.start_text,"2026-10-28");
+        compare(s.owner.createScheduleRaw.end_text,"2026-10-27");
+        const endDate=field(s,"agendaScheduleEnd");mouseClick(endDate.trailingAction);
+        tryCompare(endDate,"calendarVisible",true);verify(waitForPolish(s.view.Window.window));
+        mouseClick(findChild(s.view.Window.window.contentItem,"dateNextMonth"));
+        compare(endDate.displayedMonth.getMonth(),10);compare(endDate.text,"2026-10-27");
+        keyClick(Qt.Key_Escape);tryCompare(endDate,"calendarVisible",false);compare(endDate.text,"2026-10-27");
+        compare(mutations().length,0);compare(calls.filter(call=>call.method==="agenda.schedule").length,0);
+        edit(s,"agendaCreateTitle","Retained draft",Qt.Key_Return);
+        accept(s.owner,[item("b","event"),item("a")],2);
+        compare(s.owner.selectedSummary.id,"agenda-new-item");compare(s.owner.itemModel.count,3);
+        s.owner.select(1);tryVerify(()=>!s.owner.creating);
+        s.view.listItem.focusSearch();keyClick(Qt.Key_A,Qt.AltModifier);
+        tryVerify(()=>s.owner.creating);compare(field(s,"agendaScheduleStart").text,"2026-10-28");
+        compare(field(s,"agendaCreateTitle").text,"Retained draft");
+        mouseClick(field(s,"detailAction:cancel-create"));compare(s.owner.itemModel.count,2);compare(mutations().length,0);
+    }
+    function test_collapsingScheduleCancelsUnsubmittedValidation() {
+        const s=start();open(s);s.view.listItem.focusList();keyClick(Qt.Key_E,Qt.AltModifier);
+        edit(s,"agendaScheduleStart","2026-10-29",Qt.Key_Return);saveCompound(s,false);
+        verify(s.owner.scheduleParsing);
+        s.view.listItem.focusList();keyClick(Qt.Key_Left);tryCompare(s.owner,"detailsOpen",false);
+        verify(!s.owner.scheduleOpen);verify(!s.owner.scheduleParsing);
+        const schedule=s.owner.emptySchedule();schedule.start_date="2026-10-29";
+        parsed(schedule);compare(mutations().length,0);
+    }
+    function test_scheduleSelectionChangeCancelsLateValidation() {
+        const s=start();open(s);s.view.listItem.focusList();keyClick(Qt.Key_E,Qt.AltModifier);
+        edit(s,"agendaScheduleStart","2026-10-29",Qt.Key_Return);saveCompound(s,false);
+        verify(s.owner.scheduleParsing);s.owner.select(1);verify(!s.owner.scheduleOpen);
+        const schedule=s.owner.emptySchedule();schedule.start_date="2026-10-29";
+        parsed(schedule);compare(mutations().length,0);compare(s.owner.selectedItem.id,"b");
     }
     function test_timedCreationKeepsRawOffsetAndZoneAndCancelsLateParser() {
-        const s=start([]);s.view.listItem.focusSearch();keyClick(Qt.Key_A,Qt.AltModifier);
-        const modal=field(s,"agendaCreateDialog");
+        const s=start([]);beginCreation(s);
         compare(field(s,"agendaCreateKind").value,"task");chooseOption(s,"agendaCreateKind");compare(s.owner.createDraft.kind,"event");
         compare(field(s,"agendaScheduleMode").value,"date");chooseOption(s,"agendaScheduleMode");
-        field(s,"agendaScheduleStart").focusInput(true);typeText("2026-03-29T02:30:00+01:00");
-        field(s,"agendaScheduleZone").focusInput(true);typeText("Europe/Amsterdam");
-        findChild(modal,"promptInput").focusInput(true);typeText("DST example");
-        mouseClick(findChild(modal,"detailAction:accept"));
+        edit(s,"agendaScheduleStart","2026-03-29T02:30:00+01:00",Qt.Key_Return);
+        edit(s,"agendaScheduleZone","Europe/Amsterdam",Qt.Key_Return);
+        edit(s,"agendaCreateTitle","DST example",Qt.Key_Return);
+        saveCompound(s,true);
         const parse=calls.filter(call=>call.method==="agenda.schedule").slice(-1)[0];
         compare(parse.params.mode,"timed");compare(parse.params.start_text,"2026-03-29T02:30:00+01:00");compare(parse.params.timezone,"Europe/Amsterdam");compare(mutations().length,0);
         parsed(null,"Local time is in a DST gap");compare(field(s,"agendaScheduleStart").text,"2026-03-29T02:30:00+01:00");capture(s,"agenda-timed-validation");
-        field(s,"agendaScheduleStart").focusInput(true);keySequence("Ctrl+A");typeText("2026-03-29T03:30:00+02:00");
-        mouseClick(findChild(modal,"detailAction:accept"));verify(s.owner.scheduleParsing);
-        keyClick(Qt.Key_Escape);tryCompare(s.owner,"createOpen",false);
+        edit(s,"agendaScheduleStart","2026-03-29T03:30:00+02:00",Qt.Key_Return);
+        saveCompound(s,true);verify(s.owner.scheduleParsing);
+        mouseClick(field(s,"detailAction:cancel-create"));tryCompare(s.owner,"createOpen",false);
         parsed({mode:"timed",start_date:null,end_date:null,start_unix_ms:1774747800000,end_unix_ms:null,timezone:"Europe/Amsterdam"});
         compare(mutations().length,0,"late validation cannot create after cancellation");
     }
     function test_existingTimedEndpointIsPreservedAsFactNotReparsedOrInferred() {
         const record=item("timed","event");record.schedule={mode:"timed",start_date:null,end_date:null,start_unix_ms:1774747800000,end_unix_ms:null,timezone:"Europe/Amsterdam"};
         const s=start([record]);open(s);s.view.listItem.focusList();keyClick(Qt.Key_E,Qt.AltModifier);
-        const modal=field(s,"agendaScheduleDialog");
+        verify(findChild(s.view,"agendaScheduleDialog")===null);verify(!s.owner.modalOpen);
         compare(field(s,"agendaScheduleStart").text,"2026-03-29T01:30:00.000Z");
-        field(s,"agendaScheduleEnd").focusInput(true);typeText("2026-03-29T04:30:00+02:00");mouseClick(findChild(modal,"detailAction:accept"));
+        edit(s,"agendaScheduleEnd","2026-03-29T04:30:00+02:00",Qt.Key_Return);saveCompound(s,false);
         const parse=calls.filter(call=>call.method==="agenda.schedule").slice(-1)[0];compare(parse.params.start_text,"");compare(parse.params.end_text,"2026-03-29T04:30:00+02:00");
         parsed({mode:"timed",start_date:null,end_date:null,start_unix_ms:null,end_unix_ms:1774751400000,timezone:"Europe/Amsterdam"});
         compare(mutations().length,1);compare(mutations()[0].params.patch.schedule.start_unix_ms,1774747800000);compare(mutations()[0].params.patch.schedule.end_unix_ms,1774751400000);
         const saved=JSON.parse(JSON.stringify(record));saved.revision=2;saved.schedule=mutations()[0].params.patch.schedule;success(s,saved);
         s.view.listItem.focusList();keyClick(Qt.Key_E,Qt.AltModifier);
-        field(s,"agendaScheduleStart").focusInput(true);keySequence("Ctrl+A");keyClick(Qt.Key_Backspace);mouseClick(findChild(modal,"detailAction:accept"));
+        edit(s,"agendaScheduleStart","",Qt.Key_Return);saveCompound(s,false);
         parsed({mode:"timed",start_date:null,end_date:null,start_unix_ms:null,end_unix_ms:null,timezone:"Europe/Amsterdam"});
         compare(mutations().length,2);compare(mutations()[1].params.patch.schedule.start_unix_ms,null);compare(mutations()[1].params.patch.schedule.end_unix_ms,1774751400000,"unchanged stored end stays a fact, never inferred");
     }
@@ -506,24 +577,27 @@ DaemonTestCase {
         s.owner.availableScreenWidth=1280;compare(field(s,"agendaTitle"),title);compare(title.text,"Retained draft");keyClick(Qt.Key_Escape);tryCompare(title,"text","Item a");
     }
     function test_standaloneTitleOnlyAndNarrowLayoutGuard() {
-        const s=start([]);s.view.listItem.focusSearch();keyClick(Qt.Key_A,Qt.AltModifier);
-        const modal=field(s,"agendaCreateDialog");tryVerify(()=>findChild(modal,"promptInput").inputActiveFocus);wait(0);
-        typeText("Title only");mouseClick(findChild(modal,"detailAction:accept"));compare(mutations().length,1);
-        compare(mutations()[0].params.item.title,"Title only");compare(mutations()[0].params.item.schedule.start_date,null);compare(mutations()[0].params.item.schedule.end_date,null);
+        const s=start([]);beginCreation(s);
+        const title=field(s,"agendaCreateTitle"),kind=field(s,"agendaCreateKind");
+        verify(title.mapToItem(s.view,0,0).y<kind.mapToItem(s.view,0,0).y,"title comes first");
+        edit(s,"agendaCreateTitle","Discard me",Qt.Key_Escape);compare(s.owner.createDraft.title,"");
+        edit(s,"agendaCreateTitle","Title only",Qt.Key_Tab);compare(s.owner.createDraft.title,"Title only");
+        compare(mutations().length,0);saveCompound(s,true);compare(mutations().length,1);
+        compare(mutations()[0].params.item.title,"Title only");compare(mutations()[0].params.item.schedule.start_date,s.owner.windowToday);compare(mutations()[0].params.item.schedule.end_date,s.owner.windowToday);
         success(s,item("title-only"));
         s.owner.availableScreenWidth=400;tryCompare(s.view,"supported",false);verify(!s.view.navigationEnabled);verify(!s.owner.geometry.horizontalOverflowAllowed);
     }
     function test_atomicScheduleDraftFailureClearAndReopen() {
         const s=start();open(s);s.view.listItem.focusList();keyClick(Qt.Key_E,Qt.AltModifier);
         tryCompare(s.owner,"scheduleOpen",true);
-        const modal=field(s,"agendaScheduleDialog");
-        const startField=field(s,"agendaScheduleStart");startField.focusInput(true);typeText("2026-12-02");
-        const endField=field(s,"agendaScheduleEnd");endField.focusInput(true);typeText("2026-11-01");
-        compare(mutations().length,0,"modal fields remain local until Save");
-        mouseClick(findChild(modal,"detailAction:accept"));compare(mutations().length,0);
+        verify(!s.owner.modalOpen);
+        const startField=edit(s,"agendaScheduleStart","2026-12-02",Qt.Key_Return);
+        edit(s,"agendaScheduleEnd","2026-11-01",Qt.Key_Return);
+        compare(mutations().length,0,"inline fields remain local until Save schedule");
+        saveCompound(s,false);compare(mutations().length,0);
         parsed(null,"Reversed dates");verify(s.owner.scheduleOpen);compare(startField.text,"2026-12-02");
-        endField.focusInput(true);keySequence("Ctrl+A");keyClick(Qt.Key_Backspace);typeText("2026-12-03");
-        mouseClick(findChild(modal,"detailAction:accept"));compare(mutations().length,0);
+        edit(s,"agendaScheduleEnd","2026-12-03",Qt.Key_Return);
+        saveCompound(s,false);compare(mutations().length,0);
         const scheduled=item("a","task",2);scheduled.schedule.start_date="2026-12-02";scheduled.schedule.end_date="2026-12-03";
         parsed(scheduled.schedule);compare(mutations().length,1);
         compare(mutations()[0].params.patch.schedule.start_date,"2026-12-02");compare(mutations()[0].params.patch.schedule.end_date,"2026-12-03");
@@ -608,19 +682,17 @@ DaemonTestCase {
         compare(s.owner.items[0].title,"Shared accepted");compare(other.items[0].title,"Shared accepted");
     }
     function test_sharedCreationDayDefaultsAndOutsideScopeInspector() {
-        const s=start([]);s.owner.dayScope="2026-10-27";s.view.listItem.focusSearch();
-        keyClick(Qt.Key_A,Qt.AltModifier);tryCompare(s.owner,"createOpen",true);
+        const s=start([]);s.owner.dayScope="2026-10-27";beginCreation(s);
         compare(s.owner.createDraft.schedule.start_date,"2026-10-27");compare(s.owner.createDraft.schedule.end_date,"2026-10-27");capture(s,"agenda-creation-context");
-        const modal=field(s,"agendaCreateDialog");
-        field(s,"agendaScheduleStart").focusInput(true);keySequence("Ctrl+A");keyClick(Qt.Key_Backspace);
-        field(s,"agendaScheduleEnd").focusInput(true);keySequence("Ctrl+A");keyClick(Qt.Key_Backspace);
-        field(s,"promptInput").focusInput(true);typeText("New item");
-        keyClick(Qt.Key_Tab,Qt.ControlModifier);compare(s.owner.detailsTab,"details","modal blocks tab command");
-        mouseClick(findChild(modal,"detailAction:accept"));
+        edit(s,"agendaScheduleStart","",Qt.Key_Return);
+        edit(s,"agendaScheduleEnd","",Qt.Key_Return);
+        edit(s,"agendaCreateTitle","New item",Qt.Key_Return);
+        keyClick(Qt.Key_Tab,Qt.ControlModifier);compare(s.owner.detailsTab,"details","draft has one detail page");
+        saveCompound(s,true);
         parsed(s.owner.emptySchedule());
         compare(mutations().length,1);compare(mutations()[0].params.item.schedule.start_date,null);compare(mutations()[0].params.item.title,"New item");
         finish(s,null,"Validation failed");verify(s.owner.createOpen);compare(s.owner.createDraft.title,"New item");
-        mouseClick(findChild(modal,"detailAction:accept"));parsed(s.owner.emptySchedule());compare(mutations().length,2);
+        saveCompound(s,true);parsed(s.owner.emptySchedule());compare(mutations().length,2);
         const record=item("created");record.title="New item";success(s,record);
         compare(s.owner.items.length,0,"creation outside day never inserts a false scoped row");
         compare(s.owner.selectedItem.id,"created");verify(s.owner.detailsOpen);
