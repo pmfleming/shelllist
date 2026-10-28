@@ -177,7 +177,16 @@
     },
     "rustix": {
       "requirement": "1",
-      "version": "1.1.4"
+      "version": "1.1.4",
+      "lockExceptions": {
+        "bar-daemon/Cargo.lock": {
+          "versions": [
+            "0.38.44",
+            "1.1.4"
+          ],
+          "reason": "Accepted Agenda/Turso 0.8.0 uses turso_sdk_kit/turso_sync_sdk_kit 0.8.3 build-dependency bindgen 0.69.5 -> which 4.4.2 -> rustix 0.38.44. This exact per-lock transitive build-tool exception preserves the shared direct requirement 1 and resolution 1.1.4; no dependency or lockfile upgrade."
+        }
+      }
     },
     "serde": {
       "requirement": "1",
