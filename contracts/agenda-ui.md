@@ -48,6 +48,15 @@ loaded window, expansion and shared chooser presentation memory independently.
   re-entry still requires the existing explicit reviewed Retry to rebase.
   Cancellation/new target/finished session clears only the transient capture.
   Incoming revisions preserve keyed child editors and active buffers.
+  Notes presents links and checklist steps in independent eight-child windows
+  using shared `CollectionPager`. Previous/Next are commands (also available in
+  Alt+J), never field Tab stops. Paging explicitly discards an unsubmitted field
+  session without writing; submitted/failed compound drafts remain owned by the
+  controller. Incoming insertions/reorders pin the active child ID in the bounded
+  window, preserving its editor and begin-time revision. Child commands resolve
+  IDs against the complete collection, not page-local indices. Per-item page
+  anchors use the shared presentation memory; all 128 links / 512 steps remain
+  reachable without instantiating all their editors.
 - Schedule editing stays inside the expanded Details view (Alt+E), below Title,
   never in a modal. Its shared icon-only Mode selector offers date-only/timed.
   Field Enter/Tab saves a local compound draft; Escape discards the current field.
@@ -116,7 +125,9 @@ summary/lazy-get guards, malformed replies, query/reconnect/receipt ownership,
 page-51 atomic refresh, inline creation/schedule failures, icon-choice/calendar
 transactions, today/day defaults, draft-row retention, late validation cancellation,
 read-only capabilities,
-checklist independence, notes, tabs, confirmed deletion and light/dark long text.
+checklist independence, maximum-size bounded Notes collections, cross-page child
+commands, incoming reorder/editor pinning, page-memory restoration, notes, tabs,
+confirmed deletion and light/dark long text.
 `tests/qml/tst_agenda_calendar.qml` owns calendar fit/focus/resize integration.
 These offscreen fixtures do not certify live compositor, hardware IME, human
 screen-reader or production database/migration behavior.

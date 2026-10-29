@@ -11,14 +11,6 @@ Ui.ActionDetailsPane {
     readonly property bool writable: controller.canWrite(item)
     readonly property var eventFields: [{key: "location", label: qsTr("Location")}, {key: "people", label: qsTr("People")}, {key: "status", label: qsTr("Status")}]
     readonly property var taskFields: [{key: "priority", label: qsTr("Priority")}, {key: "status", label: qsTr("Status")}]
-    Core.KeyedListModel {
-        id: linkRows
-        values: pane.value("links", pane.item?.links || []).map(link => ({key: pane.item.id + ":" + link.id, payload: link}))
-    }
-    Core.KeyedListModel {
-        id: stepRows
-        values: pane.value("task.checklist", pane.item?.task?.checklist || []).map(step => ({key: pane.item.id + ":" + step.id, payload: step}))
-    }
     objectName: "agendaItemDetails"
     chooserController: controller
     emptyText: qsTr("Select an item")
@@ -33,19 +25,24 @@ Ui.ActionDetailsPane {
         return value === 0 && item?.source_id !== "local" && item?.capabilities.write === false ? qsTr("Unknown") : timestamp(value);
     }
     function value(key: string, fallback: var): var { return controller.valueFor(item, key, fallback); }
-    function changeCollection(key: string, index: int, field: string, value: var): void {
+    function changeCollection(key: string, id: string, field: string, value: var): void {
         const values = controller.copy(pane.value(key, key === "links" ? item.links : item.task.checklist));
+        const index = values.findIndex(value => value.id === id);
+        if (index < 0) return;
         values[index][field] = value;
         controller.saveField(key, values);
     }
-    function moveCollection(key: string, index: int, delta: int): void {
+    function moveCollection(key: string, id: string, delta: int): void {
         const values = controller.copy(pane.value(key, key === "links" ? item.links : item.task.checklist));
-        if (index + delta < 0 || index + delta >= values.length) return;
+        const index = values.findIndex(value => value.id === id);
+        if (index < 0 || index + delta < 0 || index + delta >= values.length) return;
         const value = values.splice(index, 1)[0]; values.splice(index + delta, 0, value);
         controller.saveField(key, values);
     }
-    function removeCollection(key: string, index: int): void {
+    function removeCollection(key: string, id: string): void {
         const values = controller.copy(pane.value(key, key === "links" ? item.links : item.task.checklist));
+        const index = values.findIndex(value => value.id === id);
+        if (index < 0) return;
         values.splice(index, 1); controller.saveField(key, values);
     }
     Ui.TabbedDetailsStack {
@@ -164,6 +161,25 @@ Ui.ActionDetailsPane {
     Component {
         id: notes
         Ui.DetailFlickable {
+            id: notesPage
+            Core.KeyedListModel {
+                id: linkRows
+                values: linksPager.visibleItems.map(link => ({key: pane.item.id + ":" + link.id, payload: link}))
+            }
+            Core.KeyedListModel {
+                id: stepRows
+                values: stepsPager.visibleItems.map(step => ({key: pane.item.id + ":" + step.id, payload: step}))
+            }
+            function turnPage(pager: Ui.CollectionPager, offset: int): void {
+                if (pane.controller.navigationBlocked || pane.controller.mutationBusy) return;
+                pane.controller.detailsClosing();
+                pager.showPage(offset);
+                Qt.callLater(function() {
+                    if (!notesPage || notesPage.tearingDown || !pager) return;
+                    notesPage.revealItem(pager);
+                    notesPage.contentY = Math.max(0, Math.min(notesPage.contentHeight - notesPage.height, pager.mapToItem(notesPage.contentItem, 0, 0).y));
+                });
+            }
             viewMemory: pane.controller.viewMemory
             memoryTab: "notes"
             revealFocusedControl: true
@@ -186,15 +202,33 @@ Ui.ActionDetailsPane {
                     }
                 }
             }
-            Ui.SectionHeading { width: parent.width; title: qsTr("Links") }
+            Ui.CollectionPager {
+                id: linksPager
+                objectName: "agendaLinkPages"
+                viewMemory: pane.controller.viewMemory
+                memoryTab: "notes"
+                memoryKey: "links"
+                width: parent.width
+                title: qsTr("Links")
+                items: pane.value("links", pane.item?.links || [])
+                contextKey: pane.item?.id || ""
+                blocked: pane.controller.navigationBlocked || pane.controller.mutationBusy
+                onPageRequested: function(offset) { notesPage.turnPage(linksPager, offset); }
+            }
             Repeater {
                 model: linkRows
                 Column {
                     id: link
                     required property var resultData
                     readonly property var modelData: resultData.payload
-                    required property int index
                     width: parent.width
+                    Binding {
+                        target: linksPager
+                        property: "pinnedKey"
+                        value: link.modelData.id
+                        when: linkLabelEditor.editSession.active || linkUrlEditor.editSession.active
+                        restoreMode: Binding.RestoreBindingOrValue
+                    }
                     Ui.FormField {
                         width: parent.width
                         label: qsTr("Label")
@@ -242,7 +276,7 @@ Ui.ActionDetailsPane {
                         icon: "delete"
                         accessibleName: qsTr("Remove link %1").arg(link.modelData.label)
                         enabled: pane.writable
-                        onClicked: pane.removeCollection("links", link.index)
+                        onClicked: pane.removeCollection("links", link.modelData.id)
                     }
                 }
             }
@@ -253,15 +287,35 @@ Ui.ActionDetailsPane {
                 enabled: pane.writable
                 onClicked: pane.controller.openCollection("links")
             }
-            Ui.SectionHeading { width: parent.width; visible: pane.item?.kind === "task"; title: qsTr("Checklist") }
+            Ui.CollectionPager {
+                id: stepsPager
+                objectName: "agendaStepPages"
+                viewMemory: pane.controller.viewMemory
+                memoryTab: "notes"
+                memoryKey: "checklist"
+                width: parent.width
+                visible: pane.item?.kind === "task"
+                title: qsTr("Checklist")
+                items: pane.value("task.checklist", pane.item?.task?.checklist || [])
+                contextKey: pane.item?.id || ""
+                blocked: pane.controller.navigationBlocked || pane.controller.mutationBusy
+                onPageRequested: function(offset) { notesPage.turnPage(stepsPager, offset); }
+            }
             Repeater {
                 model: stepRows
                 Column {
                     id: step
                     required property var resultData
                     readonly property var modelData: resultData.payload
-                    required property int index
+                    readonly property int collectionIndex: stepsPager.items.findIndex(value => value.id === modelData.id)
                     width: parent.width
+                    Binding {
+                        target: stepsPager
+                        property: "pinnedKey"
+                        value: step.modelData.id
+                        when: stepEditor.editSession.active
+                        restoreMode: Binding.RestoreBindingOrValue
+                    }
                     Ui.FormField {
                         width: parent.width
                         label: qsTr("Step")
@@ -289,12 +343,12 @@ Ui.ActionDetailsPane {
                         title: qsTr("Checked")
                         enabled: pane.writable
                         checked: step.modelData.checked
-                        onClicked: pane.changeCollection("task.checklist", step.index, "checked", !checked)
+                        onClicked: pane.changeCollection("task.checklist", step.modelData.id, "checked", !checked)
                     }
                     Row {
-                        Ui.FlatIconButton { objectName: "agendaStepUp::" + step.modelData.id; icon: "arrow_upward"; accessibleName: qsTr("Move %1 up").arg(step.modelData.text); enabled: pane.writable && step.index > 0; onClicked: pane.moveCollection("task.checklist", step.index, -1) }
-                        Ui.FlatIconButton { objectName: "agendaStepDown::" + step.modelData.id; icon: "arrow_downward"; accessibleName: qsTr("Move %1 down").arg(step.modelData.text); enabled: pane.writable && step.index + 1 < stepRows.count; onClicked: pane.moveCollection("task.checklist", step.index, 1) }
-                        Ui.FlatIconButton { objectName: "agendaRemoveStep::" + step.modelData.id; icon: "delete"; accessibleName: qsTr("Remove %1").arg(step.modelData.text); enabled: pane.writable; onClicked: pane.removeCollection("task.checklist", step.index) }
+                        Ui.FlatIconButton { objectName: "agendaStepUp::" + step.modelData.id; icon: "arrow_upward"; accessibleName: qsTr("Move %1 up").arg(step.modelData.text); enabled: pane.writable && step.collectionIndex > 0; onClicked: pane.moveCollection("task.checklist", step.modelData.id, -1) }
+                        Ui.FlatIconButton { objectName: "agendaStepDown::" + step.modelData.id; icon: "arrow_downward"; accessibleName: qsTr("Move %1 down").arg(step.modelData.text); enabled: pane.writable && step.collectionIndex + 1 < stepsPager.items.length; onClicked: pane.moveCollection("task.checklist", step.modelData.id, 1) }
+                        Ui.FlatIconButton { objectName: "agendaRemoveStep::" + step.modelData.id; icon: "delete"; accessibleName: qsTr("Remove %1").arg(step.modelData.text); enabled: pane.writable; onClicked: pane.removeCollection("task.checklist", step.modelData.id) }
                     }
                 }
             }

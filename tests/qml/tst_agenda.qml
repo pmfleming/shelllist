@@ -615,6 +615,52 @@ DaemonTestCase {
         const malformed=item("bad");malformed.task.checklist.push({id:"step1",text:"Duplicate identity",checked:true});
         accept(s.owner,[malformed],2);compare(s.owner.items[0].id,"imported");verify(s.owner.error.length>0);
     }
+    function test_largeNotesCollectionsAreBoundedAndCommandsUseStableIds() {
+        const record=item("large");
+        record.links=Array.from({length:128},(_,i)=>({id:"link"+i,label:"Link "+i,url:"https://example.org/"+i}));
+        record.task.checklist=Array.from({length:512},(_,i)=>({id:"step"+i,text:"Step "+i,checked:false}));
+        const s=start([record]);open(s);s.owner.setDetailsTab("notes");
+        const steps=field(s,"agendaStepPages"),links=field(s,"agendaLinkPages");
+        compare(steps.visibleItems.length,8);compare(links.visibleItems.length,8);
+        verify(findChild(s.view,"agendaStep::step7")!==null);compare(findChild(s.view,"agendaStep::step8"),null);
+        compare(findChild(s.view,"agendaLinkUrl::link8"),null);
+        verify(s.view.detailsNavigation.targets.indexOf(field(s,"agendaStepPages-next"))<0,"pagination commands are not fields");
+        wait(100);clickRevealed(s,"agendaStepPages-next");tryCompare(steps,"start",8);
+        compare(findChild(s.view,"agendaStep::step0"),null);field(s,"agendaStep::step8");compare(mutations().length,0);
+        clickRevealed(s,"agendaStepUp::step8");compare(mutations().length,1);
+        const patch=mutations()[0].params.patch.task.checklist;
+        compare(patch.length,512);compare(patch[7].id,"step8");compare(patch[8].id,"step7");
+        const saved=s.owner.copy(record);saved.revision=2;saved.task.checklist=patch;success(s,saved,2);
+        steps.pageRequested(504);field(s,"agendaStep::step511");compare(steps.visibleItems.length,8);
+        verify(!field(s,"agendaStepDown::step511").enabled);verify(!field(s,"agendaStepPages-next").enabled);
+        Ui.Theme.previewColorScheme=Qt.Dark;capture(s,"agenda-paged-checklist-dark");
+        Ui.Theme.previewColorScheme=Qt.Light;capture(s,"agenda-paged-checklist-light");
+        links.pageRequested(120);field(s,"agendaLinkUrl::link127");compare(links.visibleItems.length,8);wait(0);
+        clickRevealed(s,"agendaRemoveLink::link127");compare(mutations().length,2);
+        compare(mutations()[1].params.patch.links.length,127);compare(mutations()[1].params.patch.links[0].id,"link0");
+        verify(!mutations()[1].params.patch.links.some(link=>link.id==="link127"));
+        finish(s,null,"Keep submitted link draft");verify(s.owner.savedDrafts["large:links"]!==undefined);
+        s.owner.setDetailsTab("details");s.owner.setDetailsTab("notes");
+        tryCompare(field(s,"agendaStepPages"),"start",504);
+        compare(field(s,"agendaLinkPages").start,120);
+    }
+    function test_notesPageChangesDiscardAndIncomingReorderPinsEditor() {
+        const record=item("a");record.task.checklist=Array.from({length:24},(_,i)=>({id:"step"+i,text:"Step "+i,checked:false}));
+        const s=start([record]);open(s);s.owner.setDetailsTab("notes");
+        const pager=field(s,"agendaStepPages"),editor=edit(s,"agendaStep::step2","Local buffer");
+        const incoming=s.owner.copy(record);incoming.revision=2;incoming.task.checklist.push(incoming.task.checklist.splice(2,1)[0]);
+        Agenda.AgendaRepository.accept(incoming,2);
+        compare(field(s,"agendaStep::step2"),editor);compare(editor.text,"Local buffer");compare(pager.visibleItems.length,8);
+        compare(mutations().length,0);keyClick(Qt.Key_Return);
+        compare(mutations().length,1);compare(mutations()[0].params.expected_revision,1);
+        compare(mutations()[0].params.patch.task.checklist[2].id,"step2");compare(mutations()[0].params.patch.task.checklist[2].text,"Local buffer");
+        finish(s,null,"Native conflict");verify(s.owner.savedDrafts["a:task.checklist"]!==undefined);
+        pager.pageRequested(0);edit(s,"agendaStep::step0","Never submitted");
+        clickRevealed(s,"agendaStepPages-next");compare(mutations().length,1);
+        compare(findChild(s.view,"agendaStep::step0"),null);clickRevealed(s,"agendaStepPages-previous");
+        compare(field(s,"agendaStep::step0").text,"Step 0");compare(mutations().length,1);
+        verify(s.owner.savedDrafts["a:task.checklist"]!==undefined);
+    }
     function test_notesDraftSurvivesKeyedChecklistArrivalAndStatusCompoundPatch() {
         const s=start();open(s);s.view.listItem.focusList();keyClick(Qt.Key_Tab,Qt.ControlModifier);
         const step=edit(s,"agendaStep::step1","Unsubmitted");
