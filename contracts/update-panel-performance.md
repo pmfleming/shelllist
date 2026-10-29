@@ -3,7 +3,8 @@
 Updates remains read-only. Page creation, scrolling, status disclosure and tab
 changes never request a release check, install, approval or retry. Controller
 request ownership, validation, cached-log behavior and settings transactions are
-unchanged.
+unchanged. History payload lifetime and paging are separately bounded by the
+[history cache contract](update-history-cache.md).
 
 ## Bounded presentation
 

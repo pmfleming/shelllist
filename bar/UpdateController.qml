@@ -52,10 +52,16 @@ Ui.ProviderChooserController {
     property string publishedRevision: ""
     property var publishedAnchors: []
     property var historyWindow: null
+    readonly property int historyCacheLimit: HistoryWindow.maximumEntries
+    property int historyOffset: 0
+    property string historyStartCursor: ""
+    readonly property bool historyCacheFull: entries.length >= historyCacheLimit
     readonly property bool canLoadMore: !!cursor && !loading && publishedQuery === queryKey
     readonly property var selectedQuietGroup: selectedResult ? selectedResult.metadata.quietGroup || null : null
     readonly property string countLabel: publishedQuery !== queryKey && entries.length ? qsTr("Showing previous results")
-        : (historyFiltered ? qsTr("%1 of %2 matching runs").arg(entries.length).arg(total) : qsTr("%1 of %2 runs").arg(entries.length).arg(total))
+        : (historyOffset > 0 ? (historyFiltered ? qsTr("Runs %1–%2 of %3 matching runs") : qsTr("Runs %1–%2 of %3"))
+                .arg(historyOffset + 1).arg(historyOffset + entries.length).arg(total)
+            : historyFiltered ? qsTr("%1 of %2 matching runs").arg(entries.length).arg(total) : qsTr("%1 of %2 runs").arg(entries.length).arg(total))
             + (foldedCount ? qsTr(" · %1 folded").arg(foldedCount) : "") + qsTr(" · read only")
     property string coverage: ""
     property var overview: null
@@ -152,7 +158,11 @@ Ui.ProviderChooserController {
         publishResults();
         refresh();
     }
-    onUiActiveChanged: if (!uiActive) { retireHistory(); overviewRequest = ""; overviewLoading = false; overviewRefreshPending = false; logRequest = ""; loading = false; logCache = []; }
+    onUiActiveChanged: if (!uiActive) {
+        clearHistoryCache();
+        overviewRequest = ""; overviewLoading = false; overviewRefreshPending = false;
+        logRequest = ""; logCache = [];
+    }
     onSelectedRunChanged: Qt.callLater(autoReadLog)
     onDetailsOpenChanged: Qt.callLater(autoReadLog)
     onLogRequestChanged: Qt.callLater(autoReadLog)
@@ -178,7 +188,7 @@ Ui.ProviderChooserController {
         detailsOpen = false;
         if (uiActive) refresh();
     }
-    function refresh(): void { requestPage(false); requestOverview(); }
+    function refresh(): void { requestPage(false, false); requestOverview(); }
     function requestOverview(): void {
         if (!uiActive || !backend.ready) return;
         if (overviewRequest) { overviewRefreshPending = true; return; }
@@ -209,14 +219,44 @@ Ui.ProviderChooserController {
         loading = false;
         historyDeadline.stop();
     }
-    function loadMore(): void { if (canLoadMore) requestPage(true); }
-    function requestPage(append: bool): void {
+    function clearHistoryCache(): void {
+        retireHistory();
+        entries = [];
+        cursor = "";
+        historyOffset = 0;
+        historyStartCursor = "";
+        publishedQuery = "";
+        publishedRevision = "";
+        publishedAnchors = [];
+        expandedQuietIds = [];
+        total = 0;
+        available = false;
+        coverage = "";
+        errorText = "";
+        warningText = "";
+        warningBrief = "";
+        // Drop provider-result metadata too, not only the backing entries array.
+        publishResults(false);
+    }
+    function loadMore(): void { if (canLoadMore && !navigationBlocked) requestPage(true, false); }
+    function autoLoadMore(): void { if (!historyCacheFull) loadMore(); }
+    function showRecent(): void {
+        if (!uiActive || navigationBlocked || runId) return;
+        requestPage(false, true);
+    }
+    function requestPage(append: bool, recent: bool): void {
         if (!uiActive || !backend.ready) return;
-        const retain = publishedQuery === queryKey && !runId;
-        const anchors = retain ? [selectedRun ? selectedRun.job.id : "", entries.length ? entries[entries.length - 1].job.id : ""].filter(Boolean) : [];
-        historyWindow = {key: queryKey, append: append, anchors: append ? publishedAnchors : [...new Set(anchors)],
-            entries: append ? entries.slice() : [], revision: append ? publishedRevision : "", total: append ? total : -1,
-            retainThrough: -1, target: retain ? entries.length : 0, pages: 0, retried: false, diagnostic: "", cursor: append ? cursor : ""};
+        const retain = !recent && publishedQuery === queryKey && !runId;
+        // At the cap, only an explicit Load older command replaces the window.
+        // Automatic near-end reads never evict an inspected result.
+        const advancing = append && historyCacheFull;
+        const offset = advancing ? historyOffset + entries.length : retain ? historyOffset : 0;
+        const start = advancing ? cursor : retain ? historyStartCursor : "";
+        const anchors = append || offset > 0 ? publishedAnchors
+            : retain ? [...new Set([selectedRun ? selectedRun.job.id : "", entries.length ? entries[entries.length - 1].job.id : ""].filter(Boolean))] : [];
+        historyWindow = {key: queryKey, append: append, anchors: anchors, offset: offset, startCursor: start, replace: recent || advancing,
+            entries: append && !advancing ? entries.slice() : [], revision: append || offset > 0 ? publishedRevision : "", total: append || offset > 0 ? total : -1,
+            retainThrough: -1, target: retain && !advancing ? entries.length : 0, pages: 0, retried: false, diagnostic: "", notice: "", cursor: append ? cursor : start};
         loading = true;
         errorText = "";
         historyDeadline.restart();
@@ -226,15 +266,20 @@ Ui.ProviderChooserController {
         if (!historyWindow || !uiActive) return;
         ownedRequest = backend.nextRequestId("update-history");
         const sent = backend.call(ownedRequest, "updates.queryHistory", {query: runId ? "" : filterText, cursor: historyWindow.cursor || null,
-            run_id: runId || null, limit: 50, lane: runId ? null : laneFilter || null, outcome: runId ? null : outcomeFilter || null, anchor_ids: historyWindow.anchors});
+            run_id: runId || null, limit: Math.min(50, historyCacheLimit - historyWindow.entries.length),
+            lane: runId ? null : laneFilter || null, outcome: runId ? null : outcomeFilter || null, anchor_ids: historyWindow.anchors});
         if (!sent && ownedRequest) failHistory(qsTr("Update history read could not be sent"));
     }
     function restartHistoryWindow(): bool {
         if (!historyWindow || historyWindow.retried) return false;
-        // One bounded restart from page one, never append across revisions.
+        // Never replay the catalog prefix to recover an old offset. A changed
+        // revision retires its cursor and starts one fresh, recent page instead.
+        const older = historyWindow.offset > 0;
         historyWindow = Object.assign({}, historyWindow, {append: false, entries: [], revision: "", total: -1, retainThrough: -1,
-            target: Math.max(entries.length + (historyWindow.append ? 50 : 0), historyWindow.entries.length),
-            anchors: [...new Set([selectedRun ? selectedRun.job.id : "", entries.length ? entries[entries.length - 1].job.id : ""].filter(Boolean))],
+            target: older ? 0 : Math.min(historyCacheLimit, Math.max(entries.length + (historyWindow.append ? 50 : 0), historyWindow.entries.length)),
+            anchors: older ? [] : [...new Set([selectedRun ? selectedRun.job.id : "", entries.length ? entries[entries.length - 1].job.id : ""].filter(Boolean))],
+            offset: 0, startCursor: "", replace: older || historyWindow.replace,
+            notice: older ? qsTr("History changed; showing latest updates") : historyWindow.notice,
             retried: true, diagnostic: "", cursor: ""});
         sendHistoryPage();
         return true;
@@ -325,6 +370,8 @@ Ui.ProviderChooserController {
             failHistory(qsTr("Duplicate update history identities")); return;
         case "continuation":
             failHistory(qsTr("Invalid update history continuation")); return;
+        case "limit":
+            failHistory(qsTr("Update history exceeded the cache limit")); return;
         }
         historyWindow = transition.window;
         if (HistoryWindow.needsMore(historyWindow)) { sendHistoryPage(); return; }
@@ -332,10 +379,12 @@ Ui.ProviderChooserController {
     }
     function publishHistory(page: var): void {
         const window = historyWindow;
-        const preserve = publishedQuery === queryKey;
+        const preserve = publishedQuery === queryKey && !window.replace;
         publishedQuery = queryKey;
         publishedRevision = page.revision;
         publishedAnchors = window.anchors;
+        historyOffset = window.offset;
+        historyStartCursor = window.startCursor;
         const diagnostic = window.diagnostic;
         retireHistory();
         entries = window.entries;
@@ -345,7 +394,7 @@ Ui.ProviderChooserController {
         coverage = page.coverage;
         // The wire diagnostics are capped and may contain multi-line/source errors,
         // so do not invent an unreadable-record count by splitting the string.
-        warningText = diagnostic || (missingRun ? qsTr("The requested run is no longer retained. Showing recent updates.") : "");
+        warningText = diagnostic || window.notice || (missingRun ? qsTr("The requested run is no longer retained. Showing recent updates.") : "");
         warningBrief = diagnostic ? qsTr("Some update history could not be read") : warningText;
         publishResults(preserve);
         if (runId && entries.length) { selectedIndex = filteredResults.findIndex(result => result.id === runId); openDetails(); }
@@ -432,7 +481,7 @@ Ui.ProviderChooserController {
     function triggerDetailAction(actionId: string): bool { return perform(actionId); }
     function perform(actionId: string): bool {
         if (!uiActive || navigationBlocked) return false;
-        if (actionId === "all") { runId = ""; missingRun = false; laneFilter = ""; outcomeFilter = ""; filterText = ""; refresh(); return true; }
+        if (actionId === "all") { runId = ""; missingRun = false; laneFilter = ""; outcomeFilter = ""; filterText = ""; requestPage(false, true); requestOverview(); return true; }
         if (actionId === "toggle-quiet") return toggleQuietGroup();
         if (actionId === "inspect" && hasSelection) { openDetails(); return true; }
         if (!selectedRun) return false;

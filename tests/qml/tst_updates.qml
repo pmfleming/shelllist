@@ -184,6 +184,219 @@ DaemonTestCase {
         compare(History.project(runs, true, ["b"], "_quiet-a")[0].quietGroup.id, "_quiet-a");
         compare(History.project(runs, false, ["b"], "d").map(row => row.run.job.id), runs.map(run => run.job.id));
     }
+    function fillHistoryCache(root, runs, revision): void {
+        for (let offset = 0; offset < root.controller.historyCacheLimit; offset += 50) {
+            if (offset) root.controller.loadMore();
+            reply(latest(), runs.slice(offset, offset + 50), revision + ":" + (offset + 50), true, null, runs.length, {revision: revision});
+        }
+        compare(root.controller.entries.length, 200);
+    }
+    function test_historyCachePagesOlderRunsWithoutGrowingOrReplayingThePrefix(): void {
+        const root = fixture();
+        const runs = historyRuns(805);
+        fillHistoryCache(root, runs, "v1");
+        root.controller.selectedIndex = 176;
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        const inspected = root.controller.selectedRun.job.id;
+        const reads = calls.length;
+        root.controller.autoLoadMore();
+        compare(calls.length, reads, "automatic scrolling stops at the cache boundary");
+        compare(root.controller.selectedRun.job.id, inspected);
+        compare(findChild(root, "updateLoadMore").label, "Load older updates");
+        tryVerify(() => root.content.detailsNavigation.commandButtons.some(button => button.accessKey === "L" && button.enabled));
+        keyClick(Qt.Key_L, Qt.AltModifier);
+        compare(latest().params.cursor, "v1:200");
+        compare(root.controller.entries.length, 200, "keep the previous window until the replacement succeeds");
+        reply(latest(), runs.slice(200, 250), "v1:250", true, null, 805, {revision: "v1"});
+        compare(root.controller.historyOffset, 200);
+        compare(root.controller.entries.length, 50);
+        compare(root.controller.selectedRun, null);
+        verify(!root.controller.detailsOpen);
+        verify(root.controller.countLabel.startsWith("Runs 201–250 of 805"));
+        // Refresh starts at this window's issued cursor, not at the catalog head.
+        root.controller.refresh();
+        compare(latest().params.cursor, "v1:200");
+        const refreshId = latest().id;
+        reply(latest(), runs.slice(200, 250), "v1:250", true, null, 805, {revision: "v1"});
+        compare(latest().id, refreshId);
+        compare(root.controller.entries[0].job.id, "history-200");
+        // Every older run remains reachable with at most 200 cached records.
+        for (let offset = 250; offset < runs.length; offset += 50) {
+            root.controller.loadMore();
+            compare(latest().params.cursor, "v1:" + offset);
+            const end = Math.min(runs.length, offset + 50);
+            reply(latest(), runs.slice(offset, end), end < runs.length ? "v1:" + end : null, true, null, runs.length, {revision: "v1"});
+            verify(root.controller.entries.length <= root.controller.historyCacheLimit);
+            verify(root.controller.filteredResults.length <= root.controller.historyCacheLimit + 1);
+        }
+        compare(root.controller.historyOffset, 800);
+        compare(root.controller.entries.map(run => run.job.id), runs.slice(800).map(run => run.job.id));
+        compare(root.controller.cursor, "");
+        verify(root.controller.countLabel.startsWith("Runs 801–805 of 805"));
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_B, Qt.AltModifier);
+        compare(latest().params.cursor, null);
+        compare(latest().params.anchor_ids.length, 0);
+        reply(latest(), runs.slice(0, 50), "v2:50", true, null, 805, {revision: "v2"});
+        compare(root.controller.historyOffset, 0);
+        compare(root.controller.entries.length, 50);
+        compare(root.controller.entries[0].job.id, "history-0");
+        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "bar.snapshot"].includes(call.method)));
+    }
+    function test_historyWindowNavigationKeepsFiltersAndExactLinksIndependent(): void {
+        const root = fixture();
+        root.controller.setHistoryFilter("lane", "system");
+        root.controller.setHistoryFilter("outcome", "problems");
+        root.controller.filterText = "failed";
+        root.controller.refresh();
+        const runs = historyRuns(805).map(run => Object.assign({}, run, {outcome: "failed"}));
+        fillHistoryCache(root, runs, "filtered");
+        root.controller.loadMore();
+        compare(latest().params.query, "failed");
+        compare(latest().params.lane, "system");
+        compare(latest().params.outcome, "problems");
+        reply(latest(), runs.slice(200, 250), "filtered:250", true, null, 805, {revision: "filtered"});
+        root.controller.showRecent();
+        compare(latest().params.cursor, null);
+        compare(latest().params.anchor_ids.length, 0);
+        compare(latest().params.query, "failed");
+        compare(latest().params.lane, "system");
+        compare(latest().params.outcome, "problems");
+        // Failure preserves the published older window; changing query starts anew.
+        historyFailure(latest(), "read-failed");
+        compare(root.controller.historyOffset, 200);
+        root.controller.filterText = "yesterday";
+        root.controller.refresh();
+        compare(latest().params.cursor, null);
+        compare(latest().params.anchor_ids.length, 0);
+        compare(latest().params.query, "yesterday");
+        root.controller.openRun("history-799");
+        compare(latest().params.cursor, null);
+        compare(latest().params.run_id, "history-799");
+        compare(latest().params.lane, null);
+        compare(latest().params.outcome, null);
+        reply(latest(), [runs[799]]);
+        compare(root.controller.historyOffset, 0);
+        compare(root.controller.entries.length, 1);
+        compare(root.controller.selectedRun.job.id, "history-799");
+        verify(root.controller.detailsOpen);
+    }
+    function test_historyCacheCloseDropsPublishedAndStagedPayloads(): void {
+        const root = fixture();
+        const runs = historyRuns(805);
+        fillHistoryCache(root, runs, "v1");
+        root.controller.refresh();
+        reply(latest(), runs.slice(0, 50), "v2:50", true, null, 805, {revision: "v2", retain_through: 200});
+        const late = latest();
+        verify(root.controller.historyWindow !== null);
+        root.controller.deactivateUi();
+        compare(root.controller.historyWindow, null);
+        compare(root.controller.entries.length, 0);
+        compare(root.controller.filteredResults.map(result => result.id), ["_now"]);
+        tryCompare(root.controller.filteredResultsModel, "count", 1);
+        compare(root.controller.cursor, "");
+        compare(root.controller.historyStartCursor, "");
+        compare(root.controller.publishedRevision, "");
+        compare(root.controller.publishedAnchors.length, 0);
+        root.controller.activateUi("");
+        compare(latest().params.cursor, null);
+        compare(latest().params.anchor_ids.length, 0);
+        compare(latest().params.limit, 50);
+        const fresh = latest();
+        reply(late, runs.slice(50, 100), "v2:100", true, null, 805, {revision: "v2", retain_through: 200});
+        compare(root.controller.entries.length, 0);
+        reply(fresh, runs.slice(0, 50), "v3:50", true, null, 805, {revision: "v3"});
+        compare(root.controller.entries.length, 50);
+        compare(latest().id, fresh.id, "reopening cannot refill the old loaded depth");
+    }
+    function test_historyRefreshCapsAnchorsAndKeepsSurvivingSelection(): void {
+        const root = fixture();
+        const old = historyRuns(805);
+        fillHistoryCache(root, old, "v1");
+        root.controller.selectedIndex = 76;
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        const fresh = Array.from({length: 105}, (_, i) => entry("new-" + i, "staged")).concat(old);
+        root.controller.refresh();
+        compare(latest().params.anchor_ids.join(","), "history-75,history-199");
+        for (let offset = 0; offset < 200; offset += 50) {
+            reply(latest(), fresh.slice(offset, offset + 50), "v2:" + (offset + 50), true, null, fresh.length,
+                {revision: "v2", retain_through: 305});
+            verify(root.controller.historyWindow === null || root.controller.historyWindow.entries.length <= 200);
+        }
+        compare(root.controller.loading, false, "an old tail anchor cannot force unbounded refill");
+        compare(root.controller.entries.length, 200);
+        compare(root.controller.selectedRun.job.id, "history-75");
+        verify(root.controller.detailsOpen);
+        compare(root.controller.cursor, "v2:200");
+        compare(root.controller.entries[199].job.id, "history-94");
+        root.controller.loadMore();
+        compare(latest().params.cursor, "v2:200");
+        compare(latest().params.anchor_ids.join(","), "history-75,history-199", "issued cursors keep their original anchor scope");
+        reply(latest(), fresh.slice(200, 250), "v2:250", true, null, fresh.length, {revision: "v2", retain_through: 305});
+        compare(root.controller.historyOffset, 200);
+        compare(root.controller.entries[0].job.id, "history-95", "capping must not skip records");
+    }
+    function test_staleOlderWindowRestartsOneRecentPageWithoutOldAnchors(): void {
+        const root = fixture();
+        const runs = historyRuns(805);
+        fillHistoryCache(root, runs, "v1");
+        root.controller.loadMore();
+        reply(latest(), runs.slice(200, 250), "v1:250", true, null, 805, {revision: "v1"});
+        root.controller.selectedIndex = 1;
+        root.controller.openDetails();
+        root.controller.refresh();
+        compare(latest().params.cursor, "v1:200");
+        historyFailure(latest(), "update-history-cursor-stale");
+        compare(latest().params.cursor, null);
+        compare(latest().params.anchor_ids.length, 0);
+        compare(root.controller.entries[0].job.id, "history-200");
+        const restarted = latest();
+        reply(restarted, runs.slice(0, 50), "v2:50", true, null, 805, {revision: "v2"});
+        compare(latest().id, restarted.id);
+        compare(root.controller.entries.length, 50);
+        compare(root.controller.historyOffset, 0);
+        compare(root.controller.selectedRun, null);
+        verify(!root.controller.detailsOpen);
+        verify(root.controller.warningText.includes("showing latest"));
+    }
+    function test_failedWindowReplacementAndOversizedAppendKeepTheCache(): void {
+        const root = fixture();
+        const runs = historyRuns(805);
+        fillHistoryCache(root, runs, "v1");
+        root.controller.loadMore();
+        historyFailure(latest(), "read-failed");
+        compare(root.controller.entries.length, 200);
+        compare(root.controller.cursor, "v1:200");
+        compare(root.controller.historyOffset, 0);
+        root.controller.loadMore();
+        historyFailure(latest(), "update-history-cursor-stale");
+        const restart = latest();
+        historyFailure(restart, "update-history-cursor-stale");
+        compare(latest().id, restart.id);
+        compare(root.controller.entries.length, 200);
+        compare(root.controller.historyOffset, 0);
+        compare(root.controller.cursor, "v1:200");
+        // A malformed reply cannot temporarily publish or stage over the cap.
+        root.controller.showRecent();
+        reply(latest(), runs.slice(0, 50), "v3:50", true, null, 805, {revision: "v3"});
+        for (let offset = 50; offset < 150; offset += 50) {
+            root.controller.loadMore();
+            reply(latest(), runs.slice(offset, offset + 50), "v3:" + (offset + 50), true, null, 805, {revision: "v3"});
+        }
+        root.controller.loadMore();
+        reply(latest(), runs.slice(150, 180), "v3:180", true, null, 805, {revision: "v3"});
+        root.controller.loadMore();
+        compare(latest().params.limit, 20);
+        reply(latest(), runs.slice(180, 210), "v3:210", true, null, 805, {revision: "v3"});
+        verify(root.controller.errorText.includes("cache limit"));
+        compare(root.controller.entries.length, 180);
+        compare(root.controller.historyWindow, null);
+        compare(root.controller.cursor, "v3:180");
+    }
     function test_refreshStagesLoadedDepthAndPreservesSelectionViewportAndFocus(): void {
         const root = fixture();
         const old = historyRuns(120);
@@ -250,7 +463,8 @@ DaemonTestCase {
         const late = latest();
         root.controller.deactivateUi();
         reply(late, runs.slice(25, 50), "v4:50", true, null, 120, {revision: "v4", retain_through: 50});
-        compare(root.controller.publishedRevision, "v1");
+        compare(root.controller.publishedRevision, "");
+        compare(root.controller.entries.length, 0);
         compare(root.controller.historyWindow, null);
     }
     function test_continuationRejectsChangedMetadata_data(): var {
@@ -918,13 +1132,13 @@ DaemonTestCase {
         replacement.issues = [];
         overviewReply(late, replacement);
         compare(root.controller.overview.issue_total, 1);
-        compare(root.controller.entries[0].job.id, "retained");
+        compare(root.controller.entries.length, 0);
         const invalidRun = entry("invalid", "failed");
         invalidRun.components = [{name: "pi", phase: "failed", changed: false, before: null, after: null, error: "bad", incident: "bad\nkey"}];
         root.controller.activateUi("");
         reply(latest(), [invalidRun]);
         compare(root.controller.errorText, "Invalid update history reply");
-        compare(root.controller.entries[0].job.id, "retained");
+        compare(root.controller.entries.length, 0);
         invalidRun.components[0].incident = "pi:build:fingerprint";
         root.controller.refresh();
         reply(latest(), [invalidRun]);
@@ -1312,6 +1526,11 @@ DaemonTestCase {
         const late = latest();
         root.controller.deactivateUi();
         reply(late, [entry("late", "failed")]);
-        compare(root.controller.entries[0].job.id, "run-42");
+        compare(root.controller.entries.length, 0);
+        compare(root.controller.selectedRun, null);
+        root.controller.activateUi("");
+        compare(latest().params.run_id, "run-42");
+        reply(latest(), [entry("run-42", "staged")]);
+        compare(root.controller.selectedRun.job.id, "run-42");
     }
 }

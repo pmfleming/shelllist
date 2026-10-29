@@ -83,7 +83,7 @@ Ui.ProviderChooserSurface {
         emptyText: content.controller.errorText || (!content.controller.available ? qsTr("Update history has not been published") : content.controller.historyFiltered ? qsTr("No matching updates") : qsTr("No recorded updates"))
         status: content.controller.loading ? qsTr("Reading update history…") : content.controller.runId ? qsTr("Exact run · history filters bypassed") : content.controller.countLabel
         feedbackScope: content
-        onListNearEndChanged: if (listNearEnd) content.controller.loadMore()
+        onListNearEndChanged: if (listNearEnd) content.controller.autoLoadMore()
         listFooterComponent: Component {
             Column {
                 width: parent.width
@@ -97,12 +97,22 @@ Ui.ProviderChooserSurface {
                     text: pane.emptyText
                 }
                 Ui.ActionButton {
+                    objectName: "updateShowRecent"
+                    label: qsTr("Latest updates")
+                    icon: "arrow_upward"
+                    accessKey: "B"
+                    visible: content.controller.historyOffset > 0
+                    enabled: !content.controller.loading && !content.controller.navigationBlocked
+                    onClicked: content.controller.showRecent()
+                }
+                Ui.ActionButton {
                     objectName: "updateLoadMore"
-                    label: qsTr("Load more updates")
+                    label: content.controller.historyCacheFull ? qsTr("Load older updates") : qsTr("Load more updates")
+                    Accessible.description: content.controller.historyCacheFull ? qsTr("Replace the cached window with older runs; Latest updates returns to recent history") : ""
                     icon: "expand_more"
                     accessKey: "L"
                     visible: !!content.controller.cursor
-                    enabled: content.controller.canLoadMore
+                    enabled: content.controller.canLoadMore && !content.controller.navigationBlocked
                     onClicked: content.controller.loadMore()
                 }
                 Ui.ThemeText {
