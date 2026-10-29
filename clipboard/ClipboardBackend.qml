@@ -90,7 +90,7 @@ Io.DaemonBackend {
             query: text,
             generation: generation,
             limit: limit,
-            fuzzy: true,
+            cursor_mode: true,
             cursor: cursor || null
         });
     }

@@ -33,10 +33,10 @@ Ui.ProviderChooserController {
     property string activeOperationId: ""
     property var handledTerminalOperations: ({})
     property var settings: ({
-            max_entries: 750,
+            max_entries: 1000,
             max_favorites: 100,
             max_entry_bytes: 16777216,
-            capture_paused: false,
+            capture_paused: true,
             private_mode: false
         })
     property var wipeChallenge: null
