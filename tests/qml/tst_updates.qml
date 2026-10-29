@@ -464,6 +464,7 @@ DaemonTestCase {
         keyClick(Qt.Key_V, Qt.AltModifier);
         const request = calls.filter(call => call.method === "updates.readLog").slice(-1)[0];
         verify(root.controller.selectedLogLoading);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
         compare(findChild(root, "updateRunLogText").text, "Reading log…");
         keyClick(Qt.Key_Down);
         verify(!root.controller.selectedLogLoading);
@@ -472,6 +473,7 @@ DaemonTestCase {
         compare(root.controller.selectedLogError, "");
         keyClick(Qt.Key_Up);
         compare(root.controller.selectedLogError, "Journal access denied");
+        tryVerify(() => root.content.detailsNavigation.contentReady);
         compare(findChild(root, "updateRunLogText").text, "Journal access denied");
         keyClick(Qt.Key_V, Qt.AltModifier);
         verify(root.controller.selectedLogLoading);
@@ -546,23 +548,23 @@ DaemonTestCase {
         root.content.listItem.focusList();
         keyClick(Qt.Key_Right);
         tryVerify(() => root.content.detailsNavigation.contentReady);
-        const system = findChild(root, "updateLane:system");
-        const tools = findChild(root, "updateLane:ai-tools");
-        const candidate = findChild(root, "updateDeferredCandidate");
-        compare(system.lane.status, "Ready · deferred candidate");
-        compare(tools.lane.status, "Running · Building");
+        compare(findChild(root, "updateLane:system"), null);
+        compare(findChild(root, "updateDeferredCandidate"), null);
+        showPage(root, "ai");
+        compare(findChild(root, "updateLane:ai-tools").lane.status, "Running · Building");
         compare(findChild(root, "updateLane:ai-tools-stale").lane.status, "Not reported");
-        verify(system.lane.timing.startsWith("Last worker run"));
-        verify(!candidate.visible);
         showPage(root, "system");
-        verify(candidate.visible);
+        let system = findChild(root, "updateLane:system");
+        compare(system.lane.status, "Ready · deferred candidate");
+        verify(system.lane.timing.startsWith("Last worker run"));
+        verify(findChild(root, "updateDeferredCandidate").visible);
         compare(findChild(root, "updateCandidate:revision").modelData.value, "revision-123");
         compare(findChild(root, "updateCandidate:base").modelData.value, "base-456");
         compare(findChild(root, "updateCandidate:application").modelData.value, "Approval required");
         verify(findChild(root, "updateCandidate:waiting").modelData.value.startsWith("3 d"));
         root.barState.updates = Object.assign({}, root.barState.updates, {error: "Readiness is unreadable"});
         compare(findChild(root, "updateCandidateStatus").text, "Candidate status unavailable");
-        compare(tools.lane.status, "Running · Building");
+        compare(Presentation.laneOverview(root.barState.updates, "ai-tools", now).status, "Running · Building");
         root.barState.updates = Object.assign({}, root.barState.updates, {error: null,
             lanes: [Object.assign({}, root.barState.updates.lanes[0], {auto_apply: true})]});
         compare(findChild(root, "updateCandidate:application").modelData.value, "Automatic");
@@ -572,12 +574,15 @@ DaemonTestCase {
         compare(root.content.detailsNavigation.highlightedControl, null);
         keyClick(Qt.Key_Down);
         compare(root.controller.selectedRun.job.id, "old-staged");
-        verify(!candidate.visible);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        compare(findChild(root, "updateDeferredCandidate"), null);
         compare(root.controller.selectedRun.outcome, "staged");
         root.barState.updates = {available: true, error: null, lanes: [{name: "delayed", ready: false}], jobs: []};
         compare(root.controller.selectedRun.outcome, "staged");
         keyClick(Qt.Key_Up);
         verify(root.controller.selectedIsOverview);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        system = findChild(root, "updateLane:system");
         compare(system.lane.status, "Not reported");
         verify(!system.lane.status.includes("staged"));
         const reads = calls.length;
@@ -617,6 +622,7 @@ DaemonTestCase {
         keyClick(Qt.Key_Down);
         compare(root.controller.selectedRun.job.id, "partial-auto");
         verify(root.controller.selectedLogQueued);
+        showPage(root, "log");
         compare(findChild(root, "updateRunLogText").text, "Waiting to read log…");
         compare(logCalls().length, 1);
         logReply(first, "First run log", false);
@@ -706,11 +712,13 @@ DaemonTestCase {
         tryVerify(() => root.content.detailsNavigation.contentReady && logCalls().length === 1);
         const rawLog = Array.from({length: 105}, (_, index) => index === 104 ? "error: raw log" : "line " + index).join("\n");
         logReply(logCalls()[0], rawLog, false);
+        showPage(root, "log");
         compare(findChild(root, "updateLogSource").text, "Rebuild log file");
         compare(findChild(root, "updateLogLine:0").text, "line 5");
         compare(findChild(root, "updateLogLine:99").text, "error: raw log");
         compare(findChild(root, "updateLogLine:100"), null);
         verify(findChild(root, "updateLogLimit").text.startsWith("Log truncated"));
+        showPage(root, "changes");
         compare(findChild(root, "updateComponentCount").text, "2 of 3 components changed");
         compare(findChild(root, "updateComponentGroup:failed").title, "Failed · 1");
         compare(findChild(root, "updateComponentGroup:changed").title, "Changed · 1");
@@ -778,14 +786,15 @@ DaemonTestCase {
         root.content.listItem.focusList();
         keyClick(Qt.Key_Right);
         tryVerify(() => root.content.detailsNavigation.contentReady);
-        const system = findChild(root, "updateSystemOverview");
-        verify(!system.visible);
+        compare(findChild(root, "updateSystemOverview"), null);
         showPage(root, "system");
+        const system = findChild(root, "updateSystemOverview");
         verify(system.visible);
         verify(system.rows.find(field => field.label === "Staging").value.startsWith("Staged for next boot since"));
         compare(system.rows.find(field => field.label === "Active").value, "/nix/store/active");
-        compare(findChild(root, "updateInstalledTool:pi").modelData.last_successful_check, 280);
         compare(findChild(root, "updateTimer:nixos-update.timer").modelData.next_at, 500);
+        showPage(root, "ai");
+        compare(findChild(root, "updateInstalledTool:pi").modelData.last_successful_check, 280);
         showPage(root, "overview");
         const review = findChild(root, "updateReviewIssue:failed-overview");
         findChild(root, "updateDetailsScroll").revealItem(review);
@@ -970,7 +979,8 @@ DaemonTestCase {
         compare(root.content.listItem.listOptionsComponent, null);
         compare(calls.length, reads);
         keyClick(Qt.Key_T, Qt.AltModifier);
-        tryVerify(() => root.content.detailsNavigation.highlightedControl === findChild(root, "updateLaneFilter"));
+        tryVerify(() => root.content.detailsNavigation.contentReady && root.content.detailsNavigation.highlightedControl !== null
+            && root.content.detailsNavigation.highlightedControl === findChild(root, "updateLaneFilter"));
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Down);
         compare(root.controller.laneFilter, "");
@@ -1019,7 +1029,7 @@ DaemonTestCase {
         verify(findChild(root, "updateArea:applications").modelData.value.includes("3 packages · active generation"));
         const reads = calls.length;
         showPage(root, "applications");
-        const inventory = findChild(root, "updateApplicationsOverview");
+        let inventory = findChild(root, "updateApplicationsOverview");
         verify(inventory.visible);
         const editor = findChild(inventory, "updateApplication:system:editor");
         const versionless = findChild(inventory, "updateApplication:user:test:local-tool");
@@ -1027,7 +1037,7 @@ DaemonTestCase {
         compare(findChild(versionless, "updateApplicationLocal").text, "—");
         compare(findChild(editor, "updateApplicationLatest").text, "—");
         const feedback = findChild(root.content.listItem, "feedbackText");
-        const explanation = findChild(inventory, "updateApplicationExplanation");
+        let explanation = findChild(inventory, "updateApplicationExplanation");
         compare(explanation.text, "");
         const height = inventory.height;
         mouseClick(findChild(inventory, "sectionHeadingHelp"));
@@ -1040,8 +1050,12 @@ DaemonTestCase {
         tryCompare(feedback, "text", "local-tool: no release source configured.");
         compare(inventory.height, height);
         showPage(root, "system");
-        compare(explanation.text, "");
+        compare(findChild(root, "updateApplicationExplanation"), null);
+        verify(!feedback.text.includes("local-tool: no release source"));
         showPage(root, "applications");
+        inventory = findChild(root, "updateApplicationsOverview");
+        explanation = findChild(inventory, "updateApplicationExplanation");
+        compare(explanation.text, "");
         keyClick(Qt.Key_Tab);
         compare(root.content.detailsNavigation.highlightedControl, null);
         const commands = root.content.detailsNavigation.contentCommands.filter(item => !item.accessKey || item.includeInCommandMenu);
@@ -1067,12 +1081,126 @@ DaemonTestCase {
             packages: [], error: "Active generation has no application inventory"};
         overviewReply(latestOverview(), unavailable);
         compare(findChild(inventory, "updateApplicationUnavailable").text, unavailable.applications.error);
-        compare(findChild(inventory, "updateApplication:system:editor"), null);
+        tryVerify(() => findChild(inventory, "updateApplication:system:editor") === null);
         compare(explanation.text, "");
         mouseClick(findChild(inventory, "sectionHeadingHelp"));
         verify(explanation.text.length > 0);
         root.controller.deactivateUi();
         compare(explanation.text, "");
+    }
+    function test_applicationInventoryKeepsDistinctInstalledVersions(): void {
+        const root = fixture();
+        reply(latest(), []);
+        const value = overviewValue();
+        value.applications = {available: true, active_system: "/nix/store/active-system", observed_at: 400,
+            total: 3, error: null, packages: [
+                {name: "fuse", scope: "system", version: "2.9.9"},
+                {name: "fuse", scope: "system", version: "3.17.4"},
+                {name: "fuse", scope: "system", version: "3.17.4"}
+            ]};
+        overviewReply(latestOverview(), value);
+        root.controller.openDetails();
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        showPage(root, "applications");
+        const list = findChild(root, "updateApplicationsList");
+        compare(list.count, 3);
+        compare(new Set(list.model.currentKeys()).size, 3);
+        compare(applicationRows(root).map(row => row.modelData.version).sort(), ["2.9.9", "3.17.4", "3.17.4"]);
+        root.controller.requestOverview();
+        const replacement = JSON.parse(JSON.stringify(value));
+        replacement.applications.observed_at++;
+        overviewReply(latestOverview(), replacement);
+        compare(list.count, 3);
+        compare(new Set(list.model.currentKeys()).size, 3);
+    }
+    function applicationRows(item): var {
+        let rows = item.objectName.startsWith("updateApplication:") ? [item] : [];
+        for (const child of item.children || []) rows = rows.concat(applicationRows(child));
+        return rows;
+    }
+    function test_applicationInventoryCreatesOnlyTheSelectedViewport_data(): var {
+        return [{tag: "live-size", count: 193}, {tag: "maximum", count: 512}];
+    }
+    function test_applicationInventoryCreatesOnlyTheSelectedViewport(data): void {
+        const root = fixture();
+        reply(latest(), [entry("recorded", "staged")]);
+        const value = overviewValue();
+        value.applications = {available: true, active_system: "/nix/store/active-system", observed_at: 400,
+            total: data.count, error: null, packages: Array.from({length: data.count}, (_, i) => ({
+                name: "package-" + i, scope: "system", version: "1.0", release: null}))};
+        overviewReply(latestOverview(), value);
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        compare(findChild(root, "updateApplicationsOverview"), null);
+        compare(findChild(root, "updateInstalledTool:pi"), null);
+        compare(findChild(root, "updateSystemOverview"), null);
+        compare(findChild(root, "updateRunLogText"), null);
+        compare(applicationRows(root).length, 0);
+        const reads = calls.length;
+        showPage(root, "applications");
+        let list = findChild(root, "updateApplicationsList");
+        tryCompare(list, "count", data.count);
+        verify(applicationRows(root).length > 0);
+        verify(applicationRows(root).length < 40, "delegate creation is viewport-bounded, not inventory-sized");
+        compare(findChild(root, "updateOpenIssues"), null);
+        keyClick(Qt.Key_Tab);
+        compare(root.content.detailsNavigation.highlightedControl, null);
+        compare(root.content.detailsNavigation.currentPage, list);
+        const initialY = list.contentY;
+        keyClick(Qt.Key_PageDown);
+        tryVerify(() => list.contentY > initialY);
+        compare(root.controller.selectedResult.id, "_now");
+        // Exercise delegate turnover at the end, including command identity.
+        list.positionViewAtEnd();
+        const lastName = "package-" + (data.count - 1);
+        tryVerify(() => findChild(root, "updateApplication:system:" + lastName) !== null);
+        wait(30);
+        const tail = findChild(root, "updateApplication:system:" + lastName);
+        mouseClick(findChild(tail, "updateApplicationStatus"));
+        const feedback = findChild(root.content.listItem, "feedbackText");
+        tryCompare(feedback, "text", lastName + ": no release source configured.");
+        verify(applicationRows(root).length < 40, "scrolling must not accumulate delegates");
+        verify(!root.content.detailsNavigation.contentCommands.some(command => command.accessibleName === "Version status: package-0"),
+            "pooled commands cannot act on old package identities");
+        const savedRow = list.itemAtIndex(list.firstVisibleIndex());
+        const savedName = savedRow.objectName;
+        const savedOffset = savedRow.y - list.contentY;
+        showPage(root, "system");
+        compare(findChild(root, "updateApplicationsList"), null);
+        compare(applicationRows(root).length, 0);
+        verify(!feedback.text.includes(lastName));
+        showPage(root, "applications");
+        list = findChild(root, "updateApplicationsList");
+        tryVerify(() => list.viewportAnchor === null && findChild(root, savedName) !== null);
+        verify(Math.abs(findChild(root, savedName).y - list.contentY - savedOffset) < 1);
+        compare(findChild(root, "updateApplicationExplanation").text, "");
+        verify(applicationRows(root).length < 40);
+        compare(calls.length, reads, "tabs, scroll and disclosure only use cached evidence");
+        // Keep a surviving keyed row and its viewport while an earlier package arrives.
+        list.positionViewAtEnd();
+        wait(30);
+        const anchor = list.itemAtIndex(list.firstVisibleIndex());
+        const anchorName = anchor.objectName;
+        const offset = anchor.y - list.contentY;
+        const replacement = JSON.parse(JSON.stringify(value));
+        replacement.applications.packages.unshift({name: "new-package", scope: "system", version: "2.0", release: null});
+        // Keep the wire's 512-row ceiling while changing the prefix.
+        replacement.applications.packages.splice(1, 1);
+        replacement.applications.observed_at++;
+        root.controller.requestOverview();
+        overviewReply(latestOverview(), replacement);
+        tryVerify(() => list.viewportAnchor === null);
+        const restored = findChild(root, anchorName);
+        verify(restored !== null);
+        verify(Math.abs(restored.y - list.contentY - offset) < 1);
+        compare(findChild(root, "updateApplicationExplanation").text, "");
+        verify(applicationRows(root).length < 40);
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Down);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        compare(findChild(root, "updateApplicationsList"), null);
+        verify(findChild(root, "updateRecordedOutcome") !== null);
     }
     function test_applicationReleaseVersionsKeepStaleAndUnsupportedEvidenceDistinct(): void {
         const root = fixture();

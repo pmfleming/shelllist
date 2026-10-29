@@ -59,7 +59,8 @@ ListView {
     function firstVisibleIndex(): int {
         // The viewport edge can land in delegate spacing after ListView refines
         // variable-height estimates. Find an actual visible row, not that gap.
-        for (let y = Math.max(originY, contentY); y < contentY + height; y += Math.max(1, spacing + 1)) {
+        const bottom = contentY + height;
+        for (let y = Math.max(originY, contentY); y < bottom; y += Math.max(1, spacing + 1)) {
             const index = indexAt(width / 2, y);
             if (index >= 0) return index;
         }
@@ -72,16 +73,32 @@ ListView {
         if (restoredKey === viewMemory.activeKey && restoredTab === memoryTab) return;
         restoringScroll = true;
         cancelFlick();
-        const saved = Number(viewMemory.pageState(memoryTab).scroll) || 0;
-        contentY = originY + Math.max(0, Math.min(Math.max(0, contentHeight - height), saved));
+        const state = viewMemory.pageState(memoryTab);
+        const saved = Number(state.scroll) || 0;
         restoredKey = viewMemory.activeKey; restoredTab = memoryTab;
+        // A recreated virtual list initially estimates heights from its first
+        // rows. Restore a keyed row/offset, not pixels relative to that estimate:
+        // ListView can move originY as it instantiates the saved viewport.
+        if (keyedModel && state.scrollKey && keyedModel.currentKeys().includes(state.scrollKey)) {
+            viewportAnchor = {key: state.scrollKey, offset: Number(state.scrollOffset) || 0, attempts: 0, stable: 0};
+            restoringScroll = false;
+            Qt.callLater(restoreAnchor);
+            return;
+        }
+        contentY = originY + Math.max(0, Math.min(Math.max(0, contentHeight - height), saved));
         restoringScroll = false;
     }
     function rememberScroll(): void {
-        if (visible && !tearingDown && !scrollSuspended && !restoringScroll && viewMemory && restoredKey === viewMemory.key && restoredTab === memoryTab)
-            viewMemory.rememberPage(memoryTab, {scroll: Math.max(0, contentY - originY)});
+        if (visible && !tearingDown && !scrollSuspended && !restoringScroll && viewMemory && restoredKey === viewMemory.key && restoredTab === memoryTab) {
+            const index = keyedModel ? firstVisibleIndex() : -1;
+            const row = index >= 0 ? itemAtIndex(index) : null;
+            viewMemory.rememberPage(memoryTab, {scroll: Math.max(0, contentY - originY),
+                scrollKey: row ? keyedModel.get(index).resultKey : "", scrollOffset: row ? row.y - contentY : 0});
+        }
     }
-    onContentYChanged: rememberScroll()
+    // indexAt() can force layout; never inspect delegates inside ListView's
+    // own contentY/layout notification while it is replacing the viewport.
+    onContentYChanged: Qt.callLater(rememberScroll)
     onContentHeightChanged: Qt.callLater(restoreScroll)
     onHeightChanged: Qt.callLater(restoreScroll)
     onMemoryTabChanged: Qt.callLater(restoreScroll)

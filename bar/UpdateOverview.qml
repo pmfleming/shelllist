@@ -11,8 +11,14 @@ Column {
     readonly property var candidate: Presentation.deferredCandidate(snapshot)
     spacing: Ui.Theme.spacingMd
 
-    UpdateFreshness { width: parent.width; controller: overview.controller }
-    UpdateOverviewDetails { width: parent.width; controller: overview.controller }
+    UpdateFreshness {
+        width: parent.width
+        controller: overview.controller
+    }
+    UpdateOverviewDetails {
+        width: parent.width
+        controller: overview.controller
+    }
     Ui.ThemeText {
         width: parent.width
         visible: !!text && overview.controller.detailsTab === "overview"
@@ -22,15 +28,13 @@ Column {
         text: overview.snapshot && overview.snapshot.error ? overview.snapshot.error : ""
     }
     Repeater {
-        model: ["system", "ai-tools", "ai-tools-stale"]
+        model: overview.controller.detailsTab === "system" ? ["system"] : overview.controller.detailsTab === "ai" ? ["ai-tools", "ai-tools-stale"] : []
         Ui.DetailColumnCard {
             id: laneCard
             required property string modelData
             readonly property var lane: Presentation.laneOverview(overview.snapshot, modelData, overview.controller.nowMs)
             property bool informationOnly: true
             objectName: "updateLane:" + modelData
-            visible: overview.controller.detailsTab === "system" ? modelData === "system"
-                : overview.controller.detailsTab === "ai" && modelData !== "system"
             title: lane.title + " · " + qsTr("Activity")
             Ui.FieldRow {
                 label: qsTr("State")
@@ -62,38 +66,61 @@ Column {
             }
         }
     }
-    Ui.DetailColumnCard {
-        property bool informationOnly: true
-        objectName: "updateDeferredCandidate"
-        visible: overview.controller.detailsTab === "system"
-        title: qsTr("Deferred system candidate")
-        Ui.ThemeText {
-            objectName: "updateCandidateStatus"
-            Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            textFormat: Text.PlainText
-            text: !overview.candidate ? qsTr("Candidate status unavailable") : overview.candidate.ready
-                ? qsTr("Checked and ready; this does not mean active, staged or booted.") : qsTr("No checked candidate reported")
-        }
-        Repeater {
-            model: overview.candidate && overview.candidate.ready ? [
-                {key: "waiting", label: qsTr("Waiting"), value: Presentation.ageLabel(overview.candidate.created_at, overview.controller.nowMs) + " · " + overview.controller.timeLabel(overview.candidate.created_at)},
-                {key: "application", label: qsTr("Application"), value: overview.candidate.auto_apply === true ? qsTr("Automatic") : overview.candidate.auto_apply === false ? qsTr("Approval required") : qsTr("Not reported")},
-                {key: "revision", label: qsTr("Revision"), value: overview.candidate.revision || qsTr("Not reported")},
-                {key: "base", label: qsTr("Base hash"), value: overview.candidate.base_hash || qsTr("Not reported")},
-                {key: "system", label: qsTr("System path"), value: overview.candidate.system || qsTr("Not reported")}
-            ] : []
-            Ui.FieldRow {
-                id: candidateField
-                required property var modelData
-                objectName: "updateCandidate:" + modelData.key
-                label: modelData.label
-                Ui.ThemeText {
-                    Layout.fillWidth: true
-                    wrapMode: Text.WrapAnywhere
-                    textFormat: Text.PlainText
-                    text: candidateField.modelData.value
-                    Accessible.name: candidateField.modelData.label + ": " + text
+    Loader {
+        width: parent.width
+        active: overview.controller.detailsTab === "system"
+        visible: active
+        sourceComponent: Ui.DetailColumnCard {
+            property bool informationOnly: true
+            objectName: "updateDeferredCandidate"
+            title: qsTr("Deferred system candidate")
+            Ui.ThemeText {
+                objectName: "updateCandidateStatus"
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+                text: !overview.candidate ? qsTr("Candidate status unavailable") : overview.candidate.ready ? qsTr("Checked and ready; this does not mean active, staged or booted.") : qsTr("No checked candidate reported")
+            }
+            Repeater {
+                model: overview.candidate && overview.candidate.ready ? [
+                    {
+                        key: "waiting",
+                        label: qsTr("Waiting"),
+                        value: Presentation.ageLabel(overview.candidate.created_at, overview.controller.nowMs) + " · " + overview.controller.timeLabel(overview.candidate.created_at)
+                    },
+                    {
+                        key: "application",
+                        label: qsTr("Application"),
+                        value: overview.candidate.auto_apply === true ? qsTr("Automatic") : overview.candidate.auto_apply === false ? qsTr("Approval required") : qsTr("Not reported")
+                    },
+                    {
+                        key: "revision",
+                        label: qsTr("Revision"),
+                        value: overview.candidate.revision || qsTr("Not reported")
+                    },
+                    {
+                        key: "base",
+                        label: qsTr("Base hash"),
+                        value: overview.candidate.base_hash || qsTr("Not reported")
+                    },
+                    {
+                        key: "system",
+                        label: qsTr("System path"),
+                        value: overview.candidate.system || qsTr("Not reported")
+                    }
+                ] : []
+                Ui.FieldRow {
+                    id: candidateField
+                    required property var modelData
+                    objectName: "updateCandidate:" + modelData.key
+                    label: modelData.label
+                    Ui.ThemeText {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WrapAnywhere
+                        textFormat: Text.PlainText
+                        text: candidateField.modelData.value
+                        Accessible.name: candidateField.modelData.label + ": " + text
+                    }
                 }
             }
         }

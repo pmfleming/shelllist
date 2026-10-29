@@ -10,7 +10,8 @@ Item {
     default property alias content: editorHost.data
     property alias accessories: accessoryHost.data
     property bool accessoriesVisible: true
-    readonly property Item controlItem: editorHost.children.find(child => child !== editorSpacer) || null
+    // An asynchronous page can be retired before its editor host is complete.
+    readonly property Item controlItem: editorHost ? editorHost.children.find(child => child !== editorSpacer) || null : null
     property string label: ""
     property string labelObjectName: "fieldRowLabel"
     property var icons: []
