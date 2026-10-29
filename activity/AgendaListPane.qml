@@ -28,7 +28,31 @@ Ui.ChooserListPane {
     emptyState: controller.loading ? "loading" : controller.error ? "unavailable" : controller.filterText ? "filtered" : "empty"
     emptyText: controller.loading ? qsTr("Loading agenda…") : controller.error || (controller.filterText ? qsTr("No matching items") : qsTr("No items"))
     preserveViewportOnAppend: true
-    readonly property bool shouldLoad: listNearEnd && !!controller.nextCursor && !controller.loading && !controller.error
-    onShouldLoadChanged: if (shouldLoad) Qt.callLater(controller.loadMore)
+    readonly property bool shouldLoad: listNearEnd && !!controller.nextCursor && !controller.cacheFull && !controller.loading && !controller.error && !controller.modalOpen
+    onShouldLoadChanged: if (shouldLoad) Qt.callLater(controller.autoLoadMore)
+    listFooterComponent: Component {
+        Column {
+            width: parent.width
+            spacing: Ui.Theme.spacingMd
+            Ui.ActionButton {
+                objectName: "agendaFirstItems"
+                label: qsTr("First items")
+                icon: "arrow_upward"
+                accessKey: "F"
+                visible: pane.controller.windowOffset > 0 || !!pane.controller.error
+                enabled: !pane.controller.loading && !pane.controller.modalOpen && !pane.controller.mutationBusy
+                onClicked: pane.controller.showFirst()
+            }
+            Ui.ActionButton {
+                objectName: "agendaMoreItems"
+                label: qsTr("More items")
+                icon: "expand_more"
+                accessKey: "M"
+                visible: pane.controller.cacheFull && !!pane.controller.nextCursor
+                enabled: !pane.controller.loading && !pane.controller.modalOpen && !pane.controller.mutationBusy && !pane.controller.error
+                onClicked: pane.controller.loadMore()
+            }
+        }
+    }
     rowDelegate: Component { AgendaListRow { listPane: pane } }
 }

@@ -27,7 +27,7 @@ Ui.ProviderChooserSurface {
     feedbackScope: content
     navigationEnabled: supported && !controller.modalOpen
     commandsWithoutDetails: true
-    additionalCommandItem: commands
+    additionalCommandItem: content.listItem
     Rectangle {
         anchors.fill: parent
         z: 100
@@ -46,6 +46,7 @@ Ui.ProviderChooserSurface {
     }
     Ui.CommandGroup {
         id: commands
+        parent: content.listItem || content
         Ui.ActionControl {
             objectName: "agendaAddCommand"
             accessibleName: qsTr("Create item")

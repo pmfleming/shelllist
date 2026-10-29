@@ -51,6 +51,17 @@ Item {
         if (active) next[owner] = true; else delete next[owner];
         owners = next;
     }
+    function retireReads(owner: string, purpose: string): void {
+        if (!["list", "get"].includes(purpose)) return;
+        const next = {};
+        for (const id of Object.keys(requests)) {
+            const request = requests[id];
+            if (request.owner !== owner || request.purpose !== purpose) next[id] = request;
+        }
+        // Wire requests may still complete, but no closed/replaced owner keeps
+        // their staged rows. Never retire writes, receipts or schedule intents.
+        requests = next;
+    }
     function token(): string { return "agenda-" + Date.now() + "-" + Math.random().toString(36).slice(2) + "-" + (++sequence); }
     function integer(value: var): bool { return Number.isSafeInteger(value) && value >= 0; }
     function text(value: var): bool { return typeof value === "string"; }

@@ -41,6 +41,10 @@ Ui.ChooserController {
     property int failingSourceCount: 0
     property string sourceError: ""
     property string nextCursor: ""
+    readonly property int cacheLimit: 200
+    readonly property bool cacheFull: items.length + 50 > cacheLimit
+    property string windowStartCursor: ""
+    property int windowOffset: 0
     property double windowRevision: -1
     property string windowToday: ""
     property string windowTimezone: ""
@@ -314,31 +318,62 @@ Ui.ChooserController {
     }
     function closeModals(): void { pendingSchedule = null; createOpen = false; scheduleOpen = false; deleteTarget = null; settingsOpen = false; collectionOpen = false; rebaseTarget = null; }
     function refresh(): void {
-        readGeneration++; loading = false; debounce.restart();
+        readGeneration++; AgendaRepository.retireReads(ownerId, "list");
+        loading = false; debounce.restart();
+    }
+    function clearListCache(): void {
+        readGeneration++; detailGeneration++; loading = false; detailLoading = false;
+        debounce.stop();
+        AgendaRepository.retireReads(ownerId, "list"); AgendaRepository.retireReads(ownerId, "get");
+        items = []; rows.values = []; retainedId = "";
+        nextCursor = ""; windowStartCursor = ""; windowOffset = 0;
+        acceptedWindow = false; acceptedQuery = ""; acceptedDay = "";
+        windowRevision = -1; windowToday = ""; windowTimezone = ""; windowEpoch = -1;
+        failingSourceCount = 0; sourceError = "";
+        // Keep the one pinned full record, submitted drafts, receipts and writes.
     }
     function readPage(append: bool): void {
         AgendaRepository.synchronizeTransportAuthority();
         if (!uiActive || !AgendaRepository.ready || loading || (append && !nextCursor)) return;
-        if (append && windowEpoch !== AgendaRepository.epoch) append = false;
-        requestPage(append, append ? nextCursor : "", [], null);
+        const same = acceptedWindow && acceptedQuery === filterText && acceptedDay === dayScope;
+        if (same && (append || windowStartCursor) && windowEpoch !== AgendaRepository.epoch) {
+            error = qsTr("Agenda changed; return to first items"); return;
+        }
+        if (append && !same) append = false;
+        if (append && cacheFull) { replaceWindow(nextCursor, windowOffset + items.length); return; }
+        const window = {cursor: same ? windowStartCursor : "", offset: same ? windowOffset : 0,
+            target: same ? Math.min(cacheLimit, items.length) : 50, reset: !same};
+        const fence = window.cursor ? {revision: windowRevision, today: windowToday, timezone: windowTimezone} : null;
+        requestPage(append, append ? nextCursor : window.cursor, [], fence, window);
     }
-    function requestPage(append: bool, cursor: string, staging: var, fence: var): void {
+    function requestPage(append: bool, cursor: string, staging: var, fence: var, window: var): void {
         AgendaRepository.synchronizeTransportAuthority();
         loading = true;
         AgendaRepository.request(ownerId, "list", "agenda.list", {query: filterText, day: dayScope || null, cursor: cursor || null, limit: 50},
             {generation: readGeneration, query: filterText, day: dayScope, append: append, cursor: cursor, staging: staging, epoch: AgendaRepository.epoch,
-                fence: fence});
+                fence: fence, window: window});
     }
-    function loadMore(): void { if (!error) readPage(true); }
-    function publish(values: var): void {
-        const id = creationResult?.id || retainedId;
+    function replaceWindow(cursor: string, offset: int): void {
+        if (!uiActive || !AgendaRepository.ready || loading || modalOpen || mutationBusy) return;
+        detailsClosing();
+        readGeneration++; AgendaRepository.retireReads(ownerId, "list"); debounce.stop();
+        error = "";
+        const fence = cursor ? {revision: windowRevision, today: windowToday, timezone: windowTimezone} : null;
+        requestPage(false, cursor, [], fence, {cursor: cursor, offset: offset, target: 50, reset: true});
+    }
+    function showFirst(): void { replaceWindow("", 0); }
+    function autoLoadMore(): void { if (!cacheFull) loadMore(); }
+    function loadMore(): void { if (!error && !modalOpen) readPage(true); }
+    function publish(values: var): void { publishWindow(values, false); }
+    function publishWindow(values: var, resetViewport: bool): void {
+        const id = creationResult?.id || (resetViewport && !creating ? "" : retainedId);
         const previousId = selectedSummary?.id || "";
         const displayed = createOpen ? [draftRow].concat(values) : values;
         const index = displayed.findIndex(item => item.id === id);
-        const nextIndex = index >= 0 ? index : creationResult ? -1 : Math.max(0, Math.min(selection.selectedIndex, displayed.length - 1));
+        const nextIndex = index >= 0 ? index : creationResult ? -1 : resetViewport ? 0 : Math.max(0, Math.min(selection.selectedIndex, displayed.length - 1));
         const nextId = creationResult && index < 0 ? creationResult.id : displayed[nextIndex]?.id || "";
         if (nextId !== previousId) detailsClosing();
-        resultsAboutToChange(true);
+        resultsAboutToChange(!resetViewport);
         selectionDuringPublish = selectedSummary; publishing = true;
         items = values;
         rows.values = displayed.map(item => ({key: item.id, payload: item}));
@@ -360,15 +395,17 @@ Ui.ChooserController {
         return !!context.fence && !AgendaRepository.sameProjection(data, context.fence);
     }
     function refreshNeedsContinuation(context: var, count: int, cursor: var): bool {
-        return !context.append && acceptedWindow && acceptedQuery === filterText && acceptedDay === dayScope && count < items.length && !!cursor;
+        return !context.append && acceptedWindow && acceptedQuery === filterText && acceptedDay === dayScope
+            && count < (context.window?.target ?? items.length) && count + 50 <= cacheLimit && !!cursor;
     }
-    function acceptListWindow(data: var, values: var): void {
+    function acceptListWindow(data: var, values: var, context: var): void {
         values.filter(item => item.summary !== true).forEach(item => AgendaRepository.accept(item, data.catalog_revision));
         AgendaRepository.catalogRevision = data.catalog_revision;
         windowRevision = data.catalog_revision; windowToday = data.today; windowTimezone = data.timezone; windowEpoch = AgendaRepository.epoch;
+        if (!context.append) { windowStartCursor = context.window?.cursor || ""; windowOffset = context.window?.offset || 0; }
         nextCursor = data.next_cursor || ""; acceptedWindow = true; acceptedQuery = filterText; acceptedDay = dayScope; error = "";
         failingSourceCount = data.failing_source_count || 0; sourceError = data.source_error || "";
-        publish(values.map(AgendaRepository.summaryOf));
+        publishWindow(values.map(AgendaRepository.summaryOf), context.window?.reset === true);
     }
     function receiveList(context: var, data: var, message: string): void {
         AgendaRepository.synchronizeTransportAuthority();
@@ -376,16 +413,20 @@ Ui.ChooserController {
         loading = false;
         if (message) { error = message; return; }
         if (!AgendaRepository.validListPage(data, 50)) { error = qsTr("Invalid agenda window"); return; }
-        if (staleListProjection(context, data)) { refresh(); return; }
+        if (staleListProjection(context, data)) {
+            if (context.cursor) error = qsTr("Agenda changed; return to first items or refresh");
+            else refresh();
+            return;
+        }
         const values = context.append ? items.concat(data.items) : (context.staging || []).concat(data.items);
-        if (!AgendaRepository.pageAdvances(values, data.next_cursor, context.cursor)) { error = qsTr("Agenda page did not advance"); return; }
+        if (values.length > cacheLimit || (data.next_cursor && !data.items.length) || !AgendaRepository.pageAdvances(values, data.next_cursor, context.cursor)) { error = qsTr("Agenda page did not advance within the cache limit"); return; }
         if (data.items.some(AgendaRepository.obsoleteSummary)) { error = qsTr("Obsolete agenda record revision"); return; }
         // Only the final, fully validated replacement publishes records/metadata.
         // Partial refresh failures retain the accepted selection/editor window.
         if (refreshNeedsContinuation(context, values.length, data.next_cursor)) {
-            requestPage(false, data.next_cursor, values, AgendaRepository.projection(data)); return;
+            requestPage(false, data.next_cursor, values, AgendaRepository.projection(data), context.window); return;
         }
-        acceptListWindow(data, values);
+        acceptListWindow(data, values, context);
     }
     function confirmRebase(): void {
         if (!rebaseTarget || mutationBusy) return;
@@ -444,15 +485,18 @@ Ui.ChooserController {
         publishMutation(draft, data);
     }
     function activateUi(workspaceId): void { activateUiState(workspaceId); refresh(); }
-    function deactivateUi(): void { closeModals(); readGeneration++; detailGeneration++; detailLoading = false; loading = false; debounce.stop(); deactivateUiState(); }
+    function deactivateUi(): void { deactivateUiState(); }
     onUiActiveChanged: {
         AgendaRepository.setActive(ownerId, uiActive);
         if (uiActive) refresh();
-        else { closeModals(); readGeneration++; detailGeneration++; loading = false; detailLoading = false; debounce.stop(); }
+        else { detailsClosing(); closeModals(); clearListCache(); }
     }
     onFilterTextChanged: { if (selection.queryText !== filterText) selection.queryText = filterText; refresh(); }
     onDayScopeChanged: { if (creationResult) detailsClosing(); creationResult = null; createOpen = false; scheduleOpen = false; refresh(); }
-    Component.onDestruction: AgendaRepository.setActive(ownerId, false)
+    Component.onDestruction: {
+        AgendaRepository.setActive(ownerId, false);
+        AgendaRepository.retireReads(ownerId, "list"); AgendaRepository.retireReads(ownerId, "get");
+    }
     Component.onCompleted: { ownerId = AgendaRepository.ownerId(); AgendaRepository.setActive(ownerId, uiActive); if (uiActive) refresh(); }
     Timer { id: debounce; interval: 100; onTriggered: controller.readPage(false) }
     Core.SelectionModel {

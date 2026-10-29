@@ -23,11 +23,26 @@ loaded window, expansion and shared chooser presentation memory independently.
 - Query/day generations and transport epochs reject obsolete completions.
   Continuations must agree on catalog revision, today and timezone. Duplicate
   identities, malformed children and wrong mutation identities fail closed.
-- Reads retain the accepted window on failure. A same-query refresh stages pages
-  through the previously loaded extent before publishing once. Results use the
-  shared keyed list/viewport composition. Scrolling lazily requests later pages;
-  there is no arbitrary 500-row cutoff. Loaded summary pages accumulate until
-  a replacement query/refresh; full document payloads do not accumulate there.
+- Reads retain the accepted window on failure. Each controller bounds published
+  and separately staged summaries to 200 records (plus one local creation row).
+  Automatic scrolling reserves room for a complete 50-record native page, so
+  byte-limited short pages can reach the boundary slightly before 200. **More
+  items (Alt+M)** explicitly replaces that window; **First items (Alt+F)** returns
+  to one first page. All native results remain reachable, with no catalog cutoff.
+  Explicit replacement resets list selection/viewport, without publishing false
+  membership or dropping saved compound creation fields.
+- Same-query/day refresh starts from the window's originally issued opaque
+  cursor and stages only its bounded extent before publishing once. It never
+  parses/manufactures cursors or replays an older window's prefix. Stale older
+  cursors retain the accepted rows and inspected editor/draft; First items is the
+  explicit recovery route. There is no automatic retry loop or surprise switch
+  away from an active editor. Query/day changes request one first page.
+- Closing clears summary/model rows, cursors, source metadata and accepted scope.
+  `AgendaRepository.retireReads` drops obsolete list/get contexts, including their
+  staged rows; eventual wire completions cannot repopulate a closed owner.
+  Reopening reads one first page. The single pinned full record, submitted/failed
+  drafts, writes and receipt ownership remain separate and are not cleared or
+  replayed. The shared full-record repository retains its existing item/byte cap.
 
 ## Interactions and drafts
 
@@ -129,5 +144,9 @@ checklist independence, maximum-size bounded Notes collections, cross-page child
 commands, incoming reorder/editor pinning, page-memory restoration, notes, tabs,
 confirmed deletion and light/dark long text.
 `tests/qml/tst_agenda_calendar.qml` owns calendar fit/focus/resize integration.
+`tests/qml/tst_agenda_cache.qml` covers all 805 synthetic summaries, opaque older
+cursor reuse, bounded staging, short/oversized/empty pages, stale editor retention,
+query/day/late-response ownership, native boundary commands and close/reopen with
+an uncertain submitted write.
 These offscreen fixtures do not certify live compositor, hardware IME, human
 screen-reader or production database/migration behavior.
