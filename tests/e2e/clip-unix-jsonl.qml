@@ -20,9 +20,9 @@ ShellRoot {
     function fail(message) { console.error("CLIP_SOCKET_PROBE_FAIL " + message); Qt.exit(1); }
     function readMain() {
         if (!primary.item || primary.item.isPending("read")) return;
-        const params = {fuzzy: root.largeCharacters === 0, limit: 200};
+        const params = {cursor_mode: root.largeCharacters === 0, limit: 200};
         if (largeCharacters && !largeSent) {
-            // Ignored read-only fixture input exercises worst-case JSON escaping
+            // Probe-only input (removed by the Rust test adapter) exercises worst-case JSON escaping
             // for the default 16 MiB clipboard payload without publishing it.
             params.probe_padding = "\u0000".repeat(16 * 1024 * 1024);
             largeSent = true;
@@ -58,7 +58,7 @@ ShellRoot {
             if (Object.keys(session.consumers).length !== 1) return;
             if (session.client !== sharedClient || observer.baseSubscriptionId !== peerSubscription) { fail("peer connection was replaced"); return; }
             phase = 3;
-            peer.call("peer-final", "clipboard.history.query", {fuzzy: true});
+            peer.call("peer-final", "clipboard.history.query", {cursor_mode: true});
         }
     }
     Loader {
@@ -102,7 +102,7 @@ ShellRoot {
         active: root.privateProbe && !root.controlProbe
         requestPolicy: Io.ClipboardStateRecovery {
             backend: peer
-            onReadDiscarded: function(id) { if (root.phase === 3) peer.call("peer-final", "clipboard.history.query", {fuzzy: true}); }
+            onReadDiscarded: function(id) { if (root.phase === 3) peer.call("peer-final", "clipboard.history.query", {cursor_mode: true}); }
         }
         onResponseReceived: function(id, envelope, error) {
             if (root.phase !== 3 || id !== "peer-final" || error || !envelope?.ok
