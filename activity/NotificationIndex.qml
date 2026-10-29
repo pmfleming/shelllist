@@ -14,6 +14,12 @@ Item {
     Connections {
         target: page.timeline
         function onViewAboutToChange(): void { history.captureAnchor(); }
+        function onWindowReplaced(): void {
+            history.cancelAnchor();
+            page.controller.viewMemory.rememberPage("notifications", {scroll: 0, scrollKey: "", scrollOffset: 0});
+            history.forceLayout();
+            history.positionViewAtBeginning();
+        }
         function onViewChanged(): void { Qt.callLater(history.restoreAnchor); }
     }
     function dateLabel(key: string): string {
@@ -24,6 +30,24 @@ Item {
         width: parent.width
         spacing: Ui.Theme.spacingSm
         NotificationAppHeader { width: parent.width; controller: page.controller }
+        Ui.ActionButton {
+            objectName: "notificationLatestHistory"
+            label: qsTr("Latest notifications in period")
+            icon: "arrow_upward"
+            accessKey: "B"
+            visible: page.timeline.windowOffset > 0
+            enabled: !page.timeline.busy && !page.controller.navigationBlocked
+            onClicked: page.timeline.showRecent()
+        }
+        Ui.ActionButton {
+            objectName: "notificationOlderHistory"
+            label: qsTr("Load older notifications")
+            icon: "expand_more"
+            accessKey: "L"
+            visible: page.timeline.cacheFull && page.timeline.hasMore
+            enabled: !page.timeline.busy && !page.timeline.error && !page.controller.navigationBlocked
+            onClicked: page.timeline.loadMore()
+        }
         Ui.ContentState {
             width: parent.width
             visible: page.timeline.totalCount === 0
@@ -80,15 +104,15 @@ Item {
                 Ui.LabeledAction {
                     width: row.width
                     uiScale: Ui.Theme.expandedSecondaryActionScale
-                    label: page.timeline.busy ? qsTr("Loading…") : qsTr("More notifications")
+                    label: page.timeline.busy ? qsTr("Loading…") : page.timeline.cacheFull ? qsTr("Load older notifications") : qsTr("More notifications")
                     icon: "expand_more"
-                    enabled: !page.timeline.busy && !page.timeline.error
+                    enabled: !page.timeline.busy && !page.timeline.error && !page.controller.navigationBlocked
                     onClicked: page.timeline.loadMore()
-                    // This is a transport boundary, not a page control. Load
-                    // when it enters the viewport; keep an explicit retry route.
+                    // Automatic reads stop at the working-set boundary. Only
+                    // an explicit command replaces an already full window.
                     readonly property bool inViewport: row.y < history.contentY + history.height + 80
-                    onInViewportChanged: if (inViewport) Qt.callLater(page.timeline.loadMore)
-                    Component.onCompleted: if (inViewport) Qt.callLater(page.timeline.loadMore)
+                    onInViewportChanged: if (inViewport) Qt.callLater(page.timeline.autoLoadMore)
+                    Component.onCompleted: if (inViewport) Qt.callLater(page.timeline.autoLoadMore)
                 }
             }
             Component {

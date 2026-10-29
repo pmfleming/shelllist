@@ -15,6 +15,7 @@ Ui.ChooserController {
     property double nowMs: Date.now()
     property var appViews: ({})
     property string presentedQuery: ""
+    property bool resetListViewport: false
     property string pendingGroupKey: ""
     property string pendingAppKey: ""
     property int entryGeneration: 0
@@ -69,12 +70,20 @@ Ui.ChooserController {
         active: controller.uiActive
         query: controller.filterText.trim().toLowerCase()
         onAppsChanged: Qt.callLater(controller.rebuildRecords)
+        onWindowReplaced: { controller.resetListViewport = true; Qt.callLater(controller.rebuildRecords); }
         onQueryChanged: controller.entryGeneration++
+        onRevealFinished: function(found) {
+            if (!found) { controller.pendingAppKey = ""; controller.notificationState.lastError = qsTr("Notification application is no longer available"); }
+        }
     }
     function memoryKey(): string { return JSON.stringify([catalog.query, selectedAppKey]); }
     function rememberApp(): void {
         if (!selectedAppKey) return;
-        appViews = Object.assign({}, appViews, {[memoryKey()]: {tab: detailsTab, date: timeline.requestedDate, collapsed: timeline.collapsed}});
+        const next = Object.assign({}, appViews);
+        delete next[memoryKey()];
+        next[memoryKey()] = {tab: detailsTab, date: timeline.requestedDate, collapsed: timeline.collapsed};
+        while (Object.keys(next).length > 64) delete next[Object.keys(next)[0]];
+        appViews = next;
     }
     function select(index: int): void {
         const app = visibleApps[Math.max(0, Math.min(visibleApps.length - 1, index))];
@@ -93,12 +102,14 @@ Ui.ChooserController {
     function resultKeyAt(index: int): string { return visibleApps[index] ? "notification-app::" + visibleApps[index].key : ""; }
     function resultIndexForKey(key: string): int { return visibleApps.findIndex(app => "notification-app::" + app.key === key); }
     function rebuildRecords(): void {
+        if (!uiActive) { visibleApps = []; records.rows = []; return; }
         const next = catalog.apps;
         const rows = next.map(app => ({key: app.key, payload: app}));
         const changed = records.count !== rows.length || rows.some((row, index) => records.get(index).resultKey !== row.key || records.get(index).resultData.payload !== JSON.stringify(row.payload));
-        if (!changed) return;
-        const oldIndex = records.currentKeys().indexOf(selectedAppKey);
-        resultsAboutToChange(presentedQuery === catalog.query);
+        if (!changed && !pendingAppKey && !resetListViewport) return;
+        const oldIndex = resetListViewport ? 0 : records.currentKeys().indexOf(selectedAppKey);
+        resultsAboutToChange(!resetListViewport && presentedQuery === catalog.query);
+        resetListViewport = false;
         visibleApps = next;
         records.rows = rows;
         if (!selectedApp) {
@@ -173,7 +184,11 @@ Ui.ChooserController {
     function refresh(): void { notificationState.backend.snapshot(); catalog.refresh(); timeline.refresh(); }
     function captureScreenshot(x: real, y: real, width: real, height: real): bool { return screenshotCapture.captureRegion(x, y, width, height); }
     function activateUi(workspaceId): void { activateUiState(workspaceId); nowMs = Date.now(); Qt.callLater(resolveGroup); }
-    function deactivateUi(): void { rememberApp(); deactivateUiState(); entryGeneration++; returnSurface = ""; }
+    function deactivateUi(): void {
+        deactivateUiState(); entryGeneration++; returnSurface = "";
+        pendingAppKey = ""; pendingGroupKey = ""; appViews = ({});
+        visibleApps = []; records.rows = [];
+    }
     signal backRequested
     Connections {
         target: controller.notificationState

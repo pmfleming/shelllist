@@ -11,8 +11,8 @@ Ui.ProviderChooserSurface {
     feedbackScope: content
     navigationEnabled: !controller.notificationState.deleteConfirmation
     detailsTabEnabled: navigationEnabled && controller.detailsOpen && controller.hasSelection && !controller.settingsOpen
-    commandsWithoutDetails: controller.hasSelection && !controller.settingsOpen
-    additionalCommandItem: collapsedCommands
+    commandsWithoutDetails: !controller.settingsOpen
+    additionalCommandItem: content.listItem
     // Read failures belong to the surface, including collapsed details and the
     // controls tab. Recovery policy stays native; Refresh/F5 requests a new read.
     Ui.FeedbackSource {
@@ -24,21 +24,6 @@ Ui.ProviderChooserSurface {
         text: content.controller.timeline.error
         summaryText: qsTr("Notification history unavailable")
         tone: "error"
-    }
-    Ui.CommandGroup {
-        id: collapsedCommands
-        visible: content.commandsWithoutDetails && !content.controller.detailsOpen
-        enabled: visible
-        Repeater {
-            model: content.controller.appCommands
-            Ui.ActionControl {
-                required property var modelData
-                accessibleName: modelData.label
-                accessKey: modelData.accessKey
-                enabled: collapsedCommands.enabled && modelData.enabled
-                onClicked: content.controller.triggerAppAction(modelData.id, content.controller.selectedAppKey)
-            }
-        }
     }
     Connections {
         target: content.controller
@@ -56,6 +41,45 @@ Ui.ProviderChooserSurface {
         chooserController: content.controller
         resultModel: content.controller.notificationModel
         filterText: content.controller.filterText
+        Ui.CommandGroup {
+            id: collapsedCommands
+            visible: content.controller.hasSelection && !content.controller.settingsOpen && !content.controller.detailsOpen
+            enabled: visible
+            Repeater {
+                model: content.controller.appCommands
+                Ui.ActionControl {
+                    required property var modelData
+                    accessibleName: modelData.label
+                    accessKey: modelData.accessKey
+                    enabled: collapsedCommands.enabled && modelData.enabled
+                    onClicked: content.controller.triggerAppAction(modelData.id, content.controller.selectedAppKey)
+                }
+            }
+        }
+        listFooterComponent: Component {
+            Column {
+                width: parent.width
+                spacing: Ui.Theme.spacingMd
+                Ui.ActionButton {
+                    objectName: "notificationLatestApps"
+                    label: qsTr("Latest applications")
+                    icon: "arrow_upward"
+                    accessKey: "F"
+                    visible: content.controller.catalog.windowOffset > 0
+                    enabled: !content.controller.catalog.rootBusy && !content.controller.navigationBlocked
+                    onClicked: content.controller.catalog.showRecent()
+                }
+                Ui.ActionButton {
+                    objectName: "notificationMoreApps"
+                    label: qsTr("More applications")
+                    icon: "expand_more"
+                    accessKey: "M"
+                    visible: content.controller.catalog.cacheFull && content.controller.catalog.hasMore
+                    enabled: !content.controller.catalog.rootBusy && !content.controller.navigationBlocked && !content.controller.catalog.rootError
+                    onClicked: content.controller.catalog.loadMore()
+                }
+            }
+        }
         icon: ""
         placeholder: qsTr("Search recent notifications…")
         powerVisible: false
@@ -69,8 +93,8 @@ Ui.ProviderChooserSurface {
         emptyText: content.controller.catalog.rootError || (emptyState === "loading" ? qsTr("Loading notifications…") : emptyState === "unavailable" ? qsTr("Notifications unavailable") : emptyState === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
         emptyIcon: "notifications_none"
         preserveViewportOnAppend: true
-        readonly property bool loadMore: listNearEnd && content.controller.catalog.hasMore && !refreshing && !content.controller.catalog.rootError
-        onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.catalog.loadMore)
+        readonly property bool loadMore: listNearEnd && content.controller.catalog.hasMore && !content.controller.catalog.cacheFull && !refreshing && !content.controller.catalog.rootError
+        onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.catalog.autoLoadMore)
         // Do not instantiate a hidden button: the shared options loader uses
         // implicitHeight, so an invisible control still reserves a whole row.
         listOptionsComponent: content.controller.returnSurface === "activity" ? backToAgenda : null
