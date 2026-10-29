@@ -12,6 +12,14 @@ Ui.DetailFlickable {
     required property var application
     required property real uiScale
 
+    function revealCollection(anchor: Item): void {
+        Qt.callLater(function() {
+            if (!page || page.tearingDown || !anchor) return;
+            page.revealItem(anchor);
+            page.contentY = Math.max(0, Math.min(page.contentHeight - page.height, anchor.mapToItem(page.contentItem, 0, 0).y));
+        });
+    }
+
     Ui.ThemeText {
         objectName: "applicationDescription"
         visible: !!page.application.comment && page.application.comment !== (page.controller.selectedResult || {}).subtitle
@@ -44,6 +52,7 @@ Ui.DetailFlickable {
         controller: page.controller
         application: page.application
         uiScale: page.uiScale
+        onPageChanged: function(anchor) { page.revealCollection(anchor); }
     }
 
     ApplicationDataDetails {
@@ -57,6 +66,7 @@ Ui.DetailFlickable {
         controller: page.controller
         application: page.application
         uiScale: page.uiScale
+        onPageChanged: function(anchor) { page.revealCollection(anchor); }
     }
 
     Ui.ContentState {

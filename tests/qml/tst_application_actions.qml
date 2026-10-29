@@ -31,6 +31,7 @@ DaemonTestCase {
             }
         }
     }
+    function init() { failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop|Unable to assign).*/); }
     function application(id, windows) {
         return {id: id, name: id, kind: "desktop-application", revision: 1,
             running: windows.length > 0, focused: false,
@@ -130,6 +131,63 @@ DaemonTestCase {
         const call = lastCall(Api.methods.execute);
         compare(call.params.action, "desktop-action");
         compare(call.params.desktop_action_id, "new-private");
+    }
+    function replaceLarge(panel, count, actionCount, prepend) {
+        const windows=Array.from({length:count},(_,i)=>"w"+(i+1));
+        if(prepend) windows.unshift("arrived");
+        const alpha=application("Alpha",windows);
+        alpha.desktop_actions=Array.from({length:actionCount},(_,i)=>({id:"action-"+i,name:"Action "+i,icon:""}));
+        panel.controller.replaceProviderResults([alpha,application("Beta",["w3"])].map(app=>panel.controller.provider.resultFor(app)),false);
+    }
+    function windowRows(item) {
+        let count=item.objectName.startsWith("windowRow-")?1:0;
+        for(const child of item.children||[]) count+=windowRows(child);
+        return count;
+    }
+    function test_largeCollectionsAreBoundedReachableAndRemembered_data() { return [{tag:"60-windows",count:60},{tag:"512-windows",count:512}]; }
+    function test_largeCollectionsAreBoundedReachableAndRemembered(data) {
+        const panel=makePanel();replaceLarge(panel,data.count,128,false);expand(panel);
+        const windows=findChild(panel,"applicationWindowPages"),actions=findChild(panel,"applicationActionPages");
+        verify(!!windows&&!!actions);compare(windows.visibleItems.length,8);compare(actions.visibleItems.length,8);
+        compare(windowRows(panel),8);compare(findChild(panel,"windowRow-w9"),null);compare(findChild(panel,"desktopAction-action-8"),null);
+        tryVerify(()=>panel.detailsNavigation.contentReady);panel.listItem.focusList();keyClick(Qt.Key_J,Qt.AltModifier);
+        tryCompare(panel.detailsNavigation,"commandMenuOpen",true);
+        const menu=findChild(panel.Window.window.contentItem,"detailsCommandMenu");verify(!!menu);
+        for(let i=0;i<menu.count&&menu.model[menu.currentIndex].objectName!=="applicationWindowPages-next";i++) keyClick(Qt.Key_Down);
+        compare(menu.model[menu.currentIndex].objectName,"applicationWindowPages-next");keyClick(Qt.Key_Return);
+        tryCompare(windows,"start",8);tryCompare(panel.detailsNavigation,"commandMenuOpen",false);compare(windowRows(panel),8);
+        const lastPage=Math.floor((data.count-1)/8)*8;windows.pageRequested(lastPage);actions.pageRequested(120);
+        tryVerify(()=>findChild(panel,"windowRow-w"+data.count)!==null);verify(windowRows(panel)<=8);
+        verify(findChild(panel,"desktopAction-action-127")!==null);
+        verify(!findChild(panel,"applicationWindowPages-next").enabled);verify(!findChild(panel,"applicationActionPages-next").enabled);
+        panel.controller.selectDetailsTab("settings");tryVerify(()=>findChild(panel,"applicationCategory")!==null);
+        panel.controller.selectDetailsTab("application");tryVerify(()=>findChild(panel,"windowRow-w"+data.count)!==null);
+        tryCompare(findChild(panel,"applicationWindowPages"),"start",lastPage);compare(findChild(panel,"applicationActionPages").start,120);
+        panel.controller.select(panel.controller.filteredResults.findIndex(row=>row.id==="Beta"));
+        tryVerify(()=>findChild(panel,"windowRow-w3")?.applicationId==="Beta");compare(windowRows(panel),1);
+        panel.controller.select(panel.controller.filteredResults.findIndex(row=>row.id==="Alpha"));
+        tryVerify(()=>findChild(panel,"windowRow-w"+data.count)!==null);compare(findChild(panel,"applicationWindowPages").start,lastPage);
+        compare(calls.filter(call=>call.method===Api.methods.execute).length,0,"page/menu/tab navigation never launches or closes");
+        compare(panel.detailsNavigation.availableFields().length,0);
+    }
+    function test_pagedWindowRefreshPreservesIdentityAndPendingGuards() {
+        const panel=makePanel();replaceLarge(panel,64,0,false);expand(panel);
+        const pager=findChild(panel,"applicationWindowPages");pager.pageRequested(8);wait(0);
+        const row=findChild(panel,"windowRow-w9");verify(!!row);
+        replaceLarge(panel,64,0,true);tryCompare(pager,"start",9);
+        compare(findChild(panel,"windowRow-w9"),row);compare(windowRows(panel),8);
+        const button=findChild(panel,"closeWindow-w9");findChild(panel,"applicationPage").revealItem(button);waitForRendering(panel);mouseClick(button);
+        const call=lastCall(Api.methods.execute);compare(call.params.target_id,"Alpha");compare(call.params.window_id,"w9");compare(call.params.action,"close-window");
+        pager.pageRequested(32);compare(pager.start,9,"pending operation retains its visible command window");
+        compare(calls.filter(call=>call.method===Api.methods.execute).length,1);
+    }
+    function test_lastDesktopActionUsesItsOriginalNativeId() {
+        const panel=makePanel();replaceLarge(panel,2,128,false);expand(panel);
+        const pager=findChild(panel,"applicationActionPages");pager.pageRequested(120);wait(0);
+        const action=findChild(panel,"desktopAction-action-127");verify(!!action);
+        findChild(panel,"applicationPage").revealItem(action);waitForRendering(panel);mouseClick(action.button);
+        const call=lastCall(Api.methods.execute);compare(call.params.target_id,"Alpha");compare(call.params.action,"desktop-action");compare(call.params.desktop_action_id,"action-127");
+        compare(pager.visibleItems.length,8);compare(calls.filter(call=>call.method===Api.methods.execute).length,1);
     }
     function test_close_usesNativeObservationAndRestoresCommandFocus() {
         const panel = makePanel();

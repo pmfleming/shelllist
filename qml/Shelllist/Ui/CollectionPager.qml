@@ -56,28 +56,31 @@ Item {
     }
     implicitHeight: heading.implicitHeight
     Layout.fillWidth: true
-    RowLayout {
+    Loader {
         id: heading
         width: parent.width
-        spacing: Theme.spacingSm
-        SectionHeading {
-            Layout.fillWidth: true
-            title: pager.items.length > pager.pageSize
-                ? qsTr("%1 · %2–%3 of %4").arg(pager.title).arg(pager.start + 1).arg(pager.start + pager.visibleItems.length).arg(pager.items.length)
-                : pager.title
-        }
-        SurfaceActionRow {
-            Layout.preferredWidth: 2 * nominalControlHeight + gap
-            Layout.preferredHeight: implicitHeight
-            visible: pager.items.length > pager.pageSize
-            headerCommands: false
-            compactSecondaryActions: true
-            actionObjectNamePrefix: pager.objectName + "-"
-            actions: [
-                {id: "previous", label: qsTr("Previous %1").arg(pager.title), icon: "chevron_left", enabled: !pager.blocked && pager.start > 0, presentation: {group: "toolbar"}},
-                {id: "next", label: qsTr("Next %1").arg(pager.title), icon: "chevron_right", enabled: !pager.blocked && pager.start + pager.pageSize < pager.items.length, presentation: {group: "toolbar"}}
-            ]
-            onTriggered: function(id) { pager.pageRequested(id === "previous" ? Math.max(0, pager.start - pager.pageSize) : pager.start + pager.pageSize); }
+        active: pager.visible
+        sourceComponent: RowLayout {
+            spacing: Theme.spacingSm
+            SectionHeading {
+                Layout.fillWidth: true
+                title: pager.items.length > pager.pageSize
+                    ? qsTr("%1 · %2–%3 of %4").arg(pager.title).arg(pager.start + 1).arg(pager.start + pager.visibleItems.length).arg(pager.items.length)
+                    : pager.title
+            }
+            SurfaceActionRow {
+                Layout.preferredWidth: 2 * nominalControlHeight + gap
+                Layout.preferredHeight: implicitHeight
+                visible: pager.items.length > pager.pageSize
+                headerCommands: false
+                compactSecondaryActions: true
+                actionObjectNamePrefix: pager.objectName + "-"
+                actions: [
+                    {id: "previous", label: qsTr("Previous %1").arg(pager.title), icon: "chevron_left", enabled: !pager.blocked && pager.start > 0, presentation: {group: "toolbar"}},
+                    {id: "next", label: qsTr("Next %1").arg(pager.title), icon: "chevron_right", enabled: !pager.blocked && pager.start + pager.pageSize < pager.items.length, presentation: {group: "toolbar"}}
+                ]
+                onTriggered: function(id) { pager.pageRequested(id === "previous" ? Math.max(0, pager.start - pager.pageSize) : pager.start + pager.pageSize); }
+            }
         }
     }
 }
