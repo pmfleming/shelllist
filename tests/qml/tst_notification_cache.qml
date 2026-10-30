@@ -11,13 +11,13 @@ DaemonTestCase {
     Component { id: controllerFactory; Activity.NotificationController {} }
     Component { id: contentFactory; Activity.NotificationContent {} }
     function init() { calls=[]; clientReady=true; failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop|Unable to assign).*/); }
-    function state() {
+    function createState() {
         const value=createTemporaryObject(stateFactory,tests,{uiActive:true});
         value.applySummary({available:true,backend:"native",history_revision:1,app_policies:{}});
         return value;
     }
     function make(kind) {
-        const store=state();
+        const store=createState();
         const reader=createTemporaryObject(kind==="apps"?catalogFactory:timelineFactory,store,{store:store,active:true});
         if(kind==="timeline") { reader.appKey="named:Chat"; reader.requestedDate="older"; }
         reload(reader,kind);
@@ -133,7 +133,7 @@ DaemonTestCase {
         compare(s.reader.revealKey,"");s.reader.active=false;
     }
     function test_nativeBoundaryCommandsAndControllerCacheRelease() {
-        const store=state();const owner=createTemporaryObject(controllerFactory,store,{notificationState:store,uiActive:true});
+        const store=createState();const owner=createTemporaryObject(controllerFactory,store,{notificationState:store,uiActive:true});
         const apps={store:store,reader:owner.catalog,kind:"apps"};owner.catalog.reloadApps();fill(apps);owner.rebuildRecords();
         const view=createTemporaryObject(contentFactory,owner,{controller:owner,width:width,height:height});
         view.listItem.focusList();wait(30);keyClick(Qt.Key_M,Qt.AltModifier);
