@@ -16,7 +16,8 @@
     "generation": 0,
     "has_more": false,
     "next_offset": null,
-    "revision": 1
+    "revision": 1,
+    "total": 1
   },
   "protocol": "clip-api",
   "recovery": {
@@ -63,17 +64,17 @@
         "pagination": {
           "expires_seconds": 120,
           "kind": "opaque-cursor",
-          "legacy_offset_mode": "fuzzy=false",
           "max_page_entries": 200,
-          "max_search_entries": 5000,
+          "offset_mode": "cursor_mode=false",
           "request_field": "cursor",
           "response_field": "next_cursor",
           "revision_field": "snapshot_revision",
+          "search_engine": "turso-fts",
           "stale_error": "stale-cursor"
         },
         "params_example": {
           "cursor": null,
-          "fuzzy": true,
+          "cursor_mode": true,
           "generation": 1,
           "limit": 100,
           "query": ""
@@ -224,7 +225,7 @@
         "name": "clipboard.settings.update",
         "params_example": {
           "collapse_self_echoes": true,
-          "max_entries": 750,
+          "max_entries": 1000,
           "max_entry_bytes": 16777216
         },
         "response_key": "settings",

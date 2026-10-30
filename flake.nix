@@ -526,13 +526,6 @@
           btDaemonPackage = btDaemon;
           clipDaemonPackage = clipDaemon;
           nmDaemonPackage = nmDaemon;
-          otherSourceSnapshots =
-            pkgs.runCommand "shelllist-other-source-snapshots" { nativeBuildInputs = [ pkgs.diffutils ]; }
-              ''
-                diff -q ${./rust/shelllist-search}/Cargo.toml ${inputs.clip-daemon}/vendor/shelllist-search/Cargo.toml
-                diff -qr ${./rust/shelllist-search}/src ${inputs.clip-daemon}/vendor/shelllist-search/src
-                touch $out
-              '';
           appResourceContract = apiContract "app" appDaemon;
 
           hypridleReadiness =

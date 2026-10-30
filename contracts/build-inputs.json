@@ -27,7 +27,8 @@
     "bar-daemon/Cargo.toml",
     "bt-daemon/Cargo.toml",
     "clip-daemon/Cargo.toml",
-    "clip-daemon/vendor/shelllist-search/Cargo.toml",
+    "clip-daemon/tools/turso-contract/Cargo.toml",
+    "clip-daemon/vendor/tantivy-sstable/Cargo.toml",
     "daemon-framework/Cargo.toml",
     "daemon-framework/crates/shelllist-daemon-core/Cargo.toml",
     "daemon-framework/crates/shelllist-daemon-tokio/Cargo.toml",
@@ -46,6 +47,8 @@
     "bar-daemon/Cargo.lock",
     "bt-daemon/Cargo.lock",
     "clip-daemon/Cargo.lock",
+    "clip-daemon/tools/turso-contract/Cargo.lock",
+    "clip-daemon/vendor/tantivy-sstable/Cargo.lock",
     "nm-daemon/Cargo.lock",
     "update-daemon/Cargo.lock",
     "shelllist/portal-launcher/Cargo.lock",
@@ -56,9 +59,7 @@
     "shelllist/tools/xtask/Cargo.toml": "Standalone offline development checks with an empty workspace and its own Cargo.lock. Native DTO tests stay in producer crates; xtask does not link or replace production daemons.",
     "shelllist/tools/performance-lens/Cargo.toml": "Standalone external measurement CLI with an empty workspace and its own Cargo.lock; not a production package or dependency. Validated separately using the locked commands in tools/performance-lens/README.md."
   },
-  "nonOwningLocks": {
-    "clip-daemon/vendor/shelllist-search/Cargo.lock": "Ignored local library-test artifact; clip-daemon/Cargo.lock owns this path dependency. Not captured or consumed by product Nix builds."
-  },
+  "nonOwningLocks": {},
   "shared": {
     "schemars": {
       "requirement": "1.2.3",
@@ -125,6 +126,10 @@
       "requirement": null,
       "version": "0.3.34"
     },
+    "futures-lite": {
+      "requirement": "2.6",
+      "version": "2.6.1"
+    },
     "futures-macro": {
       "requirement": null,
       "version": "0.3.34"
@@ -139,7 +144,13 @@
     },
     "futures-util": {
       "requirement": "0.3",
-      "version": "0.3.34"
+      "version": "0.3.34",
+      "requirementExceptions": {
+        "clip-daemon/vendor/tantivy-sstable/Cargo.toml": {
+          "requirement": "0.3.30",
+          "reason": "Turso FTS uses the vendored upstream tantivy-sstable security patch; retain its compatible upstream requirement and shared locked resolution."
+        }
+      }
     },
     "fuzzy-matcher": {
       "requirement": "0.3",
@@ -171,6 +182,38 @@
         }
       }
     },
+    "rand": {
+      "requirement": "0.8",
+      "version": "0.8.7",
+      "requirementExceptions": {
+        "clip-daemon/vendor/tantivy-sstable/Cargo.toml": {
+          "requirement": "0.9",
+          "reason": "Upstream Tantivy patch tests use rand 0.9; Bluetooth retains its independent rand 0.8 API."
+        }
+      },
+      "lockExceptions": {
+        "bar-daemon/Cargo.lock": {
+          "versions": ["0.8.8", "0.9.5", "0.10.2"],
+          "reason": "Preserve Agenda/Turso's existing transitive random-number dependencies; no shared Rust rand types cross daemon boundaries."
+        },
+        "clip-daemon/Cargo.lock": {
+          "versions": ["0.8.8", "0.9.5", "0.10.3"],
+          "reason": "Preserve the qualified Turso/FTS clipboard dependency graph across its transitive rand API generations."
+        },
+        "clip-daemon/tools/turso-contract/Cargo.lock": {
+          "versions": ["0.8.8", "0.9.5", "0.10.3"],
+          "reason": "The standalone Turso/FTS qualification probe locks the same transitive rand API generations as clipboard storage."
+        },
+        "clip-daemon/vendor/tantivy-sstable/Cargo.lock": {
+          "versions": ["0.9.5", "0.10.3"],
+          "reason": "Preserve the vendored upstream Tantivy patch's standalone test/benchmark dependencies."
+        },
+        "update-daemon/Cargo.lock": {
+          "versions": ["0.10.3"],
+          "reason": "Preserve the independent updater's existing transitive rand resolution."
+        }
+      }
+    },
     "reqwest": {
       "requirement": "0.12",
       "version": "0.12.28"
@@ -185,6 +228,18 @@
             "1.1.4"
           ],
           "reason": "Accepted Agenda/Turso 0.8.0 uses turso_sdk_kit/turso_sync_sdk_kit 0.8.3 build-dependency bindgen 0.69.5 -> which 4.4.2 -> rustix 0.38.44. This exact per-lock transitive build-tool exception preserves the shared direct requirement 1 and resolution 1.1.4; no dependency or lockfile upgrade."
+        },
+        "clip-daemon/Cargo.lock": {
+          "versions": ["0.38.44", "1.1.4"],
+          "reason": "The clipboard Turso 0.8.3 SDK build dependencies also require bindgen/which's rustix 0.38.44; the direct runtime dependency remains 1.1.4."
+        },
+        "clip-daemon/tools/turso-contract/Cargo.lock": {
+          "versions": ["0.38.44", "1.1.6"],
+          "reason": "The standalone Turso qualification probe retains its SDK build-tool rustix 0.38 and current test lock's rustix 1.1.6."
+        },
+        "clip-daemon/vendor/tantivy-sstable/Cargo.lock": {
+          "versions": ["1.1.6"],
+          "reason": "The vendored upstream Tantivy security patch retains its standalone test/benchmark lock; the clipboard production lock keeps its existing runtime resolution."
         }
       }
     },
@@ -202,7 +257,17 @@
     },
     "serde_json": {
       "requirement": "1",
-      "version": "1.0.151"
+      "version": "1.0.151",
+      "lockExceptions": {
+        "clip-daemon/tools/turso-contract/Cargo.lock": {
+          "versions": ["1.0.154"],
+          "reason": "The standalone clipboard Turso qualification probe retains its own test lock; production daemons retain the shared resolution."
+        },
+        "clip-daemon/vendor/tantivy-sstable/Cargo.lock": {
+          "versions": ["1.0.154"],
+          "reason": "The vendored upstream Tantivy security patch retains its standalone test/benchmark lock; the clipboard production lock keeps the shared resolution."
+        }
+      }
     },
     "sha2": {
       "requirement": "0.10",
@@ -218,28 +283,25 @@
     },
     "tokio": {
       "requirement": "1",
-      "version": "1.53.1"
+      "version": "1.53.1",
+      "lockExceptions": {
+        "clip-daemon/Cargo.lock": {
+          "versions": ["1.54.1"],
+          "reason": "The clipboard Turso cutover was qualified with Tokio 1.54.1; retain its locked runtime without upgrading the other independent daemon runtimes."
+        }
+      }
+    },
+    "turso": {
+      "requirement": "=0.8.3",
+      "version": "0.8.3"
     },
     "toml": {
       "requirement": "0.8",
       "version": "1.1.4+spec-1.1.0",
-      "requirementExceptions": {
-        "clip-daemon/Cargo.toml": {
-          "requirement": "0.9",
-          "reason": "local-build retains toml 0.8 parse-only API; clipboard settings retain toml 0.9. No wire types are shared; a parser migration is outside compiler alignment."
-        }
-      },
       "lockExceptions": {
         "daemon-framework/Cargo.lock": {
           "versions": [
             "0.8.23"
-          ],
-          "reason": "Distinct TOML parser API generations: local-build 0.8, clipboard config 0.9, and native PipeWire system-deps build tooling 1.1. Keep these exact transitive resolutions until a separate parser/native dependency upgrade."
-        },
-        "clip-daemon/Cargo.lock": {
-          "versions": [
-            "0.9.12+spec-1.1.0",
-            "1.1.4+spec-1.1.0"
           ],
           "reason": "Distinct TOML parser API generations: local-build 0.8, clipboard config 0.9, and native PipeWire system-deps build tooling 1.1. Keep these exact transitive resolutions until a separate parser/native dependency upgrade."
         }
@@ -263,7 +325,13 @@
     },
     "uuid": {
       "requirement": "1",
-      "version": "1.26.0"
+      "version": "1.26.0",
+      "lockExceptions": {
+        "clip-daemon/tools/turso-contract/Cargo.lock": {
+          "versions": ["1.29.0"],
+          "reason": "The standalone clipboard Turso qualification probe retains its own test lock; production daemons retain the shared resolution."
+        }
+      }
     },
     "wayland-client": {
       "requirement": "0.31",

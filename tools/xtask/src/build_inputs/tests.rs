@@ -7,7 +7,7 @@ struct Fixture {
 }
 const MANIFESTS: [&str; 2] = [
     "shelllist/rust/shelllist-search/Cargo.toml",
-    "clip-daemon/vendor/shelllist-search/Cargo.toml",
+    "clip-daemon/Cargo.toml",
 ];
 impl Fixture {
     fn new() -> Self {
@@ -86,6 +86,21 @@ fn aligned_and_missing_sources() {
     f.rejects("captured repository set");
 }
 #[test]
+fn removed_vendor_is_not_required_but_unlisted_manifests_are_rejected() {
+    let f = Fixture::new();
+    assert!(
+        !f.sources["clip-daemon"]
+            .join("vendor/shelllist-search")
+            .exists()
+    );
+    assert!(audit(&f.policy, &f.sources).unwrap().is_empty());
+    f.put(
+        "clip-daemon/vendor/shelllist-search/Cargo.toml",
+        "[package]\nname = \"stale-search\"\nversion = \"0.1.0\"\n",
+    );
+    f.rejects("manifest inventory changed");
+}
+#[test]
 fn compiler_pins_requirements_msrv_and_sources() {
     for (path, old, new, reason) in [
         (
@@ -139,11 +154,6 @@ fn inventories_new_dependencies_paths_and_lock_drift() {
             "shelllist/rust/shelllist-search/Cargo.lock",
             "version=4\npackage=[]",
             "declared dependency missing",
-        ),
-        (
-            "clip-daemon/vendor/shelllist-search/src/lib.rs",
-            "// changed",
-            "vendored search differs",
         ),
     ] {
         let f = Fixture::new();
@@ -226,11 +236,7 @@ fn documented_requirement_and_resolution_exceptions_are_narrow() {
     f.policy["shared"]["serde"]["lockExceptions"] =
         json!({lock:{"versions":["1.0.228"],"reason":"compatibility"}});
     assert!(audit(&f.policy, &f.sources).unwrap().is_empty());
-    f.replace(
-        "clip-daemon/vendor/shelllist-search/Cargo.lock",
-        "1.0.229",
-        "1.0.228",
-    );
+    f.replace("clip-daemon/Cargo.lock", "1.0.229", "1.0.228");
     f.rejects("resolution drift");
     f.policy["shared"]["serde"]["lockExceptions"][lock]
         .as_object_mut()
@@ -241,10 +247,7 @@ fn documented_requirement_and_resolution_exceptions_are_narrow() {
     f.replace(MANIFESTS[0], "serde = \"1\"", "serde = \"1.0.229\"");
     f.policy["shared"]["serde"]["requirementExceptions"] =
         json!({MANIFESTS[0]:{"requirement":"1.0.229","reason":"upgrade"}});
-    assert_eq!(
-        audit(&f.policy, &f.sources).unwrap(),
-        vec!["vendored search differs from canonical source"]
-    );
+    assert!(audit(&f.policy, &f.sources).unwrap().is_empty());
     f.replace(MANIFESTS[1], "serde = \"1\"", "serde = \"1.0.229\"");
     f.rejects("requirement must be");
 }

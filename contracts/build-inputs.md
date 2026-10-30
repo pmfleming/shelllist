@@ -2,7 +2,9 @@
 
 ## Decision
 
-**Retain the multi-repository build graph and ten owning Cargo locks.** P6's
+**Retain the multi-repository build graph.** The inventory now covers ten product
+Cargo locks plus the clipboard Turso qualification probe and vendored Tantivy
+patch's standalone test lock. P6's
 conditional product-workspace migration is not approved by this change. Do not
 merge Git histories, delete old checkouts/locks, rename services, or move privilege
 boundaries. Compiler/dependency alignment is independently deployable. A future
@@ -79,8 +81,9 @@ All shared direct requirements are checked, including dev/build and
 target-conditional dependencies. Exact resolutions for shared dependencies
 and key serializer/runtime/derive companions are checked in every owning lock
 that contains them. In particular all five daemons and the framework resolve
-zbus **5.18.0**, zvariant **5.13.1**, Tokio **1.53.1**, serde **1.0.229** and
-serde_json **1.0.151**. The zbus/zvariant requirements now describe those supported
+zbus **5.18.0**, zvariant **5.13.1**, serde **1.0.229** and
+serde_json **1.0.151**. Tokio is **1.53.1**, except clipboard's qualified
+Turso cutover lock at **1.54.1**. The zbus/zvariant requirements now describe those supported
 API lines; features remain domain-specific (including NM's blocking API and
 private-bus test features). Chrono **0.4.45** is shared by the bar's clock and
 the worker's UTC status formatter; their `clock` and `std` features remain
@@ -88,16 +91,21 @@ independent. No automatic dependency updates run in CI.
 
 Exceptions have exact paths/versions and reasons in the policy:
 
-- local-build's parse-only TOML 0.8 and clipboard's TOML 0.9 are distinct APIs.
-  Native PipeWire build tooling uses TOML 1.1.4. Do not upgrade config parser APIs
-  just to erase multiple major versions.
+- local-build's parse-only TOML 0.8 and native build tooling's TOML 1.1.4
+  are distinct APIs. Clipboard no longer directly depends on TOML. Do not upgrade
+  parser APIs just to erase multiple major versions.
 - The worker's HTTP/TLS transitive graph also needs base64 0.23; the shared direct
   API stays at 0.22.1.
-- Clipboard's ignored `vendor/shelllist-search/Cargo.lock` can exist after a
-  standalone library test but is not an owning product lock or Nix input.
-- Clipboard still explicitly scopes `RUSTC_BOOTSTRAP` to the two pinned
-  clipboard-history crates. This is a native dependency constraint, not a claim
-  that every product dependency compiles without unstable features.
+- Clipboard now uses Turso **0.8.3** with FTS, not a vendored Shelllist matcher
+  or the legacy clipboard-history crates. The obsolete matcher byte-comparison
+  gates are removed; exact manifest and lock inventories still reject stale copies.
+- `vendor/tantivy-sstable` is the upstream security patch used by clipboard's
+  Turso FTS graph. Its manifest and standalone test lock are audited, as are
+  `tools/turso-contract`'s manifest and lock. Exact per-lock exceptions preserve
+  their qualified dependency versions without updating unrelated daemon locks.
+- Turso's SDK build tooling requires an additional rustix 0.38 resolution in bar
+  and clipboard. Independent rand API generations and test-only serializer/UUID
+  resolutions are documented narrowly in the policy.
 
 This is intentionally not a claim that *all* transitive packages have identical
 versions across independent locks. Changing a shared requirement/resolution,
@@ -109,9 +117,9 @@ not become a blanket allowed-major-version range.
 
 | Candidate | Current ownership and constraints |
 | --- | --- |
-| Five session daemons | Separate Cargo roots and packages; MIT manifests. Keep per-domain features and bus/systemd names. App uses compositor IPC; bar/BT need PipeWire/libclang (shared writable bindgen fallback); bar also uses libudev/systemd, bundled SQLite, managed hypridle and installed protocol/data license notices. BT uses native D-Bus/BlueZ. Clip uses D-Bus, Wayland, image codecs and pinned clipboard-history crates. NM keeps its blocking/control paths and separate cast-policy package. |
+| Five session daemons | Separate Cargo roots and packages; MIT manifests. Keep per-domain features and bus/systemd names. App uses compositor IPC; bar/BT need PipeWire/libclang (shared writable bindgen fallback); bar also uses libudev/systemd, bundled SQLite, managed hypridle and installed protocol/data license notices. BT uses native D-Bus/BlueZ. Clip uses D-Bus, Wayland, image codecs and Turso/FTS with a vendored Tantivy security patch. NM keeps its blocking/control paths and separate cast-policy package. |
 | Framework | Existing four-crate resolver-3 workspace, MIT; core/tokio/Hyprland path crates and local-build tooling. Keep the filtered three-crate daemon source and shared workspace dependency cache. |
-| Canonical search | `shelllist/rust/shelllist-search`, MIT; standalone binary/library and lock. Clip still builds the byte-checked vendor copy. Replacing it requires a cycle-free source input/package extraction: adding all of Shelllist as a clip input would create a flake cycle. The existing freshness gate is retained, not silently removed. |
+| Canonical search | `shelllist/rust/shelllist-search`, MIT; standalone binary/library and lock. Clipboard search is now owned by Turso/FTS and no longer builds a copy of this matcher. No Shelllist input or flake cycle is added to clipboard. |
 | Update-status contract | MIT serde-only crate inside update-worker's existing workspace/lock, also captured explicitly for bar. Never import privileged implementation to obtain a DTO. |
 | Update-worker | Separate finite privileged package and lock, configured by the host. Root Cargo manifest does not declare a license; resolve that metadata before any consolidation. Preserve test-support output, host configuration, transaction/state paths and separate deployment authority. |
 | Portal launcher | Shelllist-owned MIT root/lock; source capture includes the current framework Hyprland crate. Keep its separate executable and portal/process behavior. |

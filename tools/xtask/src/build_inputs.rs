@@ -72,22 +72,6 @@ fn version(value: &str) -> Result<Vec<u32>> {
     parts.resize(3, 0);
     Ok(parts)
 }
-fn search_files(root: &Path) -> Result<BTreeMap<PathBuf, Vec<u8>>> {
-    let mut files = BTreeMap::from([(
-        PathBuf::from("Cargo.toml"),
-        fs::read(root.join("Cargo.toml"))?,
-    )]);
-    for entry in WalkDir::new(root.join("src")) {
-        let entry = entry?;
-        if entry.file_type().is_file() {
-            files.insert(
-                entry.path().strip_prefix(root)?.to_owned(),
-                fs::read(entry.path())?,
-            );
-        }
-    }
-    Ok(files)
-}
 pub fn audit(policy: &Value, sources: &BTreeMap<String, PathBuf>) -> Result<Vec<String>> {
     let mut errors = Vec::new();
     macro_rules! require { ($test:expr,$($arg:tt)*) => { if !$test { errors.push(format!($($arg)*)); } }; }
@@ -392,20 +376,6 @@ pub fn audit(policy: &Value, sources: &BTreeMap<String, PathBuf>) -> Result<Vec<
             }
         }
     }
-    require!(
-        search_files(
-            &sources
-                .get("shelllist")
-                .context("missing canonical search repository")?
-                .join("rust/shelllist-search")
-        )? == search_files(
-            &sources
-                .get("clip-daemon")
-                .context("missing vendored search repository")?
-                .join("vendor/shelllist-search")
-        )?,
-        "vendored search differs from canonical source"
-    );
     Ok(errors)
 }
 pub fn check(root: &Path, sources: Option<&Path>, policy: Option<&Path>) -> Result<()> {

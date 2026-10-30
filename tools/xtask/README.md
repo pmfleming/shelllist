@@ -29,7 +29,9 @@ cargo clippy --locked --manifest-path tools/xtask/Cargo.toml --all-targets -- -D
   loading/residency validation, deterministic output and freshness. The Nix-side
   module evaluator remains; controller factories stay typed QML, not generated.
 - **Build inputs:** reads only the supplied source graph, Cargo TOML/locks, compiler
-  pins and vendored matcher. No Cargo resolution, network, Git hooks or source
+  pins, including the clipboard's vendored Tantivy patch and its standalone lock.
+  The clipboard's Turso search no longer vendors Shelllist's matcher.
+  No Cargo resolution, network, Git hooks or source
   modification occurs during this check. Independent crates have exact documented
   exceptions, not directory-wide exemptions. Nix platform/toolchain gates remain.
 - **Cache trimming:** native inode/block accounting and Linux Cargo-compatible file
