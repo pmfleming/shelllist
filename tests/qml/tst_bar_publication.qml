@@ -23,15 +23,9 @@ DaemonTestCase {
             }
         }
     }
-    function fixture() {
-        const request = new XMLHttpRequest();
-        request.open("GET", Qt.resolvedUrl("fixtures/bar-reads.json"), false);
-        request.send();
-        return JSON.parse(request.responseText);
-    }
     function make() { const f = createTemporaryObject(factory, tests); verify(f !== null); return f; }
     function projection(stream, revision, patch, stamp) {
-        const value = fixture().changed[stream].data;
+        const value = readFixture("bar-reads").changed[stream].data;
         return Object.assign({}, value, patch || {}, {_publication: Object.assign({}, value._publication, {revision: revision}, stamp || {})});
     }
     function read(f, stream, value) {
@@ -43,7 +37,7 @@ DaemonTestCase {
             {protocol: "bar-api", version: 2, ok: true, data: {snapshot: {[f.requestPolicy.keys[stream]]: value}}}, "", call.route);
     }
     function push(f, stream, value, kind) {
-        const envelope = fixture().changed[stream];
+        const envelope = readFixture("bar-reads").changed[stream];
         envelope.data = value;
         envelope.event = kind || "changed";
         const route = {consumerId: f.sharedConsumerId, localId: "session-subscribe", kind: "base-subscription",

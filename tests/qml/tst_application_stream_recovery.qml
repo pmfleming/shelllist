@@ -8,12 +8,6 @@ DaemonTestCase {
     name: "ApplicationStreamRecovery"
     when: windowShown
     Component { id: factory; Apps.ApplicationController { uiActive: true; scheduledRefreshDelay: 60000 } }
-    function fixture(name) {
-        const request = new XMLHttpRequest();
-        request.open("GET", Qt.resolvedUrl("fixtures/" + name + ".json"), false);
-        request.send();
-        return JSON.parse(request.responseText);
-    }
     function setup() {
         const controller = createTemporaryObject(factory, tests);
         verify(controller !== null);
@@ -22,7 +16,7 @@ DaemonTestCase {
         verify(consumer !== undefined);
         const sub = session.client.subscriptions.find(s => s.id === consumer.baseSubscriptionRequestId);
         verify(sub !== undefined);
-        emitBaseEvent("app-daemon", sub.route, fixture("app-events")["applications.changed.subscribed"]);
+        emitBaseEvent("app-daemon", sub.route, readFixture("app-events")["applications.changed.subscribed"]);
         calls = [];
         return {c: controller, b: consumer.backend, session: session, sub: sub};
     }
@@ -33,14 +27,14 @@ DaemonTestCase {
         return calls.find(c => c.method === "applications.query");
     }
     function reply(f, request, revision) {
-        const envelope = fixture("app-replies")["applications.query"];
+        const envelope = readFixture("app-replies")["applications.query"];
         envelope.data.applications.revision = revision;
         f.session.client.response(request.id, envelope, "", request.route);
     }
     function test_invalidationFencesReadEvenBeforeDebouncedReplacementDispatch() {
         const f = setup();
         const old = query(f);
-        emitBaseEvent("app-daemon", f.sub.route, fixture("app-events")["windows.changed"]);
+        emitBaseEvent("app-daemon", f.sub.route, readFixture("app-events")["windows.changed"]);
         reply(f, old, 10);
         compare(f.c.catalogRevision, -1, "a late read cannot briefly republish an invalidated catalog");
         const fresh = query(f);
@@ -64,7 +58,7 @@ DaemonTestCase {
     function test_staleReadFailureDoesNotReplaceCurrentDiagnostics() {
         const f = setup();
         const old = query(f);
-        emitBaseEvent("app-daemon", f.sub.route, fixture("app-events")["applications.changed"]);
+        emitBaseEvent("app-daemon", f.sub.route, readFixture("app-events")["applications.changed"]);
         f.c.catalogError = "current diagnostic";
         f.session.client.response(old.id, null, "late read failure", old.route);
         compare(f.c.catalogError, "current diagnostic");

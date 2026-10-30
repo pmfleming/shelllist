@@ -16,21 +16,15 @@ DaemonTestCase {
         clientReady = true;
         failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop).*/);
     }
-    function fixture() {
-        const request = new XMLHttpRequest();
-        request.open("GET", Qt.resolvedUrl("fixtures/bar-reads.json"), false);
-        request.send();
-        return JSON.parse(request.responseText);
-    }
     function make() {
         const controller = createTemporaryObject(factory, tests);
         const read = calls.find(call => call.method === "bar.snapshot");
-        const envelope = fixture().snapshot;
+        const envelope = readFixture("bar-reads").snapshot;
         Io.DaemonSessions.sessions["bar-daemon"].client.response(read.id, envelope, "", read.route);
         return controller;
     }
     function powerEvent(profile: var, revision: int): void {
-        const event = fixture().changed["power-profile.changed"];
+        const event = readFixture("bar-reads").changed["power-profile.changed"];
         event.data = Object.assign(event.data, profile);
         event.data._publication.revision = revision;
         const read = calls.find(call => call.method === "bar.snapshot");

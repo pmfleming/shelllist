@@ -14,6 +14,16 @@ TestCase {
     property var originalFactory
     property var originalSessions
 
+    // Resolve beside this shared owner; all consumers use the same fixture tree.
+    // Return fresh data unless a consumer explicitly retains its fixture value.
+    function readFixture(name: string): var {
+        const request = new XMLHttpRequest();
+        request.open("GET", Qt.resolvedUrl("fixtures/" + name + ".json"), false);
+        request.send();
+        return JSON.parse(request.responseText);
+    }
+    function clone(value) { return JSON.parse(JSON.stringify(value)); }
+
     Component {
         id: clientFactory
         QtObject {

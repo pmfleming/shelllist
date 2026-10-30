@@ -114,7 +114,7 @@ QtObject {
         });
     }
 
-    function dispatchReady(control, cleanup) {
+    function dispatchReady(control: bool, cleanup: bool): bool {
         return control ? pendingControls < (cleanup ? maximumControls : Math.max(0, maximumControls - 1))
             : pendingCalls < maximumCalls;
     }

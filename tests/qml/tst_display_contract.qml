@@ -7,7 +7,7 @@ DaemonTestCase {
     id: tests
     name: "DisplayContract"
     when: windowShown
-    property var loadedFixture: null
+    readonly property var contractFixture: readFixture("bar-displays")
     Component {
         id: factory
         Displays.DisplayController {
@@ -16,16 +16,6 @@ DaemonTestCase {
             onActionInFlightChanged: if (!actionInFlight) stateAtRelease = JSON.stringify(displayPolicyState)
         }
     }
-    function fixture() {
-        if (!loadedFixture) {
-            const request = new XMLHttpRequest();
-            request.open("GET", Qt.resolvedUrl("fixtures/bar-displays.json"), false);
-            request.send();
-            loadedFixture = JSON.parse(request.responseText);
-        }
-        return loadedFixture;
-    }
-    function clone(value) { return JSON.parse(JSON.stringify(value)); }
     function init() {
         calls = [];
         clientReady = true;
@@ -45,21 +35,21 @@ DaemonTestCase {
     }
     function event(controller, state) {
         const route = Object.assign({}, lastCall(controller, "bar.snapshot").route, {kind: "base-subscription", localId: "session-subscribe"});
-        emitBaseEvent("bar-daemon", route, clone(fixture().events[state]));
+        emitBaseEvent("bar-daemon", route, clone(contractFixture.events[state]));
         // Test the fixed fixture deadline against a fixed observation clock, not the wall date.
-        controller.clock = fixture().events.preview.data.layout.trial.expires_at * 1000 - 20000;
+        controller.clock = contractFixture.events.preview.data.layout.trial.expires_at * 1000 - 20000;
     }
     function make() {
         const controller = createTemporaryObject(factory, tests);
         verify(controller !== null);
-        reply(lastCall(controller, "bar.snapshot"), fixture().snapshots.initial);
+        reply(lastCall(controller, "bar.snapshot"), contractFixture.snapshots.initial);
         verify(controller.canEdit);
         verify(controller.outputs[0].supported && controller.outputs[0].internal);
         compare(controller.draft[0].mode, "1920x1200@60.00Hz");
         return controller;
     }
     function start(controller, method) {
-        const params = fixture().replies[method].params;
+        const params = contractFixture.replies[method].params;
         let sent = false;
         switch (method) {
         case "displayLayout.preview":
@@ -86,13 +76,13 @@ DaemonTestCase {
         controller.backend.requestPolicy.recover("display-policy.changed");
         const recovery = lastCall(controller, "bar.snapshot");
         compare(recovery.params.streams, ["display-policy.changed"]);
-        reply(recovery, fixture().snapshots.initial);
+        reply(recovery, contractFixture.snapshots.initial);
         compare(JSON.stringify(controller.draft), draft);
         verify(controller.actionInFlight);
         compare(effects(controller).length, 1);
         event(controller, "preview");
         verify(controller.actionInFlight, "state observation is not the effect acknowledgement");
-        reply(preview, fixture().replies[preview.method].success);
+        reply(preview, contractFixture.replies[preview.method].success);
         verify(!controller.actionInFlight);
         verify(controller.trial !== null);
         compare(effects(controller).length, 1);
@@ -103,8 +93,8 @@ DaemonTestCase {
         compare(effects(controller).length, 0, "local field save does not apply displays");
         verify(controller.preview());
         const call = lastCall(controller, "displayLayout.preview");
-        compare(call.params, fixture().invalidDraft.params);
-        reply(call, fixture().invalidDraft.reply);
+        compare(call.params, contractFixture.invalidDraft.params);
+        reply(call, contractFixture.invalidDraft.reply);
         verify(!controller.actionInFlight && controller.canEdit);
         compare(controller.draft[0].scale, "", "empty is not silently coerced to zero");
         verify(controller.dirty && controller.displayPolicyError.length > 0);
@@ -119,12 +109,12 @@ DaemonTestCase {
         const controller = make();
         const preview = start(controller, "displayLayout.preview");
         controller.deactivateUi();
-        const foreign = clone(fixture().events.preview);
+        const foreign = clone(contractFixture.events.preview);
         foreign.data.layout.trial.id = "another-trial";
         foreign.data._publication.revision++;
         const route = Object.assign({}, preview.route, {kind:"base-subscription", localId:"session-subscribe"});
         emitBaseEvent("bar-daemon", route, foreign);
-        reply(preview, fixture().replies[preview.method].success);
+        reply(preview, contractFixture.replies[preview.method].success);
         compare(controller.trial.id, "another-trial");
         compare(effects(controller).length, 1, "receipt identity cannot authorize rollback of newer live state");
         verify(!controller.revertOnArrival);
@@ -138,9 +128,9 @@ DaemonTestCase {
         verify(!controller.revertOnArrival);
         controller.uiActive = true;
         clientReady = true;
-        reply(lastCall(controller, "bar.snapshot"), fixture().snapshots.preview);
+        reply(lastCall(controller, "bar.snapshot"), contractFixture.snapshots.preview);
         wait(0);
-        compare(controller.trial.id, fixture().events.preview.data.layout.trial.id);
+        compare(controller.trial.id, contractFixture.events.preview.data.layout.trial.id);
         compare(calls.filter(c => c.method.startsWith("displayLayout.")).length, 1, "a fresh baseline is not effect or rollback authority");
     }
     function test_explicitCloseRevertsOnceButLostRevertIsNotReplayed() {
@@ -149,15 +139,15 @@ DaemonTestCase {
         controller.deactivateUi();
         verify(controller.revertOnArrival);
         compare(effects(controller).length, 1, "Wait for authoritative trial identity before requesting safety revert");
-        reply(preview, fixture().replies[preview.method].success);
+        reply(preview, contractFixture.replies[preview.method].success);
         const revert = lastCall(controller, "displayLayout.revert");
-        compare(revert.params, fixture().replies[revert.method].params);
+        compare(revert.params, contractFixture.replies[revert.method].params);
         compare(effects(controller).length, 2);
         verify(!controller.revertOnArrival);
         clientReady = false;
         Io.DaemonSessions.sessions["bar-daemon"].client.transportFailed("Revert outcome unknown");
         clientReady = true;
-        reply(lastCall(controller, "bar.snapshot"), fixture().snapshots.preview);
+        reply(lastCall(controller, "bar.snapshot"), contractFixture.snapshots.preview);
         wait(0);
         compare(effects(controller).length, 2, "A lost revert reply must not issue another revert");
         event(controller, "reverted");

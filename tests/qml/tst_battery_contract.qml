@@ -7,20 +7,11 @@ DaemonTestCase {
     id: tests
     name: "BatteryContract"
     when: windowShown
-    property var loaded: null
+    readonly property var contractFixture: readFixture("bar-battery")
     Component { id: factory; Battery.BatteryController { uiActive: true } }
-    function fixture() {
-        if (!loaded) {
-            const request = new XMLHttpRequest();
-            request.open("GET", Qt.resolvedUrl("fixtures/bar-battery.json"), false);
-            request.send(); loaded = JSON.parse(request.responseText);
-        }
-        return loaded;
-    }
-    function clone(value) { return JSON.parse(JSON.stringify(value)); }
     function init() { calls = []; clientReady = true; failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop).*/); }
     function requests(c) { return calls.filter(call => call.route.consumerId === c.backend.sharedConsumerId); }
-    function effects(c) { return requests(c).filter(call => call.method === "battery.operation.start" || Object.keys(fixture().cases).includes(call.method)); }
+    function effects(c) { return requests(c).filter(call => call.method === "battery.operation.start" || Object.keys(contractFixture.cases).includes(call.method)); }
     function lastCall(c, method) {
         const found = requests(c).filter(call => call.method === method || (call.method === "battery.operation.start" && call.params.method === method));
         verify(found.length > 0, "Missing " + method); return found[found.length - 1];
@@ -34,14 +25,14 @@ DaemonTestCase {
     }
     function make(method) {
         const c = createTemporaryObject(factory, tests); verify(c !== null);
-        reply(lastCall(c, "bar.snapshot"), fixture().snapshot);
-        reply(lastCall(c, "battery.history"), fixture().history);
-        compare(c.batteryHistory, fixture().history.data.history);
-        if (method === "battery.cancelCalibration") event(c, fixture().events.discharging);
+        reply(lastCall(c, "bar.snapshot"), contractFixture.snapshot);
+        reply(lastCall(c, "battery.history"), contractFixture.history);
+        compare(c.batteryHistory, contractFixture.history.data.history);
+        if (method === "battery.cancelCalibration") event(c, contractFixture.events.discharging);
         return c;
     }
     function start(c, method) {
-        const params = clone(fixture().cases[method].params);
+        const params = clone(contractFixture.cases[method].params);
         let sent = false;
         switch (method) {
         case "battery.setThresholds": case "battery.setProtection":
@@ -67,10 +58,10 @@ DaemonTestCase {
         const newer = lastCall(c, "battery.history");
         compare(older.params, {hours:24});
         compare(newer.params, {hours:168});
-        reply(newer, fixture().windows["168"]);
-        compare(c.batteryHistory, fixture().windows["168"].data.history);
-        reply(older, fixture().windows["24"]);
-        compare(c.batteryHistory, fixture().windows["168"].data.history);
+        reply(newer, contractFixture.windows["168"]);
+        compare(c.batteryHistory, contractFixture.windows["168"].data.history);
+        reply(older, contractFixture.windows["24"]);
+        compare(c.batteryHistory, contractFixture.windows["168"].data.history);
         compare(c.historyHours, 168);
         compare(effects(c).length, 0);
     }
@@ -85,7 +76,7 @@ DaemonTestCase {
             clientReady = false;
             Io.DaemonSessions.sessions["bar-daemon"].client.transportFailed("Outcome unknown");
             clientReady = true;
-            reply(lastCall(c, "bar.snapshot"), fixture().snapshot);
+            reply(lastCall(c, "bar.snapshot"), contractFixture.snapshot);
         } else reply(call, null, "Outcome unknown");
         wait(650); // Beyond both settings debounce timers, not just the next event loop.
         compare(effects(c).length, 1, "No automatic replay after uncertain execution");
@@ -103,7 +94,7 @@ DaemonTestCase {
         const c = make("battery.setThresholds");
         const first = start(c, "battery.setThresholds");
         c.settings.updateEndPercent(85, false);
-        const completion = clone(fixture().operationFinished["battery.setThresholds"].success);
+        const completion = clone(contractFixture.operationFinished["battery.setThresholds"].success);
         reply(first, completion);
         verify(c.settings.thresholdDraftDirty);
         compare(c.settings.draftEndPercent, 85, "acknowledging an older save cannot overwrite the next saved revision");
@@ -116,16 +107,16 @@ DaemonTestCase {
     function test_domainRecoveryAndSubscriptionRenewalKeepAcceptedBatteryWork() {
         const c = make("battery.chargeOnce");
         const call = start(c, "battery.chargeOnce");
-        reply(call, fixture().operationStarted);
+        reply(call, contractFixture.operationStarted);
         const pending = JSON.stringify(c.backend.interactiveOperations.requests);
         c.backend.requestPolicy.recover("battery.changed");
         const read = lastCall(c, "bar.snapshot");
         compare(read.params.streams, ["battery.changed"]);
-        reply(read, fixture().snapshot);
+        reply(read, contractFixture.snapshot);
         verify(c.actionInFlight);
         compare(JSON.stringify(c.backend.interactiveOperations.requests), pending);
         verify(c.backend.renewBaseSubscription());
-        event(c, {protocol: "bar-api", version: 2, stream: "battery.changed", event: "subscribed", data: fixture().snapshot.data.snapshot.battery});
+        event(c, {protocol: "bar-api", version: 2, stream: "battery.changed", event: "subscribed", data: contractFixture.snapshot.data.snapshot.battery});
         verify(c.actionInFlight);
         compare(JSON.stringify(c.backend.interactiveOperations.requests), pending);
         compare(effects(c).length, 1, "renewal cannot cancel or replay accepted work");
@@ -133,13 +124,13 @@ DaemonTestCase {
     function test_cancelAcknowledgesIntentNotRollback() {
         const c = make("battery.chargeOnce");
         const call = start(c, "battery.chargeOnce");
-        reply(call, fixture().operationStarted);
+        reply(call, contractFixture.operationStarted);
         verify(c.actionInFlight);
         c.backend.interactiveOperations.cancel();
-        reply(lastCall(c, "battery.operation.cancel"), fixture().operationCancelled);
+        reply(lastCall(c, "battery.operation.cancel"), contractFixture.operationCancelled);
         verify(c.actionInFlight, "Cancel intent is not proof that a write stopped");
         c.backend.interactiveOperations.poll();
-        reply(lastCall(c, "battery.operation.status"), fixture().operationUnknown);
+        reply(lastCall(c, "battery.operation.status"), contractFixture.operationUnknown);
         verify(!c.actionInFlight);
         verify(c.lastError.includes("unknown"));
         compare(effects(c).length, 1);

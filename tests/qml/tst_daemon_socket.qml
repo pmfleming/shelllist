@@ -340,7 +340,7 @@ TestCase {
     }
     function test_fullControlsReserveCleanupWithoutRaisingNativeCeiling() {
         const f = fixture();
-        f.transport.queueTimeout = 10;
+        f.transport.queueTimeout = 60000;
         for (let i = 0; i < 15; i++) f.client.cancel("hold-" + i, "owned-" + i);
         f.client.cancel("cleanup", "exact-resource", null, true);
         compare(f.transport.pendingControls, 16);
@@ -350,6 +350,12 @@ TestCase {
         verify(rejected);
         f.client.cancel("queued-cleanup", "exact-late-resource", null, true);
         compare(f.transport.queue.length, 16, "last existing queue entry is reserved for cleanup");
+        for (const wireId of f.transport.queue) {
+            const record = f.transport.pending[wireId];
+            record.expiresAt = Date.now() - 1;
+            record.timer.interval = 1;
+            record.timer.restart();
+        }
         tryVerify(() => f.client.unsent.length === 16);
         compare(f.transport.pendingControls, 16, "queued expiry never releases native permits");
         compare(f.transport.endpoint.writes.length, 16);

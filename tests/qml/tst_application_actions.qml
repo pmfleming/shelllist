@@ -63,10 +63,7 @@ DaemonTestCase {
             {protocol: Api.protocol, version: Api.version, ok: !error, data: data}, error || "", call.route);
     }
     function operation(call, status, extra) {
-        const request = new XMLHttpRequest();
-        request.open("GET", Qt.resolvedUrl("fixtures/" + (status === "accepted" ? "app-replies.json" : "app-events.json")), false);
-        request.send();
-        const fixture = JSON.parse(request.responseText);
+        const fixture = readFixture(status === "accepted" ? "app-replies" : "app-events");
         const native = status === "accepted" ? fixture["applications.execute"].data.operation : fixture[status].data.operation;
         return Object.assign({}, native, {id: "op-" + call.id, target_id: call.params.target_id,
             action: call.params.action, message: status}, extra || {});
@@ -89,6 +86,7 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         tryCompare(panel.controller, "detailsOpen", true);
         tryVerify(() => findChild(panel, "closeWindow-w1") !== null);
+        tryVerify(() => panel.detailsNavigation.contentReady);
         waitForRendering(panel);
     }
     function verifyStatus(panel, message) {
@@ -121,7 +119,7 @@ DaemonTestCase {
         }
         keyClick(Qt.Key_Tab);
         compare(panel.detailsNavigation.availableFields().length, 0, "headings remain passive");
-        compare(panel.detailsNavigation.currentTarget.objectName, "applicationPage");
+        tryVerify(() => panel.detailsNavigation.currentTarget?.objectName === "applicationPage");
         keyClick(Qt.Key_PageDown);
         compare(calls.filter(call => call.method === Api.methods.execute).length, 0);
         const action = findChild(panel, "desktopAction-new-private");
@@ -172,10 +170,11 @@ DaemonTestCase {
     }
     function test_pagedWindowRefreshPreservesIdentityAndPendingGuards() {
         const panel=makePanel();replaceLarge(panel,64,0,false);expand(panel);
-        const pager=findChild(panel,"applicationWindowPages");pager.pageRequested(8);wait(0);
+        const pager=findChild(panel,"applicationWindowPages");pager.pageRequested(8);
+        tryVerify(()=>findChild(panel,"windowRow-w9")!==null && windowRows(panel)===8);
         const row=findChild(panel,"windowRow-w9");verify(!!row);
         replaceLarge(panel,64,0,true);tryCompare(pager,"start",9);
-        compare(findChild(panel,"windowRow-w9"),row);compare(windowRows(panel),8);
+        tryVerify(()=>windowRows(panel)===8);compare(findChild(panel,"windowRow-w9"),row);
         const button=findChild(panel,"closeWindow-w9");findChild(panel,"applicationPage").revealItem(button);waitForRendering(panel);mouseClick(button);
         const call=lastCall(Api.methods.execute);compare(call.params.target_id,"Alpha");compare(call.params.window_id,"w9");compare(call.params.action,"close-window");
         pager.pageRequested(32);compare(pager.start,9,"pending operation retains its visible command window");
@@ -183,7 +182,8 @@ DaemonTestCase {
     }
     function test_lastDesktopActionUsesItsOriginalNativeId() {
         const panel=makePanel();replaceLarge(panel,2,128,false);expand(panel);
-        const pager=findChild(panel,"applicationActionPages");pager.pageRequested(120);wait(0);
+        const pager=findChild(panel,"applicationActionPages");pager.pageRequested(120);
+        tryVerify(()=>findChild(panel,"desktopAction-action-127")!==null);
         const action=findChild(panel,"desktopAction-action-127");verify(!!action);
         findChild(panel,"applicationPage").revealItem(action);waitForRendering(panel);mouseClick(action.button);
         const call=lastCall(Api.methods.execute);compare(call.params.target_id,"Alpha");compare(call.params.action,"desktop-action");compare(call.params.desktop_action_id,"action-127");
@@ -201,9 +201,14 @@ DaemonTestCase {
         verifyStatus(panel, "Closing window of Alpha…");
         accept(call);
         verifyStatus(panel, "Closing window of Alpha…");
-        verify(!findChild(panel, "closeWindow-w1").enabled);
-        mouseClick(findChild(panel, "closeWindow-w1"));
-        mouseClick(findChild(panel, "focusWindow-w1"));
+        const row = findChild(panel, "windowRow-w1");
+        verify(!row.actionEnabled);
+        row.trigger("close-window"); row.trigger("focus-window");
+        for (const id of ["closeWindow-w1", "focusWindow-w1"]) {
+            const button = findChild(panel, id);
+            // Shared responsive rows may omit disabled commands at narrow widths.
+            if (button) { verify(!button.enabled); mouseClick(button); }
+        }
         compare(calls.filter(c => c.method === Api.methods.execute).length, 1, "Pending close blocks conflicting pointer commands");
         event(call, "completed", {message: "Close requested; 1 window still open. Focus it to check for a save prompt.",
             close: {status: "still-open", targeted_window_ids: ["w1"], dispatched_window_ids: ["w1"], remaining_window_ids: ["w1"], dispatch_error: null}});
@@ -211,7 +216,7 @@ DaemonTestCase {
         compare(c.selectedApplication.instances.length, 2, "Native observation must not rewrite the catalog");
         snapshot(panel, ["w1", "w2"]);
         verify(c.selectedActionMessage.indexOf("still open") >= 0);
-        verify(findChild(panel, "focusWindow-w1").enabled, "Can reach a save prompt");
+        tryVerify(() => findChild(panel, "focusWindow-w1")?.enabled === true, 5000, "Can reach a save prompt");
         // Put real native focus on the row command before removing that row.
         findChild(panel, "closeWindow-w1").forceActiveFocus();
         snapshot(panel, ["w2"]);

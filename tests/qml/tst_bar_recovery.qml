@@ -20,14 +20,8 @@ DaemonTestCase {
         return controller;
     }
     function reads(backend) { return calls.filter(call => call.route.consumerId === backend.sharedConsumerId && call.method === "bar.snapshot"); }
-    function nativeFixtures() {
-        const request = new XMLHttpRequest();
-        request.open("GET", Qt.resolvedUrl("fixtures/bar-reads.json"), false);
-        request.send();
-        return JSON.parse(request.responseText);
-    }
     function reply(call, snapshot) {
-        const native = nativeFixtures().snapshot.data.snapshot;
+        const native = readFixture("bar-reads").snapshot.data.snapshot;
         const n = calls.filter(c => c.route.consumerId === call.route.consumerId && c.method === "bar.snapshot").findIndex(c => c.id === call.id) + 1;
         const result = {};
         for (const [key, value] of Object.entries(snapshot)) {
@@ -38,10 +32,7 @@ DaemonTestCase {
             {protocol: "bar-api", version: 2, ok: true, data: {snapshot: snapshot}}, "", call.route);
     }
     function event(call, stream, kind, data) {
-        const request = new XMLHttpRequest();
-        request.open("GET", Qt.resolvedUrl("fixtures/bar-reads.json"), false);
-        request.send();
-        const fixtures = JSON.parse(request.responseText);
+        const fixtures = readFixture("bar-reads");
         const group = fixtures[kind === "gap" ? "lagged" : kind];
         // Positive events start with the production serializer, not a partial fake.
         const envelope = group ? group[stream] : {protocol: "bar-api", version: 2, stream: stream, event: kind, data: {}};
