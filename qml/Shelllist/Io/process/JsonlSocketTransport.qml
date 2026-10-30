@@ -114,6 +114,11 @@ QtObject {
         });
     }
 
+    function dispatchReady(control, cleanup) {
+        return control ? pendingControls < (cleanup ? maximumControls : Math.max(0, maximumControls - 1))
+            : pendingCalls < maximumCalls;
+    }
+
     function write(line, reservedCleanup) {
         if (!running || stopping || !endpoint)
             throw new Error("UNSENT: socket is not accepting requests");
@@ -137,14 +142,12 @@ QtObject {
         // One of the existing control slots/queue entries is reserved for the
         // session's captured resource transaction. No native ceiling is raised.
         const cleanup = control && !!reservedCleanup; // local admission hint, never a wire/route extension
-        const controlLimit = cleanup ? maximumControls : Math.max(0, maximumControls - 1);
         const queuedControlLimit = cleanup ? maximumQueuedControls : Math.max(0, maximumQueuedControls - 1);
-        const waiting = queue.filter(key => pending[key].control === control).length;
-        const slotsFull = control ? pendingControls >= controlLimit : pendingCalls >= maximumCalls;
+        const waiting = queue.reduce((count, key) => count + (pending[key].control === control ? 1 : 0), 0);
         const ordinaryControlBytes = control && !cleanup ? Object.values(pending)
-            .filter(record => record.control && !record.cleanup).reduce((total, record) => total + record.bytes, 0) : 0;
+            .reduce((total, record) => total + (record.control && !record.cleanup ? record.bytes : 0), 0) : 0;
         if ((control && !cleanup && ordinaryControlBytes + bytes > Math.max(0, maximumPendingControlBytes - reservedCleanupBytes))
-                || laneBytes + bytes > laneLimit || ((slotsFull || !endpoint.connected || waiting > 0)
+                || laneBytes + bytes > laneLimit || ((!dispatchReady(control, cleanup) || !endpoint.connected || waiting > 0)
                 && waiting >= (control ? queuedControlLimit : maximumQueuedRequests)))
             throw new Error("UNSENT: socket admission queue or byte capacity exceeded");
         const timer = requestDeadline.createObject(transport, {wireId: wireId}) as Timer;
@@ -176,7 +179,7 @@ QtObject {
                     rejectQueued(wireId, "socket admission waiting deadline exceeded");
                     continue;
                 }
-                if (record.control ? pendingControls >= (record.cleanup ? maximumControls : Math.max(0, maximumControls - 1)) : pendingCalls >= maximumCalls)
+                if (!dispatchReady(record.control, record.cleanup))
                     continue;
                 queue = queue.filter(id => id !== wireId);
                 record.dispatched = true; // write may synchronously reenter receive
@@ -198,7 +201,7 @@ QtObject {
             pumping = false;
         }
         // A synchronous response can enqueue a replacement during write().
-        if (queue.some(id => pending[id].control ? pendingControls < (pending[id].cleanup ? maximumControls : Math.max(0, maximumControls - 1)) : pendingCalls < maximumCalls))
+        if (queue.some(id => dispatchReady(pending[id].control, pending[id].cleanup)))
             Qt.callLater(transport.pump);
     }
 

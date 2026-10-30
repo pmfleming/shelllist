@@ -90,3 +90,17 @@ late-resource handling and callback order remain in place.
 `run-qmlquality-tests.sh -input tests/qml/tst_daemon_socket.qml -o -,txt`:
 **24 passes (22 behaviors), zero failures/skips**; strict lint of the changed
 transport and `git diff --check` pass. Raw `stage1-qt.log`, `stage1-lint.log`.
+Measured `receive` cognitive 40 → 32; cyclomatic 31 → 31; token Halstead effort
+39812 → 39812. This is a control-flow readability improvement, not fewer guards.
+
+## Stage 2 — socket admission
+
+`dispatchReady` now owns the reused call/control credit decision for admission,
+dispatch and queued follow-up. Removed two temporary filtered arrays used only
+for counting queued records/control bytes. Queue and byte ceilings, reserved
+cleanup space, FIFO lanes, generation fences and callback order are unchanged.
+Do not snapshot pending records across `discardQueued`: its callbacks can reenter.
+The same full socket suite passes **24 / 0 / 0**, including exact control slot,
+queue and byte reservations, delayed expiry, uncertain permits and late receipts.
+Changed-file strict lint and `git diff --check` pass. Raw `stage2-*.log`.
+No wall-clock or throughput improvement is claimed from allocation removal.
