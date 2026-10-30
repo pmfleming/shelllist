@@ -190,19 +190,23 @@ Ui.ChooserController {
     }
     function triggerDetailAction(action: string): void {
         if (modalOpen) return;
-        if (action === "create") create();
-        else if (action === "cancel-create") cancelCreation();
-        else if (action === "save-schedule") saveSchedule();
-        else if (action === "cancel-schedule") scheduleOpen = false;
-        else if (action === "complete") complete(selectedItem);
-        else if (action === "schedule" && canWrite(selectedItem)) {
+        switch (action) {
+        case "create": create(); break;
+        case "cancel-create": cancelCreation(); break;
+        case "save-schedule": saveSchedule(); break;
+        case "cancel-schedule": scheduleOpen = false; break;
+        case "complete": complete(selectedItem); break;
+        case "schedule":
+            if (!canWrite(selectedItem)) break;
             scheduleTarget = selectedItem;
             scheduleDraft = copy(valueFor(selectedItem, "schedule", selectedItem.schedule));
             scheduleText = JSON.stringify(scheduleDraft) === JSON.stringify(selectedItem.schedule) ? selectedItem.schedule_text || null : null; scheduleRaw = null;
             detailsTab = "details"; detailsOpen = true; scheduleOpen = true;
-        } else if (action === "delete" && selectedItem?.capabilities.delete && !mutationBusy) deleteTarget = selectedItem;
-        else if (action === "retry" && failedDraft && !mutationBusy) requestItem(selectedSummary, false, copy(failedDraft));
-        else if (action === "receipt") checkReceipt();
+            break;
+        case "delete": if (selectedItem?.capabilities.delete && !mutationBusy) deleteTarget = selectedItem; break;
+        case "retry": if (failedDraft && !mutationBusy) requestItem(selectedSummary, false, copy(failedDraft)); break;
+        case "receipt": checkReceipt(); break;
+        }
     }
     function valueFor(item: var, key: string, fallback: var): var {
         return savedDrafts[item?.id + ":" + key]?.value ?? fallback;
