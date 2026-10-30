@@ -52,6 +52,9 @@ and viewport behavior.
 - Offset-aware validation compares the absolute end with the reported total;
   revisions, continuation metadata and duplicate identities remain fenced.
   The frontend neither parses nor manufactures backend cursor tokens.
+- Published arrays are replaced, never mutated. An append may capture the
+  published prefix directly; the pure window transition concatenates into a new
+  array. Rejected/staged pages cannot change a previously published prefix.
 - Filter/query changes and exact-run links start from their own query, never
   from another window's cursor. No daemon protocol change is required.
 

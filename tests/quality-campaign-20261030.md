@@ -104,3 +104,14 @@ The same full socket suite passes **24 / 0 / 0**, including exact control slot,
 queue and byte reservations, delayed expiry, uncertain permits and late receipts.
 Changed-file strict lint and `git diff --check` pass. Raw `stage2-*.log`.
 No wall-clock or throughput improvement is claimed from allocation removal.
+
+## Stage 3 — Update history capture
+
+Named the shared continuation decision once and removed `entries.slice()` when
+capturing an append prefix. Source review found no in-place mutations of published
+entries; `UpdateHistoryWindow.advance` concatenates and returns a new window.
+The retained native refresh journey now independently checks that the captured
+50-row prefix remains unchanged after the 100-row publication. The cache contract
+documents that invariant. No page cap, anchor, revision or retry guard changed.
+Full Updates suite: **47 passes (45 behaviors), zero failures/skips**;
+changed controller/test strict lint and `git diff --check` pass. Raw `stage3-*.log`.

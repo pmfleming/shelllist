@@ -252,10 +252,12 @@ Ui.ProviderChooserController {
         const advancing = append && historyCacheFull;
         const offset = advancing ? historyOffset + entries.length : retain ? historyOffset : 0;
         const start = advancing ? cursor : retain ? historyStartCursor : "";
-        const anchors = append || offset > 0 ? publishedAnchors
+        const continuation = append || offset > 0;
+        const anchors = continuation ? publishedAnchors
             : retain ? [...new Set([selectedRun ? selectedRun.job.id : "", entries.length ? entries[entries.length - 1].job.id : ""].filter(Boolean))] : [];
+        // Published arrays are replaced, never edited; advance() concatenates.
         historyWindow = {key: queryKey, append: append, anchors: anchors, offset: offset, startCursor: start, replace: recent || advancing,
-            entries: append && !advancing ? entries.slice() : [], revision: append || offset > 0 ? publishedRevision : "", total: append || offset > 0 ? total : -1,
+            entries: append && !advancing ? entries : [], revision: continuation ? publishedRevision : "", total: continuation ? total : -1,
             retainThrough: -1, target: retain && !advancing ? entries.length : 0, pages: 0, retried: false, diagnostic: "", notice: "", cursor: append ? cursor : start};
         loading = true;
         errorText = "";
