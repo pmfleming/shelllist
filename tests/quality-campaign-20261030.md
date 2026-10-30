@@ -270,3 +270,11 @@ Python test declarations and five daemon-contract declarations. This is not a
 claim that the Rust/producer suites ran here. Reproduce with
 `python3 tests/count-test-inventory.py --qml-log target/quality-campaign-20261030/final-verified-qt.log --expected-qml-skip 'qmltestrunner::MediaChip::test_artworkReallyClipsRoundedCorners()'`;
 the result and repeated zero-prompt UI review are in `final-inventory-and-ui.log`.
+
+## Parent integration follow-up
+
+After all eight workers committed and their trees were clean, the parent ran
+`local-build check .` against one captured graph: **all 28 checks passed**,
+including packaged Qt (**701 passed, zero failed, one existing skip**).
+This resolves the sibling-file package blocker above. The [campaign overview](quality-campaign-overview-20261030.md)
+records exact source identities, command, logs and remaining quality-policy limits.
