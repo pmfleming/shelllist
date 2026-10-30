@@ -148,6 +148,27 @@ DaemonTestCase {
         compare(calls.length, 1);
         compare(Object.keys(peer.requestPolicy.operations).length, 0);
     }
+    function test_operationRetentionPreservesRunningAndJustAcceptedRecords_data() {
+        return [{tag: "terminal", mode: "terminal"}, {tag: "running", mode: "running"}, {tag: "mixed", mode: "mixed"}];
+    }
+    function test_operationRetentionPreservesRunningAndJustAcceptedRecords(data) {
+        const b = make();
+        for (let index = 0; index < 70; index++) {
+            const running = data.mode === "running" || (data.mode === "mixed" && index % 2 === 1);
+            verify(b.call("effect-" + index, "clipboard.entry.action", {action: "annotate"}));
+            reply(b, "effect-" + index, {operation: operation(running ? "started" : "completed", 1, "operation-" + index)});
+        }
+        const runningCount = data.mode === "running" ? 70 : data.mode === "mixed" ? 35 : 0;
+        compare(Object.keys(b.requestPolicy.operations).length, data.mode === "running" ? 70 : 64);
+        compare(Object.values(b.requestPolicy.operations).filter(record => record.running).length, runningCount);
+        compare(!!b.requestPolicy.operations["operation-0"], data.mode === "running");
+        verify(b.call("last", "clipboard.entry.action", {action: "annotate"}));
+        reply(b, "last", {operation: operation("completed", 1, "last")});
+        verify(!!b.requestPolicy.operations.last, "the just-accepted terminal record cannot evict itself");
+        compare(Object.keys(b.requestPolicy.operations).length, data.mode === "running" ? 71 : 64);
+        compare(Object.values(b.requestPolicy.operations).filter(record => record.running).length, runningCount);
+        compare(calls.filter(call => call.method === "clipboard.entry.action").length, 71, "retention never replays effects");
+    }
     function test_uncertaintyStopsPollingAndRetiresLateResultsWithoutReplayingEffects_data() {
         return [{tag: "expired", deadline: false}, {tag: "deadline", deadline: true}];
     }

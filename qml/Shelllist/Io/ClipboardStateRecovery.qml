@@ -92,9 +92,10 @@ Item {
             epoch: stamp.epoch, revision: stamp.revision, running: running(operation), action: operation.action
         }});
         const ids = Object.keys(next);
+        let excess = ids.length - 64;
         for (const id of ids) {
-            if (Object.keys(next).length <= 64) break;
-            if (!next[id].running && id !== operation.id) delete next[id];
+            if (excess <= 0) break;
+            if (!next[id].running && id !== operation.id) { delete next[id]; excess--; }
         }
         operations = next;
         if (operation.status === "unknown") {

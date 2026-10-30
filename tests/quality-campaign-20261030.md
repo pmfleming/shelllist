@@ -115,3 +115,15 @@ The retained native refresh journey now independently checks that the captured
 documents that invariant. No page cap, anchor, revision or retry guard changed.
 Full Updates suite: **47 passes (45 behaviors), zero failures/skips**;
 changed controller/test strict lint and `git diff --check` pass. Raw `stage3-*.log`.
+
+## Stage 4 — clipboard operation retention
+
+Pruning enumerates keys once and decrements an excess count only after deletion,
+instead of allocating/enumerating the full key array on every visited record.
+Iteration order, 64-record soft target, running-operation protection and protection
+of the just-accepted record are identical. Native recovery-boundary data cases
+submit 71 owned operations each for terminal, running and mixed populations;
+they check exact retained totals, protected records and no extra effect calls.
+The full clipboard stream-recovery suite and changed-file strict lint pass;
+see `stage4-qt.log` / `stage4-lint.log`. Three new behavior rows add coverage of
+retention limits; no statement/branch coverage percentage is claimed.
