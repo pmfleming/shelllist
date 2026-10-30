@@ -192,6 +192,10 @@
         }
       },
       "lockExceptions": {
+        "app-daemon/Cargo.lock": {
+          "versions": ["0.8.8", "0.9.5", "0.10.3"],
+          "reason": "The app-daemon Turso 0.8.3 resource-history migration introduces rand through antithesis_sdk/shuttle, turso_core and twox-hash. Preserve its exact transitive resolutions without changing Bluetooth's direct rand 0.8 API."
+        },
         "bar-daemon/Cargo.lock": {
           "versions": ["0.8.8", "0.9.5", "0.10.2"],
           "reason": "Preserve Agenda/Turso's existing transitive random-number dependencies; no shared Rust rand types cross daemon boundaries."
@@ -222,6 +226,10 @@
       "requirement": "1",
       "version": "1.1.4",
       "lockExceptions": {
+        "app-daemon/Cargo.lock": {
+          "versions": ["0.38.44", "1.1.4"],
+          "reason": "The app-daemon Turso 0.8.3 SDK build dependencies require bindgen/which's rustix 0.38.44; the direct runtime dependency remains at the shared 1.1.4 resolution."
+        },
         "bar-daemon/Cargo.lock": {
           "versions": [
             "0.38.44",

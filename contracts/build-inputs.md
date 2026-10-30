@@ -103,9 +103,12 @@ Exceptions have exact paths/versions and reasons in the policy:
   Turso FTS graph. Its manifest and standalone test lock are audited, as are
   `tools/turso-contract`'s manifest and lock. Exact per-lock exceptions preserve
   their qualified dependency versions without updating unrelated daemon locks.
-- Turso's SDK build tooling requires an additional rustix 0.38 resolution in bar
-  and clipboard. Independent rand API generations and test-only serializer/UUID
-  resolutions are documented narrowly in the policy.
+- Turso's SDK build tooling requires an additional rustix 0.38 resolution in app,
+  bar and clipboard. App's Turso resource-history migration also introduces rand
+  0.8.8, 0.9.5 and 0.10.3 through antithesis_sdk/shuttle, turso_core and twox-hash.
+  These exact per-lock exceptions preserve the shared direct requirements.
+  Independent rand API generations and test-only serializer/UUID resolutions
+  remain documented narrowly in the policy.
 
 This is intentionally not a claim that *all* transitive packages have identical
 versions across independent locks. Changing a shared requirement/resolution,
@@ -117,7 +120,7 @@ not become a blanket allowed-major-version range.
 
 | Candidate | Current ownership and constraints |
 | --- | --- |
-| Five session daemons | Separate Cargo roots and packages; MIT manifests. Keep per-domain features and bus/systemd names. App uses compositor IPC; bar/BT need PipeWire/libclang (shared writable bindgen fallback); bar also uses libudev/systemd, bundled SQLite, managed hypridle and installed protocol/data license notices. BT uses native D-Bus/BlueZ. Clip uses D-Bus, Wayland, image codecs and Turso/FTS with a vendored Tantivy security patch. NM keeps its blocking/control paths and separate cast-policy package. |
+| Five session daemons | Separate Cargo roots and packages; MIT manifests. Keep per-domain features and bus/systemd names. App uses compositor IPC and Turso resource-history storage; bar/BT need PipeWire/libclang (shared writable bindgen fallback); bar also uses libudev/systemd, bundled SQLite, managed hypridle and installed protocol/data license notices. BT uses native D-Bus/BlueZ. Clip uses D-Bus, Wayland, image codecs and Turso/FTS with a vendored Tantivy security patch. NM keeps its blocking/control paths and separate cast-policy package. |
 | Framework | Existing four-crate resolver-3 workspace, MIT; core/tokio/Hyprland path crates and local-build tooling. Keep the filtered three-crate daemon source and shared workspace dependency cache. |
 | Canonical search | `shelllist/rust/shelllist-search`, MIT; standalone binary/library and lock. Clipboard search is now owned by Turso/FTS and no longer builds a copy of this matcher. No Shelllist input or flake cycle is added to clipboard. |
 | Update-status contract | MIT serde-only crate inside update-worker's existing workspace/lock, also captured explicitly for bar. Never import privileged implementation to obtain a DTO. |
