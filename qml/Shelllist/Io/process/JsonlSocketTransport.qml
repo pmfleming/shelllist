@@ -220,45 +220,45 @@ QtObject {
             finish(1, "Invalid socket record");
             return;
         }
-        if (message.kind === "response") {
-            if (typeof message.id !== "string" || !message.id || typeof message.ok !== "boolean") {
-                finish(1, "Invalid socket response correlation");
-                return;
-            }
-            if (stopping && message.id === shutdownId && message.ok && message.response?.shutdown) {
-                finish(0, "");
-                return;
-            }
-            const wireId = message.id;
-            const record = pending[wireId];
-            if (!record || !record.dispatched)
-                return; // duplicate or never written; cannot grant credit/deliver
-            // A late resource receipt can establish cleanup responsibility only.
-            // It cannot release uncertain native credit or regain view authority.
-            const lateResource = record.uncertain && !record.lateResourceSeen && message.ok
-                && (record.operation === "subscribe" || record.cleanup);
-            if (record.uncertain && !lateResource)
-                return;
-            if (!sameRoute(record.route, message.route || null)
-                    || (message.ok ? !message.response || typeof message.response !== "object" || Array.isArray(message.response)
-                        : typeof message.error !== "string" || !["rejected-before-dispatch", "outcome-unknown"].includes(message.outcome))) {
-                finish(1, "Invalid socket response identity or outcome; outcome unknown");
-                return;
-            }
-            message.id = record.id;
-            // Timeout/error receipts do NOT prove the native retained work/permit
-            // ended. Keep its credit and original deadline until owner retirement.
-            if (lateResource)
-                record.lateResourceSeen = true;
-            else if (!message.ok && message.outcome === "outcome-unknown")
-                record.uncertain = true;
-            else
-                forget(wireId);
-            messageReceived(message); // captured identity retired before callbacks reuse IDs
-            pump();
+        if (message.kind !== "response") {
+            messageReceived(message);
             return;
         }
-        messageReceived(message);
+        if (typeof message.id !== "string" || !message.id || typeof message.ok !== "boolean") {
+            finish(1, "Invalid socket response correlation");
+            return;
+        }
+        if (stopping && message.id === shutdownId && message.ok && message.response?.shutdown) {
+            finish(0, "");
+            return;
+        }
+        const wireId = message.id;
+        const record = pending[wireId];
+        if (!record || !record.dispatched)
+            return; // duplicate or never written; cannot grant credit/deliver
+        // A late resource receipt can establish cleanup responsibility only.
+        // It cannot release uncertain native credit or regain view authority.
+        const lateResource = record.uncertain && !record.lateResourceSeen && message.ok
+            && (record.operation === "subscribe" || record.cleanup);
+        if (record.uncertain && !lateResource)
+            return;
+        if (!sameRoute(record.route, message.route || null)
+                || (message.ok ? !message.response || typeof message.response !== "object" || Array.isArray(message.response)
+                    : typeof message.error !== "string" || !["rejected-before-dispatch", "outcome-unknown"].includes(message.outcome))) {
+            finish(1, "Invalid socket response identity or outcome; outcome unknown");
+            return;
+        }
+        message.id = record.id;
+        // Timeout/error receipts do NOT prove the native retained work/permit
+        // ended. Keep its credit and original deadline until owner retirement.
+        if (lateResource)
+            record.lateResourceSeen = true;
+        else if (!message.ok && message.outcome === "outcome-unknown")
+            record.uncertain = true;
+        else
+            forget(wireId);
+        messageReceived(message); // captured identity retired before callbacks reuse IDs
+        pump();
     }
 
     function abort(message) {
