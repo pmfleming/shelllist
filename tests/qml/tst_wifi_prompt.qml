@@ -81,22 +81,22 @@ TestCase {
         verify(capturedSecrets.save);
     }
 
-    function test_rememberIsExplicitOptOutAndResetsForNewRequests() {
-        const network = {ssid: "Cafe", key: "cafe"};
-        prompt.openPasswordPrompt(network);
-        verify(prompt.saveSecret);
-        prompt.saveSecret = false;
-        prompt.text = "test-password";
-        prompt.submit(fakeController);
-        compare(capturedConnect.password, "test-password");
-        compare(capturedConnect.remember, false);
-        prompt.openPasswordPrompt(network);
-        verify(prompt.saveSecret, "opt-out is local to this connection intent");
-        prompt.cancel();
-        prompt.openDaemonSecretPrompt({request_id: "temporary", data: {secret_keys: ["psk"], save_supported: false}});
+    function test_nativeRequestOwnsRetentionAndNeverStartsAnotherConnection() {
+        prompt.openDaemonSecretPrompt({request_id: "temporary", data: {
+            secret_keys: ["psk"], save_supported: false, save_required: false
+        }});
         verify(!prompt.saveSecret, "temporary native credentials must not be saved");
         verify(prompt.submitCredentials(fakeController, {psk: "test-password"}));
         verify(!capturedSecrets.save);
+        compare(capturedSecrets.id, "temporary");
+        verify(capturedConnect === null, "answer the outstanding NM request, never reconnect");
+        prompt.secretResponse({request_id: "temporary", accepted: true, status: "accepted"});
+        verify(!prompt.credentialOpen);
+        compare(prompt.credentialValues, ({}));
+        prompt.openDaemonSecretPrompt({request_id: "persistent", data: {
+            secret_keys: ["psk"], save_supported: true, save_required: true
+        }});
+        verify(prompt.saveSecret, "retention comes from each NM request, not the previous dialog");
     }
 
     function test_nativeRequiredStorageCannotBeUncheckedAndEscapeCancels() {

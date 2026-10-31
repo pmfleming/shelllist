@@ -152,7 +152,7 @@ DaemonTestCase {
         compare(writes.length, 1);
         compare(writes[0].params.key, "buds");
     }
-    function test_wifiTypedChallengeAndCredentialOptOut() {
+    function test_wifiTypedChallenge() {
         const panel = createTemporaryObject(wifiFactory, tests);
         const c = panel.controller;
         const ap = {key: "cafe", ssid: "Cafe", active: true, strength: 70, security: "wpa2", profiles: [{id: "Cafe"}]};
@@ -186,12 +186,5 @@ DaemonTestCase {
         const write = calls.find(call => call.params.operation === "forget");
         verify(!!write);
         compare(write.params.key, "cafe");
-        // Password prompts using the same component are not this confirmation.
-        c.prompt.openPasswordPrompt(ap);
-        tryVerify(() => input.inputActiveFocus);
-        verify(!dialog.compactPresentation);
-        verify(findChild(dialog, "modalDetail").visible);
-        compare(dialog.inputLabel, "Password");
-        keyClick(Qt.Key_Escape);
     }
 }

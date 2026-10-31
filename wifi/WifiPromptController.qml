@@ -61,9 +61,6 @@ Item {
     readonly property var submitHandlerByMode: ({
             "confirm-forget": function (controller, value) {
                 root.submitForget(controller, value);
-            },
-            "network-password": function (controller, value) {
-                root.submitNetworkPassword(controller, value);
             }
         })
 
@@ -82,10 +79,6 @@ Item {
 
     function promptMessage(ap, fallback) {
         return ap && ap.connect_prompt && ap.connect_prompt.message ? ap.connect_prompt.message : fallback;
-    }
-
-    function openPasswordPrompt(ap, detailOverride) {
-        openPrompt("network-password", "Password for " + Presentation.networkName(ap), detailOverride || promptMessage(ap, "Enter the Wi-Fi password, then press Enter."), true, ap);
     }
 
     function openCredentials(nextMode, nextTitle, nextDetail, fields, nextNetwork) {
@@ -162,20 +155,6 @@ Item {
         saveSecret = true;
         saveSecretSupported = false;
         saveSecretRequired = false;
-    }
-
-    function submitNetworkPassword(controller, value) {
-        if (!controller.connection.beginAny())
-            return;
-        if (value.length === 0) {
-            controller.status = "Enter a password for this network.";
-            return;
-        }
-        const ap = network;
-        const remember = saveSecret;
-        cancel();
-        if (ap)
-            controller.connection.runTarget(ap, Presentation.networkName(ap), value, null, null, null, remember);
     }
 
     function submitCredentials(controller, values) {

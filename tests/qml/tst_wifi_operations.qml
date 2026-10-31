@@ -227,6 +227,46 @@ DaemonTestCase {
         retentionNetwork(panel, false, null);
         verify(!toggle.checked, "deleted profiles cannot inherit an old pre-connect opt-in");
     }
+    function test_newNetworkPromptsOnlyForNativeCredentials_data() {
+        const rows = [];
+        for (const remember of [false, true])
+            for (const security of ["personal", "wep"])
+                rows.push({tag: security + (remember ? "-remembered" : "-temporary"), remember: remember, security: security});
+        return rows;
+    }
+    function test_newNetworkPromptsOnlyForNativeCredentials(data) {
+        const panel = makePanel();
+        openNetwork(panel, false);
+        const c = panel.controller;
+        c.applyNetworks([{key: "cafe", ssid: "Cafe", active: false, strength: 70,
+            security: data.security === "wep" ? "WEP" : "WPA2", security_class: data.security,
+            capabilities: {can_connect: true}, connect_prompt: {kind: "password"}
+        }], true, {});
+        c.connection.setRemember(data.remember);
+        calls = [];
+        panel.page.listItem.focusList();
+        keyClick(Qt.Key_Return);
+        const starts = calls.filter(call => call.method === "wifi.connectTarget");
+        compare(starts.length, 1);
+        compare(starts[0].params, {key: "cafe", remember: data.remember});
+        verify(!c.prompt.open && !c.prompt.credentialOpen, "no speculative password dialog");
+        c.backend.acceptSharedResponse("connect-start", {protocol: "nm-api", version: 2, ok: true,
+            data: {result: {status: "started", request_id: "new-connect"}}}, "");
+        const key = data.security === "wep" ? "wep-key0" : "psk";
+        c.handleSecretEvent({event: "requested", request_id: "new-secret", data: {
+            secret_keys: [key], primary_secret_key: key, timeout_ms: 60000,
+            save_supported: data.remember, save_required: data.remember
+        }});
+        verify(c.prompt.credentialOpen && !c.prompt.open);
+        verify(c.prompt.submitCredentials(c, {[key]: data.security === "wep" ? "abcde" : "synthetic-password"}));
+        const replies = calls.filter(call => call.method === "wifi.secret.provide");
+        compare(replies.length, 1);
+        compare(replies[0].params.request_id, "new-secret");
+        compare(replies[0].params.values[key], data.security === "wep" ? "abcde" : "synthetic-password");
+        compare(replies[0].params.save, data.remember);
+        compare(calls.filter(call => call.method === "wifi.connectTarget").length, 1,
+            "password delivery answers NM without a second activation");
+    }
     function savedNetwork(panel) {
         openNetwork(panel, false);
         panel.controller.applyNetworks([{key: "cafe", ssid: "Cafe", active: false, strength: 70,

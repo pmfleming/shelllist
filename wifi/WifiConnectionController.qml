@@ -185,16 +185,11 @@ Item {
         if (controller.profileFor(ap))
             return false;
         const promptKind = ap && ap.connect_prompt ? (ap.connect_prompt.kind || "none") : "none";
-        const handlers = {
-            password: function () {
-                prompt.openPasswordPrompt(ap);
-            },
-            enterprise: function () {
-                prompt.openEnterpriseIdentityPrompt(ap);
-            }
-        };
-        if (handlers[promptKind]) {
-            handlers[promptKind]();
+        // Visible personal/WEP networks start activation without collecting a
+        // password here. Only NM's live SecretAgent request owns that prompt.
+        // Enterprise setup still needs identity and trust configuration first.
+        if (promptKind === "enterprise") {
+            prompt.openEnterpriseIdentityPrompt(ap);
             prompt.saveSecret = rememberFor(ap);
             return true;
         }

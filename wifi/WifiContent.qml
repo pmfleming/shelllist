@@ -59,9 +59,6 @@ ProviderChooserSurface {
         readonly property bool forgetResponseValid: content.controller.prompt.text.trim().toLowerCase() === "forget"
         inputValid: !compactPresentation || content.controller.prompt.text.length === 0 || forgetResponseValid
         acceptEnabled: !compactPresentation || forgetResponseValid
-        optionVisible: content.controller.prompt.mode === "network-password"
-        optionChecked: content.controller.prompt.saveSecret
-        optionLabel: qsTr("Remember network")
         actionsVisible: true
         rejectLabel: "Cancel"
         acceptLabel: compactPresentation ? qsTr("Forget") : qsTr("Continue")
@@ -69,9 +66,6 @@ ProviderChooserSurface {
         instruction: compactPresentation ? qsTr("Enter confirm   •   Esc cancel") : qsTr("Enter continue   •   Esc cancel")
         onInputEdited: function (text) {
             content.controller.prompt.text = text;
-        }
-        onOptionEdited: function (requested) {
-            content.controller.prompt.saveSecret = requested;
         }
         onAccepted: content.controller.prompt.submit(content.controller)
         onCancelled: content.cancelPrompt()
