@@ -33,7 +33,7 @@ DaemonTestCase {
     }
     function init() { failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop|Unable to assign).*/); }
     function application(id, windows) {
-        return {id: id, name: id, kind: "desktop-application", revision: 1,
+        return {id: id, name: id, kind: "desktop-application", revision: 1, new_workspace: false,
             running: windows.length > 0, focused: false,
             instances: windows.map(w => ({id: w, title: w, workspace_id: "1"})),
             desktop_actions: [], category: "shell"};
@@ -75,6 +75,15 @@ DaemonTestCase {
         call = lastCall(Api.methods.execute);
         compare(call.params.action, "launch");
         compare(call.params.launch_target, "default");
+    }
+    function test_oldCatalogKeepsOrdinaryActionsAndOmitsWorkspaceOverrides() {
+        const panel = makePanel();
+        const old = application("Old", []);
+        delete old.new_workspace;
+        const actions = panel.controller.provider.primaryActions(old, false);
+        verify(actions.some(action => action.id === "activate"));
+        verify(actions.some(action => action.id === "launch"));
+        verify(!actions.some(action => action.id === "launch-current" || action.id === "launch-new"));
     }
     function reply(call, data, error) {
         Io.DaemonSessions.sessions["app-daemon"].client.response(call.id,

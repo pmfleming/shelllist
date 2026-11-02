@@ -51,14 +51,18 @@ Core.Provider {
                     toolTip: application.default_workspace_id ? "Launch another instance on workspace " + application.default_workspace_id : "Launch another instance in a new tile on the current workspace"
                 }
             }));
-            actions.push(action("launch-current", "Open on current workspace", {
-                accessKey: "O", icon: "󰖲", enabled: !busy,
-                presentation: {group: "toolbar"}, metadata: {launchTarget: "current"}
-            }));
-            actions.push(action("launch-new", "Open on new workspace", {
-                accessKey: "N", icon: "󰐕", enabled: !busy,
-                presentation: {group: "toolbar"}, metadata: {launchTarget: "new"}
-            }));
+            // An older app daemon ignores unknown launch fields. Expose these
+            // commands only when the catalog carries the new Rust preference.
+            if (typeof application.new_workspace === "boolean") {
+                actions.push(action("launch-current", "Open on current workspace", {
+                    accessKey: "O", icon: "󰖲", enabled: !busy,
+                    presentation: {group: "toolbar"}, metadata: {launchTarget: "current"}
+                }));
+                actions.push(action("launch-new", "Open on new workspace", {
+                    accessKey: "N", icon: "󰐕", enabled: !busy,
+                    presentation: {group: "toolbar"}, metadata: {launchTarget: "new"}
+                }));
+            }
         }
         return actions;
     }

@@ -1162,6 +1162,13 @@
           "available": false,
           "error": null,
           "focused_monitor": null,
+          "lifecycle": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "session": "",
+            "version": 0
+          },
           "monitors": [],
           "workspaces": []
         }

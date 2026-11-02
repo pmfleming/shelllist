@@ -7,6 +7,10 @@ bindings are produced from the Rust daemons' registries.
 
 The app service orders startup after and wants bar-daemon. Workspace policy and
 shortcut CLI are Rust; Shelllist QML only renders state and sends commands.
+An older app catalog lacks the new preference field, so Shelllist hides workspace
+overrides. An explicitly unsupported bar lifecycle protocol retains ordinary
+default routing; requests requiring the new feature fail before launch. Transport
+errors and malformed replies are not treated as permission to fall back.
 The four native Hyprland configuration bindings execute:
 
 | Shortcut | Command |

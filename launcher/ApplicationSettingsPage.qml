@@ -60,7 +60,7 @@ Ui.DetailFlickable {
     Ui.ToggleRow {
         objectName: "applicationNewWorkspace"
         width: parent.width
-        visible: page.application.kind === "desktop-application"
+        visible: page.application.kind === "desktop-application" && typeof page.application.new_workspace === "boolean"
         title: qsTr("Open on a new workspace")
         subtitle: qsTr("Use a new workspace for launches with default routing.")
         checked: !!page.application.new_workspace

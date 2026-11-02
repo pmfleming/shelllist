@@ -27,7 +27,8 @@ batch of monitors, workspaces and clients; failed acquisition is unknown.
 Validate numeric and string input in Rust before constructing protocol expressions.
 Check dispatch result `.ok`; a Lua result table is truthy even on failure.
 
-Close captures weak compositor window references before dispatch. The reference,
+Close pins weak compositor window references in the same batch as its target
+snapshot, then persists admission before dispatch. The reference,
 address, PID, mapped state and workspace must still match in the compositor event
 turn that sends normal close. Consuming the reference prevents repeated dispatch
 and distinguishes a recycled address in the same process. Reference tokens are
@@ -45,7 +46,13 @@ Durably record admission before effects; preserve per-window close and per-launc
 handoff uncertainty. Lost responses lead to lookup, never a replacement effect.
 Bar serializes lease admission, placement and retirement; app proves launch
 provenance. Old writer generations cannot perform placement after lease release.
+Close admission revokes pending destination leases before its first close.
 Indeterminate launch is distinct from success and failure.
+
+An old app catalog without the `new_workspace` boolean exposes ordinary actions
+only. An explicitly unsupported bar context protocol permits ordinary default
+routing, while new/current overrides and saved-new routing require the matching
+owner. Malformed replies and transport failures are not compatibility signals.
 
 The action matrix, migration, monitor fallback and stage exits are specified in
 [the implementation plan](temporary-workspaces-plan.md). Capability negotiation

@@ -43,7 +43,7 @@ DaemonTestCase {
     function application(category, workspace, id) {
         return {id: id || "example.desktop", name: "Example", kind: "desktop-application",
             category: category, default_workspace_id: workspace, instances: [], desktop_actions: [],
-            running: false, focused: false};
+            running: false, focused: false, new_workspace: false};
     }
     function setApplication(surface, category, workspace, id) {
         const controller = surface.chooserController;
