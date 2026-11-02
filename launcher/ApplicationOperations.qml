@@ -94,7 +94,7 @@ Item {
         const original = pending[responseId] || Object.values(pending).find(record => record.operationId && record.operationId === operation?.id);
         if (!original)
             return; // An event before admission is recovered with an owned status read.
-        if (operation?.status === "unknown" && operation.id === original.operationId
+        if (operation?.status === "unknown" && operation.id === (original.operationId || original.recoveryId)
                 && operation.target_id === original.request.result.id
                 && operation.action === original.request.operationAction
                 && Number.isSafeInteger(operation.revision) && operation.revision > original.revision) {
@@ -169,6 +169,11 @@ Item {
         const original = pending[id];
         if (!original)
             return false;
+        if (code === "outcome-unknown" && original.recoveryId) {
+            store(Object.assign({}, original, {checks: 0, message: message + ". Checking saved operation status."}));
+            check(original.request.result.id);
+            return true;
+        }
         const record = Object.assign({}, original, {message: message, status: "failed"});
         // Only an explicit admission rejection is recoverable by a new snapshot.
         // Transport failures and accepted operation outcomes retain their feedback.

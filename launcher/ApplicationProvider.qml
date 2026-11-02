@@ -205,7 +205,9 @@ Core.Provider {
             window_id: metadata.windowId || null,
             desktop_action_id: metadata.desktopActionId || null,
             expected_revision: Lifecycle.expectedRevision(request.result.payload.revision),
-            workspace_id: null,
+            // Compatibility hint for the explicitly disabled lifecycle. The
+            // enabled Rust router captures its own authoritative context.
+            workspace_id: controller.currentWorkspaceId || null,
             launch_target: metadata.launchTarget || "default",
             request_id: request.id
         });

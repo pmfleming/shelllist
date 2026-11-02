@@ -64,7 +64,7 @@ DaemonTestCase {
         let call = lastCall(Api.methods.execute);
         compare(call.params.action, "launch");
         compare(call.params.launch_target, "current");
-        compare(call.params.workspace_id, null);
+        compare(call.params.workspace_id, "1");
         verify(call.id.endsWith(call.params.request_id));
         panel.controller.operations.fail(call.params.request_id, "fixture rejection", "validation-error");
         keyClick(Qt.Key_N, Qt.AltModifier);
@@ -376,6 +376,22 @@ DaemonTestCase {
         verify(!c.operations.busy("Alpha"));
         event(call, "running", {revision: 3});
         verify(!c.operations.busy("Alpha"));
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+    }
+    function test_lostLaunchAdmissionRecoversUnknownWithoutReplay() {
+        const panel = makePanel();
+        const c = panel.controller;
+        keyClick(Qt.Key_N, Qt.AltModifier);
+        const call = lastCall(Api.methods.execute);
+        c.operations.fail(call.params.request_id, "Lost admission reply", "outcome-unknown");
+        verify(c.operations.busy("Alpha"));
+        const check = lastCall(Api.methods.operationStatus);
+        compare(check.params.operation_id, "operation-" + call.params.request_id);
+        reply(check, {operation_status: operation(call, "completed", {
+            id: check.params.operation_id, status: "unknown", revision: 2, message: "Restarted; inspect windows"
+        })});
+        verify(!c.operations.busy("Alpha"));
+        compare(panel.dismissals, 0);
         compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
     }
     function test_missingNativeOperationRevisionLeavesOutcomeUnknownWithoutReplay() {

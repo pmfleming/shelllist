@@ -1210,6 +1210,13 @@
         "available": true,
         "error": null,
         "focused_monitor": "eDP-1",
+        "lifecycle": {
+          "available": false,
+          "error": null,
+          "monitors": {},
+          "session": "",
+          "version": 0
+        },
         "monitors": [
           {
             "active_workspace_id": 1,
@@ -2553,6 +2560,13 @@
           "available": true,
           "error": null,
           "focused_monitor": "eDP-1",
+          "lifecycle": {
+            "available": false,
+            "error": null,
+            "monitors": {},
+            "session": "",
+            "version": 0
+          },
           "monitors": [
             {
               "active_workspace_id": 1,
@@ -3129,6 +3143,13 @@
         "available": false,
         "error": null,
         "focused_monitor": null,
+        "lifecycle": {
+          "available": false,
+          "error": null,
+          "monitors": {},
+          "session": "",
+          "version": 0
+        },
         "monitors": [],
         "workspaces": []
       },
