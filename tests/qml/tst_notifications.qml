@@ -91,6 +91,66 @@ DaemonTestCase {
     function finishApps(controller, value, error, code) {
         controller.notificationState.backend.finish(rootRequest(controller), {notification_center: value}, error || "", code || "");
     }
+    function test_freshStoreCutoverRetiresOldSessionAndAcceptsEmptyHistory() {
+        const controller = startCenter(), state = controller.notificationState;
+        const catalog = controller.catalog, timeline = controller.timeline;
+        finishApps(controller, Object.assign(appPage([app(100)], "", 200, 201, 300), {revision: "90"}));
+        state.acceptedHistoryRevision = 90;
+        state.acceptedActiveRevision = 80;
+        state.setDraft(notification(1), "Unsent text");
+        const draftKey = state.keyFor(notification(1));
+        state.deleteConfirmation = {token: "old-store-token", expires_unix_ms: Date.now() + 60000};
+        state.deletePreparing = true;
+        state.operations = {"1000:1": true};
+        state.policyPending = {Chat: true};
+        state.settingsPending = true;
+        state.dndPending = true;
+        state.sharingPending = true;
+        timeline.snapshot = {epoch: "old", revision: "90", recent: [preview(100)], next_offset: 200};
+        timeline.entries = [preview(100)];
+        timeline.windowOffset = 180;
+        controller.appViews = {Chat: {date: "older"}};
+        state.backend.queryCenter({view: "apps"}, {view: "apps", generation: catalog.rootGeneration, query: "", revision: 90});
+        const lateId = Object.keys(state.backend.requests).find(id => state.backend.requests[id].kind === "center");
+        verify(!!lateId);
+        state.backend.transportFailed("Daemon restarting", []);
+        compare(state.activeRecords.length, 0);
+        compare(state.notificationActive.notifications.length, 0);
+        compare(state.deleteConfirmation, null);
+        verify(!state.deletePreparing && !state.deletePending);
+        verify(!state.settingsPending && !state.dndPending && !state.sharingPending);
+        compare(Object.keys(state.operations).length, 0);
+        compare(Object.keys(state.policyPending).length, 0);
+        compare(catalog.apps.length, 0);
+        compare(catalog.windowOffset, 0);
+        compare(catalog.epoch, "");
+        compare(timeline.entries.length, 0);
+        compare(Object.keys(timeline.snapshot).length, 0);
+        compare(timeline.windowOffset, 0);
+        compare(Object.keys(controller.appViews).length, 0);
+        compare(state.drafts[draftKey], "Unsent text");
+        const callsBefore = calls.length;
+        state.confirmDelete();
+        compare(calls.length, callsBefore, "old deletion token cannot be submitted after reconnect");
+        state.backend.finish(lateId, {notification_center: appPage([app(100)])}, "", "");
+        compare(catalog.apps.length, 0, "old read cannot repopulate the cleared catalog");
+        state.applySnapshot({
+            notifications: {available: true, backend: "native", count: 0, dnd: false, history_revision: 0,
+                settings: {countdown: true, code_expiry_seconds: 0, history_days: 30}, app_policies: {}},
+            notification_active: {available: true, revision: 0, notifications: []}
+        });
+        compare(state.acceptedHistoryRevision, 0);
+        compare(state.acceptedActiveRevision, 0);
+        compare(state.settings.history_days, 30);
+        catalog.reloadApps();
+        finishApps(controller, Object.assign(appPage([]), {epoch: "v2-session", revision: "0"}));
+        compare(catalog.epoch, "v2-session");
+        compare(catalog.apps.length, 0);
+        compare(catalog.rootError, "");
+        state.applyActive({available: true, revision: 1, notifications: [notification(2)]});
+        verify(state.isActive(2), "new delivery works after the empty-store cutover");
+        verify(!state.isActive(1));
+    }
     function test_stalePagesNeverMixVisibleRevisionsAndGapsRefreshReads() {
         const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;
         finishApps(controller, appPage([app(100), app(3, "Mail")], "", 0, 2, 3));

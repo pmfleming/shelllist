@@ -69,6 +69,8 @@ Name and setting drafts become saved only after acknowledgement. Failed drafts s
 
 **Notifications** provides daemon-backed search, DND, actions, inline replies, 15-minute snooze and dismissal with retained history. Search includes unloaded pages within the newest 5,000 persisted notifications plus live records. Reply drafts survive navigation and clear only after success. `bar-daemon` owns ingestion, expiry, snooze and persistence. See [Activity and notifications](docs/activity.md).
 
+The relational notification v2 release starts a fresh daemon store: older saved notifications, DND/settings and app policies are not imported. Deploy the matching daemon and Shelllist together; reconnect clears obsolete session state and accepts empty history. See the [cutover contract](contracts/notification-cache.md#daemon-restart-and-relational-storage-v2).
+
 **Time & Weather** lists configured cities with conditions, temperatures, rain chance and local time. Expanded Time details show the selected UTC-offset regions, location, daylight and moon phase; Weather shows hourly and seven-day forecasts.
 
 ### Clipboard

@@ -163,7 +163,7 @@ Item {
         target: catalog.store
         function onObservedHistoryRevisionChanged(): void { catalog.refresh(); }
         function onCollectionChanged(): void { catalog.invalidate(); catalog.refresh(); }
-        function onDataGenerationChanged(): void { catalog.invalidate(); catalog.rootError = qsTr("Notifications unavailable"); }
+        function onDataGenerationChanged(): void { catalog.clearCache(); catalog.rootError = qsTr("Notifications unavailable"); }
         function onCenterResponse(context: var, value: var, error: string, code: string): void { catalog.receive(context, value, error, code); }
     }
     Connections {

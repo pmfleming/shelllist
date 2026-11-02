@@ -171,7 +171,7 @@ Item {
         function onCenterResponse(context: var, value: var, error: string, code: string): void { timeline.receive(context, value, error, code); }
         function onObservedHistoryRevisionChanged(): void { timeline.refresh(); }
         function onCollectionChanged(): void { timeline.invalidate(false); }
-        function onDataGenerationChanged(): void { timeline.invalidate(false); timeline.error = qsTr("Notifications unavailable"); }
+        function onDataGenerationChanged(): void { timeline.invalidate(true); timeline.error = qsTr("Notifications unavailable"); }
     }
     Connections {
         target: timeline.store.backend

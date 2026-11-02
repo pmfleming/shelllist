@@ -192,6 +192,16 @@ Ui.ChooserController {
     signal backRequested
     Connections {
         target: controller.notificationState
+        function onDataGenerationChanged(): void {
+            controller.entryGeneration++;
+            controller.pendingAppKey = "";
+            controller.pendingGroupKey = "";
+            controller.appViews = ({});
+            controller.selectedAppKey = "";
+            controller.visibleApps = [];
+            records.rows = [];
+            controller.detailsOpen = false;
+        }
         function onCenterResponse(context: var, value: var, error: string, code: string): void {
             if (!context.resolve || context.entryGeneration !== controller.entryGeneration || context.group !== controller.pendingGroupKey) return;
             controller.pendingGroupKey = "";

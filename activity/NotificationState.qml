@@ -79,13 +79,29 @@ Item {
         applyActive(active);
     }
     function connectionLost(): void {
-        dataGeneration++;
         queuedSummary = null;
         queuedActive = null;
         acceptedHistoryRevision = -1;
         acceptedActiveRevision = -1;
-        notifications = Object.assign({}, notifications, {available: false});
-        notificationActive = Object.assign({}, notificationActive, {available: false});
+        // A new daemon may use a fresh history store and restart its IDs and
+        // revisions. Retire all session-owned values before notifying readers.
+        notifications = {available: false, count: 0, dnd: false};
+        notificationActive = {available: false, notifications: []};
+        deleteGeneration++;
+        deleteConfirmation = null;
+        deletePreparing = false;
+        deletePending = false;
+        deleteLabel = "";
+        deleteScope = {app_key: null, selected: null};
+        operations = ({});
+        replies = ({});
+        policyPending = ({});
+        dndPending = false;
+        sharingPending = false;
+        settingsPending = false;
+        dndRequest = null;
+        // Unsent text remains keyed by full record identity, never replayed.
+        dataGeneration++;
     }
     function reconcileActive(): void {
         // Popup visibility changes must not reserialize/repaint center rows.
