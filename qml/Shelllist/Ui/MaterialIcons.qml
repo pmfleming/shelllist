@@ -33,7 +33,7 @@ QtObject {
         "clear_all", "qr_code", "qr_code_scanner", "content_copy", "content_paste",
         "web_asset_off", "extension_off", "open_in_new", "unfold_more", "unfold_less", "filter_alt", "layers", "reply", "snooze", "schedule", "notifications", "notifications_off",
         "contrast", "desktop_windows", "center_focus_strong", "warning", "share", "bluetooth", "volume_up",
-        "music_note", "settings_input_component", "memory", "storage", "bolt", "power", "priority_high", "battery_full", "cloud",
+        "music_note", "code", "description", "workspaces", "settings_input_component", "memory", "storage", "bolt", "power", "priority_high", "battery_full", "cloud",
         "headphones", "noise_control_off", "auto_stories", "videocam", "equalizer", "stop", "skip_next", "skip_previous",
         "lock", "block", "text_fields", "lan", "route", "dns", "language", "key", "category",
         "aspect_ratio", "rotate_90_degrees_cw", "format_size",

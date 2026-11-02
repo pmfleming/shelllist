@@ -21,8 +21,8 @@ Ui.ActionControl {
     Accessible.checked: active
     onClicked: controller.focusWorkspace(workspaceId)
 
-    // Bar maintainer: extras include stable origin and ID, so reveal uses bounds.
-    implicitWidth: presentation?.temporary ? Math.min(160, extraLabel.implicitWidth + 44) : 32
+    // Names and IDs remain accessible; every workspace uses the same icon target.
+    implicitWidth: 32
     implicitHeight: 34
 
     Rectangle {
@@ -32,6 +32,7 @@ Ui.ActionControl {
         width: button.width
         height: 34
         radius: 9
+        clip: true
         // Selection is chromatic, with a size cue independent of hue. Occupancy
         // uses glyph weight; neither state changes category identity or hit geometry.
         color: "transparent"
@@ -39,11 +40,10 @@ Ui.ActionControl {
         border.color: Ui.Theme.danger
         Item {
             id: categoryIcon
-            visible: !button.presentation?.temporary
             anchors.centerIn: parent
             width: button.active ? 22 : 20
             height: width
-            readonly property bool terminal: button.presentation.icon === "terminal"
+            readonly property bool terminal: !button.presentation.temporary && button.presentation.icon === "terminal"
             readonly property color foreground: button.active ? Ui.Theme.accent : button.occupied ? Ui.Theme.text : Ui.Theme.mutedText
 
             Ui.TerminalGlyph {
@@ -56,52 +56,25 @@ Ui.ActionControl {
             Ui.GlyphLabel {
                 objectName: "workspaceCategoryGlyph"
                 anchors.centerIn: parent
-                visible: !categoryIcon.terminal
-                glyph: button.presentation.icon
+                visible: !categoryIcon.terminal && !originIcon.visible
+                glyph: !button.presentation.temporary && Ui.MaterialIcons.name(button.presentation.icon)
+                    ? button.presentation.icon : "workspaces"
                 color: categoryIcon.foreground
                 font.pixelSize: categoryIcon.width
-                // Other categories and the numeric fallback retain glyph weight.
+                // Category and fallback icons retain occupancy weight.
                 font.weight: button.occupied ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
                 Accessible.ignored: true
             }
-        }
-        Row {
-            id: extraRow
-            anchors.centerIn: parent
-            spacing: 4
-            visible: !!button.presentation.temporary
-            Item {
-                width: 20
-                height: 20
-                Image {
-                    id: originIcon
-                    anchors.fill: parent
-                    source: button.presentation.icon && button.presentation.icon !== "workspace" ? Quickshell.iconPath(button.presentation.icon, "application-x-executable") : ""
-                    sourceSize: Qt.size(width, height)
-                    visible: status === Image.Ready
-                }
-                Ui.GlyphLabel {
-                    anchors.centerIn: parent
-                    visible: !originIcon.visible
-                    glyph: "workspaces"
-                    color: button.active ? Ui.Theme.accent : Ui.Theme.mutedText
-                }
+            Image {
+                id: originIcon
+                objectName: "workspaceOriginIcon"
+                anchors.fill: parent
+                source: button.presentation.temporary && button.presentation.icon && button.presentation.icon !== "workspace"
+                    ? Quickshell.iconPath(button.presentation.icon, "application-x-executable") : ""
+                sourceSize: Qt.size(width, height)
+                visible: button.presentation.temporary && status === Image.Ready
+                Accessible.ignored: true
             }
-        Text {
-            id: extraLabel
-            objectName: "workspaceOrigin"
-            width: Math.min(implicitWidth, workspaceTile.width - 36)
-            height: 20
-            verticalAlignment: Text.AlignVCenter
-            visible: !!button.presentation?.temporary
-            text: button.presentation ? button.presentation.number + " · " + button.presentation.label : ""
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
-            font.weight: button.occupied ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
-            color: button.active ? Ui.Theme.accent : button.occupied ? Ui.Theme.text : Ui.Theme.mutedText
-            elide: Text.ElideRight
-            Accessible.ignored: true
-        }
         }
         Rectangle {
             objectName: "workspaceUrgency"

@@ -2,7 +2,8 @@
 
 Workspace chips render the Rust monitor projection. Active-chip reveal measures
 delegate bounds; the fixed add button is outside the viewport. The bar maintainer
-owns the existing compact geometry and the new capped origin-label width. Pointer
+owns the existing compact geometry. All workspace targets now use the same
+32px icon-only width; origin labels and IDs remain accessible. Pointer
 commands accept only the left button; accessible descriptions expose shortcut
 names. Selection changes only with observed compositor state.
 
@@ -25,3 +26,16 @@ Validation on 2026-11-02:
 
 These are native Qt interactions with recording transports. Final real-daemon
 qualification is separate; no live session deployment is claimed here.
+
+## Icon-only correction, 2026-11-03
+
+Registered the canonical `code`, `description` and `workspaces` Material symbols
+so they cannot fall back to literal words. Removed temporary-workspace inline
+labels, retained origin icons and accessible names, and clamped stale scroll
+offsets when the strip grows wide enough to fit its contents.
+
+The updated Qt fixture uses the real category icon names, verifies rendered
+glyph widths and non-overlapping targets, and retains overflow/active reveal,
+fixed-add and left-button-only coverage. Four checks pass at 1× and 1.25× scale.
+Strict QML lint passes. Panel review reports zero changed-line or wrapper prompts;
+the existing bar geometry is reused rather than introducing new size overrides.

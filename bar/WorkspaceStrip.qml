@@ -14,6 +14,8 @@ Item {
     implicitWidth: workspaceRow.implicitWidth + addButton.width
     implicitHeight: 37
     function revealActive(): void {
+        viewport.contentX = Math.max(0, Math.min(viewport.contentX,
+            Math.max(0, viewport.contentWidth - viewport.width)));
         const delegate = workspaceRepeater.itemAt(activeWorkspaceIndex);
         if (!delegate) return;
         if (delegate.x < viewport.contentX)

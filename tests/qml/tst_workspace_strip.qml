@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Bar as Bar
+import Shelllist.Ui as Ui
 
 DaemonTestCase {
     id: tests
@@ -21,7 +22,8 @@ DaemonTestCase {
     function init() { calls = []; failOnWarning(/.*/); }
     function model() {
         return [1,2,3,4,5,6,100].map(id => ({id:id, label:id === 100 ? "Long application origin" : "Workspace",
-            icon:"terminal", number:id > 5 ? String(id) : "", temporary:id > 5, divider_before:id === 6,
+            icon:id <= 5 ? ["terminal", "language", "code", "music_note", "description"][id - 1] : "workspace",
+            number:id > 5 ? String(id) : "", temporary:id > 5, divider_before:id === 6,
             active:id === 100, occupied:id === 6, urgent:id === 6, accessible_name:"Workspace " + id}));
     }
     function make() {
@@ -40,7 +42,7 @@ DaemonTestCase {
         verify(viewport.contentWidth > viewport.width, "overflow " + viewport.contentWidth + " / " + viewport.width);
         tryVerify(() => viewport.contentX > 0);
         const active = findChild(strip, "barWorkspace:100");
-        verify(active.width > 32);
+        compare(active.width, 32);
         const position = active.mapToItem(viewport, 0, 0);
         verify(position.x >= -1 && position.x + active.width <= viewport.width + 1);
         compare(add.x + add.width, strip.width);
@@ -58,5 +60,31 @@ DaemonTestCase {
         strip.width = 170;
         wait(0);
         compare(add.x + add.width, strip.width);
+    }
+    function test_workspacesRenderIconsWithoutInlineTextOrOverlap() {
+        const strip = make();
+        strip.width = tests.width;
+        verify(waitForRendering(strip));
+        tryCompare(findChild(strip, "workspaceViewport"), "contentX", 0);
+        let previousRight = 0;
+        for (const item of strip.items) {
+            const button = findChild(strip, "barWorkspace:" + item.id);
+            compare(button.width, 32);
+            compare(button.accessibleName, item.accessible_name);
+            verify(findChild(button, "workspaceOrigin") === null);
+            const position = button.mapToItem(strip, 0, 0);
+            verify(position.x >= previousRight, "Workspace " + item.id + " overlaps its preceding target");
+            previousRight = position.x + button.width;
+            if (item.id === 1) {
+                verify(findChild(button, "workspaceTerminalGlyph").visible);
+            } else {
+                const glyph = findChild(button, "workspaceCategoryGlyph");
+                verify(glyph.visible);
+                compare(glyph.symbol, item.temporary ? "workspaces" : item.icon);
+                compare(glyph.font.family, Ui.Theme.symbolFontFamily);
+                verify(glyph.implicitWidth <= button.width, "Icon must fit its workspace target");
+            }
+        }
+        verify(previousRight <= findChild(strip, "workspaceAdd").x);
     }
 }

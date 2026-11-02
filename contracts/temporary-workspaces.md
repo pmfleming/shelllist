@@ -5,6 +5,16 @@ contract for lifecycle protocol version 1. These are additive operations on the
 existing authenticated bar/app session transports. Rust owners determine routing,
 allocation, retirement, placement eligibility and recovery. QML renders state.
 
+## Workspace strip presentation
+
+Every workspace is a fixed-width, icon-only target. Standard destinations retain
+their category icons; temporary destinations use their stable origin icon or the
+shared workspace fallback icon. Names and IDs remain in the accessible label,
+without inline origin text or number labels. This supersedes the implementation
+plan's inline icon/number presentation. The fixed add button, divider, acknowledged
+active state, occupancy/urgency cues and left-click routing remain unchanged.
+Overflow reveals the active target and resets its scroll offset when the strip fits.
+
 ## Identity and admission
 
 Every effect carries the exact compositor session and an immutable request key.
