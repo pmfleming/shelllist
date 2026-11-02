@@ -992,5 +992,542 @@
       "protocol": "bar-api",
       "version": 2
     }
+  },
+  "workspace.close": {
+    "failed": {
+      "error": {
+        "code": "workspace-operation-failed",
+        "message": "stale workspace context"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "invalid_params": {},
+    "limited": {
+      "data": {
+        "workspace_operation": {
+          "error": null,
+          "request": {
+            "context": {
+              "monitor": "DP-1",
+              "session": "fixture-session",
+              "workspace_id": 1
+            },
+            "request_id": "fixture-close"
+          },
+          "status": "still-open",
+          "targets": [
+            {
+              "attempted": true,
+              "token": "fixture-window",
+              "window": {
+                "address": "0x123",
+                "pid": 42,
+                "workspace_id": 1
+              }
+            }
+          ]
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "params": {
+      "context": {
+        "monitor": "DP-1",
+        "session": "fixture-session",
+        "workspace_id": 1
+      },
+      "request_id": "fixture-close"
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "workspace.close parameters are invalid: missing field `request_id`"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "success": {
+      "data": {
+        "workspace_operation": {
+          "error": null,
+          "request": {
+            "context": {
+              "monitor": "DP-1",
+              "session": "fixture-session",
+              "workspace_id": 1
+            },
+            "request_id": "fixture-close"
+          },
+          "status": "closed",
+          "targets": [
+            {
+              "attempted": true,
+              "token": "fixture-window",
+              "window": {
+                "address": "0x123",
+                "pid": 42,
+                "workspace_id": 1
+              }
+            }
+          ]
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    }
+  },
+  "workspace.command": {
+    "failed": {
+      "error": {
+        "code": "workspace-operation-failed",
+        "message": "stale workspace context"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "invalid_params": {},
+    "limited": {
+      "data": {
+        "workspace_operation": {
+          "lease": {
+            "generation": "fixture-generation",
+            "request_id": "fixture-create",
+            "session": "fixture-session",
+            "workspace_id": 6
+          },
+          "placed": false,
+          "placement": null,
+          "released": true,
+          "request": {
+            "context": {
+              "monitor": "DP-1",
+              "session": "fixture-session",
+              "workspace_id": 1
+            },
+            "icon": "workspace",
+            "origin": "Workspace",
+            "purpose": "landing-pad",
+            "request_id": "fixture-create",
+            "workspace_id": null
+          },
+          "status": "unknown",
+          "writer": "fixture-writer"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "params": {
+      "command": "create",
+      "monitor": "DP-1",
+      "request_id": "fixture-create"
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "workspace.command parameters are invalid: missing field `command`"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "success": {
+      "data": {
+        "workspace_operation": {
+          "lease": {
+            "generation": "fixture-generation",
+            "request_id": "fixture-create",
+            "session": "fixture-session",
+            "workspace_id": 6
+          },
+          "placed": false,
+          "placement": null,
+          "released": true,
+          "request": {
+            "context": {
+              "monitor": "DP-1",
+              "session": "fixture-session",
+              "workspace_id": 1
+            },
+            "icon": "workspace",
+            "origin": "Workspace",
+            "purpose": "landing-pad",
+            "request_id": "fixture-create",
+            "workspace_id": null
+          },
+          "status": "focused",
+          "writer": "fixture-writer"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    }
+  },
+  "workspace.context": {
+    "failed": {
+      "error": {
+        "code": "workspace-operation-failed",
+        "message": "stale workspace context"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "invalid_params": null,
+    "limited": {
+      "data": {
+        "workspace_operation": {
+          "context": {
+            "monitor": "DP-1",
+            "session": "fixture-session",
+            "workspace_id": 1
+          },
+          "request_id": "fixture-context",
+          "version": 1
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "params": {},
+    "rejected": null,
+    "success": {
+      "data": {
+        "workspace_operation": {
+          "context": {
+            "monitor": "DP-1",
+            "session": "fixture-session",
+            "workspace_id": 1
+          },
+          "request_id": "fixture-context",
+          "version": 1
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    }
+  },
+  "workspace.create": {
+    "failed": {
+      "error": {
+        "code": "workspace-operation-failed",
+        "message": "stale workspace context"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "invalid_params": {},
+    "limited": {
+      "data": {
+        "workspace_operation": {
+          "lease": {
+            "generation": "fixture-generation",
+            "request_id": "fixture-create",
+            "session": "fixture-session",
+            "workspace_id": 6
+          },
+          "placed": false,
+          "placement": null,
+          "released": true,
+          "request": {
+            "context": {
+              "monitor": "DP-1",
+              "session": "fixture-session",
+              "workspace_id": 1
+            },
+            "icon": "editor",
+            "origin": "Editor",
+            "purpose": "launch",
+            "request_id": "fixture-create",
+            "workspace_id": null
+          },
+          "status": "unknown",
+          "writer": "fixture-writer"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "params": {
+      "context": {
+        "monitor": "DP-1",
+        "session": "fixture-session",
+        "workspace_id": 1
+      },
+      "icon": "editor",
+      "origin": "Editor",
+      "purpose": "launch",
+      "request_id": "fixture-create",
+      "workspace_id": null
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "workspace.create parameters are invalid: missing field `request_id`"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "success": {
+      "data": {
+        "workspace_operation": {
+          "lease": {
+            "generation": "fixture-generation",
+            "request_id": "fixture-create",
+            "session": "fixture-session",
+            "workspace_id": 6
+          },
+          "placed": false,
+          "placement": null,
+          "released": false,
+          "request": {
+            "context": {
+              "monitor": "DP-1",
+              "session": "fixture-session",
+              "workspace_id": 1
+            },
+            "icon": "editor",
+            "origin": "Editor",
+            "purpose": "launch",
+            "request_id": "fixture-create",
+            "workspace_id": null
+          },
+          "status": "reserved",
+          "writer": "fixture-writer"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    }
+  },
+  "workspace.lease.release": {
+    "failed": {
+      "error": {
+        "code": "workspace-operation-failed",
+        "message": "stale workspace context"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "invalid_params": {},
+    "limited": {
+      "data": {
+        "workspace_operation": {
+          "lease": {
+            "generation": "fixture-generation",
+            "request_id": "fixture-create",
+            "session": "fixture-session",
+            "workspace_id": 6
+          },
+          "status": "released"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "params": {
+      "generation": "fixture-generation",
+      "request_id": "fixture-create",
+      "session": "fixture-session",
+      "workspace_id": 6
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "workspace.lease.release parameters are invalid: missing field `session`"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "success": {
+      "data": {
+        "workspace_operation": {
+          "lease": {
+            "generation": "fixture-generation",
+            "request_id": "fixture-create",
+            "session": "fixture-session",
+            "workspace_id": 6
+          },
+          "status": "released"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    }
+  },
+  "workspace.operation.get": {
+    "failed": {
+      "error": {
+        "code": "workspace-operation-failed",
+        "message": "stale workspace context"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "invalid_params": {},
+    "limited": {
+      "data": {
+        "workspace_operation": {
+          "lease": {
+            "generation": "fixture-generation",
+            "request_id": "fixture-create",
+            "session": "fixture-session",
+            "workspace_id": 6
+          },
+          "placed": false,
+          "placement": null,
+          "released": true,
+          "request": {
+            "context": {
+              "monitor": "DP-1",
+              "session": "fixture-session",
+              "workspace_id": 1
+            },
+            "icon": "editor",
+            "origin": "Editor",
+            "purpose": "launch",
+            "request_id": "fixture-create",
+            "workspace_id": null
+          },
+          "status": "unknown",
+          "writer": "fixture-writer"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "params": {
+      "request_id": "fixture-create",
+      "session": "fixture-session"
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "workspace.operation.get parameters are invalid: missing field `session`"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "success": {
+      "data": {
+        "workspace_operation": {
+          "lease": {
+            "generation": "fixture-generation",
+            "request_id": "fixture-create",
+            "session": "fixture-session",
+            "workspace_id": 6
+          },
+          "placed": false,
+          "placement": null,
+          "released": false,
+          "request": {
+            "context": {
+              "monitor": "DP-1",
+              "session": "fixture-session",
+              "workspace_id": 1
+            },
+            "icon": "editor",
+            "origin": "Editor",
+            "purpose": "launch",
+            "request_id": "fixture-create",
+            "workspace_id": null
+          },
+          "status": "reserved",
+          "writer": "fixture-writer"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    }
+  },
+  "workspace.placement.apply": {
+    "failed": {
+      "error": {
+        "code": "workspace-operation-failed",
+        "message": "stale workspace context"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "invalid_params": {},
+    "limited": {
+      "data": {
+        "workspace_operation": {
+          "lease": {
+            "generation": "fixture-generation",
+            "request_id": "fixture-create",
+            "session": "fixture-session",
+            "workspace_id": 6
+          },
+          "status": "placed"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "params": {
+      "follow": true,
+      "lease": {
+        "generation": "fixture-generation",
+        "request_id": "fixture-create",
+        "session": "fixture-session",
+        "workspace_id": 6
+      },
+      "window": {
+        "address": "0x123",
+        "pid": 42,
+        "workspace_id": 1
+      }
+    },
+    "rejected": {
+      "error": {
+        "code": "validation-error",
+        "message": "workspace.placement.apply parameters are invalid: missing field `lease`"
+      },
+      "ok": false,
+      "protocol": "bar-api",
+      "version": 2
+    },
+    "success": {
+      "data": {
+        "workspace_operation": {
+          "lease": {
+            "generation": "fixture-generation",
+            "request_id": "fixture-create",
+            "session": "fixture-session",
+            "workspace_id": 6
+          },
+          "status": "placed"
+        }
+      },
+      "ok": true,
+      "protocol": "bar-api",
+      "version": 2
+    }
   }
 }

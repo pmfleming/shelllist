@@ -1,5 +1,20 @@
 # Temporary workspaces: final qualification
 
+## Follow-up: generated control contracts
+
+The original qualification omitted `checks.x86_64-linux.generatedContracts`.
+That check exposed seven registered workspace methods without control examples;
+their unconstrained reply schemas also lacked required fields for mutation tests.
+Rust now emits fixtures for all seven methods using the live DTOs and serializers,
+with typed reply schemas and a registry-wide fixture coverage regression. The
+frontend registry snapshot, generated bindings and control examples are refreshed.
+
+Follow-up validation passed: the direct `node tests/check-generated-contracts.js`
+check; `local-build build --attr checks.x86_64-linux.generatedContracts
+/home/laufan/Projects/shelllist`; 304 Rust library tests with six existing skips;
+strict all-target Clippy; and exact producer/checked-fixture/binding parity.
+The JavaScript checker itself is unchanged.
+
 2026-11-02. Domain policy, durable operations, allocation, placement, cleanup and
 shortcut dispatch are Rust in app-daemon, bar-daemon and daemon-framework. Product
 UI is Shelllist QML. The only native configuration additions are four declarative
