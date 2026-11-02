@@ -64,6 +64,50 @@ DaemonTestCase {
     function choice(surface) { return findChild(surface.detailsItem, "applicationCategory"); }
     function form(surface) { return findChild(surface.detailsItem, "applicationCategoryField"); }
     function updates() { return calls.filter(call => call.method === "applications.settings.update"); }
+    function test_settingsClicksShowInformationInStatusWithoutGrowingRows() {
+        const surface = make("code", "3");
+        const page = surface.detailsItem;
+        const field = form(surface);
+        const toggle = findChild(page, "applicationNewWorkspace");
+        const card = findChild(page, "applicationDataDetails");
+        const information = findChild(page, "applicationSettingsInformation");
+        const status = findChild(surface.listItem, "feedbackText").parent;
+        verify(waitForRendering(surface));
+        verify(toggle.y >= field.y + field.height + Ui.Theme.spacingMd);
+        verify(!findChild(field, "formFieldHelp").visible);
+        verify(!findChild(card, "sectionHeadingHelp").visible);
+        verify(!toggle.showSubtitle);
+        compare(information.text, "");
+        const originalHeight = field.height;
+        const label = findChild(field, "formFieldLabel");
+        mouseClick(label, label.width / 2, label.height / 2);
+        tryCompare(information, "text", field.helpText);
+        verify(status.fullText.includes(field.helpText));
+        compare(status.displayText, field.helpText);
+        compare(field.height, originalHeight);
+        verify(!findChild(field, "formFieldSupport").visible);
+        compare(updates().length, 0);
+
+        mouseClick(choice(surface), choice(surface).width / 2, choice(surface).height / 2);
+        tryCompare(choice(surface).popup, "visible", true);
+        keyClick(Qt.Key_Escape);
+        compare(updates().length, 0);
+
+        mouseClick(card, card.width / 2, Ui.Theme.spacingMd);
+        tryCompare(information, "text", card.helpText);
+        verify(status.fullText.includes("Temporary data is not necessarily safe to delete."));
+        setApplication(surface, "code", "3");
+        compare(information.text, card.helpText, "Refreshing the same app keeps disclosed context");
+        compare(surface.detailsNavigation.availableFields().length, 2);
+        mouseClick(toggle, toggle.width - Ui.Theme.spacingLg, toggle.height / 2);
+        compare(updates().length, 1);
+        compare(updates()[0].params.new_workspace, true);
+        tryCompare(information, "text", toggle.subtitle);
+        surface.chooserController.handleFailure(surface.chooserController.activeSettingsRequestId, "Permission denied.");
+        tryCompare(status, "messageTone", "error");
+        setApplication(surface, "shell", "1", "another.desktop");
+        tryCompare(information, "text", "");
+    }
     function test_appDataCombinesVersionsAndStorageWithoutAddingFields() {
         const surface = make("code", "3");
         const controller = surface.chooserController;

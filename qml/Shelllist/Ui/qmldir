@@ -8,6 +8,7 @@ singleton IpCodec 1.0 IpCodec.qml
 SectionHeading 1.0 SectionHeading.qml
 CollectionPager 1.0 CollectionPager.qml
 FeedbackButton 1.0 FeedbackButton.qml
+FeedbackTapHandler 1.0 FeedbackTapHandler.qml
 InlineStatus 1.0 InlineStatus.qml
 singleton Theme 1.0 Theme.qml
 MaterialPalette 1.0 MaterialPalette.qml

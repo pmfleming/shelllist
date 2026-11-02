@@ -7,6 +7,7 @@ ColumnLayout {
     property string title: ""
     property string helpText: ""
     property bool helpOpen: false
+    property bool showHelpButton: true
     property FeedbackSource helpFeedback: null
     property string helpObjectName: "sectionHeadingHelp"
     spacing: Theme.spacingSm
@@ -28,7 +29,7 @@ ColumnLayout {
             objectName: heading.helpObjectName
             feedback: heading.helpFeedback
             feedbackText: heading.helpText
-            visible: heading.helpText.length > 0
+            visible: heading.showHelpButton && heading.helpText.length > 0
             Layout.preferredWidth: Theme.formActionSize
             Layout.preferredHeight: Theme.formActionSize
             iconSize: Theme.formActionIconSize

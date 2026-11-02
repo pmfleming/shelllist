@@ -76,6 +76,15 @@ DetailCard to accommodate wrapped source details and grouped values, with shared
 theme metrics and no custom editor or command identity. The panel UI review's
 composition prompt is accepted for this passive layout.
 
+Application Settings separates preference rows and App data groups using shared
+theme spacing. Category and App data omit question-mark buttons; the workspace
+switch omits persistent guidance below its label. Clicking those items discloses
+their guidance in the existing status bar through one page-owned FeedbackSource.
+New disclosures replace previous guidance; target changes and hiding the page
+clear it. Operational errors retain higher priority. Shared FeedbackTapHandler
+observes taps without taking editor focus or adding Tab stops; the switch also
+discloses before dispatch, since pending requests disable its pointer area.
+
 ## Rollout and checks
 
 Deploy app-daemon, update-worker, the Nix inventory module and Shelllist together,
@@ -98,3 +107,6 @@ backend transaction tests own storage-failure injection.
 source wrapping, unchanged editable-field traversal, unavailable/zero readings,
 target-scoped history and read-only entries. `tst_application_actions.qml` verifies
 keyboard navigation to its single home in Settings.
+The Settings suite also checks real label/editor/card/switch clicks, status-bar
+disclosure, stable row geometry, absent help icons, error priority and clearing
+context when the selected application changes.
