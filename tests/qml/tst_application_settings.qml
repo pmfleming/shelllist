@@ -64,6 +64,19 @@ DaemonTestCase {
     function choice(surface) { return findChild(surface.detailsItem, "applicationCategory"); }
     function form(surface) { return findChild(surface.detailsItem, "applicationCategoryField"); }
     function updates() { return calls.filter(call => call.method === "applications.settings.update"); }
+    function test_newWorkspaceIsIndependentEditableToggle() {
+        const surface = make("code", "3");
+        const toggle = findChild(surface.detailsItem, "applicationNewWorkspace");
+        verify(toggle.visible);
+        keyClick(Qt.Key_Tab);
+        compare(surface.detailsNavigation.currentTarget, toggle);
+        compare(updates().length, 0);
+        keyClick(Qt.Key_Return);
+        compare(updates().length, 1);
+        compare(updates()[0].params.new_workspace, true);
+        verify(!Object.prototype.hasOwnProperty.call(updates()[0].params, "category"));
+        compare(choice(surface).value, "code");
+    }
     function open(surface) {
         keyClick(Qt.Key_Return);
         verify(surface.detailsNavigation.editing);

@@ -1,6 +1,6 @@
 import QtQuick
+import Quickshell
 import Shelllist.Ui as Ui
-import "BarWorkspacePresentation.js" as Presentation
 
 Ui.ActionControl {
     id: button
@@ -8,32 +8,28 @@ Ui.ActionControl {
     required property BarController controller
     required property string screenName
     required property int workspaceId
-    readonly property var workspace: Presentation.workspaceFor(controller.workspaces, workspaceId)
-    readonly property var category: Presentation.workspaceCategory(workspaceId)
-    readonly property bool active: Presentation.activeWorkspaceId(controller.workspaces, screenName) === workspaceId
-    readonly property bool occupied: !!workspace && Number(workspace.windows || 0) > 0
-    readonly property bool urgent: !!workspace && !!workspace.urgent
+    required property var presentation
+    readonly property bool active: presentation.active
+    readonly property bool occupied: presentation.occupied
+    readonly property bool urgent: presentation.urgent
 
     objectName: "barWorkspace:" + workspaceId
     activeFocusOnTab: false
     browseIndicatorVisible: false
     focusSurface: workspaceTile
-    accessibleName: qsTr("Workspace %1").arg(workspaceId)
-        + (category ? ". " + category.label : "")
-        + (occupied ? qsTr(". Occupied") : "")
-        + (urgent ? qsTr(". Urgent") : "")
-        + (workspace && workspace.last_window_title ? ". " + workspace.last_window_title : "")
+    accessibleName: presentation.accessible_name
     Accessible.checked: active
     onClicked: controller.focusWorkspace(workspaceId)
 
-    implicitWidth: 32
+    // Bar maintainer: extras include stable origin and ID, so reveal uses bounds.
+    implicitWidth: presentation?.temporary ? Math.min(160, extraLabel.implicitWidth + 44) : 32
     implicitHeight: 34
 
     Rectangle {
         id: workspaceTile
         objectName: "workspaceTile"
         anchors.centerIn: parent
-        width: 32
+        width: button.width
         height: 34
         radius: 9
         // Selection is chromatic, with a size cue independent of hue. Occupancy
@@ -43,10 +39,11 @@ Ui.ActionControl {
         border.color: Ui.Theme.danger
         Item {
             id: categoryIcon
+            visible: !button.presentation?.temporary
             anchors.centerIn: parent
             width: button.active ? 22 : 20
             height: width
-            readonly property bool terminal: button.category?.value === "shell"
+            readonly property bool terminal: button.presentation.icon === "terminal"
             readonly property color foreground: button.active ? Ui.Theme.accent : button.occupied ? Ui.Theme.text : Ui.Theme.mutedText
 
             Ui.TerminalGlyph {
@@ -60,13 +57,51 @@ Ui.ActionControl {
                 objectName: "workspaceCategoryGlyph"
                 anchors.centerIn: parent
                 visible: !categoryIcon.terminal
-                glyph: button.category ? button.category.icon : String(button.workspaceId)
+                glyph: button.presentation.icon
                 color: categoryIcon.foreground
                 font.pixelSize: categoryIcon.width
                 // Other categories and the numeric fallback retain glyph weight.
                 font.weight: button.occupied ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
                 Accessible.ignored: true
             }
+        }
+        Row {
+            id: extraRow
+            anchors.centerIn: parent
+            spacing: 4
+            visible: !!button.presentation.temporary
+            Item {
+                width: 20
+                height: 20
+                Image {
+                    id: originIcon
+                    anchors.fill: parent
+                    source: button.presentation.icon && button.presentation.icon !== "workspace" ? Quickshell.iconPath(button.presentation.icon, "application-x-executable") : ""
+                    sourceSize: Qt.size(width, height)
+                    visible: status === Image.Ready
+                }
+                Ui.GlyphLabel {
+                    anchors.centerIn: parent
+                    visible: !originIcon.visible
+                    glyph: "workspaces"
+                    color: button.active ? Ui.Theme.accent : Ui.Theme.mutedText
+                }
+            }
+        Text {
+            id: extraLabel
+            objectName: "workspaceOrigin"
+            width: Math.min(implicitWidth, workspaceTile.width - 36)
+            height: 20
+            verticalAlignment: Text.AlignVCenter
+            visible: !!button.presentation?.temporary
+            text: button.presentation ? button.presentation.number + " · " + button.presentation.label : ""
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeBody
+            font.weight: button.occupied ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
+            color: button.active ? Ui.Theme.accent : button.occupied ? Ui.Theme.text : Ui.Theme.mutedText
+            elide: Text.ElideRight
+            Accessible.ignored: true
+        }
         }
         Rectangle {
             objectName: "workspaceUrgency"

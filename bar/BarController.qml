@@ -182,6 +182,9 @@ Item {
     function focusWorkspace(workspaceId: int): bool {
         return backend.focusWorkspace(workspaceId);
     }
+    function createWorkspace(monitor: string): bool {
+        return backend.createWorkspace(monitor);
+    }
     // Pointer and compositor shortcuts share the same current-player policy.
     // Capture the native player ID; never fall back to an implicit other player.
     function performMediaTransport(action: string): bool {

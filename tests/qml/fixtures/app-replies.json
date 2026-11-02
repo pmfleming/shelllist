@@ -188,6 +188,7 @@
             "network_receive_bytes_per_second": 0.0,
             "network_transmit_bytes": 0,
             "network_transmit_bytes_per_second": 0.0,
+            "new_workspace": false,
             "open_file_disk_bytes": 0,
             "power_watts": 0.0,
             "process_count": 0,
@@ -340,6 +341,7 @@
             "network_receive_bytes_per_second": 0.0,
             "network_transmit_bytes": 0,
             "network_transmit_bytes_per_second": 0.0,
+            "new_workspace": false,
             "open_file_disk_bytes": 0,
             "power_watts": 0.0,
             "process_count": 0,
@@ -382,6 +384,7 @@
     "data": {
       "settings": {
         "category": "code",
+        "new_workspace": false,
         "target_id": "Alpha",
         "workspace_id": "3"
       }

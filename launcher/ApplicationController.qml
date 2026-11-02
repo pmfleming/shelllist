@@ -136,13 +136,16 @@ Ui.ProviderChooserController {
         return true;
     }
     function updateApplicationSettings(category: string): bool {
+        return updateApplicationPreferences({category: category || null});
+    }
+    function updateApplicationPreferences(patch: var): bool {
         if (!selectedResult || operationBlocked || operations.busy(selectedResult.id))
             return false;
-        settingsFeedback = {targetId: selectedResult.id, category: category, error: ""};
+        settingsFeedback = {targetId: selectedResult.id, category: patch.category, error: ""};
         const requestId = backend.nextRequestId("settings");
         activeSettingsRequestId = requestId;
         status = "Saving application settings…";
-        if (!backend.updateSettings(requestId, selectedResult.id, category)) {
+        if (!backend.updatePreferences(requestId, selectedResult.id, patch)) {
             // sendFailed may already have supplied a more specific error.
             if (activeSettingsRequestId === requestId)
                 handleFailure(requestId, qsTr("Application service is unavailable."));

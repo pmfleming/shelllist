@@ -39,19 +39,27 @@ Core.Provider {
                     toolTip: running ? "Focus the first running instance" : (application.default_workspace_id ? "Launch on workspace " + application.default_workspace_id : "Launch on the current workspace")
                 }
             })];
-        if (application.kind === "desktop-application")
+        if (application.kind === "desktop-application") {
             actions.push(action("launch", "New tile", {
-                accessKey: "N",
                 icon: "󰖲",
                 shortcut: "Shift+Enter",
                 enabled: !busy,
                 presentation: {
-                    group: "toolbar"
+                    group: "overflow"
                 },
                 metadata: {
                     toolTip: application.default_workspace_id ? "Launch another instance on workspace " + application.default_workspace_id : "Launch another instance in a new tile on the current workspace"
                 }
             }));
+            actions.push(action("launch-current", "Open on current workspace", {
+                accessKey: "O", icon: "󰖲", enabled: !busy,
+                presentation: {group: "toolbar"}, metadata: {launchTarget: "current"}
+            }));
+            actions.push(action("launch-new", "Open on new workspace", {
+                accessKey: "N", icon: "󰐕", enabled: !busy,
+                presentation: {group: "toolbar"}, metadata: {launchTarget: "new"}
+            }));
+        }
         return actions;
     }
 
@@ -176,6 +184,8 @@ Core.Provider {
     }
 
     function operationFor(actionId: string): string {
+        if (actionId === "launch-current" || actionId === "launch-new")
+            return "launch";
         if (actionId.indexOf("focus-window-") === 0)
             return "focus-window";
         if (actionId.indexOf("close-window-") === 0)
@@ -195,7 +205,9 @@ Core.Provider {
             window_id: metadata.windowId || null,
             desktop_action_id: metadata.desktopActionId || null,
             expected_revision: Lifecycle.expectedRevision(request.result.payload.revision),
-            workspace_id: controller.currentWorkspaceId || null
+            workspace_id: null,
+            launch_target: metadata.launchTarget || "default",
+            request_id: request.id
         });
     }
 }

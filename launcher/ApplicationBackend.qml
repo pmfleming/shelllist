@@ -77,10 +77,10 @@ Io.DaemonBackend {
     }
 
     function updateSettings(id: string, targetId: string, category: string): bool {
-        return call(id, AppApi.methods.settingsUpdate, {
-            target_id: targetId,
-            category: category
-        });
+        return updatePreferences(id, targetId, {category: category || null});
+    }
+    function updatePreferences(id: string, targetId: string, patch: var): bool {
+        return call(id, AppApi.methods.settingsUpdate, Object.assign({target_id: targetId}, patch));
     }
 
     onResponseReceived: function (id, envelope, transportError) {

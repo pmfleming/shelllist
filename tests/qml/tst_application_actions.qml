@@ -58,6 +58,24 @@ DaemonTestCase {
         verify(matches.length > 0, "Missing " + method);
         return matches[matches.length - 1];
     }
+    function test_explicitWorkspaceCommandsAndPlainLaunchRouting() {
+        const panel = makePanel();
+        keyClick(Qt.Key_O, Qt.AltModifier);
+        let call = lastCall(Api.methods.execute);
+        compare(call.params.action, "launch");
+        compare(call.params.launch_target, "current");
+        compare(call.params.workspace_id, null);
+        verify(call.id.endsWith(call.params.request_id));
+        panel.controller.operations.fail(call.params.request_id, "fixture rejection", "validation-error");
+        keyClick(Qt.Key_N, Qt.AltModifier);
+        call = lastCall(Api.methods.execute);
+        compare(call.params.launch_target, "new");
+        panel.controller.operations.fail(call.params.request_id, "fixture rejection", "validation-error");
+        keyClick(Qt.Key_Return, Qt.ShiftModifier);
+        call = lastCall(Api.methods.execute);
+        compare(call.params.action, "launch");
+        compare(call.params.launch_target, "default");
+    }
     function reply(call, data, error) {
         Io.DaemonSessions.sessions["app-daemon"].client.response(call.id,
             {protocol: Api.protocol, version: Api.version, ok: !error, data: data}, error || "", call.route);

@@ -68,7 +68,7 @@ Item {
             request: {id: request.id, actionId: request.actionId, operationAction: params.action,
                 result: {id: request.result.id, title: request.result.title},
                 action: {label: request.action.label}},
-            operationId: "", statusRequestId: "", status: "", checks: 0, revision: 0,
+            operationId: "", recoveryId: params.request_id ? "operation-" + params.request_id : "", statusRequestId: "", status: "", checks: 0, revision: 0,
             generation: controller.uiGeneration, viewEpoch: controller.actionViewEpoch, handedOff: false,
             windowIds: windowId ? [windowId] : windows.map(window => window.id),
             progressMessage: progressMessage(request, params),
@@ -94,6 +94,16 @@ Item {
         const original = pending[responseId] || Object.values(pending).find(record => record.operationId && record.operationId === operation?.id);
         if (!original)
             return; // An event before admission is recovered with an owned status read.
+        if (operation?.status === "unknown" && operation.id === original.operationId
+                && operation.target_id === original.request.result.id
+                && operation.action === original.request.operationAction
+                && Number.isSafeInteger(operation.revision) && operation.revision > original.revision) {
+            const unknown = Object.assign({}, original, {status: "unknown", revision: operation.revision,
+                message: operation.message || qsTr("Launch outcome unknown. Inspect windows before launching again.")});
+            retire(unknown);
+            reportFailure(unknown);
+            return;
+        }
         const transition = Lifecycle.operationTransition(original.request, original.request.result.id, original.operationId, responseId, operation);
         if (!transition)
             return;
@@ -181,7 +191,7 @@ Item {
     }
     function check(targetId: string): void {
         const original = forTarget(targetId);
-        if (!original || !original.operationId) {
+        if (!original || !(original.operationId || original.recoveryId)) {
             if (original)
                 store(Object.assign({}, original, {checks: original.checks + 1, message: original.request.action.label + ": still waiting for confirmation"}));
             if (controller.uiActive)
@@ -196,7 +206,7 @@ Item {
             message: original.request.action.label + ": still waiting for confirmation"
         });
         store(record);
-        backend.operationStatus(record.statusRequestId, record.operationId);
+        backend.operationStatus(record.statusRequestId, record.operationId || record.recoveryId);
     }
     // Retire only an owned read, including an empty/malformed success payload.
     // Neither a missing status nor a read error completes the pending mutation.
@@ -212,13 +222,17 @@ Item {
             record.message = "Could not confirm action status: " + error + ". Check windows before trying again.";
         }
         store(record);
-        if (!error && operation?.id === record.operationId)
+        if (!error && operation?.id === (record.operationId || record.recoveryId))
             apply(record.request.id, operation);
         return true;
     }
     function transportLost(message: string): void {
-        for (const id of Object.keys(pending))
-            fail(id, message + ". Action outcome unknown; check windows before trying again.");
+        for (const record of Object.values(pending)) {
+            if (record.operationId || record.recoveryId)
+                store(Object.assign({}, record, {statusRequestId: "", checks: 0, message: message + ". Checking the saved operation; do not relaunch."}));
+            else
+                fail(record.request.id, message + ". Action outcome unknown; check windows before trying again.");
+        }
     }
     function poll(): void {
         for (const record of Object.values(pending)) {

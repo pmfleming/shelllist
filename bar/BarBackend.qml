@@ -29,6 +29,11 @@ Io.BarDaemonBackend {
         });
     }
 
+    function createWorkspace(monitor: string): bool {
+        const id = nextRequestId("workspace-create");
+        return call(id, "workspace.command", {command: "create", monitor: monitor, request_id: id});
+    }
+
     function mediaOperation(operation: string): bool {
         return mediaOperationFor(controller.activePlayerId, operation, null);
     }

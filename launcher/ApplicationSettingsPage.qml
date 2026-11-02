@@ -28,8 +28,10 @@ Ui.DetailFlickable {
         ? qsTr("Couldn’t save %1. %2 Choose again to retry.").arg(requestedCategory ? requestedCategory.label : qsTr("category")).arg(feedback.error) : ""
     readonly property var categoryOptions: Preferences.categories.map(function (category) {
         return {value: category.value, label: category.label, icon: category.icon};
-    })
+    }).concat([{value: "", label: qsTr("Uncategorized"), icon: "category"}])
 
+    Column {
+        width: parent.width
     Ui.FormField {
         objectName: "applicationCategoryField"
         width: parent.width
@@ -46,7 +48,7 @@ Ui.DetailFlickable {
             Layout.fillWidth: true
             options: page.categoryOptions
             value: page.selectedCategory ? page.selectedCategory.value : ""
-            placeholder: qsTr("Choose a category")
+            placeholder: qsTr("Uncategorized")
             saveOnOptionClick: true
             errorText: page.categoryError
             interactive: !page.controller.settingsInFlight
@@ -54,5 +56,16 @@ Ui.DetailFlickable {
                 page.controller.updateApplicationSettings(value);
             }
         }
+    }
+    Ui.ToggleRow {
+        objectName: "applicationNewWorkspace"
+        width: parent.width
+        visible: page.application.kind === "desktop-application"
+        title: qsTr("Open on a new workspace")
+        subtitle: qsTr("Use a new workspace for launches with default routing.")
+        checked: !!page.application.new_workspace
+        interactive: !page.controller.settingsInFlight
+        onClicked: page.controller.updateApplicationPreferences({new_workspace: !checked})
+    }
     }
 }

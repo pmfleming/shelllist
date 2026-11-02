@@ -56,4 +56,19 @@ Ui.ProviderChooserSurface {
         enabled: content.controller.uiActive && content.controller.hasSelection && !content.controller.operationBlocked && content.navigationEnabled && (content.controller.selectedApplication || ({})).kind === "desktop-application"
         onActivated: content.controller.launchSelected()
     }
+    Shortcut {
+        sequence: "Alt+O"
+        enabled: !content.controller.detailsOpen && content.controller.uiActive && content.navigationEnabled && !content.controller.operationBlocked && (content.controller.selectedApplication || ({})).kind === "desktop-application"
+        onActivated: content.controller.executeSelected("launch-current")
+    }
+    Shortcut {
+        sequence: "Alt+N"
+        enabled: !content.controller.detailsOpen && content.controller.uiActive && content.navigationEnabled && !content.controller.operationBlocked && (content.controller.selectedApplication || ({})).kind === "desktop-application"
+        onActivated: content.controller.executeSelected("launch-new")
+    }
+    Shortcut {
+        sequence: "Alt+A"
+        enabled: !content.controller.detailsOpen && content.controller.uiActive && content.navigationEnabled && !content.controller.operationBlocked
+        onActivated: content.controller.primarySelected()
+    }
 }
