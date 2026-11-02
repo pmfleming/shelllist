@@ -10,6 +10,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -47,14 +48,6 @@ class NativeApplicationTests(unittest.TestCase):
             (root / "data/applications/unrelated.desktop").write_text(
                 "[Desktop Entry]\nType=Application\nName=Unrelated\nExec=true\n"
             )
-            # A directory at the destination makes atomic publication fail,
-            # independent of uid, permissions or the user's real settings.
-            blocked = root / "config/app-daemon/application-settings-v1.json"
-            blocked.mkdir(parents=True)
-            repair = root / "bin/fixture-settings-repair"
-            repair.write_text(f"#!{sys.executable}\nimport os\nfrom pathlib import Path\n"
-                              "(Path(os.environ['XDG_CONFIG_HOME']) / 'app-daemon/application-settings-v1.json').rmdir()\n")
-            repair.chmod(0o700)
             config = root / "bus.conf"
             config.write_text(
                 f'<busconfig><type>session</type><listen>unix:tmpdir={root / "run"}</listen>'
@@ -71,6 +64,13 @@ class NativeApplicationTests(unittest.TestCase):
                                 "QT_QPA_PLATFORM": "offscreen", "QT_QUICK_BACKEND": "software",
                                 "QML2_IMPORT_PATH": str(ROOT / "qml"), "TZ": "UTC",
                                 "SHELLLIST_MODE": "floating"})
+            environment["APP_DAEMON_UPDATE_WORKER"] = "/nonexistent/fixture-update-worker"
+            # This journey owns standalone handoff; workspace coordination has
+            # its own private multi-daemon acceptance test.
+            environment["SHELLLIST_TEMPORARY_WORKSPACES"] = "0"
+            # Scope the launch journal to this fixture; no host compositor
+            # socket or environment is inherited.
+            environment["HYPRLAND_INSTANCE_SIGNATURE"] = "fixture"
             for variable, name in (("XDG_DATA_HOME", "data"), ("XDG_CONFIG_HOME", "config"),
                                    ("XDG_STATE_HOME", "state"), ("XDG_CACHE_HOME", "cache"),
                                    ("XDG_RUNTIME_DIR", "run")):
@@ -115,8 +115,39 @@ class NativeApplicationTests(unittest.TestCase):
                 self.assertNotIn("SHELLLIST_E2E_FAIL", output)
                 self.assertEqual((root / "state/attempts").read_text().splitlines(), ["failed", "completed"])
                 self.assertIn("journey.desktop", (root / "state/launch-arguments").read_text())
-                persisted = json.loads(blocked.read_text())
-                self.assertEqual(persisted["applications"]["journey.desktop"]["category"], "text")
+                # Verify persistence through the owner API after restart, never
+                # open the live Turso file from a second database writer.
+                daemon.terminate()
+                daemon.wait(timeout=15)
+                daemon = subprocess.Popen([str(args.app_daemon.resolve()), "daemon"],
+                                          env=environment, stdout=daemon_log, stderr=daemon_log,
+                                          start_new_session=True)
+                children.append(daemon)
+                deadline = time.monotonic() + 15
+                restored = None
+                while time.monotonic() < deadline and restored is None:
+                    client = subprocess.Popen([str(args.app_daemon.resolve()), "client"], env=environment,
+                                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                    try:
+                        client.stdin.write((json.dumps({"op": "call", "id": "verify-catalog", "method": "applications.catalog", "params": {}}) + "\n").encode())
+                        client.stdin.flush()
+                        with selectors.DefaultSelector() as selector:
+                            selector.register(client.stdout, selectors.EVENT_READ)
+                            if selector.select(2):
+                                line = client.stdout.readline()
+                                reply = json.loads(line) if line else {}
+                                restored = reply.get("response", {}).get("data", {}).get("catalog")
+                    finally:
+                        client.kill()
+                        client.wait(timeout=5)
+                        client.stdin.close()
+                        client.stdout.close()
+                    if restored is None:
+                        time.sleep(0.05)
+                self.assertIsNotNone(restored, "catalog unavailable after restart")
+                journey = next(row for row in restored["entries"] if row["id"] == "journey.desktop")
+                self.assertEqual(journey["category"], "text")
+                self.assertTrue((root / "state/app-daemon/software-catalog-turso-v1.db").is_file())
             finally:
                 for child in reversed(children):
                     try:

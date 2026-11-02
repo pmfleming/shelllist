@@ -1,0 +1,79 @@
+# Shared software catalog
+
+The launcher and Updates use the app-daemon-owned Turso catalog at
+`$XDG_STATE_HOME/app-daemon/software-catalog-turso-v1.db` (default
+`~/.local/state/app-daemon/`). This is a pristine schema: no settings JSON import,
+SQLite conversion, automatic upgrade, unknown-file reset, or compatibility fallback.
+Existing category overrides are intentionally not imported. Resource history remains
+in its separate Turso database.
+
+## Ownership and identity
+
+- app-daemon is the sole database writer. Its API serves both views; consumers
+  never open the database. Tables hold application records, preferences, snapshot
+  metadata and the last worker observation. A transaction publishes related records
+  together. Uncertain commit/rollback outcomes fence further access until restart.
+- Desktop IDs are the launcher's existing exact IDs. Desktop names, icons and
+  category defaults come from the desktop catalog. User overrides and new-workspace
+  preferences live only in Turso; the existing category-to-workspace mapping remains.
+- `update-worker application-status --json` is an unprivileged metadata-only read.
+  It reports active-generation package declarations, cached releases and active
+  managed-tool receipts. It runs no release check, package manager or installer.
+- Nix inventory records add `store_path`, `desktop_ids`, `kind` and `vendor_tool`.
+  Package-to-desktop joins use reviewed desktop IDs or the exact owning Nix store
+  output, never display-name similarity. Unmatched desktop apps remain present
+  with unknown versions. Unmatched packages remain separate catalog records.
+- Each record retains all scoped installations and their declared version, active
+  version, origin and release evidence. Active managed-tool versions take precedence
+  for display without overwriting the generation's declaration. Different versions
+  are shown together rather than choosing an arbitrary installation.
+- Worker reads have a five-second deadline and a 2 MiB limit. Ordinary reads reuse
+  observations for 60 seconds; explicit refresh rereads local evidence. Failed reads
+  retain persisted observations, mark them stale, and expose the failure. A successful
+  replacement removes packages that disappeared from the inventory. Existing worker
+  coverage limits remain explicit (`inventory_included` / `inventory_total`).
+
+## API and presentation
+
+`applications.catalog` returns the full bounded catalog. `applications.query`
+attaches the same persisted software record to each launcher result. Category
+changes update preferences and catalog records together; caller cancellation cannot
+interrupt the commit-to-memory publication. `applications.catalog.changed` invalidates
+metadata consumers independently of resource sampling and window activity.
+
+Updates reads the catalog directly from app-daemon. bar-daemon continues to own
+update history and system/AI status; its raw package projection is not used for the
+software list. Catalog responses are validated against the generated producer schema.
+An invalidation during an in-flight read rejects that response and schedules a new
+one. Closing the panel or losing transport retires its request identity.
+
+The list orders desktop applications by category/name, then shortcuts, command-line
+tools, system packages and local helpers. Every group has a heading and count; the
+page shows the total software count. Package-only classifications come from reviewed
+Nix metadata, with `system` as the explicit fallback. Updating a launcher's category
+moves that app's Updates group through the same catalog publication.
+
+Shared `DetailListView` shows a persistent draggable scrollbar when content overflows
+and reserves a gutter in its consumers. It disappears when all content fits. It adds
+no editable Tab stop. PageUp/PageDown, keyed viewport restoration, pooled-command
+retirement and bounded delegate creation remain intact. The launcher and Updates
+share version formatting and keep unsupported, unchecked, stale and failed evidence
+distinct. A missing release source still cannot produce a latest version.
+
+## Rollout and checks
+
+Deploy app-daemon, update-worker, the Nix inventory module and Shelllist together,
+then restart the user daemon/UI so the new schema and generated API agree. No
+migration or rebuild is triggered by merely reading the catalog. The new database
+is created on daemon startup; old JSON files are untouched and unused.
+`APP_DAEMON_UPDATE_WORKER` can specify an absolute worker executable for packaging
+or isolated tests; the default is `/run/current-system/sw/bin/update-worker`.
+
+Backend tests cover exact joins, multiple installations, active versions, database
+restart, exclusive ownership, unknown-file rejection, stale-cache retention,
+transaction rollback and successful retry. Service tests compare launcher/API
+records before and after category changes. Qt tests cover shared groups/version
+formatting, response invalidation, late replies, scrollbar dragging, keyboard
+scrolling, pooling and viewport restoration. The native application journey verifies
+category persistence through the owner API after restarting the private daemon;
+backend transaction tests own storage-failure injection.

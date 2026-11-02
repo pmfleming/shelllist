@@ -7,15 +7,14 @@ import Shelllist.Core as Core
 Rectangle {
     id: page
     required property UpdateController controller
-    readonly property var applications: controller.overview ? controller.overview.applications : null
-    readonly property bool available: !!applications && applications.available
-    readonly property string helpText: qsTr("Declared local versions; latest known upstream releases. Refresh only reads.")
+    readonly property var catalog: controller.applicationCatalog
+    readonly property bool available: !!catalog
+    readonly property string helpText: qsTr("Shared with the launcher. Local uses active installations when known, otherwise declared package versions; latest known upstream releases. Refresh only reads.")
     objectName: "updateApplicationsOverview"
     color: Ui.Theme.surface
     radius: Ui.Theme.cardRadius
-    Accessible.description: available ? qsTr("%1 of %2 declared packages").arg(applications.packages.length).arg(applications.total) : ""
+    Accessible.description: available ? qsTr("%1 software entries").arg(catalog.entries.length) : ""
 
-    // Disclosure belongs to the page, never a recycled row.
     Ui.FeedbackSource {
         id: explanation
         objectName: "updateApplicationExplanation"
@@ -24,27 +23,30 @@ Rectangle {
         onActiveChanged: if (!active) text = ""
     }
     onVisibleChanged: if (!visible) explanation.text = ""
-    onApplicationsChanged: { explanation.text = ""; updatePackages(); }
+    onCatalogChanged: { explanation.text = ""; updatePackages(); }
     Component.onCompleted: updatePackages()
     function updatePackages(): void {
         if (!list || !packagesModel) return;
         list.captureAnchor();
-        // Multiple installed versions can share a scope/name (e.g. fuse or Qt).
-        // Also fence repeated identical records accepted by the wire contract.
-        const occurrences = new Map();
-        packagesModel.rows = available ? applications.packages.map(pkg => {
-            const identity = JSON.stringify([pkg.scope, pkg.name, pkg.version]);
-            const occurrence = occurrences.get(identity) || 0;
-            occurrences.set(identity, occurrence + 1);
-            return {key: JSON.stringify([identity, occurrence]), payload: pkg};
-        }) : [];
+        let previous = "";
+        const entries = available ? catalog.entries : [];
+        const counts = new Map();
+        for (const entry of entries) {
+            const group = Ui.SoftwarePresentation.group(entry);
+            counts.set(group, (counts.get(group) || 0) + 1);
+        }
+        packagesModel.rows = entries.map(entry => {
+            const group = Ui.SoftwarePresentation.group(entry);
+            const start = previous !== group;
+            previous = group;
+            return {key: entry.id, payload: {record: entry, group: group, groupStart: start, groupCount: counts.get(group)}};
+        });
         Qt.callLater(list.restoreAnchor);
     }
     Connections {
         target: page.controller
         function onNavigationInteracted(): void { list.cancelAnchor(); }
     }
-
     Ui.DetailListView {
         id: list
         objectName: "updateApplicationsList"
@@ -52,27 +54,32 @@ Rectangle {
         anchors.margins: Ui.Theme.cardPadding
         viewMemory: page.controller.viewMemory
         memoryTab: "applications"
-        // Bound creation to the viewport, including at the 512-package limit.
         cacheBuffer: 0
         reuseItems: true
         spacing: Ui.Theme.spacingSm
         model: Core.SerializedListModel { id: packagesModel }
         header: Column {
-            width: list.width
+            width: list.rowWidth
             spacing: Ui.Theme.spacingMd
             Ui.SectionHeading {
                 width: parent.width
-                title: qsTr("Applications")
+                title: page.available ? qsTr("Software · %1").arg(page.catalog.entries.length) : qsTr("Software")
                 helpText: page.helpText
                 helpFeedback: explanation
             }
             Ui.ThemeText {
                 objectName: "updateApplicationUnavailable"
                 width: parent.width
-                visible: !page.available
-                text: page.applications && page.applications.error ? page.applications.error : qsTr("Application inventory not reported")
+                visible: !!text
+                text: page.controller.catalogError || (page.catalog ? page.catalog.error || "" : qsTr("Application catalog not reported"))
                 wrapMode: Text.Wrap
                 textFormat: Text.PlainText
+            }
+            Ui.ThemeText {
+                width: parent.width
+                visible: !!page.catalog && page.catalog.inventory_included < page.catalog.inventory_total
+                text: page.catalog ? qsTr("Package coverage: %1 of %2").arg(page.catalog.inventory_included).arg(page.catalog.inventory_total) : ""
+                wrapMode: Text.Wrap
             }
             Ui.FieldRow {
                 width: parent.width
@@ -87,65 +94,69 @@ Rectangle {
                 }
             }
         }
-        delegate: Ui.FieldRow {
+        delegate: Column {
             id: row
             required property var resultData
-            readonly property var modelData: JSON.parse(resultData.payload)
+            readonly property var payload: JSON.parse(resultData.payload)
+            readonly property var record: payload.record
             property bool pooled: false
             ListView.onPooled: pooled = true
             ListView.onReused: pooled = false
-            // Pooled commands must not remain discoverable in Alt+J.
             visible: !pooled
-            readonly property var release: modelData.release || null
-            readonly property string releaseSummary: !release ? qsTr("%1: no release source configured.").arg(label)
-                : !release.version ? (release.error ? qsTr("%1: release check failed.").arg(label) : qsTr("%1: latest release not checked.").arg(label))
-                : release.error ? qsTr("%1: last known %2; check failed.").arg(label).arg(release.version)
-                : release.stale ? qsTr("%1: last known release %2.").arg(label).arg(release.version)
-                : qsTr("%1: latest release %2.").arg(label).arg(release.version)
-            objectName: pooled ? "" : "updateApplication:" + modelData.scope + ":" + modelData.name
-            width: list.width
-            height: implicitHeight
-            label: modelData.name
-            RowLayout {
-                Layout.fillWidth: true
-                Ui.ThemeText {
-                    objectName: "updateApplicationLocal"
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    text: row.modelData.version || "—"
-                    font.pixelSize: Ui.Theme.formValueSize
-                    wrapMode: Text.WrapAnywhere
-                    textFormat: Text.PlainText
-                    Accessible.name: qsTr("%1: declared local %2").arg(row.label).arg(row.modelData.version || qsTr("Not reported"))
-                    Accessible.description: row.modelData.scope
-                }
+            objectName: pooled ? "" : "updateApplication:" + record.id
+            width: list.rowWidth
+            spacing: Ui.Theme.spacingSm
+            Ui.ThemeText {
+                objectName: "softwareGroupHeading"
+                width: parent.width
+                visible: row.payload.groupStart
+                text: row.payload.group + " · " + row.payload.groupCount
+                font.pixelSize: Ui.Theme.groupHeadingSize
+                font.weight: Ui.Theme.groupHeadingWeight
+                color: Ui.Theme.mutedText
+                wrapMode: Text.Wrap
+            }
+            Ui.FieldRow {
+                width: parent.width
+                height: implicitHeight
+                label: row.record.name
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
                     Ui.ThemeText {
-                        objectName: "updateApplicationLatest"
+                        objectName: "updateApplicationLocal"
                         Layout.fillWidth: true
-                        // Only cached upstream evidence can supply this column.
-                        text: row.release && row.release.version ? row.release.version : "—"
+                        Layout.preferredWidth: 1
+                        text: Ui.SoftwarePresentation.local(row.record)
                         font.pixelSize: Ui.Theme.formValueSize
                         wrapMode: Text.WrapAnywhere
                         textFormat: Text.PlainText
-                        Accessible.name: row.releaseSummary
+                        Accessible.name: qsTr("%1: local %2").arg(row.record.name).arg(text)
+                        Accessible.description: Ui.SoftwarePresentation.details(row.record)
                     }
-                    Ui.FeedbackButton {
-                        objectName: "updateApplicationStatus"
-                        Layout.preferredWidth: Ui.Theme.formActionSize
-                        Layout.preferredHeight: Ui.Theme.formActionSize
-                        iconSize: Ui.Theme.formActionIconSize
-                        icon: row.release && row.release.error ? "warning"
-                            : row.release && row.release.version ? (row.release.stale ? "history" : "info") : "help_outline"
-                        accessibleName: qsTr("Version status: %1").arg(row.label)
-                        Accessible.description: [row.releaseSummary, row.release ? row.release.source : "",
-                            row.release && row.release.checked_at ? qsTr("Checked %1").arg(page.controller.timeLabel(row.release.checked_at)) : "",
-                            row.release ? row.release.error || "" : ""].filter(Boolean).join(". ")
-                        feedback: explanation
-                        feedbackText: row.releaseSummary
-                        feedbackBrief: qsTr("Application release status")
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Ui.ThemeText {
+                            objectName: "updateApplicationLatest"
+                            Layout.fillWidth: true
+                            text: Ui.SoftwarePresentation.latest(row.record)
+                            font.pixelSize: Ui.Theme.formValueSize
+                            wrapMode: Text.WrapAnywhere
+                            textFormat: Text.PlainText
+                            Accessible.name: Ui.SoftwarePresentation.summary(row.record)
+                        }
+                        Ui.FeedbackButton {
+                            objectName: "updateApplicationStatus"
+                            Layout.preferredWidth: Ui.Theme.formActionSize
+                            Layout.preferredHeight: Ui.Theme.formActionSize
+                            iconSize: Ui.Theme.formActionIconSize
+                            icon: Ui.SoftwarePresentation.icon(row.record)
+                            accessibleName: qsTr("Version status: %1").arg(row.record.name)
+                            Accessible.description: Ui.SoftwarePresentation.summary(row.record) + " " + Ui.SoftwarePresentation.details(row.record)
+                            feedback: explanation
+                            feedbackText: Ui.SoftwarePresentation.summary(row.record)
+                            feedbackBrief: qsTr("Application release status")
+                        }
                     }
                 }
             }

@@ -65,6 +65,9 @@ Ui.ProviderChooserController {
             + (foldedCount ? qsTr(" · %1 folded").arg(foldedCount) : "") + qsTr(" · read only")
     property string coverage: ""
     property var overview: null
+    property var applicationCatalog: null
+    property string catalogError: ""
+    property alias catalogBackend: catalogBackend
     property string overviewRequest: ""
     property bool overviewLoading: false
     property bool overviewRefreshPending: false
@@ -188,7 +191,7 @@ Ui.ProviderChooserController {
         detailsOpen = false;
         if (uiActive) refresh();
     }
-    function refresh(): void { requestPage(false, false); requestOverview(); }
+    function refresh(): void { requestPage(false, false); requestOverview(); catalogBackend.refresh(true); }
     function requestOverview(): void {
         if (!uiActive || !backend.ready) return;
         if (overviewRequest) { overviewRefreshPending = true; return; }
@@ -498,6 +501,7 @@ Ui.ProviderChooserController {
         id: clipboardPublisher
         onFinished: function(succeeded, message) { controller.copyError = succeeded ? "" : message; }
     }
+    UpdateCatalogBackend { id: catalogBackend; controller: controller }
     Io.BarDaemonBackend {
         id: backend
         daemonName: "bar-daemon"

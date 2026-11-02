@@ -1,4 +1,27 @@
 {
+  "applications.catalog.changed": {
+    "data": {
+      "revision": 9007199254740949
+    },
+    "event": "changed",
+    "protocol": "app-api",
+    "stream": "applications.catalog.changed",
+    "subscription_id": "subscription-example",
+    "version": 2
+  },
+  "applications.catalog.changed.subscribed": {
+    "data": {
+      "catalog_revision": 9007199254740991,
+      "runtime_revision": 9007199254740984,
+      "settings_revision": 1,
+      "window_revision": 0
+    },
+    "event": "subscribed",
+    "protocol": "app-api",
+    "stream": "applications.catalog.changed",
+    "subscription_id": "subscription-example",
+    "version": 2
+  },
   "applications.changed": {
     "data": {
       "revision": 9007199254740949

@@ -9,7 +9,7 @@ Column {
     required property UpdateController controller
     readonly property var overview: controller.overview
     readonly property var git: overview ? overview.git || null : null
-    readonly property var applications: overview ? overview.applications || null : null
+    readonly property var applications: controller.applicationCatalog
     spacing: Ui.Theme.cardGap
     Loader {
         width: parent.width
@@ -37,8 +37,8 @@ Column {
                     {
                         key: "applications",
                         label: qsTr("Applications"),
-                        value: page.applications && page.applications.available ? qsTr("%1 packages · active generation").arg(page.applications.total) : qsTr("Application inventory not reported"),
-                        detail: qsTr("Package metadata from the active NixOS generation; system and Home Manager declarations only")
+                        value: page.applications ? qsTr("%1 entries · shared catalog").arg(page.applications.entries.length) : qsTr("Application catalog not reported"),
+                        detail: qsTr("Launcher applications, active tool versions and declared packages")
                     },
                     {
                         key: "system",

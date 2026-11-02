@@ -45,9 +45,11 @@ DaemonTestCase {
         return Array.from({length: count}, (_, index) => entry("history-" + index, "staged"));
     }
     function latest(): var { return calls.filter(call => call.method === "updates.queryHistory").slice(-1)[0]; }
+    property var currentRoot: null
     function fixture(): var {
         const root = createTemporaryObject(factory, testCase);
         verify(root !== null);
+        currentRoot = root;
         root.controller.activateUi("");
         tryVerify(() => latest() !== undefined);
         return root;
@@ -125,7 +127,7 @@ DaemonTestCase {
         compare(latest().params.query, "");
         reply(latest(), [entry("exact", "current")]);
         compare(root.controller.selectedRun.job.id, "exact");
-        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot"].includes(call.method)));
+        verify(calls.every(call => ["applications.catalog", "updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot"].includes(call.method)));
     }
     function test_noChangeGroupsExpandWithoutHidingFailuresOrInventingRuns(): void {
         const root = fixture();
@@ -243,7 +245,7 @@ DaemonTestCase {
         compare(root.controller.historyOffset, 0);
         compare(root.controller.entries.length, 50);
         compare(root.controller.entries[0].job.id, "history-0");
-        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "bar.snapshot"].includes(call.method)));
+        verify(calls.every(call => ["applications.catalog", "updates.queryHistory", "updates.getOverview", "bar.snapshot"].includes(call.method)));
     }
     function test_historyWindowNavigationKeepsFiltersAndExactLinksIndependent(): void {
         const root = fixture();
@@ -507,7 +509,7 @@ DaemonTestCase {
         tryVerify(() => calls.some(call => call.method === "updates.readLog"));
         const log = calls.filter(call => call.method === "updates.readLog").slice(-1)[0];
         compare(log.params.run_id, "run-2");
-        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot"].includes(call.method)));
+        verify(calls.every(call => ["applications.catalog", "updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot"].includes(call.method)));
     }
     function test_manualRebuildUsesTheSameReadOnlyHistoryAndLogRoute(): void {
         const root = fixture();
@@ -823,7 +825,7 @@ DaemonTestCase {
         compare(root.controller.filteredResults.length, 1);
         verify(root.controller.selectedIsOverview);
         compare(root.controller.countLabel, "0 of 0 matching runs · read only");
-        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "bar.snapshot"].includes(call.method)));
+        verify(calls.every(call => ["applications.catalog", "updates.queryHistory", "updates.getOverview", "bar.snapshot"].includes(call.method)));
     }
     function test_autoLogsQueueTheLatestSelectionAndCacheFailuresWithoutRetry(): void {
         const root = fixture();
@@ -975,7 +977,7 @@ DaemonTestCase {
         compare(Presentation.shortVersion(before), "host-26.05.1");
         compare(Presentation.shortVersion("/nix/store/abc-other-package"), "/nix/store/abc-other-package");
         compare(Presentation.shortVersion(null), "Unknown");
-        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot", ClipApi.methods.selectionPublishText].includes(call.method)));
+        verify(calls.every(call => ["applications.catalog", "updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot", ClipApi.methods.selectionPublishText].includes(call.method)));
     }
     function overviewValue(): var {
         return {schema_version: 1, available: true, observed_at: 400, error: null,
@@ -987,10 +989,34 @@ DaemonTestCase {
             tools: [{name: "pi", installed_version: "1.0", phase: "current", last_successful_check: 280, last_activation: 270, error: null}],
             timers: [{unit: "nixos-update.timer", next_at: 500, last_at: 250}], timers_error: null};
     }
+    function catalogReply(value): void {
+        const backend = currentRoot.controller.catalogBackend;
+        tryVerify(() => backend.ready);
+        if (!backend.request) backend.refresh(false);
+        backend.refreshPending = false; backend.forcePending = false;
+        const call = calls.filter(c => c.id.endsWith("::" + backend.request) && c.method === "applications.catalog").slice(-1)[0];
+        verify(!!call, JSON.stringify({request: backend.request, active: backend.active, calls: calls.map(c => [c.id, c.method]), error: currentRoot.controller.catalogError}));
+        Io.DaemonSessions.sessions["app-daemon"].client.response(call.id, {
+            protocol: "app-api", version: 2, ok: true, data: {catalog: value}
+        }, "", call.route);
+    }
+    function catalogFromPackages(value): var {
+        const records = new Map();
+        for (const p of value.packages) {
+            const id = p.scope + ":" + p.name;
+            if (!records.has(id)) records.set(id, {id: id, name: p.name, icon: "", kind: "system", category: "", installations: []});
+            const installation = {stale: false, scope: p.scope, package_name: p.name, store_path: null, declared_version: p.version,
+                active_version: null, version_origin: "generation", release: p.release || null};
+            if (!records.get(id).installations.some(i => JSON.stringify(i) === JSON.stringify(installation))) records.get(id).installations.push(installation);
+        }
+        return {revision: value.observed_at || 400, observed_at: value.observed_at || 400, inventory_available: value.available,
+            inventory_total: value.total, inventory_included: value.packages.length, error: value.error, entries: [...records.values()]};
+    }
     function overviewReply(request, value): void {
         Io.DaemonSessions.sessions["bar-daemon"].client.response(request.id, {
             protocol: Contract.protocol, version: Contract.version, ok: true, data: {overview: value}
         }, "", request.route);
+        if (value.applications) catalogReply(catalogFromPackages(value.applications));
     }
     function latestOverview(): var { return calls.filter(call => call.method === "updates.getOverview").slice(-1)[0]; }
     function test_nativeOverviewIssueNavigationAndStructuredRecovery(): void {
@@ -1038,7 +1064,7 @@ DaemonTestCase {
         const copied = copyCalls()[0].params.text;
         verify(copied.includes("Failed stage: Activation hook") && copied.includes("Deployment recorded: Yes") && copied.includes("recovered"));
         acknowledgeCopy(copyCalls()[0]);
-        verify(calls.every(call => ["updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot", ClipApi.methods.selectionPublishText].includes(call.method)));
+        verify(calls.every(call => ["applications.catalog", "updates.queryHistory", "updates.getOverview", "updates.readLog", "bar.snapshot", ClipApi.methods.selectionPublishText].includes(call.method)));
     }
     function test_overviewIssueReviewUsesTheSharedKeyboardCommandMenu(): void {
         const root = fixture();
@@ -1242,7 +1268,7 @@ DaemonTestCase {
         root.content.listItem.focusList();
         keyClick(Qt.Key_Right);
         tryVerify(() => root.content.detailsNavigation.contentReady);
-        verify(findChild(root, "updateArea:applications").modelData.value.includes("3 packages · active generation"));
+        verify(findChild(root, "updateArea:applications").modelData.value.includes("2 entries · shared catalog"));
         const reads = calls.length;
         showPage(root, "applications");
         let inventory = findChild(root, "updateApplicationsOverview");
@@ -1290,7 +1316,7 @@ DaemonTestCase {
         invalid.applications.packages[0].version = 123;
         overviewReply(latestOverview(), invalid);
         compare(root.controller.overviewError, "Invalid update overview reply");
-        compare(findChild(inventory, "updateApplication:system:editor").modelData.version, "1.2.3");
+        compare(findChild(inventory, "updateApplication:system:editor").record.installations[0].declared_version, "1.2.3");
         root.controller.requestOverview();
         const unavailable = overviewValue();
         unavailable.applications = {available: false, active_system: null, observed_at: null, total: 0,
@@ -1319,15 +1345,50 @@ DaemonTestCase {
         tryVerify(() => root.content.detailsNavigation.contentReady);
         showPage(root, "applications");
         const list = findChild(root, "updateApplicationsList");
-        compare(list.count, 3);
-        compare(new Set(list.model.currentKeys()).size, 3);
-        compare(applicationRows(root).map(row => row.modelData.version).sort(), ["2.9.9", "3.17.4", "3.17.4"]);
+        tryCompare(list, "count", 1);
+        compare(new Set(list.model.currentKeys()).size, 1);
+        compare(applicationRows(root)[0].record.installations.map(i => i.declared_version), ["2.9.9", "3.17.4"]);
         root.controller.requestOverview();
         const replacement = JSON.parse(JSON.stringify(value));
         replacement.applications.observed_at++;
         overviewReply(latestOverview(), replacement);
-        compare(list.count, 3);
-        compare(new Set(list.model.currentKeys()).size, 3);
+        compare(list.count, 1);
+        compare(new Set(list.model.currentKeys()).size, 1);
+    }
+    function test_sharedCatalogGroupingVersionsAndLateReadBarrier(): void {
+        const root = fixture();
+        reply(latest(), []);
+        const snapshot = {revision: 1, observed_at: 400, inventory_available: true, inventory_total: 1, inventory_included: 1, error: null,
+            entries: [{id: "editor.desktop", name: "Editor", icon: "", kind: "desktop-application", category: "code",
+                installations: [{stale: false, scope: "system", package_name: "editor", store_path: null, declared_version: "1.0", active_version: "2.0", version_origin: "active-profile",
+                    release: {version: "2.1", source: "https://example.test/releases", checked_at: 390, attempted_at: 390, stale: false, error: null}}]},
+                {id: "package:helper", name: "Helper", icon: "", kind: "local-helper", category: "", installations: []}]};
+        catalogReply(snapshot);
+        root.controller.openDetails();
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        showPage(root, "applications");
+        const list = findChild(root, "updateApplicationsList");
+        compare(list.model.rows.map(r => r.payload.group), ["Applications · Development", "Local helpers"]);
+        const row = findChild(root, "updateApplication:editor.desktop");
+        compare(findChild(row, "updateApplicationLocal").text, "2.0");
+        compare(findChild(row, "updateApplicationLatest").text, "2.1");
+        verify(Ui.SoftwarePresentation.details(row.record).includes("declared 1.0"));
+        const backend = root.controller.catalogBackend;
+        backend.refresh(false);
+        backend.observationGeneration++; // catalog changed while this read was in flight
+        const changed = JSON.parse(JSON.stringify(snapshot));
+        changed.revision = 2; changed.entries[0].category = "text";
+        catalogReply(changed);
+        compare(root.controller.applicationCatalog.revision, 1, "pre-invalidation response cannot publish");
+        tryVerify(() => backend.request.length > 0);
+        catalogReply(changed);
+        compare(root.controller.applicationCatalog.entries[0].category, "text");
+        compare(list.model.rows[0].payload.group, "Applications · Documents");
+        backend.refresh(false);
+        const pending = calls.filter(c => c.method === "applications.catalog").slice(-1)[0];
+        root.controller.deactivateUi();
+        Io.DaemonSessions.sessions["app-daemon"].client.response(pending.id, {protocol: "app-api", version: 2, ok: true, data: {catalog: snapshot}}, "", pending.route);
+        compare(root.controller.applicationCatalog.revision, 2, "closed panel ignores late response");
     }
     function applicationRows(item): var {
         let rows = item.objectName.startsWith("updateApplication:") ? [item] : [];
@@ -1363,9 +1424,19 @@ DaemonTestCase {
         keyClick(Qt.Key_Tab);
         compare(root.content.detailsNavigation.highlightedControl, null);
         compare(root.content.detailsNavigation.currentPage, list);
+        const scrollBar = findChild(list, "detailListScrollBar");
+        verify(scrollBar.visible && scrollBar.opacity > 0);
+        verify(scrollBar.size < 1);
+        verify(list.rowWidth < list.width);
         const initialY = list.contentY;
         keyClick(Qt.Key_PageDown);
         tryVerify(() => list.contentY > initialY);
+        const beforeDrag = list.contentY;
+        const thumbY = scrollBar.visualPosition * scrollBar.height + scrollBar.visualSize * scrollBar.height / 2;
+        mousePress(scrollBar, scrollBar.width / 2, thumbY);
+        mouseMove(scrollBar, scrollBar.width / 2, Math.min(scrollBar.height - 1, thumbY + scrollBar.height / 3));
+        mouseRelease(scrollBar, scrollBar.width / 2, Math.min(scrollBar.height - 1, thumbY + scrollBar.height / 3));
+        tryVerify(() => list.contentY > beforeDrag);
         compare(root.controller.selectedResult.id, "_now");
         // Exercise delegate turnover at the end, including command identity.
         list.positionViewAtEnd();

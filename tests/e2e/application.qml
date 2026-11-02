@@ -23,13 +23,6 @@ ShellRoot {
                 onCloseWindowRequested: dismissals++
             }
         }
-        Process {
-            id: repair
-            property int result: -1
-            command: ["fixture-settings-repair"]
-            // Quickshell's qmltypes omit QProcess::ExitStatus (as in the production bridge).
-            onExited: function(code) { result = code; } // qmllint disable signal-handler-parameters
-        }
         TestCase {
             id: driver
             name: "ApplicationJourney"
@@ -57,17 +50,10 @@ ShellRoot {
                     category = findChild(panel, "applicationCategory");
                     return category !== null && category.visible && category.width > 0 && category.height > 0;
                 });
-                stage = "settings failure";
+                stage = "durable catalog settings";
                 const original = category.value;
                 chooseText(category);
                 compare(category.value, original, "sending is not acknowledgement");
-                tryVerify(() => !controller.settingsInFlight && category.errorText.length > 0, 10000);
-                compare(category.value, original, "failed save cannot publish the requested category");
-                verify(category.enabled, "a rejected save remains retryable");
-                repair.running = true;
-                tryCompare(repair, "result", 0);
-                stage = "settings retry";
-                chooseText(category);
                 tryVerify(() => !controller.settingsInFlight && controller.selectedApplication.category === "text", 10000);
                 compare(category.value, "text");
                 compare(category.errorText, "");
@@ -76,7 +62,8 @@ ShellRoot {
                 tryVerify(() => !controller.refreshInFlight && controller.selectedApplication.category === "text");
                 stage = "failed launch";
                 keyClick(Qt.Key_Return, Qt.ShiftModifier);
-                tryVerify(() => !controller.actionInFlight && controller.selectedActionMessage.includes("fixture launch rejected"), 15000);
+                tryVerify(() => !controller.actionInFlight && controller.selectedActionMessage.length > 0, 15000);
+                verify(controller.selectedActionMessage.includes("fixture launch rejected"), controller.selectedActionMessage);
                 compare(controller.dismissals, 0, "failed launch must not hand off the UI");
                 wait(250);
                 compare(controller.dismissals, 0, "failure must not automatically retry");
@@ -105,7 +92,7 @@ ShellRoot {
                     console.log("SHELLLIST_E2E_PASS application");
                     Qt.quit();
                 } catch (error) {
-                    console.error("SHELLLIST_E2E_FAIL application at " + driver.stage + ": " + error);
+                    console.error("SHELLLIST_E2E_FAIL application at " + driver.stage + ": " + error + "; action=" + controller.selectedActionMessage + "; pending=" + controller.actionInFlight);
                     Qt.exit(1);
                 }
             }

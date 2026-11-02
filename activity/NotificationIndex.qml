@@ -75,7 +75,7 @@ Item {
             id: row
             required property var resultData
             readonly property var modelData: JSON.parse(resultData.payload)
-            width: history.width
+            width: history.rowWidth
             // Column's implicit height settles a positioning pass later. Feed
             // the loader height directly to ListView so it never estimates a
             // newly created message as a zero-height row.

@@ -29,6 +29,18 @@ Ui.DetailFlickable {
         wrapMode: Text.Wrap
     }
 
+    Ui.DetailRows {
+        objectName: "applicationVersions"
+        width: parent.width
+        visible: !!page.application.software
+        title: qsTr("Versions")
+        rows: page.application.software ? [
+            {label: qsTr("Local"), value: Ui.SoftwarePresentation.local(page.application.software)},
+            {label: qsTr("Latest"), value: Ui.SoftwarePresentation.latest(page.application.software)},
+            {label: qsTr("Source"), value: Ui.SoftwarePresentation.details(page.application.software) || qsTr("No package version reported")}
+        ] : []
+    }
+
     Ui.ContentState {
         objectName: "applicationEmptyState"
         visible: page.application.kind === "desktop-shortcut" || (page.application.instances || []).length === 0

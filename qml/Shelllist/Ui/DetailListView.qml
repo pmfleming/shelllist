@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls as Controls
 import Shelllist.Core as Core
 
 // Virtualized read-only detail content. DetailsNavigation uses the same
@@ -14,6 +15,13 @@ ListView {
     property bool tearingDown: false
     readonly property Core.KeyedListModel keyedModel: model as Core.KeyedListModel
     property var viewportAnchor: null
+    readonly property real rowWidth: width - (contentHeight > height ? scrollBar.width + Theme.spacingSm : 0)
+    Controls.ScrollBar.vertical: DetailScrollBar {
+        id: scrollBar
+        objectName: "detailListScrollBar"
+        policy: page.contentHeight > page.height ? Controls.ScrollBar.AlwaysOn : Controls.ScrollBar.AlwaysOff
+        onPressedChanged: if (pressed) page.cancelAnchor()
+    }
 
     function captureAnchor(): void {
         if (viewportAnchor || !keyedModel) return;

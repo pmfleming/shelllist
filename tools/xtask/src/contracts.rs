@@ -236,7 +236,16 @@ pub fn check(root: &Path, daemon: &str, bin: &Path) -> Result<()> {
             } else {
                 "clipboard/ClipApi.js"
             };
-            coverage(registry, &fs::read_to_string(root.join(path))?, true, &[])?;
+            let mut text = fs::read_to_string(root.join(path))?;
+            if daemon == "app" {
+                // Catalog requests and demand-scoped subscriptions belong to
+                // Updates, not the launcher's always-subscribed API surface.
+                text.push('\n');
+                text.push_str(&fs::read_to_string(
+                    root.join("bar/UpdateCatalogBackend.qml"),
+                )?);
+            }
+            coverage(registry, &text, true, &[])?;
         }
         "bt" => coverage(
             registry,

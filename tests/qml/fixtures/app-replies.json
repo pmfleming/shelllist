@@ -1,4 +1,20 @@
 {
+  "applications.catalog": {
+    "data": {
+      "catalog": {
+        "entries": [],
+        "error": null,
+        "inventory_available": true,
+        "inventory_included": 0,
+        "inventory_total": 0,
+        "observed_at": 400,
+        "revision": 1
+      }
+    },
+    "ok": true,
+    "protocol": "app-api",
+    "version": 2
+  },
   "applications.energyOverview": {
     "data": {
       "energy_overview": {
@@ -202,6 +218,7 @@
             "running_count": 0,
             "runtime_score": 0,
             "score": 0,
+            "software": null,
             "startup_class": "Alpha",
             "system_power_watts": 0.0,
             "thread_count": 0,
@@ -355,6 +372,7 @@
             "running_count": 0,
             "runtime_score": 0,
             "score": 0,
+            "software": null,
             "startup_class": "Alpha",
             "system_power_watts": 0.0,
             "thread_count": 0,
