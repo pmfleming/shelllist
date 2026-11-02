@@ -120,9 +120,9 @@ Ui.ProviderChooserController {
         refresh(false);
     }
     function availableDetailsTabs(): var {
-        if (!selectedApplication || selectedApplication.kind === "desktop-shortcut")
+        if (!selectedApplication)
             return ["application"];
-        return selectedApplication.kind === "desktop-application" ? ["application", "resources", "settings"] : ["application", "resources"];
+        return selectedApplication.kind === "desktop-shortcut" ? ["application", "settings"] : ["application", "resources", "settings"];
     }
     function selectDetailsTab(value: string): void {
         if (availableDetailsTabs().includes(value))

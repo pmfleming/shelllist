@@ -64,6 +64,57 @@ DaemonTestCase {
     function choice(surface) { return findChild(surface.detailsItem, "applicationCategory"); }
     function form(surface) { return findChild(surface.detailsItem, "applicationCategoryField"); }
     function updates() { return calls.filter(call => call.method === "applications.settings.update"); }
+    function test_appDataCombinesVersionsAndStorageWithoutAddingFields() {
+        const surface = make("code", "3");
+        const controller = surface.chooserController;
+        const app = Object.assign(application("code", "3"), {
+            running: true, disk_space_total_bytes: 4096, disk_space_permanent_bytes: 4096, disk_space_temporary_bytes: 0,
+            metric_availability: {disk_space_total_bytes: true, disk_space_permanent_bytes: true, disk_space_temporary_bytes: true},
+            software: {name: "Example", installations: [{scope: "user:example", package_name: "example-application-with-a-long-package-name",
+                active_version: "1.3.1", declared_version: "1.3.0", release: {version: "1.4.0", source: "https://example.test/releases/long/source/description"}}]}
+        });
+        controller.replaceProviderResults([controller.provider.resultFor(app)], false);
+        const card = findChild(surface, "applicationDataDetails");
+        verify(card !== null && card.visible);
+        compare(card.title, "App data");
+        compare(findChild(card, "applicationDataVersions").entries.map(entry => entry.value), ["1.3.1", "1.4.0"]);
+        compare(findChild(card, "applicationDataTotal").value, "4.0 KiB");
+        compare(findChild(card, "applicationDataStorage").entries.map(entry => entry.value), ["4.0 KiB", "0 B"]);
+        const source = findChild(card, "applicationDataSource");
+        verify(source.text.includes("user:example"));
+        verify(source.text.includes("active 1.3.1"));
+        surface.width = 600;
+        verify(waitForRendering(surface));
+        verify(source.lineCount > 1, "Long package identities wrap in the card");
+        const sourcePosition = source.mapToItem(card, 0, 0);
+        verify(sourcePosition.x >= 0 && sourcePosition.x + source.width <= card.width);
+        const fields = surface.detailsNavigation.availableFields();
+        compare(fields.length, 2);
+        verify(fields.includes(choice(surface)));
+        verify(fields.includes(findChild(surface, "applicationNewWorkspace")));
+        compare(updates().length, 0);
+    }
+    function test_appDataRetainsUnavailableAndTargetScopedHistory() {
+        const surface = make("code", "3");
+        const controller = surface.chooserController;
+        const card = findChild(surface, "applicationDataDetails");
+        const total = findChild(card, "applicationDataTotal");
+        compare(total.value, "Unavailable");
+        controller.resourceHistory = [{disk_space_total_bytes: 2048, metric_availability: {disk_space_total_bytes: true}}];
+        controller.historyTargetId = "different.desktop";
+        compare(total.value, "Unavailable");
+        controller.historyTargetId = controller.selectedApplication.id;
+        compare(total.value, "2.0 KiB");
+        compare(findChild(card, "applicationDataStorage").entries[1].value, "Unavailable");
+        for (const kind of ["window", "desktop-shortcut"]) {
+            const entry = Object.assign(application("", "", kind), {kind: kind});
+            controller.replaceProviderResults([controller.provider.resultFor(entry)], false);
+            verify(controller.availableDetailsTabs().includes("settings"));
+            verify(!findChild(surface, "applicationPreferences").visible);
+            compare(surface.detailsNavigation.availableFields().length, 0);
+        }
+        compare(updates().length, 0);
+    }
     function test_newWorkspaceIsIndependentEditableToggle() {
         const surface = make("code", "3");
         const toggle = findChild(surface.detailsItem, "applicationNewWorkspace");

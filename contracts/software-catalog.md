@@ -60,6 +60,22 @@ retirement and bounded delegate creation remain intact. The launcher and Updates
 share version formatting and keep unsupported, unchecked, stale and failed evidence
 distinct. A missing release source still cannot produce a latest version.
 
+The launcher's Settings tab contains one **App data** card: local/latest versions
+share a compact grid, source details wrap in a shared FieldRow, and identified
+storage sits above the persistent/temporary pair. The Application tab keeps window
+and desktop-action collections. Shortcut and unmatched-window entries retain a
+read-only Settings tab; category and launch preferences are shown only for desktop
+applications. Metadata, storage values and Help add no editable Tab stops.
+
+Storage availability and attribution are unchanged: a measured zero stays zero,
+unknown stays unavailable, and a stopped app can use retained observations only
+when the history target matches its ID. Opening Settings does not request history.
+
+The launcher owns the App data composition: shared DetailColumnCard replaces
+DetailCard to accommodate wrapped source details and grouped values, with shared
+theme metrics and no custom editor or command identity. The panel UI review's
+composition prompt is accepted for this passive layout.
+
 ## Rollout and checks
 
 Deploy app-daemon, update-worker, the Nix inventory module and Shelllist together,
@@ -77,3 +93,8 @@ formatting, response invalidation, late replies, scrollbar dragging, keyboard
 scrolling, pooling and viewport restoration. The native application journey verifies
 category persistence through the owner API after restarting the private daemon;
 backend transaction tests own storage-failure injection.
+
+`tst_application_settings.qml` verifies the combined App data card, narrow-width
+source wrapping, unchanged editable-field traversal, unavailable/zero readings,
+target-scoped history and read-only entries. `tst_application_actions.qml` verifies
+keyboard navigation to its single home in Settings.

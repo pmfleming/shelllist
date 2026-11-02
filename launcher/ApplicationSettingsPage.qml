@@ -10,6 +10,7 @@ Ui.DetailFlickable {
     objectName: "applicationSettingsPage"
     viewMemory: controller.viewMemory
     memoryTab: "settings"
+    cardSpacing: Ui.Theme.cardGap
 
     required property ApplicationController controller
     required property var application
@@ -31,6 +32,8 @@ Ui.DetailFlickable {
     }).concat([{value: "", label: qsTr("Uncategorized"), icon: "category"}])
 
     Column {
+        objectName: "applicationPreferences"
+        visible: page.application.kind === "desktop-application"
         width: parent.width
     Ui.FormField {
         objectName: "applicationCategoryField"
@@ -67,5 +70,10 @@ Ui.DetailFlickable {
         interactive: !page.controller.settingsInFlight
         onClicked: page.controller.updateApplicationPreferences({new_workspace: !checked})
     }
+    }
+    ApplicationDataDetails {
+        width: parent.width
+        controller: page.controller
+        application: page.application
     }
 }

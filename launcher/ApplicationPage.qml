@@ -29,18 +29,6 @@ Ui.DetailFlickable {
         wrapMode: Text.Wrap
     }
 
-    Ui.DetailRows {
-        objectName: "applicationVersions"
-        width: parent.width
-        visible: !!page.application.software
-        title: qsTr("Versions")
-        rows: page.application.software ? [
-            {label: qsTr("Local"), value: Ui.SoftwarePresentation.local(page.application.software)},
-            {label: qsTr("Latest"), value: Ui.SoftwarePresentation.latest(page.application.software)},
-            {label: qsTr("Source"), value: Ui.SoftwarePresentation.details(page.application.software) || qsTr("No package version reported")}
-        ] : []
-    }
-
     Ui.ContentState {
         objectName: "applicationEmptyState"
         visible: page.application.kind === "desktop-shortcut" || (page.application.instances || []).length === 0
@@ -67,12 +55,6 @@ Ui.DetailFlickable {
         onPageChanged: function(anchor) { page.revealCollection(anchor); }
     }
 
-    ApplicationDataDetails {
-        width: parent.width
-        controller: page.controller
-        application: page.application
-    }
-
     ApplicationDesktopActions {
         width: parent.width
         controller: page.controller
@@ -86,7 +68,7 @@ Ui.DetailFlickable {
         objectName: "applicationNoActions"
         visible: page.application.kind === "desktop-application" && (page.application.desktop_actions || []).length === 0
         width: parent.width
-        // Center the passive mark in the space below app data; short pages scroll.
+        // Center the passive mark below the window/action collections.
         height: Math.max(implicitHeight + Ui.Theme.spacingXxl, page.height - noActions.y)
         compact: true
         uiScale: page.uiScale

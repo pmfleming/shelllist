@@ -157,6 +157,20 @@ DaemonTestCase {
         compare(call.params.action, "desktop-action");
         compare(call.params.desktop_action_id, "new-private");
     }
+    function test_appDataHasOneHomeOnTheSettingsTab() {
+        const panel = makePanel();
+        expand(panel);
+        compare(findChild(panel, "applicationDataDetails"), null);
+        compare(findChild(panel, "applicationVersions"), null);
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        tryCompare(panel.controller, "detailsTab", "resources");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        tryCompare(panel.controller, "detailsTab", "settings");
+        tryVerify(() => findChild(panel, "applicationDataDetails") !== null);
+        compare(findChild(panel, "applicationDataDetails").title, "App data");
+        compare(findChild(panel, "applicationVersions"), null);
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 0);
+    }
     function replaceLarge(panel, count, actionCount, prepend) {
         const windows=Array.from({length:count},(_,i)=>"w"+(i+1));
         if(prepend) windows.unshift("arrived");
