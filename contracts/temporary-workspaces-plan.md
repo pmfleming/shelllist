@@ -62,10 +62,10 @@ new contract, reject that routing explicitly rather than defaulting to Shell.
   Temporary positive IDs are globally unique, increase within a compositor
   session, and appear only on their actual monitor.
 - Manual + creates and focuses an empty landing pad on the invoking monitor.
-  It survives while locally active and never populated. Keyboard focus moving to
-  another monitor does not abandon a landing pad still displayed on its monitor.
-  Switching that monitor away from an unused pad retires it.
-- A populated temporary workspace retires after its last window leaves and all
+  It remains available until an explicit workspace close, including when you
+  switch away or its last window leaves. This user-requested lifetime revision
+  supersedes the original unused-pad retirement rule (2026-11-03).
+- A launch-created temporary workspace retires after its last window leaves and all
   placement leases settle. An unavailable snapshot is unknown, never empty.
   External workspaces retain compositor-owned persistence rules and are not
   silently enrolled as Shelllist-owned landing pads.
@@ -81,6 +81,9 @@ new contract, reject that routing explicitly rather than defaulting to Shell.
   captured windows; Super+Q keeps normal focused-window close. Add
   Super+Ctrl+PageUp/PageDown for previous/next in the monitor's logical strip,
   with wraparound, after checking all included bindings for collisions.
+- Super+1 through Super+9 focus those workspace IDs; Super+0 focuses workspace
+  10. Adding Shift moves the focused window to that destination and follows it.
+  Higher monotonically allocated IDs use the strip or previous/next commands.
 - Left-click only on workspaces and +. Right/middle presses, releases and
   double-clicks must have no effect. Keep + outside the scrolling viewport.
 

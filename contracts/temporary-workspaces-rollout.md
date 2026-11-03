@@ -25,6 +25,13 @@ flag. Its target is captured inside the serialized daemon; the CLI does not
 evaluate the current workspace or retry timed-out effects. Native Lua contains
 only binding declarations, with no workspace policy or helper script.
 
+The native number row binds Super+1–9 to workspace IDs 1–9 and Super+0 to ID 10.
+Super+Shift with the same key moves the focused window and follows it. IDs above
+10 use the workspace strip or previous/next. Manual creation remains available
+until explicit workspace close; launch-created workspaces still clean up after
+their last window and lease settle. Deploy the updated bar owner and native
+configuration together for these fixes.
+
 To disable new allocation while investigating a rollout, set
 `SHELLLIST_TEMPORARY_WORKSPACES=0` in both app-daemon and bar-daemon service
 environments and restart those services. The bar disables `+`, rejects creation

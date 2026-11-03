@@ -59,6 +59,21 @@ provenance. Old writer generations cannot perform placement after lease release.
 Close admission revokes pending destination leases before its first close.
 Indeterminate launch is distinct from success and failure.
 
+Manually created workspaces remain logical destinations until an explicit
+workspace close, even after switching away, becoming empty or restarting the
+owner. Hyprland may reclaim the empty inactive object; the journal preserves
+its ID, generation, monitor and strip entry so focus/move can materialize it
+again. Native numeric shortcuts address IDs 1–9 and 10 via 0; Shift adds move
+and follow. Higher IDs remain accessible through the strip and previous/next.
+Launch-created workspaces retain automatic retirement after their windows and
+leases settle. External workspaces retain compositor-owned lifetime rules.
+
+The private journal's additive `keep_until_closed` flag defaults false. Older
+manual entries migrate using their original reservation and generation, unless
+a close was already admitted. Explicit close durably clears retention with
+lease revocation before sending any normal window close; a pending close cannot
+readopt an empty destination as a landing pad.
+
 An old app catalog without the `new_workspace` boolean exposes ordinary actions
 only. An explicitly unsupported bar context protocol permits ordinary default
 routing, while new/current overrides and saved-new routing require the matching
