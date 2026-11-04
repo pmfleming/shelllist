@@ -123,26 +123,25 @@ Item {
             readDiscarded(id);
             return undefined;
         }
-        if (envelope.data?.operation) {
-            const operation = envelope.data.operation;
-            if (request.action && operation.action !== request.action)
-                return rejected(envelope, "Clipboard operation action mismatch; outcome unknown");
-            if (statusRead && operation.id !== request.operationId) {
-                uncertain(request.operationId, "Clipboard status identity mismatch; outcome unknown");
-                return undefined;
-            }
-            if (!acceptOperation(operation, !statusRead)) {
-                if (error) {
-                    if (statusRead) uncertain(request.operationId, error);
-                    else return rejected(envelope, error);
-                }
-                return undefined;
-            }
-        } else if (statusRead) {
+        const operation = envelope.data?.operation;
+        if (!operation) {
+            if (!statusRead) return envelope;
             uncertain(request.operationId, "Clipboard operation outcome is unknown; do not replay");
             return undefined;
         }
-        return envelope;
+        if (request.action && operation.action !== request.action)
+            return rejected(envelope, "Clipboard operation action mismatch; outcome unknown");
+        if (statusRead && operation.id !== request.operationId) {
+            uncertain(request.operationId, "Clipboard status identity mismatch; outcome unknown");
+            return undefined;
+        }
+        if (acceptOperation(operation, !statusRead))
+            return envelope;
+        if (error && !statusRead)
+            return rejected(envelope, error);
+        if (error)
+            uncertain(request.operationId, error);
+        return undefined;
     }
     function invalidateHistory(): void {
         historyBarrier++;

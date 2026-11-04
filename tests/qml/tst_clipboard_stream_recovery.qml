@@ -208,6 +208,8 @@ DaemonTestCase {
         reply(b, "bad", {operation: {id: "bad", action: "paste", status: "paste-prepared"}});
         compare(b.replies[1].value.ok, false);
         compare(b.requestPolicy.operations.bad, undefined);
+        b.requestPolicy.poll();
+        compare(calls.filter(call => call.method === "clipboard.entry.action").length, 2, "rejection cannot replay a paste or annotation");
     }
     function test_operationRecoveryPreservesControllerDraftsAndAcceptedGuards() {
         const controller = createTemporaryObject(controllerFactory, testCase);

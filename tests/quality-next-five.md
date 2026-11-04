@@ -41,3 +41,16 @@ Qt cleanup: **32 passes**; request metadata: **7 passes**; zero failures/skips.
 Strict changed-file lint passes. Route-event cognitive complexity **25 → 18**,
 cyclomatic **17 → 17**, weighted effort **97 → 83**. This simplifies nesting;
 it deliberately retains the number of ownership decisions.
+
+## 3. Clipboard receipt dispatch
+
+Flattened `ClipboardStateRecovery.received` after the shared history/detail fences.
+Missing status payload, wrong action/ID, rejected operation metadata and normal
+success each have one explicit return path. Mutation replies still reject invalid
+metadata; status reads still retire uncertain owned work without effect replay.
+The existing malformed-paste journey additionally verifies no effect is retried
+when polling follows rejection. No new public API, state or test case.
+Qt stream recovery: **14 passes**; controller recovery: **13 passes**; zero
+failures/skips. Strict changed-file lint passes. Native backend receipts, retained
+drafts, reentrant IDs, malformed operations and read-only reconciliation remain
+covered by those existing suites.

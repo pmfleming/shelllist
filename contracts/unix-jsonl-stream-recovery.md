@@ -347,6 +347,13 @@ recover by publishing or acknowledging hidden again. See the producer's
 
 ## Clipboard ownership, recovery and socket opt-in
 
+Clipboard receipt dispatch distinguishes an ordinary successful reply without an
+operation from a status read missing its operation. The latter leaves an unknown
+outcome, never a successful effect. Wrong action, wrong owned status ID and invalid
+publication metadata cannot grant a new operation or paste authority. History and
+sensitive-detail barriers still run before operation dispatch; polling remains
+read-only after rejection.
+
 Subsequent producer stages `dce191f`, `1fb1f07` and `c18c018` supersede the
 prerequisite's open implementation gates. Async operations now have caller scope,
 owner-filtered receipts and disconnect/late-acceptance cleanup. Admission includes
