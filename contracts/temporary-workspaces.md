@@ -68,6 +68,32 @@ and follow. Higher IDs remain accessible through the strip and previous/next.
 Launch-created workspaces retain automatic retirement after their windows and
 leases settle. External workspaces retain compositor-owned lifetime rules.
 
+An occupied launch-created workspace must remain empty for two seconds before
+automatic retirement. A new window cancels that interval; explicit workspace
+close bypasses it. A scheduled owner wake ensures cleanup completes even when
+no further compositor events arrive. Unknown snapshots never prove emptiness.
+
+The owner preserves the verified first placement across same-process window
+replacement (for example an Electrum login window becoming the wallet window).
+It captures PID plus process start time and a weak compositor reference during
+initial placement. When that exact window disappears, one unambiguous new window
+from the same process may inherit its destination within two seconds of observed
+disappearance, even if the user has switched workspaces. Replacement placement
+never follows focus. Windows observed alongside the predecessor are excluded;
+matching by application class, title, or a recycled address alone is insufficient.
+Cross-process successors are deliberately not inferred from shared application
+identity. This adds no public wire fields or frontend navigation behavior.
+
+Tracking is limited to fresh launch-created destinations, 128 concurrent launch
+observers and eight replacements per observer. Login time while a window remains
+open is unlimited; the grace period starts at disappearance. Manual window
+movement, explicit workspace close, another explicit placement from that process,
+process exit/PID reuse, ambiguous successors, identity loss, compositor event
+disconnect/config reload, and owner restart fence replacement intent. Admission
+is durable before each move; uncertain moves are not replayed. Releasing the
+original launch lease still fences further caller placement, while the separately
+recorded owner observer may finish this bounded same-process handoff.
+
 The private journal's additive `keep_until_closed` flag defaults false. Older
 manual entries migrate using their original reservation and generation, unless
 a close was already admitted. Explicit close durably clears retention with
