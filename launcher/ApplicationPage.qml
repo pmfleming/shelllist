@@ -75,6 +75,12 @@ Ui.DetailFlickable {
         icon: "extension_off"
         showLabel: false
         text: qsTr("No additional actions provided by this application.")
+        Rectangle {
+            anchors.fill: parent
+            z: -1
+            radius: Ui.Theme.cardRadius
+            color: Ui.Theme.surfaceContainer
+        }
     }
 
 }
