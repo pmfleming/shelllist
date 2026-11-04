@@ -8,12 +8,23 @@ allocation, retirement, placement eligibility and recovery. QML renders state.
 ## Workspace strip presentation
 
 Every workspace is a fixed-width, icon-only target. Standard destinations retain
-their category icons; temporary destinations use their stable origin icon or the
+their category icons; temporary destinations use their launch/app icon or the
 shared workspace fallback icon. Names and IDs remain in the accessible label,
 without inline origin text or number labels. This supersedes the implementation
 plan's inline icon/number presentation. The fixed add button, divider, acknowledged
 active state, occupancy/urgency cues and left-click routing remain unchanged.
 Overflow reveals the active target and resets its scroll offset when the strip fits.
+
+When an app enters an empty owned temporary workspace, that workspace adopts the
+app's desktop icon, including after a manual/numeric move. Once occupied, adding
+another app does not change the icon. An empty workspace retains its previous cue
+until the next occupant replaces it; unknown apps use the workspace fallback.
+The last observed empty state and cue survive owner restart, independently of
+the ever-occupied flag used for lifetime policy. The owner resolves desktop IDs
+and `StartupWMClass` through its shared desktop icon cache; window class is only
+presentation metadata and never authorizes a move. Workspaces 1–5 keep their
+fixed category icons. The isolated Qt workspace test covers two distinct apps,
+occupied stability, empty/refill replacement, and standard icon preservation.
 
 ## Identity and admission
 

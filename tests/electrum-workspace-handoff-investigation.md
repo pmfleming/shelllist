@@ -133,6 +133,11 @@ cargo test --test workspace_handoff -- --ignored --nocapture
 
 The fixture prints its private `/tmp/handoff-*` evidence directory. This verifies
 the Qt replacement behavior; it does not authenticate to or open a real wallet.
+The harness also compiles `tests/fixtures/workspace-runner.cpp` with `c++` from
+the development shell (or `WORKSPACE_TEST_CXX`). This small Qt runner gives the
+icon regression apps distinct desktop IDs; the generic `qml` executable fixes
+both processes to the same ID. Qt development headers/libraries are taken from
+the supplied QML and plugin installations.
 
 Validation on 2026-11-04:
 
