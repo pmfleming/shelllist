@@ -158,6 +158,14 @@ TestCase {
         compare(session.resources[request.id].state, "pending");
         compare(session.resources[request.id].nativeId, "");
         acknowledge(request, "native-base");
+        const event = {protocol: "test-api", version: 1, stream: "state.changed", event: "changed", data: {}, subscription_id: "native-base"};
+        for (const route of [null, Object.assign({}, request.route, {generation: -1}),
+                Object.assign({}, request.route, {consumerId: "absent"})])
+            session.client.eventReceived(event, route);
+        session.client.eventReceived(Object.assign({}, event, {subscription_id: "foreign"}), request.route);
+        compare(backend.events, 0, "native identity never falls back to broadcast or another generation");
+        session.client.eventReceived(event, request.route);
+        compare(backend.events, 1);
         backend.expectedVersion = 2;
         verify(backend.renewBaseSubscription());
         cleanupReply(session.client.controls[0], true);

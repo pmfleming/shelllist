@@ -27,6 +27,12 @@ subscription receipt can establish cleanup ownership, never revive that view.
 A pending base subscription can still be adopted by an ordinary reopen; explicit
 release or retired logical/physical identity cannot be undone by a late reply.
 
+Routed events first require the current session generation and an attached
+consumer. Base/extra subscriptions then require that active consumer's live
+native ID. Unrouted events with native subscription IDs are never broadcast;
+only unrouted legacy events use active-consumer stream matching. These paths
+share no fallback that could promote a retired subscription to broadcast work.
+
 ## Cleanup state and acknowledgement
 
 The ledger submits at most one non-uncertain cleanup attempt at a time, through

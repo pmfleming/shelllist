@@ -29,3 +29,15 @@ provider and the permanently false branch it left behind; the same drain/reopen
 journey remains. Bridge: **11 passes**; socket: **24 passes**; zero failures/skips.
 Changed-file strict QML lint and `git diff --check` pass. These are deterministic
 transport fixtures, not native socket/hardware or rollout evidence.
+
+## 2. Shared event routing
+
+Flattened `DaemonSessions.routeEvent` into explicit unrouted and routed paths.
+Generation, attached consumer, active subscription and native-ID checks remain
+before delivery. The existing captured-receipt journey now rejects unrouted
+native traffic, retired generations, absent consumers and foreign native IDs,
+then demonstrates delivery through the owned route. No new test case or helper.
+Qt cleanup: **32 passes**; request metadata: **7 passes**; zero failures/skips.
+Strict changed-file lint passes. Route-event cognitive complexity **25 → 18**,
+cyclomatic **17 → 17**, weighted effort **97 → 83**. This simplifies nesting;
+it deliberately retains the number of ownership decisions.

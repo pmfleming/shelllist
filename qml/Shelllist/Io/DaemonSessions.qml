@@ -408,32 +408,32 @@ QtObject {
         const session = sessions[daemonName];
         if (!session)
             return;
-        if (route) {
-            if (route.generation !== session.generation)
+        if (!route) {
+            if (event.subscription_id)
                 return;
-            const consumer = session.consumers[route.consumerId];
-            if (consumer) {
-                if (route.kind === "base-subscription" && (!consumer.active
-                        || !consumer.baseSubscriptionId
-                        || (event.subscription_id || event.request_id) !== consumer.baseSubscriptionId))
-                    return;
-                if (route.kind === "subscription") {
-                    const record = Cleanup.find(session, route.consumerId, route.localId);
-                    if (!consumer.active || !record || record.state !== "live"
-                            || (event.subscription_id || event.request_id) !== record.nativeId)
-                        return;
-                }
-                consumer.backend.acceptSharedEvent(event);
-            }
+            Object.keys(session.consumers).forEach(function (id) {
+                const consumer = session.consumers[id];
+                if (consumer.active && consumer.streams.indexOf(event.stream) >= 0)
+                    consumer.backend.acceptSharedEvent(event);
+            });
             return;
         }
-        if (event.subscription_id)
+        if (route.generation !== session.generation)
             return;
-        Object.keys(session.consumers).forEach(function (id) {
-            const consumer = session.consumers[id];
-            if (consumer.active && consumer.streams.indexOf(event.stream) >= 0)
-                consumer.backend.acceptSharedEvent(event);
-        });
+        const consumer = session.consumers[route.consumerId];
+        if (!consumer)
+            return;
+        if (route.kind === "base-subscription" && (!consumer.active
+                || !consumer.baseSubscriptionId
+                || (event.subscription_id || event.request_id) !== consumer.baseSubscriptionId))
+            return;
+        if (route.kind === "subscription") {
+            const record = Cleanup.find(session, route.consumerId, route.localId);
+            if (!consumer.active || !record || record.state !== "live"
+                    || (event.subscription_id || event.request_id) !== record.nativeId)
+                return;
+        }
+        consumer.backend.acceptSharedEvent(event);
     }
 
     function restoreSubscriptions(daemonName) {
