@@ -68,7 +68,7 @@ DaemonTestCase {
             const replacing=s.reader.cacheFull;
             s.reader.loadMore();const offset=pending(s).context.offset;
             reply(s,page(s,offset,size,true));
-            verify(rows(s).length<=200);verify((s.reader.staging?.entries||s.reader.staging||[]).length<=200);
+            verify(rows(s).length<=200);verify((s.reader.staging?.entries||s.reader.staging?.apps||[]).length<=200);
             seen.push(...rows(s).slice(replacing?0:-Math.min(size,805-offset)).map(row=>row.key));
         }
         compare(seen.length,805);compare(new Set(seen).size,805);
@@ -80,7 +80,7 @@ DaemonTestCase {
         const old=pending(s).context;
         s.reader.active=false;compare(rows(s).length,0);compare(s.reader.windowOffset,0);
         compare(s.kind==="apps"?s.reader.nextOffset:s.reader.snapshot.next_offset, s.kind==="apps"?null:undefined);
-        compare((s.reader.staging?.entries||s.reader.staging||[]).length,0);
+        compare(s.reader.staging,null,"closing releases staged rows and their cursor together");
         s.reader.receive(old,page(s,0,size,true),"","");compare(rows(s).length,0);
         s.reader.active=true;reload(s.reader,s.kind);
         compare(pending(s).context.offset,0);reply(s,page(s,0,size,true));compare(rows(s).length,size);
@@ -89,14 +89,17 @@ DaemonTestCase {
     function test_refreshAndStaleRetriesAreBounded_data() { return test_boundedBrowseRefreshAndClose_data(); }
     function test_refreshAndStaleRetriesAreBounded(data) {
         const s=make(data.kind),size=data.kind==="apps"?50:20;fill(s);
+        const published=rows(s);
         reload(s.reader,s.kind);
         for(let offset=0;offset<200;offset+=size) {
             compare(pending(s).context.offset,offset);
             reply(s,page(s,offset,size,false));
             compare(rows(s).length,200,"replacement is atomic");
+            verify(rows(s)===published,"continuation cannot mutate or replace the published window");
         }
         verify(!busy(s));compare(rows(s).length,200,"missing old anchor cannot grow the cache");
         s.reader.loadMore();reply(s,null,"Read failed","");compare(rows(s).length,200);compare(s.reader.windowOffset,0);
+        compare(s.reader.staging,null,"failed reads discard staged rows and cursor together");
         s.reader.showRecent();reply(s,page(s,0,size,true));fill(s);
         s.reader.loadMore();reply(s,page(s,200,size,true));compare(s.reader.windowOffset,200);
         reload(s.reader,s.kind);compare(pending(s).context.offset,200);
@@ -127,7 +130,7 @@ DaemonTestCase {
         s.reader.receive(obsolete,page(s,0,50,true),"","");compare(s.reader.apps.length,50);verify(s.reader.rootBusy);
         for(let offset=0;offset<805;offset+=50) {
             compare(pending(s).context.offset,offset);reply(s,page(s,offset,50,offset>=800));
-            verify(s.reader.staging.length<=200);verify(s.reader.apps.length<=200);
+            verify((s.reader.staging?.apps||[]).length<=200);verify(s.reader.apps.length<=200);
         }
         compare(s.reader.windowOffset,800);verify(s.reader.apps.some(app=>app.key==="named:app-804"));
         compare(s.reader.revealKey,"");s.reader.active=false;

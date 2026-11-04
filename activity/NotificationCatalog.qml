@@ -16,9 +16,7 @@ Item {
     property var nextOffset: null
     property string epoch: ""
     property string revision: ""
-    property var staging: []
-    property string stagingEpoch: ""
-    property string stagingRevision: ""
+    property var staging: null
     property int windowOffset: 0
     property int stagingOffset: 0
     readonly property int cacheLimit: 200
@@ -46,8 +44,7 @@ Item {
     }
     function startRead(offset: int, preserveExtent: bool, restarted: bool): void {
         rootGeneration++; rootDirty = false; rootError = "";
-        staging = []; stagingOffset = offset;
-        stagingEpoch = epoch; stagingRevision = revision;
+        staging = {apps: [], epoch: epoch, revision: revision}; stagingOffset = offset;
         readRestarted = restarted;
         resetViewport = !preserveExtent || apps.length === 0 || !!revealKey;
         anchor = revealKey || (preserveExtent && apps.length ? apps[apps.length - 1].key : null);
@@ -55,9 +52,10 @@ Item {
     }
     function requestApps(offset: int, replacing: bool): void {
         rootBusy = true;
+        const cursor = replacing ? staging : catalog;
         store.backend.queryCenter({view: "apps", query: query, offset: offset,
-            epoch: offset ? (replacing ? stagingEpoch : epoch) : null,
-            revision: offset ? (replacing ? stagingRevision : revision) : null,
+            epoch: offset ? cursor.epoch : null,
+            revision: offset ? cursor.revision : null,
             app_anchor: replacing ? anchor : null},
             {view: "apps", generation: rootGeneration, revision: store.observedHistoryRevision,
                 query: query, offset: offset, replacing: replacing, restarted: readRestarted});
@@ -73,8 +71,7 @@ Item {
         if (active && store.backend.ready && !rootBusy) { revealKey = ""; startRead(0, false, false); }
     }
     function invalidate(): void {
-        rootGeneration++; rootBusy = false; staging = [];
-        stagingEpoch = ""; stagingRevision = ""; anchor = null;
+        rootGeneration++; rootBusy = false; staging = null; anchor = null;
         rootDirty = true;
     }
     function clearCache(): void {
@@ -83,10 +80,10 @@ Item {
         restartAtBeginning = false; readRestarted = false;
     }
     function failRead(message: string): void {
-        rootError = message; staging = []; stagingEpoch = ""; stagingRevision = "";
+        rootError = message; staging = null;
     }
     function staleRead(context: var): void {
-        staging = [];
+        staging = null;
         if (context.restarted) { failRead(qsTr("Notification history changed; refresh again")); return; }
         restartAtBeginning = true;
         refresh();
@@ -111,10 +108,12 @@ Item {
             && NotificationValidation.pageEnds(value, offset, value.apps.length, value.total_apps);
     }
     function acceptApps(context: var, value: var): void {
-        const base = context.replacing ? staging : apps;
-        const priorEpoch = context.replacing ? stagingEpoch : epoch;
-        const priorRevision = context.replacing ? stagingRevision : revision;
-        if (context.offset && (priorEpoch !== value.epoch || priorRevision !== value.revision)) { staleRead(context); return; }
+        const previous = context.replacing ? staging : catalog;
+        const base = context.replacing ? staging?.apps || [] : apps;
+        // Consume the unpublished rows and cursor together. Only an accepted
+        // continuation installs another complete staging value.
+        staging = null;
+        if (context.offset && (previous?.epoch !== value.epoch || previous?.revision !== value.revision)) { staleRead(context); return; }
         if (!validAppPage(value, (context.replacing ? stagingOffset : windowOffset) + base.length)) {
             failRead(qsTr("Invalid notification app page")); return;
         }
@@ -122,19 +121,19 @@ Item {
         if (new Set(next.map(a => a.key)).size !== next.length || next.length > value.total_apps || next.length > cacheLimit) {
             failRead(qsTr("Notification app page did not advance")); return;
         }
-        if (context.replacing && value.next_offset !== null && !value.anchor_reached
-            && (revealKey || next.length + 50 <= cacheLimit)) {
-            staging = next; stagingEpoch = value.epoch; stagingRevision = value.revision;
+        const fits = next.length + 50 <= cacheLimit;
+        if (context.replacing && value.next_offset !== null && !value.anchor_reached && (revealKey || fits)) {
+            staging = {apps: fits ? next : [], epoch: value.epoch, revision: value.revision};
             // Explicit exact-app lookup is allowed to scan, never to retain its
             // entire prefix. The currently published window stays intact.
-            if (next.length + 50 > cacheLimit) { staging = []; stagingOffset = value.next_offset; }
+            if (!fits) stagingOffset = value.next_offset;
             requestApps(value.next_offset, true);
             return;
         }
         rootError = "";
         if (context.replacing) windowOffset = stagingOffset;
         if (!store.equal(apps, next)) apps = next;
-        staging = []; stagingEpoch = ""; stagingRevision = ""; anchor = null;
+        anchor = null;
         epoch = value.epoch; revision = value.revision; nextOffset = value.next_offset; readRestarted = false;
         if (context.replacing && resetViewport) windowReplaced();
         if (revealKey) {

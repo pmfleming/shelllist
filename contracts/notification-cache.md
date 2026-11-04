@@ -21,6 +21,13 @@ staleness or malformed/error responses retain the last accepted window without
 an automatic retry loop. Replacement rows, offsets and scope publish together;
 late generations and responses received while inactive are rejected.
 
+The app reader retains unpublished rows, epoch and revision in one staging
+record. Validation consumes that record once; only a valid continuation installs
+another complete value. Failure, stale reads, publication and deactivation leave
+no staged cursor behind. Explicit exact-app scans may discard their bounded row
+prefix while retaining the accepted cursor for the next page. Published arrays
+remain unchanged until the complete replacement is accepted.
+
 An explicit exact-app/group route may scan farther than 200 app groups, but only
 one bounded staged window is retained while scanning. It owns a new read
 generation even if a normal read is in flight. Missing resolved targets are

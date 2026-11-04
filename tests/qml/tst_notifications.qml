@@ -71,9 +71,7 @@ DaemonTestCase {
             offset: offset || 0, next_offset: next === undefined ? null : next, total_apps: total || apps.length, anchor_reached: true};
     }
     function projectApps(controller, apps) {
-        controller.catalog.staging = [];
-        controller.catalog.stagingEpoch = "";
-        controller.catalog.stagingRevision = "";
+        controller.catalog.staging = null;
         controller.catalog.acceptApps({offset: 0, replacing: true}, appPage(apps, controller.catalog.query));
         compare(controller.catalog.rootError, "");
         controller.rebuildRecords();

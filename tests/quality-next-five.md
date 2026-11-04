@@ -54,3 +54,18 @@ Qt stream recovery: **14 passes**; controller recovery: **13 passes**; zero
 failures/skips. Strict changed-file lint passes. Native backend receipts, retained
 drafts, reentrant IDs, malformed operations and read-only reconciliation remain
 covered by those existing suites.
+
+## 4. Atomic notification staging
+
+`NotificationCatalog` now holds unpublished rows/epoch/revision in one value,
+consumed before validation and reinstalled only for an accepted continuation.
+Removed two separately maintained properties and their repeated reset logic.
+Request construction selects its cursor owner once; continuation capacity is
+computed once. Exact-app scans retain the accepted cursor while dropping bounded
+prefix rows, and the published window stays unchanged throughout staging.
+The existing cache journey now checks published-array identity and full staging
+release after failure. Fixture setup no longer writes three independent internals.
+Qt cache: **10 passes**; notifications: **4 passes**; zero failures/skips. Strict
+changed-file lint passes. Both app and timeline paths retain bounded browsing,
+atomic refresh, short/malformed pages, stale retries, exact routes and native
+commands through the existing tests.
