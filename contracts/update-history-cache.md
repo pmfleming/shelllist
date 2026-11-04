@@ -38,6 +38,11 @@ and viewport behavior.
 
 ## Refresh and cursor ownership
 
+- `UpdateHistoryWindow.begin` constructs the unpublished window from one capture
+  of accepted state and the current query/route intent. The pure model owns
+  retained/new/advancing positions and the cache bound; the controller owns
+  request dispatch, deadlines, translated feedback, retry admission and publication.
+  Initial refresh and stale-cursor restart share selected/tail anchor extraction.
 - Recent-window refresh preserves its loaded range and selected/tail anchors
   only up to the cap. A displaced tail cannot force replay of hundreds of old
   records. The next cursor still addresses the first record not published;

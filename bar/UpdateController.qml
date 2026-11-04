@@ -249,19 +249,11 @@ Ui.ProviderChooserController {
     }
     function requestPage(append: bool, recent: bool): void {
         if (!uiActive || !backend.ready) return;
-        const retain = !recent && publishedQuery === queryKey && !runId;
         // At the cap, only an explicit Load older command replaces the window.
         // Automatic near-end reads never evict an inspected result.
-        const advancing = append && historyCacheFull;
-        const offset = advancing ? historyOffset + entries.length : retain ? historyOffset : 0;
-        const start = advancing ? cursor : retain ? historyStartCursor : "";
-        const continuation = append || offset > 0;
-        const anchors = continuation ? publishedAnchors
-            : retain ? [...new Set([selectedRun ? selectedRun.job.id : "", entries.length ? entries[entries.length - 1].job.id : ""].filter(Boolean))] : [];
-        // Published arrays are replaced, never edited; advance() concatenates.
-        historyWindow = {key: queryKey, append: append, anchors: anchors, offset: offset, startCursor: start, replace: recent || advancing,
-            entries: append && !advancing ? entries : [], revision: continuation ? publishedRevision : "", total: continuation ? total : -1,
-            retainThrough: -1, target: retain && !advancing ? entries.length : 0, pages: 0, retried: false, diagnostic: "", notice: "", cursor: append ? cursor : start};
+        historyWindow = HistoryWindow.begin({key: publishedQuery, entries: entries, offset: historyOffset,
+            startCursor: historyStartCursor, cursor: cursor, revision: publishedRevision, total: total, anchors: publishedAnchors},
+            {key: queryKey, append: append, recent: recent, exact: !!runId, selectedId: selectedRun ? selectedRun.job.id : ""});
         loading = true;
         errorText = "";
         historyDeadline.restart();
@@ -282,7 +274,7 @@ Ui.ProviderChooserController {
         const older = historyWindow.offset > 0;
         historyWindow = Object.assign({}, historyWindow, {append: false, entries: [], revision: "", total: -1, retainThrough: -1,
             target: older ? 0 : Math.min(historyCacheLimit, Math.max(entries.length + (historyWindow.append ? 50 : 0), historyWindow.entries.length)),
-            anchors: older ? [] : [...new Set([selectedRun ? selectedRun.job.id : "", entries.length ? entries[entries.length - 1].job.id : ""].filter(Boolean))],
+            anchors: older ? [] : HistoryWindow.anchorIds(selectedRun ? selectedRun.job.id : "", entries),
             offset: 0, startCursor: "", replace: older || historyWindow.replace,
             notice: older ? qsTr("History changed; showing latest updates") : historyWindow.notice,
             retried: true, diagnostic: "", cursor: ""});

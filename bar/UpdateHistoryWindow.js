@@ -3,6 +3,28 @@
 // Both published and staged windows are bounded independently of catalog size.
 var maximumEntries = 200;
 
+function anchorIds(selectedId, entries) {
+    return [...new Set([selectedId, entries.length ? entries[entries.length - 1].job.id : ""].filter(Boolean))];
+}
+
+// Capture one unpublished read from the accepted window. Arrays are immutable:
+// advance() concatenates; neither construction nor rejection changes the source.
+function begin(current, request) {
+    const retain = !request.recent && current.key === request.key && !request.exact;
+    const advancing = request.append && current.entries.length >= maximumEntries;
+    const retained = retain ? current : {offset: 0, startCursor: ""};
+    const position = advancing ? {offset: current.offset + current.entries.length, startCursor: current.cursor} : retained;
+    const continuation = request.append || position.offset > 0;
+    return {
+        key: request.key, append: request.append, offset: position.offset, startCursor: position.startCursor,
+        anchors: continuation ? current.anchors : retain ? anchorIds(request.selectedId, current.entries) : [],
+        replace: request.recent || advancing, entries: request.append && !advancing ? current.entries : [],
+        revision: continuation ? current.revision : "", total: continuation ? current.total : -1,
+        retainThrough: -1, target: retain && !advancing ? current.entries.length : 0,
+        pages: 0, retried: false, diagnostic: "", notice: "", cursor: request.append ? current.cursor : position.startCursor
+    };
+}
+
 // Pure transitions of the controller's one unpublished window. Rejection never
 // changes it; requests, bounded restarts and publication remain controller-owned.
 function continuationValid(window, page, length) {

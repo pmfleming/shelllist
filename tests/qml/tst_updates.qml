@@ -405,6 +405,7 @@ DaemonTestCase {
         reply(latest(), old.slice(0, 50), "v1:50", true, null, 120, {revision: "v1"});
         const published = root.controller.entries;
         root.controller.loadMore();
+        verify(root.controller.historyWindow.entries===published,"append captures the accepted prefix without cloning or mutating it");
         reply(latest(), old.slice(50, 100), "v1:100", true, null, 120, {revision: "v1"});
         compare(published.length, 50, "appending replaces the published array without mutating its captured prefix");
         root.controller.selectedIndex = 76;

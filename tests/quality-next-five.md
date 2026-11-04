@@ -69,3 +69,81 @@ Qt cache: **10 passes**; notifications: **4 passes**; zero failures/skips. Stric
 changed-file lint passes. Both app and timeline paths retain bounded browsing,
 atomic refresh, short/malformed pages, stale retries, exact routes and native
 commands through the existing tests.
+
+## 5. History-window capture locality
+
+`UpdateHistoryWindow.begin` now owns pure construction alongside its existing
+continuation transitions and cache bound. It selects a retained/new/advancing
+position once and shares that decision across cursor and offset fields. The
+controller captures accepted state once and retains all dispatch/deadline,
+translation, retry and publication ownership. `anchorIds` is reused for initial
+capture and stale-cursor restart, removing their duplicate anchor policy.
+The existing Qt refresh journey additionally checks that pending append retains
+the exact immutable published prefix. No new test case or independent model suite.
+Updates: **48 passes**, zero failures/skips; changed-file strict QML lint passes.
+
+## Paired measurements and limits
+
+Same evaluator/configuration, baseline `b0d9ddd` versus the five-change working
+tree. Entries below are cognitive / cyclomatic / weighted function effort.
+
+| Owner | Before | After |
+| --- | ---: | ---: |
+| Socket receive | 32 / 31 / 147 | 26 / 26 / 126 |
+| Shared event routing | 25 / 17 / 97 | 18 / 17 / 83 |
+| Clipboard receipt dispatch | 26 / 17 / 106 | 19 / 18 / 92 |
+| Notification app acceptance | 24 / 23 / 106 | 26 / 24 / 113 |
+| Updates request capture | 29 / 23 / 107 | 3 / 4 / 20 |
+| Pure history begin (new) | — | 17 / 17 / 70 |
+
+History capture also adds a small reused anchor helper, so the controller's
+reduction must not be treated as the removal of all those decisions. Construction
+now lives with the actual continuation model; dispatch stays in the controller.
+Notification acceptance trades a small complexity increase for one atomic staged
+value and removes two independent cursor properties. Clipboard's extra guard
+return raises cyclomatic complexity by one while reducing nesting and effort.
+
+Project function totals: cognitive **8,505 → 8,481**, cyclomatic
+**12,348 → 12,351**, weighted effort **59,443 → 59,424**. Rounded project scores
+remain unchanged (overall 82, locality 76, leverage 31, duplication 96). These are
+advisory syntax metrics, not calibrated productivity or correctness measurements.
+The revised source retains 537 discovered files with zero parser diagnostics.
+Clone evidence remains partial at the existing 100-group reporting limit.
+
+This pass does **not** achieve every original metric goal: Lens source lines grow
+**58,564 → 58,598**. Physical code grows **22 production + 19 test = 41 lines**
+across changed QML/JS files. Extra shared validation and negative-path assertions
+are retained for behavior, rather than claiming a code/test-volume reduction.
+No scope, thresholds or exclusions are changed to improve these results.
+Numeric statement/branch coverage remains unavailable; the new negative native
+journeys are behavioral evidence, not a percentage gain. No live daemon,
+hardware, deployment, sibling package or release-performance acceptance is implied.
+
+## Final verification
+
+- Full Qt: **711 passed, 0 failed, 1 existing RHI-dependent artwork skip**,
+  including lifecycle hooks. No new exclusions, skips or blacklisted cases.
+- Strict full QML lint, generated-contract negatives, source-tree relative
+  imports and `git diff --check`: pass.
+- Panel UI review against `b0d9ddd`: zero changed-line or new-wrapper prompts.
+  Shared keyboard transactions and visual roles are unchanged.
+- Native offscreen Quickshell UI smoke: pass. It used the normal bar theme
+  client; this is not isolated producer/socket qualification or rollout evidence.
+- Every implementation was checked before its own commit. The full suite ran
+  after all five code changes and before the fifth commit.
+
+Reproduce with the existing development environment:
+
+```sh
+source .direnv/flake-profile-*.rc
+tests/run-qml-tests.sh
+tests/run-qmllint.sh
+node tests/check-generated-contracts.js
+node tests/check-packaged-imports.js .
+python3 tests/review-panel-ui.py --base b0d9ddd
+node ../qmlqualitylens/dist/bin/qmlqualitylens.js analyze --config qmlqualitylens.config.json --format summary
+```
+
+Machine-readable paired metrics: `target/quality-next-five/comparison.json`.
+Per-step reports use the same evaluator fingerprint
+`ecbe448644080d95c83fc67b09fdf409d983163a2b5166d7b7eeb2585c605655`.
