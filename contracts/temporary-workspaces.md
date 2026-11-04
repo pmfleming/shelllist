@@ -63,8 +63,21 @@ Manually created workspaces remain logical destinations until an explicit
 workspace close, even after switching away, becoming empty or restarting the
 owner. Hyprland may reclaim the empty inactive object; the journal preserves
 its ID, generation, monitor and strip entry so focus/move can materialize it
-again. Native numeric shortcuts address IDs 1–9 and 10 via 0; Shift adds move
-and follow. Higher IDs remain accessible through the strip and previous/next.
+again. Numeric shortcuts address IDs 1–9 and 10 via 0 through the serialized
+workspace owner; Shift adds move and follow. Standard IDs 1–5 remain available.
+Higher destinations must already exist on the invoking monitor or be retained
+manual entries there. Missing extra destinations are rejected without allocation,
+movement, or focus changes. The compositor rechecks existence and monitor/focus
+context immediately before dispatch; only standard and retained destinations may
+materialize an absent compositor object. Creating a new logical workspace remains
+an explicit create action. Higher IDs remain accessible through the strip and previous/next.
+
+The NixOS shortcut registration test verifies all ten focus/move bindings use
+`bar-daemon workspace focus|move <id>`. Bar's workspace unit tests cover admission;
+`bar-daemon/tests/workspace_handoff.rs` exercises rejected missing destinations,
+standard selection, retained empty destinations, move-and-follow, and absence of
+an extra workspace using real Qt windows on an isolated compositor.
+
 Launch-created workspaces retain automatic retirement after their windows and
 leases settle. External workspaces retain compositor-owned lifetime rules.
 
