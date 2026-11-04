@@ -94,31 +94,30 @@ Item {
         const original = pending[responseId] || Object.values(pending).find(record => record.operationId && record.operationId === operation?.id);
         if (!original)
             return; // An event before admission is recovered with an owned status read.
-        if (operation?.status === "unknown" && operation.id === (original.operationId || original.recoveryId)
-                && operation.target_id === original.request.result.id
-                && operation.action === original.request.operationAction
-                && Number.isSafeInteger(operation.revision) && operation.revision > original.revision) {
+        const stage = Lifecycle.operationStage(original, responseId, operation);
+        if (!stage)
+            return;
+        if (stage === "unknown") {
+            if (!Number.isSafeInteger(operation.revision) || operation.revision <= original.revision)
+                return;
             const unknown = Object.assign({}, original, {status: "unknown", revision: operation.revision,
                 message: operation.message || qsTr("Launch outcome unknown. Inspect windows before launching again.")});
             retire(unknown);
             reportFailure(unknown);
             return;
         }
-        const transition = Lifecycle.operationTransition(original.request, original.request.result.id, original.operationId, responseId, operation);
-        if (!transition)
-            return;
         if (!Number.isSafeInteger(operation.revision) || operation.revision < 1) {
             fail(original.request.id, "Missing or malformed native application operation revision; matching daemon required. Action outcome unknown; check applications before trying again.", "");
             return;
         }
         if (operation.revision <= (original.revision || 0))
             return;
-        const record = Object.assign({}, original, {operationId: operation.id, status: transition.status, revision: operation.revision,
+        const record = Object.assign({}, original, {operationId: operation.id, status: operation.status, revision: operation.revision,
             placement: operation.placement || null, close: operation.close || null,
             windowIds: Array.isArray(operation.close?.targeted_window_ids) ? operation.close.targeted_window_ids : original.windowIds,
             checks: original.operationId ? original.checks : 0});
         const closing = ["close", "close-window"].includes(record.request.operationAction);
-        if (transition.stage === "active")
+        if (stage === "active")
             updateActive(record, operation, closing);
         else
             complete(record, operation, closing);

@@ -34,52 +34,23 @@ function mergeResourceHistory(existing, incoming, sinceMs, untilMs) {
 }
 
 function expectedRevision(value) {
-    if (typeof value !== "number")
-        return null;
-    return isFinite(value) && value >= 0 && Math.floor(value) === value && value <= 9007199254740991 ? value : null;
+    return Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
 
-function operationMatches(activeRequest, activeTargetId, operation) {
-    if (!activeRequest || !operation)
-        return false;
-    return typeof activeRequest.operationAction === "string" && activeRequest.operationAction.length > 0
-        && operation.target_id === activeTargetId && operation.action === activeRequest.operationAction;
-}
-
-function acceptedOperationMatches(activeRequest, responseId) {
-    return !!activeRequest && !!responseId && responseId === activeRequest.id;
-}
-
-function currentOperationMatches(activeRequest, activeTargetId, activeOperationId, operation) {
-    if (!activeRequest)
-        return false;
-    return operationMatches(activeRequest, activeTargetId, operation) && (!activeOperationId || operation.id === activeOperationId);
-}
-
-function operationTransition(activeRequest, activeTargetId, activeOperationId, responseId, operation) {
-    if (!operation || !operation.id)
-        return null;
-    if (!operationMatches(activeRequest, activeTargetId, operation) || (activeOperationId && operation.id !== activeOperationId))
-        return null;
-    const status = operation.status;
-    if (!["accepted", "running", "completed", "failed", "cancelled"].includes(status))
-        return null;
-    if (status === "accepted") {
-        if (!acceptedOperationMatches(activeRequest, responseId))
-            return null;
-        return {
-            stage: "active",
-            accepted: true,
-            status: status,
-            operationId: operation.id
-        };
-    }
-    if (!currentOperationMatches(activeRequest, activeTargetId, activeOperationId, operation))
-        return null;
-    return {
-        stage: status === "running" ? "active" : "terminal",
-        accepted: false,
-        status: status,
-        operationId: operation.id
-    };
+// Every observation uses the captured native identity. Admission additionally
+// needs its request ID; unknown outcomes need an admitted or recoverable ID.
+// Revision validation/publication belongs to the operation owner.
+function operationStage(record, responseId, operation) {
+    const request = record.request;
+    if (!operation || !operation.id || typeof request.operationAction !== "string" || !request.operationAction
+            || operation.target_id !== request.result.id || operation.action !== request.operationAction
+            || (record.operationId && operation.id !== record.operationId))
+        return "";
+    if (operation.status === "unknown")
+        return operation.id === (record.operationId || record.recoveryId) ? "unknown" : "";
+    if (operation.status === "accepted" && (!responseId || responseId !== request.id))
+        return "";
+    if (["accepted", "running"].includes(operation.status))
+        return "active";
+    return ["completed", "failed", "cancelled"].includes(operation.status) ? "terminal" : "";
 }

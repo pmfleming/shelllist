@@ -181,6 +181,23 @@ Missing/malformed operation revisions fail closed with a matching-build error on
 both transports. Conservative upstream broadcast gaps can include filtered-out
 owners; they trigger only owned reads, not guessed missing transitions.
 
+Frontend receipt classification uses `ApplicationLifecycle.operationStage` with
+the retained operation record. Target, native action and admitted operation ID
+share one identity gate for progress, completion and unknown outcomes. Admission
+also requires its captured request ID; an unknown outcome requires the admitted
+ID or the captured recovery ID. `ApplicationOperations` retains revision checks,
+publication, retirement, polling and view-generation ownership. Unknown records
+with invalid or non-advancing revisions cannot retire pending work. Close never
+acquires launch handoff authority from receipt metadata.
+
+`tst_application_actions.qml` owns the combined admission/foreign/malformed-read,
+out-of-order event/status and quiet-terminal journey, plus lost-admission identity
+rejection. Close and CloseWindow both retain success/identity cases; shared
+terminal-outcome cases are representative rather than a Cartesian product. The
+row-focus journey separately owns still-open observations. The shared session
+attachment test uses actual `DaemonBackend` peers with `DaemonTestCase`, including
+peer destruction followed by reconnect of the surviving consumer.
+
 Evidence: producer library atomic-status/owner tests and private real-process
 D-Bus/socket parity, unread acceptance cleanup, release, foreign ownership,
 SIGKILL/restart and no-replay cases; actual Qt query/invalidation races, native

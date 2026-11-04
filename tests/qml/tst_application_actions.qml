@@ -285,12 +285,17 @@ DaemonTestCase {
         compare(lastCall(Api.methods.execute).params.action, "activate", "Launch remains reachable after the last close");
     }
     function test_closeCanonicalAction_data() {
-        const cases = [];
-        for (const action of ["close", "close-window-0"]) {
-            for (const outcome of ["closed", "still-open", "unknown", "missing", "malformed", "failed", "cancelled"])
-                cases.push({tag: action + "-" + outcome, action: action, outcome: outcome});
-        }
-        return cases;
+        // Both native actions need success/identity coverage. Outcome handling
+        // is shared; the row-focus journey above owns the still-open outcome.
+        return [
+            {tag: "all-closed", action: "close", outcome: "closed"},
+            {tag: "window-closed", action: "close-window-0", outcome: "closed"},
+            {tag: "unknown", action: "close-window-0", outcome: "unknown"},
+            {tag: "missing", action: "close", outcome: "missing"},
+            {tag: "malformed", action: "close-window-0", outcome: "malformed"},
+            {tag: "failed", action: "close", outcome: "failed"},
+            {tag: "cancelled", action: "close-window-0", outcome: "cancelled"}
+        ];
     }
     function test_closeCanonicalAction(data) {
         const panel = makePanel();
@@ -372,68 +377,6 @@ DaemonTestCase {
         compare(check.params.operation_id, operation(call, "accepted").id);
         reply(check, {operation_status: operation(call, "completed", {target_id: "foreign"})});
         verify(c.actionInFlight);
-        c.operations.check("Alpha");
-        reply(lastCall(Api.methods.operationStatus), {operation_status: operation(call, "completed")});
-        verify(!c.actionInFlight);
-        compare(c.selectedApplication.instances.length, 2);
-        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
-    }
-    function test_nativeOperationRevisionFencesStatusEventsAndQuietTerminalRecovery() {
-        const panel = makePanel();
-        const c = panel.controller;
-        verify(c.triggerDetailAction("close"));
-        const call = lastCall(Api.methods.execute);
-        accept(call);
-        c.operations.check("Alpha");
-        const captured = lastCall(Api.methods.operationStatus);
-        event(call, "running", {revision: 3, message: "new observation"});
-        reply(captured, {operation_status: operation(call, "running", {revision: 2})});
-        compare(c.operations.forTarget("Alpha").revision, 3);
-        event(call, "running", {revision: 2});
-        event(call, "running", {revision: 3});
-        compare(c.operations.forTarget("Alpha").revision, 3);
-        // Terminal delivery is lost with no later event. The owned status read
-        // converges; old traffic cannot revive a terminal operation.
-        c.operations.check("Alpha");
-        reply(lastCall(Api.methods.operationStatus), {operation_status: operation(call, "completed", {revision: 4})});
-        verify(!c.operations.busy("Alpha"));
-        event(call, "running", {revision: 3});
-        verify(!c.operations.busy("Alpha"));
-        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
-    }
-    function test_lostLaunchAdmissionRecoversUnknownWithoutReplay() {
-        const panel = makePanel();
-        const c = panel.controller;
-        keyClick(Qt.Key_N, Qt.AltModifier);
-        const call = lastCall(Api.methods.execute);
-        c.operations.fail(call.params.request_id, "Lost admission reply", "outcome-unknown");
-        verify(c.operations.busy("Alpha"));
-        const check = lastCall(Api.methods.operationStatus);
-        compare(check.params.operation_id, "operation-" + call.params.request_id);
-        reply(check, {operation_status: operation(call, "completed", {
-            id: check.params.operation_id, status: "unknown", revision: 2, message: "Restarted; inspect windows"
-        })});
-        verify(!c.operations.busy("Alpha"));
-        compare(panel.dismissals, 0);
-        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
-    }
-    function test_missingNativeOperationRevisionLeavesOutcomeUnknownWithoutReplay() {
-        const panel = makePanel();
-        const c = panel.controller;
-        verify(c.triggerDetailAction("close"));
-        const call = lastCall(Api.methods.execute);
-        reply(call, {operation: operation(call, "accepted", {revision: undefined})});
-        verify(!c.operations.busy("Alpha"));
-        verify(c.operations.feedback.Alpha.message.includes("matching daemon required"));
-        verify(c.operations.feedback.Alpha.message.includes("outcome unknown"));
-        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
-    }
-    function test_malformedStatusRetiresOnlyItsReadAndAllowsRecovery() {
-        const panel = makePanel();
-        const c = panel.controller;
-        verify(c.triggerDetailAction("close"));
-        const call = lastCall(Api.methods.execute);
-        accept(call);
         const original = JSON.stringify(c.operations.pending);
         c.applyOperation("", null);
         verify(!c.operations.finishStatus("", null, "Unowned error"));
@@ -451,12 +394,64 @@ DaemonTestCase {
             reply(read, data);
             compare(c.operations.forTarget("Alpha").statusRequestId, "");
             verify(c.operations.busy("Alpha"), "An empty status is not mutation completion");
-            compare(panel.dismissals, 0);
             previous = read;
         }
         c.operations.check("Alpha");
-        reply(lastCall(Api.methods.operationStatus), {operation_status: operation(call, "completed")});
+        const captured = lastCall(Api.methods.operationStatus);
+        event(call, "running", {revision: 3, message: "new observation"});
+        reply(captured, {operation_status: operation(call, "running", {revision: 2})});
+        compare(c.operations.forTarget("Alpha").revision, 3);
+        event(call, "running", {revision: 2});
+        event(call, "running", {revision: 3});
+        compare(c.operations.forTarget("Alpha").revision, 3);
+        // Terminal delivery is lost with no later event. The owned status read
+        // converges; old traffic cannot revive a terminal operation.
+        c.operations.check("Alpha");
+        reply(lastCall(Api.methods.operationStatus), {operation_status: operation(call, "completed", {revision: 4})});
         verify(!c.operations.busy("Alpha"));
+        event(call, "running", {revision: 3});
+        verify(!c.operations.busy("Alpha"));
+        compare(c.selectedApplication.instances.length, 2, "receipts never rewrite the catalog");
+        compare(panel.dismissals, 0);
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+    }
+    function test_lostLaunchAdmissionRecoversUnknownWithoutReplay() {
+        const panel = makePanel();
+        const c = panel.controller;
+        keyClick(Qt.Key_N, Qt.AltModifier);
+        const call = lastCall(Api.methods.execute);
+        c.operations.fail(call.params.request_id, "Lost admission reply", "outcome-unknown");
+        verify(c.operations.busy("Alpha"));
+        let check = lastCall(Api.methods.operationStatus);
+        compare(check.params.operation_id, "operation-" + call.params.request_id);
+        // Unknown is a terminal uncertainty report only for this captured
+        // identity and a newer exact revision, even before admission arrived.
+        for (const invalid of [{id: "foreign"}, {target_id: "Beta"}, {action: "close"},
+                {revision: 0}, {revision: 1.5}, {revision: "2"}]) {
+            reply(check, {operation_status: operation(call, "completed", Object.assign({
+                id: check.params.operation_id, status: "unknown", revision: 2
+            }, invalid))});
+            verify(c.operations.busy("Alpha"), JSON.stringify(invalid));
+            compare(c.operations.forTarget("Alpha").revision, 0);
+            c.operations.check("Alpha");
+            check = lastCall(Api.methods.operationStatus);
+        }
+        reply(check, {operation_status: operation(call, "completed", {
+            id: check.params.operation_id, status: "unknown", revision: 2, message: "Restarted; inspect windows"
+        })});
+        verify(!c.operations.busy("Alpha"));
+        compare(panel.dismissals, 0);
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+    }
+    function test_missingNativeOperationRevisionLeavesOutcomeUnknownWithoutReplay() {
+        const panel = makePanel();
+        const c = panel.controller;
+        verify(c.triggerDetailAction("close"));
+        const call = lastCall(Api.methods.execute);
+        reply(call, {operation: operation(call, "accepted", {revision: undefined})});
+        verify(!c.operations.busy("Alpha"));
+        verify(c.operations.feedback.Alpha.message.includes("matching daemon required"));
+        verify(c.operations.feedback.Alpha.message.includes("outcome unknown"));
         compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
     }
 }

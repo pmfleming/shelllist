@@ -1128,7 +1128,8 @@
     "params": {
       "command": "create",
       "monitor": "DP-1",
-      "request_id": "fixture-create"
+      "request_id": "fixture-create",
+      "workspace_id": null
     },
     "rejected": {
       "error": {
