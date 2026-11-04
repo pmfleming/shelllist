@@ -183,6 +183,9 @@ Item {
         retryTimer.restart();
     }
     function handleResponse(message) {
+        if (typeof message.id !== "string" || !message.id || typeof message.ok !== "boolean"
+                || !Routing.responsePayloadValid(message))
+            throw new Error("Invalid daemon response correlation or payload");
         const outcome = Routing.responseOutcome(message, daemonName);
         if (outcome.recover) {
             console.error("shelllist transport subscription failed daemon=" + daemonName + " error=" + outcome.error);

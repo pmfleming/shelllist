@@ -39,6 +39,14 @@ Duplicate/unknown/never-written responses cannot free credit or reach a consumer
 Malformed correlated replies and route mismatches retire the suspect connection,
 without replaying its queue.
 
+Both transport paths use `JsonlRouting.responsePayloadValid`: success carries a
+non-array object; failure carries a string error and a recognized rejection or
+unknown outcome. The bridge also requires a nonempty string ID and boolean `ok`
+before acknowledging a request or resetting retry health. Invalid bridge data
+uses its existing protocol-error recovery policy. Socket correlation, route and
+late-resource checks still precede publication; unknown or never-written wire
+IDs cannot grant ownership by supplying a well-shaped payload.
+
 Local count/byte rejection throws `UNSENT:`. Waiting expiry, consumer withdrawal
 and shutdown deliver routed `requestUnsent` for definitely never-written work.
 The backend uses its existing `sendFailed` path, not a dispatched uncertainty or

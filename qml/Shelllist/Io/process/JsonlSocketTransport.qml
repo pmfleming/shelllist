@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Io
+import "../JsonlRouting.js" as Routing
 
 // One bounded admission window per socket owner, shared by every logical view.
 // Native RequestSlots charges Call AND Subscribe to calls; cleanup is separate.
@@ -241,13 +242,11 @@ QtObject {
             return; // duplicate or never written; cannot grant credit/deliver
         // A late resource receipt can establish cleanup responsibility only.
         // It cannot release uncertain native credit or regain view authority.
-        const lateResource = record.uncertain && !record.lateResourceSeen && message.ok
-            && (record.operation === "subscribe" || record.cleanup);
-        if (record.uncertain && !lateResource)
+        const lateResource = record.uncertain;
+        if (lateResource && (record.lateResourceSeen || !message.ok
+                || (record.operation !== "subscribe" && !record.cleanup)))
             return;
-        if (!sameRoute(record.route, message.route || null)
-                || (message.ok ? !message.response || typeof message.response !== "object" || Array.isArray(message.response)
-                    : typeof message.error !== "string" || !["rejected-before-dispatch", "outcome-unknown"].includes(message.outcome))) {
+        if (!sameRoute(record.route, message.route || null) || !Routing.responsePayloadValid(message)) {
             finish(1, "Invalid socket response identity or outcome; outcome unknown");
             return;
         }

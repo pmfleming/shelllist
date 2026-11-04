@@ -8,6 +8,14 @@ function shouldRecoverFailure(kind, recoverProtocolErrors) {
     return kind === "transport-error" || (kind === "protocol-error" && recoverProtocolErrors);
 }
 
+// The bridge and native socket carry the same response payload contract.
+// Correlation and resource ownership remain transport-specific.
+function responsePayloadValid(message) {
+    if (message.ok)
+        return !!message.response && typeof message.response === "object" && !Array.isArray(message.response);
+    return typeof message.error === "string" && ["rejected-before-dispatch", "outcome-unknown"].includes(message.outcome);
+}
+
 function responseOutcome(message, daemonName) {
     const subscriptionFailure = !message.route && message.id === "session-subscribe" && !message.ok;
     const fallback = subscriptionFailure ? daemonName + " subscription failed" : daemonName + " call failed";

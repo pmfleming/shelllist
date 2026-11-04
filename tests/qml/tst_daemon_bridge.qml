@@ -38,26 +38,17 @@ TestCase {
         f.process.exited(code);
     }
 
-    function test_reopenDuringDrain_data() {
-        return [
-            {tag: "starting", starting: true}
-        ];
-    }
-
-    function test_reopenDuringDrain(data) {
+    function test_reopenDuringDrain() {
         const f = fixture();
         f.bridge.active = true;
         compare(f.bridge.lifecycle, "starting");
-        if (!data.starting)
-            f.process.started();
         f.bridge.active = false;
         compare(f.bridge.lifecycle, "stopping");
         verify(!f.bridge.ready);
         verify(!f.process.stdinEnabled);
         f.bridge.active = true;
         f.bridge.call("new-effect", "effect.once", {});
-        if (data.starting)
-            f.process.started();
+        f.process.started();
         compare(f.process.commands.length, 1);
         compare(f.process.writes.length, 0, "never write to the closing pipe");
         compare(f.bridge.queuedLines.length, 1);
@@ -149,6 +140,22 @@ TestCase {
         try { f.bridge.call("overflow","effect.once",{}); } catch (error) { rejected=String(error).includes("capacity exceeded"); }
         verify(rejected);
         compare(f.bridge.queuedLines.length,1);
+    }
+    function test_malformedResponsesCannotAcknowledgeOrRestoreHealth() {
+        for (const invalid of [{id: 1}, {id: ""}, {ok: "true"}, {response: null},
+                {response: []}, {ok: false, error: "failed", outcome: "guessed"},
+                {ok: false, error: 1, outcome: "outcome-unknown"}]) {
+            const f = fixture();
+            f.bridge.active = true;
+            f.process.started();
+            f.bridge.counters.retryAttempt = 3;
+            f.bridge.handleLine(JSON.stringify(Object.assign({kind: "response", id: "owned", ok: true, response: {}}, invalid)));
+            compare(f.bridge.replies, 0);
+            compare(f.bridge.failures, 1);
+            verify(!f.bridge.ready);
+            verify(f.bridge.counters.retryAttempt > 3, "malformed traffic cannot reset retry health");
+            f.bridge.active = false;
+        }
     }
     function test_failedDrainIsNotSilenced() {
         const f = fixture();
