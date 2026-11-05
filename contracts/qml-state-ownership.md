@@ -38,3 +38,9 @@ Full Agenda detail replies validate document identity and catalog/cache watermar
 through the repository's shared admission predicate. The chooser separately owns
 visible-summary freshness, selection and captured completion intent. Accepting a
 newer inspection document never rebases an earlier completion action implicitly.
+
+Delta cursor frame validation is independent of ordering. A duplicate valid frame
+never rolls back state or requests recovery. Recovery rejects the old owner's
+frames; a replacement owner must provide an initial zero-base frame. Same-owner
+new epochs require the previous counter to be exhausted. No rejected frame may
+consume source, epoch or revision; gap notification remains idempotent.

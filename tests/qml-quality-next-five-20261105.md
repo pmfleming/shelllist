@@ -39,6 +39,21 @@ Authored function cognitive sum is unchanged; cyclomatic/effort rise by 1/6 at
 this step. Test volume grows nine lines for the catalog-order regression, with no
 new registered case. Domain safety and acknowledgement semantics are retained.
 
-## 2–5
+## 2. Shared delta ordering — closed
+
+Frame validation and continuation/baseline ordering are separate predicates;
+`accept` owns duplicate/recovery gates and publication. An existing recovery
+journey now rejects a replacement owner's continuation before accepting its
+baseline, retaining the old watermark and one gap notification throughout.
+
+Validation: DeltaCursor **14 passes**, real Wi-Fi stream consumer **6 passes**,
+strict changed-file lint and whitespace checks pass. `accept` cognitive /
+cyclomatic / weighted effort **23/24/104 → 9/10/48**. Both predicates remain
+measured (**9/10/38**, **7/8/31**). Whole-cursor function sums rise slightly:
+cyclomatic +4, cognitive +2, effort +13. The gain is explicit state-policy phases
+and a much smaller mutation entrypoint, not fewer protocol decisions. Two test
+lines extend an existing case; registration count is unchanged.
+
+## 3–5
 
 Pending implementation; each item is committed only after its focused checks.

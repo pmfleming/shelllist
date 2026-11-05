@@ -20,6 +20,8 @@ TestCase {
         verify(!cursor.accept("owned", record("epoch", 2, false)), "reordered data cannot fill a retired generation");
         verify(!cursor.accept("owned", record("epoch", 0, true)));
         compare(cursor.gaps, 1);
+        verify(!cursor.accept("replacement", record("new-epoch", 1, false)), "a new owner cannot begin with a continuation");
+        compare(cursor.source, "owned"); compare(cursor.revision, 2); compare(cursor.gaps, 1);
         verify(cursor.accept("replacement", record("new-epoch", 0, true)));
         verify(!cursor.recovering);
         compare(cursor.revision, 1);

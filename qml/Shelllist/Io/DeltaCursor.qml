@@ -24,28 +24,31 @@ QtObject {
         recovering = true;
         gapDetected();
     }
+    function validFrame(data: var): bool {
+        return !!data && typeof data.epoch === "string" && data.epoch.length > 0
+            && typeof data.initial === "boolean" && Number.isSafeInteger(data.revision)
+            && Number.isSafeInteger(data.base_revision) && data.base_revision >= 0
+            && data.revision >= 1 && data.revision <= maximumRevision
+            && data.revision === data.base_revision + 1;
+    }
+    function follows(subscription: string, data: var): bool {
+        const sameSource = initialized && source === subscription;
+        if (sameSource && epoch === data.epoch)
+            return !data.initial && data.base_revision === revision;
+        // Only an authoritative baseline can establish a new owner or epoch.
+        return data.initial && data.base_revision === 0 && (!sameSource || revision === maximumRevision);
+    }
     function accept(subscription: string, data: var): bool {
-        if (!subscription || !data || typeof data.epoch !== "string" || !data.epoch
-                || typeof data.initial !== "boolean" || !Number.isSafeInteger(data.revision)
-                || !Number.isSafeInteger(data.base_revision) || data.base_revision < 0
-                || data.revision < 1 || data.revision > maximumRevision
-                || data.revision !== data.base_revision + 1) {
+        if (!subscription || !validFrame(data)) {
             invalidate();
             return false;
         }
         // A renewal accepts only a new subscription's authoritative baseline.
         if (recovering && source === subscription)
             return false;
-        const sameSource = initialized && source === subscription;
-        const sameEpoch = sameSource && epoch === data.epoch;
-        if (sameEpoch && data.revision <= revision)
-            return false; // duplicate/older record, never roll back
-        // New subscriptions need a baseline. A same-source epoch change also
-        // requires exact native counter exhaustion, never an unsolicited reset.
-        const baseline = data.initial && data.base_revision === 0;
-        const ordered = sameEpoch ? !data.initial && data.base_revision === revision
-            : baseline && (!sameSource || revision === maximumRevision);
-        if (!ordered) {
+        if (initialized && source === subscription && epoch === data.epoch && data.revision <= revision)
+            return false; // duplicate/older record, never roll back or demand recovery
+        if (!follows(subscription, data)) {
             invalidate();
             return false;
         }
