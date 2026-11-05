@@ -84,9 +84,7 @@ impl Window {
         self.class == CLASS || self.initial_class == CLASS
     }
     fn safe_address(&self) -> bool {
-        self.address.strip_prefix("0x").is_some_and(|value| {
-            !value.is_empty() && value.len() <= 32 && value.chars().all(|c| c.is_ascii_hexdigit())
-        })
+        shelllist_hyprland::WindowAddress::parse(&self.address).is_ok()
     }
 }
 async fn windows(client: &Client) -> Result<Vec<Window>> {
@@ -192,6 +190,9 @@ async fn launch(intent: Intent, effect_started: &mut bool) -> Result<()> {
     let (profile, _lock) = profile_and_lock()?;
     let browser = find_browser()?;
     let client = Client::from_environment();
+    client
+        .instance_signature()?
+        .context("portal launcher requires HYPRLAND_INSTANCE_SIGNATURE")?;
     let before = windows(&client).await?;
     let workspace = if intent.workspace.is_empty() {
         #[derive(Deserialize)]
