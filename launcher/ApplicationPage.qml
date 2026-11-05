@@ -64,7 +64,6 @@ Ui.DetailFlickable {
     }
 
     Ui.ContentState {
-        id: noActions
         objectName: "applicationNoActions"
         visible: page.application.kind === "desktop-application" && (page.application.desktop_actions || []).length === 0
         width: parent.width

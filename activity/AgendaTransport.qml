@@ -4,7 +4,6 @@ import "ActivityApi.js" as ActivityApi
 
 // Only the existing shared daemon bridge owns sockets and reconnects.
 Io.DaemonBackend {
-    id: transport
     daemonName: "bar-daemon"
     expectedProtocol: ActivityApi.protocol
     expectedVersion: ActivityApi.version

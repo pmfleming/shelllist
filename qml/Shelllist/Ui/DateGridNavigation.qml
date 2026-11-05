@@ -3,7 +3,6 @@ import QtQuick
 // A scoped surface-navigation region, never a field or global shortcut owner.
 // Hosts supply civil dates; no event membership or ordering is inferred here.
 FocusScope {
-    id: region
     property string dateKey: Qt.formatDate(new Date(), "yyyy-MM-dd")
     property bool blocked: false
     signal chosen(string dateKey)

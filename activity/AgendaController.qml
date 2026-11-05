@@ -77,7 +77,7 @@ Ui.ChooserController {
     onListItemsChanged: rows.values = listItems.map(item => ({key: item.id, payload: item}))
     onScheduleOpenChanged: if (!scheduleOpen && pendingSchedule?.purpose === "schedule") pendingSchedule = null
     // Only explicitly saved/submitted drafts live here, never native buffers.
-    property var savedDrafts: ({})
+    readonly property alias savedDrafts: savedFields.drafts
     property var operation: null
     property var failedOperation: null
     property bool receiptBusy: false
@@ -226,7 +226,7 @@ Ui.ChooserController {
         if (!item || mutationBusy) return;
         const draft = {kind: "patch", recordKind: item.kind, id: item.id, expected_revision: item.revision, baseline: copy(item), key: key,
             patch: copy(patch), value: value === undefined ? copy(patch) : copy(value), request_id: AgendaRepository.token()};
-        savedDrafts = Object.assign({}, savedDrafts, {[item.id + ":" + key]: draft});
+        savedFields.put(item.id + ":" + key, draft);
         submit(draft);
     }
     function submit(draft: var): void {
@@ -444,7 +444,7 @@ Ui.ChooserController {
         draft.request_id = AgendaRepository.token();
         if (parts.length > 1) draft.patch[parts[0]] = Object.assign({}, item[parts[0]], {[parts[1]]: draft.value});
         if (draft.key === "task.completed") draft.patch.task.completed_unix_ms = null;
-        savedDrafts = Object.assign({}, savedDrafts, {[draft.id + ":" + draft.key]: draft});
+        savedFields.put(draft.id + ":" + draft.key, draft);
         rebaseTarget = null;
         submit(draft);
     }
@@ -475,7 +475,7 @@ Ui.ChooserController {
             }
             if (draft.key === "schedule") scheduleOpen = false;
             if (collectionOpen && collectionTarget?.id === draft.id && collectionKey === draft.key) collectionOpen = false;
-            const next = Object.assign({}, savedDrafts); delete next[draft.id + ":" + draft.key]; savedDrafts = next;
+            savedFields.put(draft.id + ":" + draft.key, null);
         }
         AgendaRepository.invalidated();
     }
@@ -516,6 +516,7 @@ Ui.ChooserController {
         }
     }
     Core.KeyedListModel { id: rows }
+    Core.DraftStore { id: savedFields }
     Connections {
         target: AgendaRepository
         function onResponse(owner: string, purpose: string, context: var, data: var, error: string): void {

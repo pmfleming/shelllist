@@ -1,5 +1,6 @@
 import QtQuick
 import "BluetoothFlow.js" as BluetoothFlow
+import "BtApi.js" as BtApi
 
 Item {
     required property BluetoothController controller
@@ -7,16 +8,6 @@ Item {
     property var activeOperations: ({})
     property var errorsByDevice: ({})
 
-    function copyWith(values: var, key: string, value: var): var {
-        const result = Object.assign({}, values || ({}));
-        result[key] = value;
-        return result;
-    }
-    function copyWithout(values: var, key: string): var {
-        const result = Object.assign({}, values || ({}));
-        delete result[key];
-        return result;
-    }
     function reset(): void {
         activeOperations = ({});
         errorsByDevice = ({});
@@ -33,29 +24,29 @@ Item {
         if (!operation || !operation.request_id)
             return;
         if (!activeOperations[operation.request_id])
-            activeOperations = copyWith(activeOperations, operation.request_id, operation);
-        errorsByDevice = copyWithout(errorsByDevice, operation.device_key);
+            activeOperations = BtApi.copyWith(activeOperations, operation.request_id, operation);
+        errorsByDevice = BtApi.copyWithout(errorsByDevice, operation.device_key);
         controller.rebuildResults(false);
     }
     function unknown(operation: var, message: string): void {
         // Keep the device busy: uncertainty is not proof the accepted effect stopped.
-        activeOperations = copyWith(activeOperations, operation.request_id,
+        activeOperations = BtApi.copyWith(activeOperations, operation.request_id,
             Object.assign({}, operation, {state: "unknown"}));
-        errorsByDevice = copyWith(errorsByDevice, operation.device_key, {message: message});
+        errorsByDevice = BtApi.copyWith(errorsByDevice, operation.device_key, {message: message});
         controller.status = message;
         controller.rebuildResults(false);
     }
     function applyActive(operation: var, deviceName: string): void {
-        activeOperations = copyWith(activeOperations, operation.request_id, operation);
-        errorsByDevice = copyWithout(errorsByDevice, operation.device_key);
+        activeOperations = BtApi.copyWith(activeOperations, operation.request_id, operation);
+        errorsByDevice = BtApi.copyWithout(errorsByDevice, operation.device_key);
         controller.status = BluetoothFlow.activeOperationStatus(operation, deviceName);
         controller.rebuildResults(false);
     }
     function applyCompleted(operation: var, recovered: var): void {
-        activeOperations = copyWithout(activeOperations, operation.request_id);
-        errorsByDevice = operation.state === "failed" ? copyWith(errorsByDevice, operation.device_key, operation.error || ({
+        activeOperations = BtApi.copyWithout(activeOperations, operation.request_id);
+        errorsByDevice = operation.state === "failed" ? BtApi.copyWith(errorsByDevice, operation.device_key, operation.error || ({
                 message: "Bluetooth operation failed"
-            })) : copyWithout(errorsByDevice, operation.device_key);
+            })) : BtApi.copyWithout(errorsByDevice, operation.device_key);
         controller.rebuildResults(false);
         // Completion acknowledges the operation, not an ordering watermark on
         // its embedded observation. Never replace a newer watch with that data.
