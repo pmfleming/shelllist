@@ -1,0 +1,84 @@
+Shelllist daemon and framework refactor coordination, 2026-11-05
+
+Seven implementation workers reviewed the six daemon repositories and their
+shared framework using the local /home/laufan/Projects/rust-quality-lens source.
+Each worker owns one repository and preserves raw before/after evidence under
+its target directory. At review completion the changes were uncommitted; no
+deployment, host service restart, protocol migration or dependency lock update
+was requested or performed. Subsequent publication is separately user-authorized.
+
+Per-repository evidence (relative to /home/laufan/Projects):
+  daemon-framework/tests/rqlens-refactor-review.txt
+  app-daemon/tests/rqlens-refactor-review.txt
+  bar-daemon/tests/rqlens-refactor-review.txt
+  bt-daemon/tests/rqlens-refactor-review.txt
+  clip-daemon/tests/rqlens-refactor-review.txt
+  nm-daemon/tests/rqlens-refactor-review.txt
+  update-daemon/tests/rqlens-refactor-review.txt
+
+Implemented scope and verification reviewed by the coordinator:
+  Framework: fallible event parsing, shared pointer validation and queue sending;
+    98 Rust passes, two existing ignores; formatting and strict Clippy pass.
+  Applications: catalog ownership, metadata writes, refresh reads and worker
+    ingestion tests; 89 Rust passes, ten existing ignores; fmt/Clippy pass.
+  Bar: journal-owned workspace observations, borrowed close targets and shared
+    destination ordering; 371 Rust passes, zero ignored with private fixtures;
+    formatting, check, Clippy, rustdoc and tooling checks pass.
+  Bluetooth: shared transport fixtures, correlated RSSI decoding, owned OBEX
+    cleanup and fixed-size catalog ID decoding; 86 Rust and two Python passes,
+    two existing ignored probes; formatting and strict Clippy pass.
+  Clipboard: borrowed history observations, bounded Unicode trigrams, SQL
+    bindings, owner-checked single-use removal and admission counting;
+    111 cases pass across serial broad/private Quickshell runs; fmt/Clippy pass.
+  NetworkManager: borrowed peer dictionaries, moving secret merges and shared
+    guarded writes; 113 Rust passes, four existing ignores, eight Python passes;
+    formatting and strict Clippy pass. Native-prompt tests needed unchanged-source
+    reruns; initial failures are retained and instability remains unresolved.
+  Updates: typed bounded codecs, phase spelling, in-place notification
+    reconciliation and shared test termination; 99 Rust and 28 Python passes,
+    one existing ignored real-Nix case; formatting, Clippy and doctests pass.
+
+Interpretation and unmet goals:
+  All workers report executed line-coverage improvements, but scopes differ:
+  library versus full targets, inline-test-inclusive versus production masks,
+  and workspace subsystem versus whole repository. Do not average percentages
+  or present them as ecosystem-wide production or branch coverage. See exact
+  commands, denominators, dependency drift and exclusions in each report.
+  Cognitive/effort hotspots and duplication improve; improvements are modest
+  and do not mean every metric or function improved. Framework and NM aggregate
+  cyclomatic totals increase. App production cyclomatic and Bar's measured
+  combined cyclomatic remain flat. App locality/all-code effort regress slightly.
+  Production locality/leverage generally do not improve numerically. Borrowing,
+  shared controls and ownership changes are structural evidence, not allocation
+  benchmarks. Bluetooth's measured leverage gain concerns test fixtures only.
+  Updates total code grows eight lines. Clipboard tests grow one line despite
+  consolidation. Existing dead public APIs were not removed without evidence;
+  removed forwarders/derives are not proof of previously unreachable code.
+  Bluetooth duplication remains over its existing policy budget. Existing panic,
+  escape, ignored-test and generated-macro findings remain documented.
+  RQLens semantic/macro inventories remain partial. No strict complete-evidence
+  policy pass, hardware acceptance or runtime-performance gain is claimed.
+
+Combined integration gate:
+  Working directory: /home/laufan/Projects/shelllist
+  Command:
+    nix develop /home/laufan/Projects/rust-quality-lens --command tests/check-sibling-boundary.sh
+  Log: target/rqlens-sibling-integration-20261105.log
+  Frozen source map: target/rqlens-sibling-integration-20261105-sources.json
+  The documented gate snapshots all eight current tracked worktrees once,
+  including dirty source, then checks the single frozen local dependency graph.
+  Gate status: PASS, exit 0; all 40 flake checks passed on the frozen graph.
+  This includes framework workspace/local-build checks, all six daemon/worker
+  packages, producer protocol contracts, generated contracts/bindings, QML
+  interaction tests and strict lint, TypeScript freshness, native application,
+  module evaluation, packaged imports and the remaining declared flake checks.
+  This is an actual combined gate result, not inferred from worker suites.
+  Packaged Qt suite: 731 passed, zero failed, one existing renderer skip.
+  Qt log: target/rqlens-sibling-integration-20261105-qml.log
+  Post-gate source audit: all 746 tracked Rust/manifest/lock inputs across the
+  seven sibling repositories match their frozen store snapshots byte-for-byte.
+  Audit: target/rqlens-sibling-integration-20261105-source-audit.json
+  Coordinator audit: no Cargo.toml, Cargo.lock or flake.lock diff in any of the
+  seven owned repositories. All seven implementation diffs and verification logs
+  were reviewed; documentation-only coordination evidence is outside the frozen
+  build snapshot and does not change runtime/build inputs.
