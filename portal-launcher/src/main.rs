@@ -71,7 +71,10 @@ impl Intent {
 }
 
 type Window = shelllist_hyprland::workspace::Window;
-trait PortalWindow { fn portal(&self) -> bool; fn safe_address(&self) -> bool; }
+trait PortalWindow {
+    fn portal(&self) -> bool;
+    fn safe_address(&self) -> bool;
+}
 impl PortalWindow for Window {
     fn portal(&self) -> bool {
         self.class == CLASS || self.initial_class == CLASS
@@ -178,7 +181,7 @@ async fn launch(intent: Intent, effect_started: &mut bool) -> Result<()> {
     client.capabilities().await?;
     let before = windows(&client).await?;
     let workspace = if intent.workspace.is_empty() {
-        client.active_workspace().await?.id.context("active workspace has no number")?.to_string()
+        client.active_workspace().await?.selector()?
     } else {
         intent.workspace.clone()
     };
@@ -323,6 +326,24 @@ mod tests {
         focus(&client, &windows[0], "3").await.unwrap();
         server.await.unwrap();
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn captured_named_workspace_can_route_a_portal_without_a_number() {
+        let capture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../daemon-framework/crates/shelllist-hyprland/tests/fixtures/0.57.1/named.json"
+        ))
+        .unwrap();
+        let workspace: shelllist_hyprland::workspace::WorkspaceRef =
+            serde_json::from_value(capture["activeworkspace"].clone()).unwrap();
+        let selector = workspace.selector().unwrap();
+        assert_eq!(selector, "name:ipc-review");
+        assert!(shelllist_hyprland::lua::move_window("0x123", &selector).is_ok());
+        assert!(
+            shelllist_hyprland::workspace::WorkspaceRef::default()
+                .selector()
+                .is_err()
+        );
     }
 
     #[test]

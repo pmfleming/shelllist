@@ -40,3 +40,24 @@ Local `docs/` remains ignored. No deployment, service restart or push is require
 ## Evidence and closure
 
 Pending implementation. Each closure below will identify checks and commits.
+
+### Reads, handoffs and named identities closed
+
+- Bar `eb314b7`: deferred prefix cleanup; 23 lifecycle tests pass.
+- Bar `24c38a9`: record special/named moves; 26 workspace tests pass.
+- Named identity closure spans framework, bar, app and portal. Private installed
+  0.57.1 acceptance passed; captured named JSON/events now live in the framework.
+  Full framework/bar/app tests pass, plus the new app process launch regression,
+  five portal tests and five Qt strip checks (including init/cleanup).
+- The review missed geometry's legacy negative-ID `n[true]` rule. It is corrected
+  and tested against current compositor semantics. Named displays no longer
+  replace address identity during geometry or placement confirmation.
+- App default launches with temporary workspaces disabled already avoid the
+  active-workspace read; that portion of the finding is rejected. Explicit
+  current launches and portal placement now support named addresses.
+- Named workspaces are published as ordinary read state with null numeric IDs.
+  The numbered strip and version-1 temporary lifecycle remain numbered. Full
+  named lifecycle creation/close/reservation is deliberately deferred because it
+  needs a protocol/guard design, rather than weakening existing safety checks.
+- Portal formatting is corrected. Local original-plan status and named-workspace
+  assumptions were updated without tracking `docs/`.

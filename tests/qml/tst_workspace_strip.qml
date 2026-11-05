@@ -61,6 +61,26 @@ DaemonTestCase {
         wait(0);
         compare(add.x + add.width, strip.width);
     }
+    function test_namedWorkspaceDoesNotInventANumberedSelection() {
+        const strip = make();
+        strip.width = tests.width;
+        strip.controller.workspaces = {available:true,
+            monitors:[{name:"test-monitor", active_workspace_id:null, active_workspace_address:"ipc-review"}],
+            workspaces:[{id:null, address:"ipc-review", name:"Named workspace", monitor:"test-monitor"}],
+            lifecycle:{available:true, version:1, monitors:{"test-monitor":model().map(item => Object.assign({}, item, {active:false}))}}};
+        wait(0);
+        compare(strip.activeWorkspaceIndex, -1);
+        verify(strip.workspaceIds.every(id => id > 0));
+        verify(waitForRendering(strip));
+        tryCompare(findChild(strip, "workspaceViewport"), "contentX", 0);
+        const button = findChild(strip, "barWorkspace:1");
+        calls = [];
+        mouseClick(button, button.width/2, button.height/2, Qt.LeftButton);
+        const requests = calls.filter(call => call.method === "workspace.focus");
+        compare(requests.length, 1);
+        compare(requests[0].params.workspace_id, 1);
+        compare(strip.activeWorkspaceIndex, -1, "a command acknowledgement cannot fabricate compositor selection");
+    }
     function test_workspacesRenderIconsWithoutInlineTextOrOverlap() {
         const strip = make();
         strip.width = tests.width;
