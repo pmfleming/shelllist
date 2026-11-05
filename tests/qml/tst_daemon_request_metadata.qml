@@ -31,8 +31,10 @@ TestCase {
             property bool rejectSend: false
             signal response(string id, var envelope, string transportError, var route)
             signal eventReceived(var event, var route)
+            signal ownerRetired()
             signal transportFailed(string message)
             signal requestUnsent(string id, string message, var route)
+            function discardQueued(consumerId) {}
             function call(id, method, params, route) {
                 if (rejectSend) throw new Error("UNSENT: inert admission failure");
                 calls = calls.concat([{id: id, method: method, route: route}]);

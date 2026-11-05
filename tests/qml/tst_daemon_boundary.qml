@@ -28,8 +28,10 @@ TestCase {
             property var calls: []
             signal response(string id, var envelope, string transportError, var route)
             signal eventReceived(var event, var route)
+            signal requestUnsent(string id, string message, var route)
             signal transportFailed(string message)
             signal ownerRetired()
+            function discardQueued(consumerId) {}
             function subscribeExtra(id, streams, route) {
                 subscriptions = subscriptions.concat([
                     {

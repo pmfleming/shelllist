@@ -36,7 +36,10 @@ TestCase {
             property var cancellations: []
             signal response(string id, var envelope, string transportError, var route)
             signal eventReceived(var event, var route)
+            signal requestUnsent(string id, string message, var route)
+            signal ownerRetired()
             signal transportFailed(string message)
+            function discardQueued(consumerId) {}
             function call(id, method, params, route) {
                 testCase.calls = testCase.calls.concat([
                     {

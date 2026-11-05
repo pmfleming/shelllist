@@ -66,6 +66,26 @@ function subscriptionReceipt(record, envelope, error) {
     return typeof id === "string" && id.length > 0 && id.length <= maximumNativeId;
 }
 
+// Receipt admission changes resource responsibility only. The session owns
+// view delivery, base-subscription publication and progress scheduling.
+function acceptSubscription(session, record, route, envelope, error) {
+    if (!matches(record, route) || record.owner !== session.owner
+            || !["pending", "uncertain"].includes(record.state))
+        return false;
+    const late = record.state === "uncertain";
+    const valid = subscriptionReceipt(record, envelope, error);
+    if (late && (!valid || record.nativeId))
+        return false;
+    if (!valid) {
+        record.state = "uncertain";
+        return true;
+    }
+    if (late) record.wanted = false;
+    record.nativeId = envelope.data.subscription.id;
+    record.state = "live";
+    return true;
+}
+
 function complete(session, record, envelope, error) {
     // Absence/failure is not successful disposition. Retry ONLY requestUnsent,
     // whose exact serialized cancellation has definitely never been written.

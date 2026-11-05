@@ -183,8 +183,7 @@ Item {
         retryTimer.restart();
     }
     function handleResponse(message) {
-        if (typeof message.id !== "string" || !message.id || typeof message.ok !== "boolean"
-                || !Routing.responsePayloadValid(message))
+        if (!Routing.responseCorrelationValid(message) || !Routing.responsePayloadValid(message))
             throw new Error("Invalid daemon response correlation or payload");
         const outcome = Routing.responseOutcome(message, daemonName);
         if (outcome.recover) {

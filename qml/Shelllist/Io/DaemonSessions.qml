@@ -52,13 +52,10 @@ QtObject {
         client.response.connect(function (id, envelope, transportError, route) {
             registry.routeResponse(daemonName, id, envelope, transportError, route);
         });
-        if (client.requestUnsent) {
-            client.requestUnsent.connect(function (id, message, route) {
-                registry.routeUnsent(daemonName, id, message, route);
-            });
-        }
-        if (client.ownerRetired)
-            client.ownerRetired.connect(function () { registry.retireOwner(session); });
+        client.requestUnsent.connect(function (id, message, route) {
+            registry.routeUnsent(daemonName, id, message, route);
+        });
+        client.ownerRetired.connect(function () { registry.retireOwner(session); });
         client.eventReceived.connect(function (event, route) {
             registry.routeEvent(daemonName, event, route);
         });
@@ -113,8 +110,7 @@ QtObject {
         consumer.detaching = true;
         consumer.active = false; // revoke event/new-work authority before notifying queued UNSENT
         Object.values(session.resources).filter(record => record.consumerId === consumerId).forEach(Cleanup.retireView);
-        if (session.client.discardQueued)
-            session.client.discardQueued(consumerId);
+        session.client.discardQueued(consumerId);
         const consumers = Object.assign({}, session.consumers);
         delete consumers[consumerId];
         session.consumers = consumers;
@@ -132,8 +128,7 @@ QtObject {
         consumer.streams = (streams || []).slice();
         session.client.recoverProtocolErrors = recoverProtocolErrors;
         if (!consumer.active) {
-            if (session.client.discardQueued)
-                session.client.discardQueued(consumerId);
+            session.client.discardQueued(consumerId);
             cancelBaseSubscription(session, consumerId, consumer);
         }
         updateSession(session);
@@ -143,9 +138,7 @@ QtObject {
     }
 
     function updateSession(session) {
-        session.client.active = Object.keys(session.consumers).some(function (id) {
-            return session.consumers[id].active;
-        }) || (session.client.ready && Object.values(session.resources).some(record => !record.wanted && record.state !== "uncertain"));
+        session.client.active = Object.values(session.consumers).some(consumer => consumer.active) || (session.client.ready && Object.values(session.resources).some(record => !record.wanted && record.state !== "uncertain"));
     }
 
     function isReady(daemonName) {
@@ -255,11 +248,6 @@ QtObject {
         consumer.baseSubscriptionRequestId = "";
     }
 
-    function subscriptionId(envelope) {
-        const subscription = envelope && envelope.data ? (envelope.data.subscription || ({})) : ({});
-        return subscription.id || "";
-    }
-
     function ownsSubscription(daemonName, consumerId, localId, nativeId) {
         const session = sessions[daemonName];
         const record = session ? Cleanup.find(session, consumerId, localId) : null;
@@ -306,25 +294,15 @@ QtObject {
 
     function recordSubscription(session, transportId, route, consumer, envelope, transportError) {
         const record = session.resources[transportId];
-        if (!Cleanup.matches(record, route) || record.owner !== session.owner
-                || (record.state !== "pending" && record.state !== "uncertain"))
-            return false;
-        const late = record.state === "uncertain";
-        const valid = Cleanup.subscriptionReceipt(record, envelope, transportError);
-        if (late && (!valid || record.nativeId))
+        const late = record?.state === "uncertain";
+        if (!Cleanup.acceptSubscription(session, record, route, envelope, transportError))
             return false;
         const base = route.kind === "base-subscription";
         const current = consumer && (!base || transportId === consumer.baseSubscriptionRequestId);
         if (base && current)
             consumer.baseSubscriptionPending = false;
-        if (!valid) {
-            record.state = "uncertain"; // rejected/invalid data grants no native ID authority
+        if (record.state === "uncertain")
             return !!current;
-        }
-        if (late)
-            record.wanted = false; // late acknowledgement owns cleanup only, never a reopened view
-        record.nativeId = registry.subscriptionId(envelope);
-        record.state = "live";
         if (!current || !consumer.active || !record.wanted)
             Cleanup.retireView(record);
         if (base && current && record.wanted)
@@ -436,15 +414,19 @@ QtObject {
         consumer.backend.acceptSharedEvent(event);
     }
 
+    function resetBaseSubscription(consumer) {
+        consumer.baseSubscriptionId = "";
+        consumer.baseSubscriptionRequestId = "";
+        consumer.baseSubscriptionPending = false;
+    }
+
     function restoreSubscriptions(daemonName) {
         const session = sessions[daemonName];
         if (!session)
             return;
         Object.keys(session.consumers).forEach(function (id) {
             const consumer = session.consumers[id];
-            consumer.baseSubscriptionId = "";
-            consumer.baseSubscriptionRequestId = "";
-            consumer.baseSubscriptionPending = false;
+            resetBaseSubscription(consumer);
             if (consumer.active)
                 ensureBaseSubscription(session, id, consumer);
         });
@@ -464,9 +446,7 @@ QtObject {
         Object.keys(session.consumers).forEach(id => {
             reserveConsumer(session, id);
             const consumer = session.consumers[id];
-            consumer.baseSubscriptionId = "";
-            consumer.baseSubscriptionRequestId = "";
-            consumer.baseSubscriptionPending = false;
+            resetBaseSubscription(consumer);
         });
     }
 
@@ -479,11 +459,8 @@ QtObject {
         // stays on its captured route/owner until ownerRetired proves exit.
         session.generation += 1;
         Object.values(session.resources).forEach(Cleanup.retireView);
-        Object.keys(session.consumers).forEach(function (id) {
-            const consumer = session.consumers[id];
-            consumer.baseSubscriptionId = "";
-            consumer.baseSubscriptionRequestId = "";
-            consumer.baseSubscriptionPending = false;
+        Object.values(session.consumers).forEach(function (consumer) {
+            resetBaseSubscription(consumer);
             consumer.backend.failSharedTransport(message);
         });
         revision += 1;

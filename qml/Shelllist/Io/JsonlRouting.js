@@ -10,6 +10,10 @@ function shouldRecoverFailure(kind, recoverProtocolErrors) {
 
 // The bridge and native socket carry the same response payload contract.
 // Correlation and resource ownership remain transport-specific.
+function responseCorrelationValid(message) {
+    return typeof message.id === "string" && message.id.length > 0 && typeof message.ok === "boolean";
+}
+
 function responsePayloadValid(message) {
     if (message.ok)
         return !!message.response && typeof message.response === "object" && !Array.isArray(message.response);

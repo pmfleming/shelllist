@@ -62,7 +62,7 @@ QtObject {
         if (!record)
             return;
         delete pending[wireId]; // retire identity before any notifying counters
-        queue = queue.filter(id => id !== wireId);
+        if (!record.dispatched) queue = queue.filter(id => id !== wireId);
         record.timer.stop();
         record.timer.destroy();
         pendingBytes -= record.bytes;
@@ -120,6 +120,20 @@ QtObject {
             : pendingCalls < maximumCalls;
     }
 
+    function checkAdmission(control: bool, cleanup: bool, bytes: double): void {
+        const laneBytes = control ? pendingControlBytes : pendingBytes - pendingControlBytes;
+        const laneLimit = control ? maximumPendingControlBytes : maximumPendingBytes;
+        const queueLimit = control ? Math.max(0, maximumQueuedControls - (cleanup ? 0 : 1)) : maximumQueuedRequests;
+        const waiting = queue.reduce((count, key) => count + (pending[key].control === control ? 1 : 0), 0);
+        const ordinaryBytes = control && !cleanup ? Object.values(pending)
+            .reduce((total, record) => total + (record.control && !record.cleanup ? record.bytes : 0), 0) : 0;
+        const bytesFull = laneBytes + bytes > laneLimit;
+        const reserveFull = control && !cleanup && ordinaryBytes + bytes > Math.max(0, maximumPendingControlBytes - reservedCleanupBytes);
+        const mustWait = !dispatchReady(control, cleanup) || !endpoint.connected || waiting > 0;
+        if (bytesFull || reserveFull || (mustWait && waiting >= queueLimit))
+            throw new Error("UNSENT: socket admission queue or byte capacity exceeded");
+    }
+
     function write(line, reservedCleanup) {
         if (!running || stopping || !endpoint)
             throw new Error("UNSENT: socket is not accepting requests");
@@ -138,19 +152,9 @@ QtObject {
         message.id = wireId;
         const capturedLine = JSON.stringify(message) + "\n";
         const bytes = capturedLine.length * 3;
-        const laneBytes = control ? pendingControlBytes : pendingBytes - pendingControlBytes;
-        const laneLimit = control ? maximumPendingControlBytes : maximumPendingBytes;
-        // One of the existing control slots/queue entries is reserved for the
-        // session's captured resource transaction. No native ceiling is raised.
-        const cleanup = control && !!reservedCleanup; // local admission hint, never a wire/route extension
-        const queuedControlLimit = cleanup ? maximumQueuedControls : Math.max(0, maximumQueuedControls - 1);
-        const waiting = queue.reduce((count, key) => count + (pending[key].control === control ? 1 : 0), 0);
-        const ordinaryControlBytes = control && !cleanup ? Object.values(pending)
-            .reduce((total, record) => total + (record.control && !record.cleanup ? record.bytes : 0), 0) : 0;
-        if ((control && !cleanup && ordinaryControlBytes + bytes > Math.max(0, maximumPendingControlBytes - reservedCleanupBytes))
-                || laneBytes + bytes > laneLimit || ((!dispatchReady(control, cleanup) || !endpoint.connected || waiting > 0)
-                && waiting >= (control ? queuedControlLimit : maximumQueuedRequests)))
-            throw new Error("UNSENT: socket admission queue or byte capacity exceeded");
+        // One existing control slot/queue entry is reserved for captured cleanup.
+        const cleanup = control && !!reservedCleanup; // local hint, never serialized
+        checkAdmission(control, cleanup, bytes);
         const timer = requestDeadline.createObject(transport, {wireId: wireId}) as Timer;
         pending[wireId] = {id: id, route: message.route || null, bytes: bytes, control: control,
             timer: timer, line: capturedLine, dispatched: false, uncertain: false, cleanup: cleanup,
@@ -158,7 +162,7 @@ QtObject {
             expiresAt: Date.now() + queueTimeout};
         pendingBytes += bytes;
         if (control) pendingControlBytes += bytes;
-        queue = queue.concat([wireId]);
+        queue = queue.concat(wireId);
         timer.interval = queueTimeout;
         timer.start();
         pump();
@@ -228,7 +232,7 @@ QtObject {
             messageReceived(message);
             return;
         }
-        if (typeof message.id !== "string" || !message.id || typeof message.ok !== "boolean") {
+        if (!Routing.responseCorrelationValid(message)) {
             finish(1, "Invalid socket response correlation");
             return;
         }
