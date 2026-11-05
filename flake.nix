@@ -614,6 +614,9 @@
 
           materialGallery = pkgs.runCommand "shelllist-material-gallery-smoke" {
             nativeBuildInputs = [ pkgs.dbus ];
+            # Quickshell 0.3.2 logs Qt's C-locale fallback as a warning. Keep the
+            # smoke's warning gate strict by supplying the UTF-8 locale Qt needs.
+            LC_ALL = "C.UTF-8";
           } ''
             export HOME="$TMPDIR/home"
             export XDG_RUNTIME_DIR="$TMPDIR/runtime"
