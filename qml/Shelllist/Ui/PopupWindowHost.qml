@@ -103,36 +103,33 @@ Item {
         floatingPlacementTimer.restart();
     }
 
-    function setWindowProperty(selector, legacyName, legacyValue, luaName, luaValue) {
-        Hyprland.dispatch(HyprlandDispatch.windowProperty(Hyprland.usingLua, selector, legacyName, legacyValue, luaName, luaValue));
+    function setWindowProperty(selector, name, value) {
+        Hyprland.dispatch(HyprlandDispatch.windowProperty(selector, name, value));
     }
     function focusWindow(selector) {
-        Hyprland.dispatch(HyprlandDispatch.focusWindow(Hyprland.usingLua, selector));
+        Hyprland.dispatch(HyprlandDispatch.focusWindow(selector));
     }
     function floatWindow(selector) {
-        Hyprland.dispatch(HyprlandDispatch.floatWindow(Hyprland.usingLua, selector));
+        Hyprland.dispatch(HyprlandDispatch.floatWindow(selector));
     }
     function moveWindow(selector) {
-        Hyprland.dispatch(HyprlandDispatch.moveWindow(Hyprland.usingLua, selector, targetWindowX(), targetWindowY()));
+        Hyprland.dispatch(HyprlandDispatch.moveWindow(selector, targetWindowX(), targetWindowY()));
     }
 
     function syncPopoverAnimationRule() {
         if (!popoverMode || !Theme.hyprland)
             return;
         // Named Lua rules update idempotently, including after config reload.
-        if (Hyprland.usingLua)
-            layerRuleClient.applyStyle(layerNamespace, noAnimations, Theme.blurEnabled);
-        else
-            layerRuleClient.apply(noAnimations ? "animation 0 " + layerNamespace : "animation unset " + layerNamespace);
+        layerRuleClient.applyStyle(layerNamespace, noAnimations, Theme.blurEnabled);
     }
     function applyCompositorWindowRules() {
         if (!floatingMode || !Theme.hyprland)
             return;
         const selector = "title:" + windowTitle;
         const animationValue = noAnimations ? "1" : "0";
-        setWindowProperty(selector, "noanim", animationValue, "no_anim", animationValue);
-        setWindowProperty(selector, "noborder", "1", "decorate", "0");
-        setWindowProperty(selector, "noshadow", "1", "no_shadow", "1");
+        setWindowProperty(selector, "no_anim", animationValue);
+        setWindowProperty(selector, "decorate", "0");
+        setWindowProperty(selector, "no_shadow", "1");
     }
 
     function closeRequested() {

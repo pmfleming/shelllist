@@ -8,9 +8,6 @@ Item {
     function applyStyle(namespace: string, noMotion: bool, blur: bool): void {
         applyCommand(Settings.layerStyle(namespace, noMotion, blur));
     }
-    function apply(rule: string): void {
-        applyCommand(["hyprctl", "keyword", "layerrule", rule]);
-    }
     function applyCommand(command: var): void {
         if (process.running) {
             pendingCommand = command;

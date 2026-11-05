@@ -95,32 +95,21 @@ async fn windows(client: &Client) -> Result<Vec<Window>> {
             .collect(),
     )
 }
-async fn dispatch(client: &Client, lua: String, legacy: String) -> Result<()> {
-    if client
-        .request(&format!("dispatch {lua}"))
-        .await
-        .is_ok_and(|reply| reply.trim() == "ok")
-    {
-        return Ok(());
-    }
-    ensure!(
-        client.request(&format!("dispatch {legacy}")).await?.trim() == "ok",
-        "compositor rejected focus command"
-    );
-    Ok(())
-}
 async fn focus(client: &Client, window: &Window, workspace: &str) -> Result<()> {
-    ensure!(window.safe_address(), "invalid compositor address");
     if !workspace.is_empty() {
-        dispatch(client, format!("hl.dsp.window.move({{ workspace = '{workspace}', follow = false, window = 'address:{}' }})", window.address), format!("movetoworkspacesilent {workspace},address:{}", window.address)).await?;
+        shelllist_hyprland::execute(
+            client,
+            &shelllist_hyprland::lua::move_window(&window.address, workspace)?,
+        )
+        .await?;
     }
-    dispatch(
+    shelllist_hyprland::execute(
         client,
-        format!("hl.dsp.focus({{ window = 'address:{}' }})", window.address),
-        format!("focuswindow address:{}", window.address),
+        &shelllist_hyprland::lua::focus_window(&window.address)?,
     )
     .await
 }
+
 fn profile_and_lock() -> Result<(PathBuf, File)> {
     use std::os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt, PermissionsExt};
     let runtime =
@@ -193,6 +182,7 @@ async fn launch(intent: Intent, effect_started: &mut bool) -> Result<()> {
     client
         .instance_signature()?
         .context("portal launcher requires HYPRLAND_INSTANCE_SIGNATURE")?;
+    client.capabilities().await?;
     let before = windows(&client).await?;
     let workspace = if intent.workspace.is_empty() {
         #[derive(Deserialize)]
@@ -295,7 +285,7 @@ mod tests {
         assert!(!command.get_args().any(|arg| arg == "-c"));
     }
     #[tokio::test]
-    async fn workspace_and_focus_use_native_ipc_with_legacy_dispatch_fallback() {
+    async fn workspace_and_focus_use_checked_lua_without_legacy_fallback() {
         use tokio::io::{AsyncReadExt, AsyncWriteExt};
         let root = std::env::temp_dir().join(format!(
             "portal-ipc-{}-{}",
@@ -312,15 +302,29 @@ mod tests {
         let server = tokio::spawn(async move {
             for (expected, reply) in [
                 (
-                    "j/clients",
-                    r#"[{"address":"0x123","class":"shelllist-captive-portal"}]"#,
+                    "j/clients".into(),
+                    r#"[{"address":"0x123","class":"shelllist-captive-portal"}]"#.to_owned(),
+                ),
+                ("j/status".into(), r#"{"configProvider":"lua"}"#.into()),
+                ("j/version".into(), r#"{"version":"0.57.1"}"#.into()),
+                (
+                    format!("eval {}", shelllist_hyprland::capabilities::probe()),
+                    "ok".into(),
                 ),
                 (
-                    "dispatch hl.dsp.window.move({ workspace = '3', follow = false, window = 'address:0x123' })",
-                    "unknown dispatcher",
+                    format!(
+                        "eval {}",
+                        shelllist_hyprland::lua::move_window("0x123", "3").unwrap()
+                    ),
+                    "ok".into(),
                 ),
-                ("dispatch movetoworkspacesilent 3,address:0x123", "ok"),
-                ("dispatch hl.dsp.focus({ window = 'address:0x123' })", "ok"),
+                (
+                    format!(
+                        "eval {}",
+                        shelllist_hyprland::lua::focus_window("0x123").unwrap()
+                    ),
+                    "ok".into(),
+                ),
             ] {
                 let (mut stream, _) = socket.accept().await.unwrap();
                 let mut command = String::new();
