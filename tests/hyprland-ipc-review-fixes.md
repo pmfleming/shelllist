@@ -39,7 +39,9 @@ Local `docs/` remains ignored. No deployment, service restart or push is require
 
 ## Evidence and closure
 
-Pending implementation. Each closure below will identify checks and commits.
+The scoped fix plan is complete. All changes are committed locally. Named
+lifecycle extensions and physical/production rollout checks remain explicitly
+deferred as described below.
 
 ### Reads, handoffs and named identities closed
 
@@ -61,3 +63,52 @@ Pending implementation. Each closure below will identify checks and commits.
   needs a protocol/guard design, rather than weakening existing safety checks.
 - Portal formatting is corrected. Local original-plan status and named-workspace
   assumptions were updated without tracking `docs/`.
+
+
+### Commit map
+
+| Review item | Repository and fix commits |
+|---|---|
+| 1 — read isolation | bar `eb314b7` |
+| 3 — manual move cancellation | bar `24c38a9` |
+| 2 — named identity, reads and routing | framework `c971521`, `8d4a773`; bar `8a252d4`; app `d8dc2ab`; Shelllist `9715eff3` |
+| 4 — production capability scope | framework `3c72b4d` |
+| 5 — client/cache reuse | app `62b78e9` |
+| 6 — version suffixes | framework `e12047a` |
+| 7 — formatting | Shelllist `9715eff3`; latch deduplication deliberately deferred |
+| 8 — leftovers | legacy special-ID heuristics removed with named identity; urgency wire field retained |
+
+### Final checks
+
+All Nix development commands used `--no-write-lock-file`; no lock file changed.
+
+- Framework: `cargo fmt --check`, warning-denied workspace/all-target clippy,
+  full locked workspace tests pass. The Hyprland crate has 34 passing unit tests.
+- Bar: formatting, warning-denied all-target clippy and all locked tests pass:
+  330 library and 34 integration tests; eight opt-in tests remain ignored.
+- App: formatting, warning-denied all-target clippy and all locked tests pass:
+  67 library and 22 session tests, plus the subprocess helper; ten opt-in/helper
+  entries remain ignored in their ordinary harnesses.
+- Portal: formatting and five locked tests pass.
+- Actual Qt WorkspaceStrip interaction: five checks pass, including a named
+  active workspace with no synthetic numbered selection and a real pointer
+  click. The test used Qt 6.11.1, matching import paths and the application's
+  font configuration. Initial ad-hoc runs exposed missing Qt imports/fonts and
+  a test click before layout settled; the final test waits for rendering.
+- Private installed Hyprland 0.57.1 acceptance passes after the final identity
+  guard change, covering named/special reads/events and numbered safety guards.
+  Portal tests were also rerun after that change. The final full consumer suites
+  preceded only that narrow parser/selector hardening; all affected framework
+  tests and warning-denied framework clippy were rerun afterwards.
+- Logs: `/tmp/{framework,bar,app,portal}-ipc-review-final.log`,
+  `/tmp/{app,bar}-ipc-review-final-clippy.log`,
+  `/tmp/framework-ipc-review-invalid-identity.log`,
+  `/tmp/framework-ipc-review-final-guard-acceptance.log`, and
+  `/tmp/shelllist-ipc-review-workspace-qt.log`.
+
+No system rebuild, production service restart, production compositor restart,
+push, hardware recovery check or real non-UTF-8-title experiment was performed.
+The default bar strip and temporary lifecycle remain numbered. App launches from
+named contexts with the temporary lifecycle enabled still require a future
+versioned owner-context/reservation design; errors are not bypassed. These limits
+are intentional deferrals, not claims of full named-lifecycle support.
