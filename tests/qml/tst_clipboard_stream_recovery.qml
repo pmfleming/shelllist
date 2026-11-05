@@ -131,6 +131,10 @@ DaemonTestCase {
         reply(b, "effect", {operation: operation("started", 1)});
         event(peer, "clipboard.operation", "started", {operation: operation("started", 1)});
         compare(peer.events.length, 0, "socket owner sharing is not consumer operation ownership");
+        event(b, "clipboard.operation", "progress", {operation: operation("progress", 1)});
+        event(b, "clipboard.operation", "progress", {operation: Object.assign(operation("progress", 9), {_publication: stamp(9,"foreign-epoch")})});
+        compare(b.requestPolicy.operations.owned.revision,1); verify(b.requestPolicy.operations.owned.running);
+        compare(b.events.length,0,"duplicate and foreign-epoch progress cannot acquire a new watermark");
         calls = [];
         event(b, "clipboard.operation", "gap", {});
         compare(calls.length, 1);

@@ -44,3 +44,8 @@ never rolls back state or requests recovery. Recovery rejects the old owner's
 frames; a replacement owner must provide an initial zero-base frame. Same-owner
 new epochs require the previous counter to be exhausted. No rejected frame may
 consume source, epoch or revision; gap notification remains idempotent.
+
+Clipboard receipt admission validates action, epoch and revision before entering
+the retention owner. Retention copies the operation map once, trims only completed
+entries, keeps running work and the just-admitted receipt, then publishes once.
+Unknown/terminal results retain the existing no-replay and polling semantics.

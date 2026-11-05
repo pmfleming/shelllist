@@ -72,6 +72,19 @@ Item {
         historyRevision = stamp.revision;
         return envelope;
     }
+    // Retention never evicts running work or the receipt being admitted. Build
+    // one unpublished map and publish it only after the bounded trim.
+    function retainOperation(keepId: string, record: var): void {
+        const next = Object.assign({}, operations);
+        next[keepId] = record;
+        const ids = Object.keys(next);
+        let excess = ids.length - 64;
+        for (const id of ids) {
+            if (excess <= 0) break;
+            if (!next[id].running && id !== keepId) { delete next[id]; excess--; }
+        }
+        operations = next;
+    }
     function acceptOperation(operation: var, initial: bool): bool {
         if (!operation || typeof operation.id !== "string" || !operation.id
                 || typeof operation.action !== "string" || typeof operation.status !== "string"
@@ -88,16 +101,9 @@ Item {
             return false;
         }
         if (previous && (!previous.running || previous.epoch !== stamp.epoch || stamp.revision <= previous.revision)) return false;
-        const next = Object.assign({}, operations, {[operation.id]: {
+        retainOperation(operation.id, {
             epoch: stamp.epoch, revision: stamp.revision, running: running(operation), action: operation.action
-        }});
-        const ids = Object.keys(next);
-        let excess = ids.length - 64;
-        for (const id of ids) {
-            if (excess <= 0) break;
-            if (!next[id].running && id !== operation.id) { delete next[id]; excess--; }
-        }
-        operations = next;
+        });
         if (operation.status === "unknown") {
             operationUncertain(operation.id, "Clipboard operation outcome is unknown; do not replay");
             return false;

@@ -54,6 +54,22 @@ cyclomatic +4, cognitive +2, effort +13. The gain is explicit state-policy phase
 and a much smaller mutation entrypoint, not fewer protocol decisions. Two test
 lines extend an existing case; registration count is unchanged.
 
-## 3–5
+## 3. Clipboard operation admission/retention — closed
+
+`retainOperation` builds one unpublished map, trims completed entries without
+removing running work or the admitted record, then publishes once. Admission
+keeps metadata, action, ownership, epoch and monotonic-revision guards. Replacing
+the computed-key patch object removes one temporary object per accepted receipt;
+uncertain native work and terminal/no-replay behavior are unchanged.
+
+The existing owned-status journey additionally rejects duplicate and foreign-epoch
+progress without consuming its watermark or releasing its running guard.
+Validation: stream recovery **14 passes**, native controller recovery **24 passes**,
+strict changed-file lint and whitespace checks pass. Admission cognitive /
+cyclomatic / effort **22/21/98 → 16/17/75**; retention is **6/5/27**, included in
+aggregates. Combined cognitive is unchanged, cyclomatic +1 and effort +4. Four
+assertion/setup lines extend an existing journey; no new registered case.
+
+## 4–5
 
 Pending implementation; each item is committed only after its focused checks.
