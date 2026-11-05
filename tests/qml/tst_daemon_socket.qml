@@ -369,6 +369,9 @@ TestCase {
             compare(cleanup ? f.transport.pendingControls : f.transport.pendingCalls, 1);
             f.transport.endpoint.deliver(JSON.stringify({kind: "response", id: wire, ok: true, response: response, route: route}));
             compare(f.client.replies.length, 2, "duplicate late receipt cannot regain authority");
+            f.transport.endpoint.deliver(JSON.stringify({kind: "response", id: wire, ok: true, response: response, route: Object.assign({}, route, {consumerId: "foreign"})}));
+            compare(f.client.replies.length, 2); compare(f.client.failures, 0, "an ineligible duplicate is ignored before route validation");
+            compare(f.transport.pendingBytes, bytes);
         }
     }
     function test_controlByteBudgetIsBoundedSeparately() {

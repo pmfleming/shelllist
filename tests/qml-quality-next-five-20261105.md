@@ -70,6 +70,22 @@ cyclomatic / effort **22/21/98 → 16/17/75**; retention is **6/5/27**, included
 aggregates. Combined cognitive is unchanged, cyclomatic +1 and effort +4. Four
 assertion/setup lines extend an existing journey; no new registered case.
 
-## 4–5
+## 4. Socket reply eligibility/disposition — closed
 
-Pending implementation; each item is committed only after its focused checks.
+`responseRecord` owns correlation, shutdown, written-record eligibility, late
+resource restrictions and captured route/payload validation. `receive` retains
+parsing, event delivery and the exact uncertain-credit/disposition ordering.
+The late-resource journey now sends a foreign-route duplicate after its one late
+acknowledgement: it must be ignored without delivering, granting credit or
+retiring the healthy owner. Both subscription and cleanup lanes are exercised.
+
+Validation: socket **22 passes**, cleanup **32 passes**, bridge **11 passes**,
+strict changed-file lint and whitespace checks pass. Socket `receive` cognitive /
+cyclomatic / effort **24/24/119 → 10/10/57**; eligibility is **15/16/71**, retained
+in totals. Combined function sums rise by 1 cognitive, 2 cyclomatic and 9 effort;
+the gain is a focused delivery transaction with an explicit eligibility boundary,
+not a claim of fewer wire rules. Three test lines extend an existing case.
+
+## 5
+
+Pending implementation; committed only after focused and combined checks.

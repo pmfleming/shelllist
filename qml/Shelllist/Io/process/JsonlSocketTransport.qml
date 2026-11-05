@@ -216,6 +216,33 @@ QtObject {
             && left.kind === right.kind && left.generation === right.generation;
     }
 
+    // Correlation/eligibility precede delivery. Ineligible late/duplicate records
+    // cannot deliver, grant credit, or turn an ignored reply into a route failure.
+    function responseRecord(message: var): var {
+        if (!Routing.responseCorrelationValid(message)) {
+            finish(1, "Invalid socket response correlation");
+            return null;
+        }
+        if (stopping && message.id === shutdownId && message.ok && message.response?.shutdown) {
+            finish(0, "");
+            return null;
+        }
+        const wireId = message.id;
+        const record = pending[wireId];
+        if (!record || !record.dispatched)
+            return null; // duplicate or never written; cannot grant credit/deliver
+        // A late resource receipt can establish cleanup responsibility only.
+        // It cannot release uncertain native credit or regain view authority.
+        if (record.uncertain && (record.lateResourceSeen || !message.ok
+                || (record.operation !== "subscribe" && !record.cleanup)))
+            return null;
+        if (!sameRoute(record.route, message.route || null) || !Routing.responsePayloadValid(message)) {
+            finish(1, "Invalid socket response identity or outcome; outcome unknown");
+            return null;
+        }
+        return record;
+    }
+
     function receive(line) {
         let message;
         try {
@@ -232,32 +259,13 @@ QtObject {
             messageReceived(message);
             return;
         }
-        if (!Routing.responseCorrelationValid(message)) {
-            finish(1, "Invalid socket response correlation");
-            return;
-        }
-        if (stopping && message.id === shutdownId && message.ok && message.response?.shutdown) {
-            finish(0, "");
-            return;
-        }
+        const record = responseRecord(message);
+        if (!record) return;
         const wireId = message.id;
-        const record = pending[wireId];
-        if (!record || !record.dispatched)
-            return; // duplicate or never written; cannot grant credit/deliver
-        // A late resource receipt can establish cleanup responsibility only.
-        // It cannot release uncertain native credit or regain view authority.
-        const lateResource = record.uncertain;
-        if (lateResource && (record.lateResourceSeen || !message.ok
-                || (record.operation !== "subscribe" && !record.cleanup)))
-            return;
-        if (!sameRoute(record.route, message.route || null) || !Routing.responsePayloadValid(message)) {
-            finish(1, "Invalid socket response identity or outcome; outcome unknown");
-            return;
-        }
         message.id = record.id;
         // Timeout/error receipts do NOT prove the native retained work/permit
         // ended. Keep its credit and original deadline until owner retirement.
-        if (lateResource)
+        if (record.uncertain)
             record.lateResourceSeen = true;
         else if (!message.ok && message.outcome === "outcome-unknown")
             record.uncertain = true;

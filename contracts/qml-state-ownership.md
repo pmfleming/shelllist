@@ -49,3 +49,8 @@ Clipboard receipt admission validates action, epoch and revision before entering
 the retention owner. Retention copies the operation map once, trims only completed
 entries, keeps running work and the just-admitted receipt, then publishes once.
 Unknown/terminal results retain the existing no-replay and polling semantics.
+
+Socket reply eligibility completes before disposition. Malformed correlation
+retires the socket; absent/unwritten or ineligible duplicate receipts are ignored.
+An eligible receipt must match its captured route and payload contract before it
+can deliver or change retained credit. Late cleanup receipts never regain credit.
