@@ -426,6 +426,15 @@ DaemonTestCase {
         tryCompare(s.owner.selectedItem,"revision",2);compare(s.owner.selectedItem.task.completed,true);
         compare(Agenda.AgendaRepository.records[summary.id].revision,2);compare(mutations().length,0);
         compare(s.owner.detailError,"");compare(s.owner.error,"");verify(s.owner.canWrite(s.owner.selectedItem));
+        s.owner.requestItem(s.owner.selectedItem, false);
+        const stale=calls.filter(call=>call.method==="agenda.get").slice(-1)[0];
+        verify(Agenda.AgendaRepository.accept(item("peer"),3));
+        respond(stale,{item:item(summary.id,"task",3),catalog_revision:2});
+        compare(s.owner.selectedItem.revision,2,"an older catalog cannot publish a newer document");
+        compare(Agenda.AgendaRepository.catalogRevision,3);verify(s.owner.detailError.length>0);
+        s.owner.requestItem(s.owner.selectedItem, false);
+        respond(calls.filter(call=>call.method==="agenda.get").slice(-1)[0],{item:item(summary.id,"task",3),catalog_revision:3});
+        compare(s.owner.selectedItem.revision,3);compare(s.owner.detailError,"");compare(mutations().length,0);
     }
     function test_lazySummaryDetailsAndMalformedMutationTarget() {
         const full=item("lazy");

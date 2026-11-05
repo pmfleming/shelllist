@@ -33,3 +33,8 @@ alias. The store owns copy-on-write map updates; Agenda retains immutable begin
 snapshots, request IDs, revisions, acknowledgement and explicit retry/rebase.
 Bluetooth operation maps reuse the existing `BtApi` copy helpers. These changes
 do not change field transactions, native key routing or domain safety guards.
+
+Full Agenda detail replies validate document identity and catalog/cache watermarks
+through the repository's shared admission predicate. The chooser separately owns
+visible-summary freshness, selection and captured completion intent. Accepting a
+newer inspection document never rebases an earlier completion action implicitly.

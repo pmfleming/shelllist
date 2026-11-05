@@ -125,6 +125,14 @@ Item {
         return validRecordHeader(item) && item.summary !== true && validDocumentContent(item)
             && (item.kind === "event" ? validEventDocument(item) : validTaskDocument(item));
     }
+    // Full-detail admission shares the repository's document and watermark
+    // authority. Selection and captured action intent stay with the controller.
+    function validDetailResult(context: var, data: var): bool {
+        const item = data?.item;
+        return validItem(item) && item.id === context.id && item.kind === context.recordKind
+            && item.revision >= context.revision && integer(data.catalog_revision)
+            && data.catalog_revision >= catalogRevision && !(records[context.id]?.revision > item.revision);
+    }
     function validListPage(data: var, limit: int): bool {
         return !!data && validSourceDiagnostics(data) && Array.isArray(data.items) && data.items.length <= limit && data.items.every(validSummary)
             && integer(data.catalog_revision) && text(data.today) && text(data.timezone) && (data.next_cursor === null || text(data.next_cursor));

@@ -156,9 +156,8 @@ Ui.ChooserController {
     function receiveItem(context: var, data: var, message: string): void {
         if (context.generation !== detailGeneration || !uiActive) return;
         detailLoading = false;
-        if (message || !AgendaRepository.validItem(data?.item) || data.item.id !== context.id || data.item.kind !== context.recordKind || data.item.revision < context.revision
-            || !AgendaRepository.integer(data.catalog_revision) || data.catalog_revision < AgendaRepository.catalogRevision
-            || AgendaRepository.records[context.id]?.revision > data.item.revision || items.find(item => item.id === context.id)?.revision > data.item.revision) {
+        if (message || !AgendaRepository.validDetailResult(context, data)
+            || items.find(item => item.id === context.id)?.revision > data.item.revision) {
             detailError = message || qsTr("Invalid or obsolete agenda details");
             if (context.completeAfter) error = detailError;
             if (detailsOpen && selectedSummary?.id !== context.id) requestSelected();
