@@ -1,5 +1,11 @@
 # Test scope
 
+The [2026-11-05 QML quality review](qml-quality-review-20261105.md) records the
+current matched Lens refactor, three passing fault/restoration experiments and
+test ownership changes: 731 Qt passes, zero failures, one existing renderer skip,
+with two fewer executed behaviors and 42 fewer test-code lines. These counts are
+not branch coverage; native protocol and domain safety owners remain intact.
+
 The [clipboard pin-order contract](../contracts/clipboard-pin-order.md) is covered
 by `tst_clipboard_pins.qml` and the sibling clip-daemon's database/API tests:
 native paging order, passive group dividers, selection and copy identity.
