@@ -103,6 +103,10 @@ Ui.ProviderChooserController {
             refresh();
         }
     }
+    function resetSearchScope(): void {
+        historyRevision = "";
+        selectionIndexAfterRefresh = -1;
+    }
     function finishEditSession(): void {
         if (!detailState.editing)
             return;
@@ -211,6 +215,11 @@ Ui.ProviderChooserController {
     function selectCurrentEntry(currentEntry: var): void {
         if (!selectCurrentAfterRefresh)
             return;
+        if (freshSelection) {
+            selectFirst();
+            selectCurrentAfterRefresh = false;
+            return;
+        }
         if (selectionIndexAfterRefresh >= 0) {
             const retainedIndex = filteredResults.length > 0 ? Math.min(selectionIndexAfterRefresh, filteredResults.length - 1) : 0;
             selectionIndexAfterRefresh = -1;
@@ -299,6 +308,7 @@ Ui.ProviderChooserController {
         const target = entry || actionEntry();
         if (!target || actionInFlight)
             return false;
+        continueInvocation();
         actionInFlight = true;
         activeAction = actionName;
         backend.action("action-" + actionName, target, actionName, sessionId, fileIndex);

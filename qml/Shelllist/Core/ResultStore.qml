@@ -18,6 +18,9 @@ SelectionModel {
     property double lastSearchRankLatencyMs: -1
     property bool rankRequestsEnabled: true
     property bool providerRankedResults: false
+    // A fresh invocation stays at the top across asynchronous catalog/rank
+    // replies until the user starts navigating again.
+    property bool selectFirstOnUpdate: false
     // All ordering, including empty queries, belongs to Rust. Providers with
     // native ranked windows bypass this service without re-sorting their rows.
     // Retain the accepted window while pending; source order is startup-only.
@@ -69,7 +72,9 @@ SelectionModel {
             lastSearchRankLatencyMs = Math.max(0, Date.now() - searchRankRequestedAtMs);
             searchRankRequestedAtMs = 0;
         }
-        if (previous) {
+        if (selectFirstOnUpdate) {
+            selectedIndex = 0;
+        } else if (previous) {
             const retainedIndex = Model.indexByKey(visibleResults, previous.key);
             selectedIndex = retainedIndex >= 0 ? retainedIndex : clampIndex(selectedIndex);
         }
@@ -110,7 +115,7 @@ SelectionModel {
         });
         catalogUpdateStartedAtMs = Date.now();
         sourceResults = retained.concat(normalized);
-        if (resetSelection || !previous) {
+        if (selectFirstOnUpdate || resetSelection || !previous) {
             selectedIndex = 0;
             return;
         }

@@ -201,6 +201,55 @@ DaemonTestCase {
         compare(surface.chooserController.filterText, "z");
         compare(surface.edits, 0);
     }
+    function test_completedInvocationStartsAtTopEvenAfterLateRanking() {
+        const surface = makeSurface();
+        const controller = surface.chooserController;
+        const store = controller.selectionModel;
+        store.rankRequestsEnabled = false;
+        catalog(surface, Array.from({length: 40}, (_, i) => ({id: "a" + i, title: "Alpha " + i})));
+        surface.listItem.focusSearch();
+        keyClick(Qt.Key_A);
+        keyClick(Qt.Key_Down);
+        for (let i = 0; i < 20; i++) keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Right);
+        verify(controller.selectedIndex > 0);
+        verify(controller.detailsOpen);
+        controller.completeInvocation(controller.completionContext());
+        closeInvocation(surface);
+        reopenInvocation(surface);
+        tryVerify(() => surface.listItem.searchFocused);
+        compare(controller.filterText, "");
+        compare(controller.selectedIndex, 0);
+        verify(!controller.detailsOpen);
+        const keys = store.sourceResults.map(row => row.key).reverse();
+        store.applyRustRanking(store.searchOwner, store.searchGeneration, keys);
+        compare(controller.selectedIndex, 0, "late empty-query ranking must not retain the old first result");
+        tryCompare(controller.filteredResultsModel, "count", 40);
+        tryVerify(() => surface.listItem.sessionState().viewport?.key === keys[0]);
+        compare(surface.listItem.sessionState().viewport.offset, 0);
+        verify(surface.listItem.searchFocused);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Down);
+        const selected = controller.selectedResult.key;
+        store.applyRustRanking(store.searchOwner, store.searchGeneration, keys.slice().reverse());
+        compare(controller.selectedResult.key, selected, "new navigation restores ordinary stable selection");
+    }
+
+    function test_continuedBrowsingCancelsCompletedInvocation() {
+        const surface = makeSurface();
+        const controller = surface.chooserController;
+        surface.listItem.focusSearch();
+        keyClick(Qt.Key_A);
+        controller.completeInvocation(controller.completionContext());
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Down);
+        const selected = controller.selectedResult.key;
+        closeInvocation(surface);
+        reopenInvocation(surface);
+        tryVerify(() => surface.listItem.listFocused);
+        compare(controller.filterText, "a");
+        compare(controller.selectedResult.key, selected);
+    }
     function test_readinessResumesFocusButNeverRestoresUnsavedValues() {
         const surface = makeSurface();
         inspectSecondTab(surface);

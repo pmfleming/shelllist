@@ -18,6 +18,9 @@ Io.DaemonBackend {
     // Both annotation and delayed paste outlive the picker. Disconnecting their
     // owner cancels them, so hiding alone must not retire this connection.
     property var pasteDispatches: ({})
+    property string copyRequestId: ""
+    property string copyOperationId: ""
+    property var copyContext: null
     active: controller.uiActive || controller.backgroundOperationInFlight || Object.keys(pasteDispatches).length > 0
     readonly property var eventHandlers: {
         const handlers = ({});
@@ -31,6 +34,7 @@ Io.DaemonBackend {
         handlers[ClipApi.streams.operation] = function (event) {
             const operation = event.data && event.data.operation;
             if (operation) {
+                finishCopy("", operation);
                 controller.applyOperation(operation);
                 if (operation.status !== "started")
                     controller.scheduleRefresh();
@@ -44,6 +48,7 @@ Io.DaemonBackend {
         if (finishPasteWait(id, envelope ? envelope.data : null, error))
             return;
         if (error) {
+            if (id === copyRequestId) clearCopyCompletion();
             controller.handleFailure(id, error);
             return;
         }
@@ -51,6 +56,7 @@ Io.DaemonBackend {
     }
 
     function applyResponse(id: string, data: var): void {
+        if (data.operation) finishCopy(id, data.operation);
         const handlers = ({
                 history: function (value) {
                     controller.applyHistory(id, value);
@@ -117,18 +123,20 @@ Io.DaemonBackend {
     }
     function waitForPaste(sessionId: string): void {
         const id = nextRequestId("paste-wait");
-        pasteDispatches = Object.assign({}, pasteDispatches, {[id]: sessionId});
+        pasteDispatches = Object.assign({}, pasteDispatches, {[id]: {sessionId: sessionId, context: controller.completionContext()}});
         if (!call(id, ClipApi.methods.sessionWait, {session_id: sessionId}))
             finishPasteWait(id, null, "Paste dispatch outcome is unknown; paste manually if needed");
     }
     function finishPasteWait(id: string, data: var, error: string): bool {
         if (!id.startsWith("paste-wait-"))
             return false;
-        const sessionId = pasteDispatches[id];
-        if (!sessionId)
+        const dispatch = pasteDispatches[id];
+        if (!dispatch)
             return true; // A retired receipt must not affect a reopened picker.
-        if (error || data?.session?.id !== sessionId || data?.session?.state !== "finished")
+        if (error || data?.session?.id !== dispatch.sessionId || data?.session?.state !== "finished")
             controller.status = error || "Paste dispatch outcome is unknown; paste manually if needed";
+        else
+            controller.completeInvocation(dispatch.context);
         const next = Object.assign({}, pasteDispatches);
         delete next[id];
         pasteDispatches = next;
@@ -140,6 +148,12 @@ Io.DaemonBackend {
         });
     }
     function action(id: string, entry: var, actionName: string, sessionId: string, fileIndex: var): bool {
+        if (actionName === "copy") {
+            clearCopyCompletion();
+            id = nextRequestId("action-copy");
+            copyRequestId = id;
+            copyContext = controller.completionContext();
+        }
         return call(id, ClipApi.methods.entryAction, {
             entry_id: entry.id,
             revision: entry.revision,
@@ -147,6 +161,23 @@ Io.DaemonBackend {
             session_id: sessionId || null,
             file_index: fileIndex === undefined ? null : fileIndex
         });
+    }
+    function clearCopyCompletion(): void {
+        copyRequestId = "";
+        copyOperationId = "";
+        copyContext = null;
+    }
+    function finishCopy(id: string, operation: var): void {
+        if (!copyContext || operation.action !== "copy") return;
+        if (id && id === copyRequestId) {
+            copyRequestId = "";
+            copyOperationId = operation.id;
+        } else if (!copyOperationId || operation.id !== copyOperationId) {
+            return;
+        }
+        if (["started", "progress"].includes(operation.status)) return;
+        if (operation.status === "completed") controller.completeInvocation(copyContext);
+        clearCopyCompletion();
     }
     function deleteEntries(id: string, entries: var): bool {
         return call(id, ClipApi.methods.entriesDelete, {
@@ -209,6 +240,7 @@ Io.DaemonBackend {
         routeEvent(event, eventHandlers);
     }
     onSendFailed: function (id, message) {
+        if (id === copyRequestId) clearCopyCompletion();
         // A failed status read says nothing about the accepted effect. Its
         // recovery policy already reports uncertainty, not "effect not sent".
         if (!finishPasteWait(id, null, message) && !id.startsWith("clip-status-"))
@@ -216,6 +248,7 @@ Io.DaemonBackend {
     }
     onTransportFailed: function (message) {
         pasteDispatches = ({});
+        clearCopyCompletion();
         controller.handleTransportFailure(message);
     }
     onTransportReady: controller.handleTransportReady()

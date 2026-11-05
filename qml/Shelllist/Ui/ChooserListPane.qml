@@ -111,7 +111,10 @@ ColumnLayout {
             pane.applyFilter(text);
         }
         onKeyPressed: function (event) {
-            pane.chooserController.navigationInteracted();
+            if (event.key === Qt.Key_Escape)
+                pane.chooserController.noteDismissal();
+            else
+                pane.chooserController.navigationInteracted();
             pane.chooserController.navigation.handleSearchKey(event);
         }
         onIconClicked: pane.iconClicked()

@@ -99,6 +99,10 @@ Ui.ProviderChooserController {
             refresh(false);
         }
     }
+    function resetSearchScope(): void {
+        categoryFilter = "";
+        catalogRevision = -1;
+    }
     function deactivateUi(): void {
         deactivateUiState();
         // Submitted actions retain their owner/subscription while hidden.
@@ -116,6 +120,7 @@ Ui.ProviderChooserController {
     function selectCategory(value: string): void {
         if (categoryFilter === value)
             return;
+        continueInvocation();
         categoryFilter = value;
         refresh(false);
     }

@@ -32,13 +32,17 @@ Rectangle {
         return item ? {key: controller.resultKeyAt(index), offset: list.contentY - item.y} : null;
     }
     function restoreViewport(state: var): void {
-        viewportBookmark = state && state.key ? state : null;
+        viewportBookmark = state && (state.key || state.top) ? state : null;
         Qt.callLater(revealSelection);
     }
     function applyViewport(): bool {
         if (!viewportBookmark)
             return false;
         const bookmark = viewportBookmark;
+        if (bookmark.top) {
+            list.positionViewAtBeginning();
+            return true;
+        }
         const index = controller.resultIndexForKey(bookmark.key);
         if (index < 0) {
             viewportBookmark = null;
@@ -76,11 +80,13 @@ Rectangle {
         list.positionViewAtBeginning();
     }
     function pick(rowIndex) {
+        controller.navigationInteracted();
         viewportBookmark = null;
         controller.select(rowIndex);
         focusList();
     }
     function toggleDetails(rowIndex) {
+        controller.navigationInteracted();
         viewportBookmark = null;
         controller.select(rowIndex);
         controller.toggleDetails();

@@ -1,5 +1,18 @@
 # Test scope
 
+The [chooser reopening contract](../contracts/chooser-reopening.md) defines the
+Applications/Clipboard completion boundaries. Native cases in
+`tst_chooser_memory.qml`, `tst_application_actions.qml` and
+`tst_clipboard_recovery.qml` cover clean next-opening search/focus/selection,
+asynchronous results, continued browsing and late operation isolation. They
+retain the existing operation recovery and field transaction coverage.
+
+Reopening validation: the full serial Qt suite passed **728 cases, 0 failed,
+1 existing software-renderer skip**; strict QML lint passed and the panel UI
+review reported no new numeric/style prompts. An initial concurrent run hit an
+Applications settings layout-timing assertion; both its isolated rerun and the
+final serial suite passed without changing that test.
+
 The [project-completion queue](completion-orchestration.md) records the current
 worker isolation, two-commit quality workflow and orchestration checks. It is not
 runtime acceptance or approval of unfinished worker changes. The

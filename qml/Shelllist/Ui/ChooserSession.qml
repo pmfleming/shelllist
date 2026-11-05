@@ -80,7 +80,7 @@ Item {
         controller.viewMemory.synchronize();
         const saved = controller.focusMemory;
         restoring = true;
-        listItem.restoreSession(saved.list ? {selection: saved.list.selection,
+        listItem.restoreSession(saved.clean ? {viewport: {top: true}} : saved.list ? {selection: saved.list.selection,
             viewport: saved.selectedKey === selectedKey ? saved.list.viewport : null} : null);
         const targetRegion = restorationRegion(saved);
         pending = targetRegion === "details" && !ready;
@@ -145,14 +145,20 @@ Item {
     }
     Connections {
         target: session.navigation
-        function onInteractionRequested(): void { session.cancel(); }
+        function onInteractionRequested(): void {
+            session.controller.continueInvocation();
+            session.cancel();
+        }
         function onPopupOpenChanged(): void {
             if (session.navigation.popupOpen)
                 session.interruptRestore();
         }
         function onNativeFocusChanged(): void {
-            if (!session.navigation.applyingMemory)
+            if (!session.navigation.applyingMemory) {
+                if (session.invocationActive && !session.restoring)
+                    session.controller.continueInvocation();
                 session.interruptRestore();
+            }
         }
     }
     Connections {

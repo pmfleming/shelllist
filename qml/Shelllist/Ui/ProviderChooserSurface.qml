@@ -69,7 +69,7 @@ ChooserSurface {
         regions[next]();
     }
     function dismiss(): void {
-        chooserController.navigationInteracted();
+        chooserController.noteDismissal();
         if (chooserController.detailsOpen && (detailsNavigation.activeFocus || detailsNavigation.popupOpen))
             detailsNavigation.retreat();
         else

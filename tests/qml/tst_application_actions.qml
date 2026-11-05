@@ -229,6 +229,10 @@ DaemonTestCase {
         findChild(panel,"applicationPage").revealItem(action);waitForRendering(panel);mouseClick(action.button);
         const call=lastCall(Api.methods.execute);compare(call.params.target_id,"Alpha");compare(call.params.action,"desktop-action");compare(call.params.desktop_action_id,"action-127");
         compare(pager.visibleItems.length,8);compare(calls.filter(call=>call.method===Api.methods.execute).length,1);
+        accept(call);
+        event(call, "completed");
+        compare(panel.dismissals, 1);
+        verify(panel.controller.cleanReopenPending);
     }
     function test_close_usesNativeObservationAndRestoresCommandFocus() {
         const panel = makePanel();
@@ -349,6 +353,8 @@ DaemonTestCase {
     }
     function test_reopenedPanelIsNotDismissedByOldOperation() {
         const panel = makePanel();
+        panel.listItem.focusSearch();
+        keyClick(Qt.Key_A);
         keyClick(Qt.Key_Return);
         const call = lastCall(Api.methods.execute);
         accept(call);
@@ -360,6 +366,67 @@ DaemonTestCase {
         compare(panel.dismissals, 1);
         verify(panel.controller.uiActive);
         verify(!panel.controller.actionInFlight);
+        verify(!panel.controller.cleanReopenPending);
+        compare(panel.controller.filterText, "a");
+    }
+    function test_handoffReopensClean_data() {
+        return [{tag: "activate", modifiers: Qt.NoModifier},
+            {tag: "launch", modifiers: Qt.ShiftModifier},
+            {tag: "focus-window", focusWindow: true}];
+    }
+    function test_handoffReopensClean(data) {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.categoryFilter = "shell";
+        panel.listItem.focusSearch();
+        keyClick(Qt.Key_A);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Right);
+        if (data.focusWindow) {
+            const windowId = c.selectedApplication.instances[0].id;
+            tryVerify(() => findChild(panel, "focusWindow-" + windowId) !== null);
+            mouseClick(findChild(panel, "focusWindow-" + windowId));
+        } else {
+            keyClick(Qt.Key_Return, data.modifiers);
+        }
+        const call = lastCall(Api.methods.execute);
+        accept(call);
+        compare(panel.dismissals, 0, "admission alone is not handoff");
+        verify(!c.cleanReopenPending);
+        if (data.focusWindow)
+            event(call, "completed");
+        else
+            event(call, "running", {launch_backend: "uwsm", launch_scope: "fixture.scope", revision: 2});
+        compare(panel.dismissals, 1);
+        compare(c.filterText, "a", "the completed view is only reset on next activation");
+        c.activateUi("1");
+        c.restoreUiFocus();
+        tryVerify(() => panel.listItem.searchFocused);
+        compare(c.filterText, "");
+        compare(c.categoryFilter, "");
+        compare(c.selectedIndex, 0);
+        verify(!c.detailsOpen);
+        compare(c.actionInFlight, !data.focusWindow, "presentation reset must not retire the submitted operation");
+        if (!data.focusWindow) event(call, "completed", {revision: 3});
+        verify(!c.cleanReopenPending, "late completion cannot reset a newer invocation");
+        compare(panel.dismissals, 1);
+    }
+    function test_rejectedLaunchKeepsSearch() {
+        const panel = makePanel();
+        const c = panel.controller;
+        panel.listItem.focusSearch();
+        keyClick(Qt.Key_A);
+        keyClick(Qt.Key_Return);
+        const call = lastCall(Api.methods.execute);
+        reply(call, {}, "Launch rejected");
+        keyClick(Qt.Key_Escape);
+        compare(panel.dismissals, 1);
+        c.activateUiState("1");
+        c.restoreUiFocus();
+        tryVerify(() => panel.listItem.searchFocused);
+        compare(c.filterText, "a");
+        verify(!c.cleanReopenPending);
     }
     function test_statusRecoveryIsOwnedReadOnlyAndDoesNotReplay() {
         const panel = makePanel();

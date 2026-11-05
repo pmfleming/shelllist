@@ -79,7 +79,10 @@ Item {
         handleSearchDirection(event);
     }
     function handleListKey(event) {
-        controller.navigationInteracted();
+        if (event.key === Qt.Key_Escape)
+            controller.noteDismissal();
+        else
+            controller.navigationInteracted();
         if (blocked)
             return;
         if (handlePrimary(event) || handleClose(event) || handleSearchText(event))

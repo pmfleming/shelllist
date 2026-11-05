@@ -8,6 +8,7 @@ ChooserController {
     required property Core.Provider provider
     property alias filterText: results.queryText
     property alias selectedIndex: results.selectedIndex
+    readonly property bool freshSelection: results.selectFirstOnUpdate
     property int filterRefreshDelay: 0
     property bool providerRankedResults: false
     property int scheduledRefreshDelay: 0
@@ -15,6 +16,16 @@ ChooserController {
     property bool sharedScreenshotEnabled: false
     property bool sharedScreenshotBlocked: actionInFlight
     property string sharedScreenshotStartMessage: "Capturing window…"
+
+    function resetSearchScope(): void {}
+    function resetForReopen(): void {
+        resetPresentationForReopen();
+        filterText = "";
+        results.selectFirstOnUpdate = true;
+        selectFirst();
+        resetSearchScope();
+    }
+    onInvocationContinued: results.selectFirstOnUpdate = false
 
     readonly property bool sharedScreenshotInFlight: sharedScreenshotCapture.inFlight
     readonly property var filteredResults: results.visibleResults
@@ -77,6 +88,7 @@ ChooserController {
     }
 
     onFilterTextChanged: {
+        continueInvocation();
         if (uiActive && filterRefreshDelay > 0)
             filterRefreshTimer.restart();
     }

@@ -200,6 +200,15 @@ DaemonTestCase {
         compare(calls.filter(call => call.method === "clipboard.session.hidden").length, data.prepared && !data.stale && !data.outcome ? 1 : 0);
         compare(details.editError, "", "saved edits are not retried for paste-preparation failure");
         verify(!details.saveInFlight);
+        if (data.prepared && !data.stale && !data.outcome) {
+            controller.hideRequested.connect(() => controller.deactivateUi());
+            reply(controller, "session-hidden", {session: {id: "paste-session", state: "hidden"}});
+            const dispatch = calls.find(call => call.method === "clipboard.session.wait");
+            verify(!!dispatch);
+            verify(!controller.cleanReopenPending);
+            reply(controller, dispatch.route.localId, {session: {id: "paste-session", state: "finished"}});
+            verify(controller.cleanReopenPending, "native save-and-paste shares the confirmed dispatch boundary");
+        }
     }
 
     function test_pasteKeepsOwnerAliveAfterHiding_data() {
@@ -207,7 +216,9 @@ DaemonTestCase {
             {tag: "normal", action: "paste"},
             {tag: "reopened", action: "image-as-file", reopen: true},
             {tag: "disconnect", action: "image-as-file", disconnect: true},
-            {tag: "failed-wait", action: "image-as-file", error: "Session cancelled"}];
+            {tag: "failed-wait", action: "image-as-file", error: "Session cancelled"},
+            {tag: "wrong-session", action: "paste", wrongSession: true},
+            {tag: "unconfirmed", action: "paste", unconfirmed: true}];
     }
     function test_pasteKeepsOwnerAliveAfterHiding(data) {
         const controller = makeController();
@@ -219,6 +230,8 @@ DaemonTestCase {
         const panel = createTemporaryObject(contentFactory, testCase, {controller: controller, width: 650, height: 900});
         views = views.concat([panel]);
         tryVerify(() => panel.listItem !== null);
+        panel.listItem.focusSearch();
+        keyClick(Qt.Key_A);
         panel.listItem.focusList();
         keyClick(Qt.Key_Return, data.action === "image-as-file" ? Qt.ShiftModifier : Qt.NoModifier);
         const action = calls.find(call => call.method === "clipboard.entry.action");
@@ -231,6 +244,7 @@ DaemonTestCase {
         verify(controller.uiActive, "publication alone does not hide the picker");
         reply(controller, "session-hidden", {session: {id: "paste-session", state: "hidden"}});
         verify(!controller.uiActive);
+        verify(!controller.cleanReopenPending, "hidden is not a successful paste");
         verify(backend.active, "hiding must not cancel delayed paste through owner loss");
         compare(controller.sessionId, "");
         const waitCall = calls.find(call => call.method === "clipboard.session.wait");
@@ -238,7 +252,7 @@ DaemonTestCase {
         compare(waitCall.params.session_id, "paste-session");
         verify(!calls.some(call => call.method === "clipboard.session.end"));
         if (data.reopen) {
-            controller.uiActive = true;
+            controller.activateUiState("");
             controller.sessionId = "new-session";
         }
         if (data.disconnect) {
@@ -247,11 +261,89 @@ DaemonTestCase {
             backend.transportReady();
             compare(calls.length, 0, "hidden recovery must not replay paste or wait");
         }
-        reply(controller, waitCall.route.localId, {session: {id: "paste-session", state: "finished"}}, data.error);
+        reply(controller, waitCall.route.localId, {session: {id: data.wrongSession ? "other" : "paste-session", state: data.unconfirmed ? "hidden" : "finished"}}, data.error);
         compare(Object.keys(backend.pasteDispatches).length, 0);
         compare(backend.active, !!data.reopen);
         compare(controller.sessionId, data.reopen ? "new-session" : "");
         if (data.error) compare(controller.status, data.error);
+        const clean = !data.reopen && !data.disconnect && !data.error && !data.wrongSession && !data.unconfirmed;
+        compare(controller.cleanReopenPending, clean);
+        if (data.reopen) controller.deactivateUi();
+        controller.activateUi("");
+        controller.restoreUiFocus();
+        compare(controller.filterText, clean ? "" : "a");
+        if (clean) {
+            tryVerify(() => panel.listItem.searchFocused);
+            compare(controller.selectedIndex, 0);
+            verify(!controller.detailsOpen);
+        }
+    }
+
+    function test_copyCompletionControlsNextOpening_data() {
+        return [{tag: "completed", status: "completed", clean: true},
+            {tag: "async-completed", status: "completed", clean: true, async: true},
+            {tag: "failed", status: "failed"},
+            {tag: "cancelled", status: "cancelled"},
+            {tag: "unknown", status: "unknown"},
+            {tag: "browsed-before-reply", status: "completed", beforeReply: true},
+            {tag: "new-search", status: "completed", continued: true},
+            {tag: "new-selection", status: "completed", pointer: true},
+            {tag: "already-reopened", status: "completed", reopened: true}];
+    }
+    function test_copyCompletionControlsNextOpening(data) {
+        const c = makeController();
+        const panel = createTemporaryObject(contentFactory, testCase, {controller: c, width: 650, height: 900});
+        views = views.concat([panel]);
+        tryVerify(() => panel.listItem !== null);
+        c.closeWindowRequested.connect(() => c.deactivateUi());
+        panel.listItem.focusSearch();
+        keyClick(Qt.Key_A);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Return, Qt.ControlModifier);
+        const copy = calls.find(call => call.method === "clipboard.entry.action");
+        verify(!!copy);
+        compare(copy.params.action, "copy");
+        verify(!c.cleanReopenPending);
+        if (data.reopened) {
+            c.deactivateUi();
+            c.activateUiState("");
+        }
+        if (data.beforeReply) panel.listItem.pick(0);
+        reply(c, copy.route.localId, {operation: {id: "copy-owned", action: "copy", status: data.async ? "started" : data.status,
+            _publication: {epoch: "fixture", revision: 1}}});
+        if (data.async) {
+            verify(!c.cleanReopenPending);
+            emitBaseEvent("clip-daemon", copy.route, {protocol: "clip-api", version: 2,
+                stream: "clipboard.operation", event: "completed", data: {operation: {
+                    id: "copy-owned", action: "copy", status: "completed", _publication: {epoch: "fixture", revision: 2}
+                }}});
+        }
+        if (data.continued) {
+            panel.listItem.focusSearch();
+            keyClick(Qt.Key_B);
+        } else if (data.pointer) {
+            // The same row is still a new browsing interaction, not a new copy.
+            panel.listItem.pick(0);
+        }
+        compare(c.filterText, data.continued ? "ab" : "a");
+        keyClick(Qt.Key_Escape);
+        verify(!c.uiActive);
+        c.activateUi("");
+        c.restoreUiFocus();
+        compare(c.filterText, data.clean ? "" : data.continued ? "ab" : "a");
+        if (data.clean) {
+            tryVerify(() => panel.listItem.searchFocused);
+            compare(c.selectedIndex, 0);
+            verify(!c.detailsOpen);
+            // A new first page must not override the clean selection with the
+            // current clipboard entry, which may be further down the history.
+            const entries = ["first", "current"].map(id => ({id: id, revision: 1, kind: "text", preview: id, byte_size: 8}));
+            reply(c, c.activeHistoryQueryId, {_history: {epoch: "fixture", revision: 1},
+                history: {entries: entries, snapshot_revision: "v1", offset: 0, total: 2, current: {id: "current"}}});
+            compare(c.filteredResults.length, 2);
+            compare(c.selectedIndex, 0);
+        }
+        compare(calls.filter(call => call.method === "clipboard.entry.action").length, 1);
     }
 
     function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft_data() {

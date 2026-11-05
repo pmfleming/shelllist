@@ -8,6 +8,9 @@ Item {
     property var focusMemory: ({})
     property bool uiSuspending: false
     property int uiGeneration: 0
+    property int interactionEpoch: 0
+    property bool cleanReopenPending: false
+    onNavigationInteracted: continueInvocation()
     onUiActiveChanged: {
         uiGeneration++;
         if (uiActive)
@@ -56,6 +59,7 @@ Item {
     signal resultsChanged
     signal detailsClosing
     signal navigationInteracted
+    signal invocationContinued
     signal uiSuspensionRequested
     signal restoreSessionFocusRequested
     signal closeWindowRequested
@@ -64,6 +68,35 @@ Item {
     signal focusDetailsRequested
     signal searchTextRequested(string text)
     signal screenshotRequested
+
+    function continueInvocation(): void {
+        interactionEpoch++;
+        cleanReopenPending = false;
+        invocationContinued();
+    }
+    // Escape still interrupts queued focus restoration, but does not undo a
+    // completed task's next-opening policy merely because the user closes it.
+    function noteDismissal(): void {
+        const completed = cleanReopenPending;
+        navigationInteracted();
+        cleanReopenPending = completed;
+    }
+    function completionContext(): var {
+        return {generation: uiGeneration, epoch: interactionEpoch};
+    }
+    function completeInvocation(context: var): void {
+        if (context && context.epoch === interactionEpoch
+                && context.generation === uiGeneration - (uiActive ? 0 : 1))
+            cleanReopenPending = true;
+    }
+    function resetPresentationForReopen(): void {
+        detailsClosing();
+        detailsOpen = false;
+        focusMemory = {region: "search", clean: true};
+    }
+    function resetForReopen(): void {
+        resetPresentationForReopen();
+    }
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
@@ -109,6 +142,10 @@ Item {
     function resultIndexForKey(key: string): int { return -1; }
 
     function activateUiState(workspaceId) {
+        if (!uiActive && cleanReopenPending) {
+            cleanReopenPending = false;
+            resetForReopen();
+        }
         uiSuspending = false;
         uiActive = true;
         currentWorkspaceId = workspaceId || "";

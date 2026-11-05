@@ -62,6 +62,7 @@ Item {
             return false;
         const windows = request.result.payload.instances || [];
         const windowId = (request.action.metadata || {}).windowId;
+        controller.continueInvocation();
         // Keep the submitted native action, not the decorated UI command ID.
         // The same captured identity validates receipts and forbids Close handoff.
         const record = {
@@ -70,6 +71,7 @@ Item {
                 action: {label: request.action.label}},
             operationId: "", recoveryId: params.request_id ? "operation-" + params.request_id : "", statusRequestId: "", status: "", checks: 0, revision: 0,
             generation: controller.uiGeneration, viewEpoch: controller.actionViewEpoch, handedOff: false,
+            reopenContext: controller.completionContext(),
             windowIds: windowId ? [windowId] : windows.map(window => window.id),
             progressMessage: progressMessage(request, params),
             message: progressMessage(request, params)
@@ -87,8 +89,10 @@ Item {
         record.handedOff = true;
         // A delayed result must not dismiss a reopened panel or another result.
         if (controller.uiActive && controller.uiGeneration === record.generation
-                && controller.actionViewEpoch === record.viewEpoch && controller.selectedResult && controller.selectedResult.id === record.request.result.id)
+                && controller.actionViewEpoch === record.viewEpoch && controller.selectedResult && controller.selectedResult.id === record.request.result.id) {
+            controller.completeInvocation(record.reopenContext);
             controller.closeWindowRequested();
+        }
     }
     function apply(responseId: string, operation: var): void {
         const original = pending[responseId] || Object.values(pending).find(record => record.operationId && record.operationId === operation?.id);
