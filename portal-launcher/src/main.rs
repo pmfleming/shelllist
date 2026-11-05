@@ -196,10 +196,11 @@ async fn launch(intent: Intent, effect_started: &mut bool) -> Result<()> {
     let workspace = if intent.workspace.is_empty() {
         #[derive(Deserialize)]
         struct Workspace {
-            id: i64,
+            id: Option<i64>,
         }
         serde_json::from_str::<Workspace>(&client.request("j/activeworkspace").await?)?
             .id
+            .context("active workspace has no number")?
             .to_string()
     } else {
         intent.workspace.clone()
