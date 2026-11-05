@@ -386,6 +386,7 @@ DaemonTestCase {
         if (data.focusWindow) {
             const windowId = c.selectedApplication.instances[0].id;
             tryVerify(() => findChild(panel, "focusWindow-" + windowId) !== null);
+            verify(waitForPolish(panel.Window.window), "asynchronous window actions must be laid out before clicking");
             mouseClick(findChild(panel, "focusWindow-" + windowId));
         } else {
             keyClick(Qt.Key_Return, data.modifiers);

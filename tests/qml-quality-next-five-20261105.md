@@ -86,6 +86,85 @@ in totals. Combined function sums rise by 1 cognitive, 2 cyclomatic and 9 effort
 the gain is a focused delivery transaction with an explicit eligibility boundary,
 not a claim of fewer wire rules. Three test lines extend an existing case.
 
-## 5
+## 5. Shared chooser restoration — closed
 
-Pending implementation; committed only after focused and combined checks.
+The session passes captured presentation directly to its native owners. The list
+restores selection independently of viewport permission; navigation receives an
+explicit editor permission instead of a cloned location with rewritten intent.
+This removes a temporary list wrapper and pending-location clone from restoration.
+All shared-panel callers grant editor permission explicitly. A changed selected
+key still clears queued viewport work, and clean invocations still start at top.
+The existing readiness journey checks that saved editor intent survives the
+browse-only phase without granting edit authority or restoring an unsaved value.
+
+Validation: chooser memory **7 passes**, field interaction **8 passes**, chooser
+keyboard **4 passes**, strict changed-file lint and whitespace checks pass. An
+initial attempt to use typed default arguments failed Qt compilation; the final
+API uses required typed permissions and every caller was updated. `apply`
+cognitive / cyclomatic / effort **22/16/91 → 15/13/73**. Decisions in the native
+owners remain counted. Four assertion/setup lines extend an existing test; one
+existing direct navigation call is updated for the explicit permission. Full-suite
+validation also exposed a launcher click before its asynchronous controls had
+finished layout. Baseline and candidate launcher suites both pass in isolation
+(26 checks each); this does not establish that the original full-suite failure
+was absent on baseline. The retained mouse journey now requires the shared Qt
+window's polish work to finish before clicking, preserving its backend assertion.
+A render-frame wait proved unsuitable here and was replaced with `waitForPolish`;
+the corrected handoff vectors pass (5 checks including lifecycle hooks).
+
+## Combined evidence and limits
+
+The five improvements preserve the registered suite and extend existing behavioral
+journeys. In disposable archived source, each journey fails behaviorally when its
+relevant guard is broken, then passes with byte-identical restored source:
+
+| Area | Deliberate fault | Retained Qt owner |
+| --- | --- | --- |
+| Agenda | Remove catalog watermark fence | `test_ordinaryInspectorGetAcceptsNewerRevisionWithoutCompleting` |
+| Delta | Allow replacement owner to begin with continuation | `test_chainDuplicatesGapAndAuthoritativeReplacement` |
+| Clipboard | Remove operation epoch fence | `test_ownedStatusRepairsQuietTerminalLossWithoutAffectingPeersOrReplaying` |
+| Socket | Allow repeated late resource receipts | `test_lateResourceReceiptsCannotReleaseUncertainNativeCredit` |
+| Chooser | Ignore explicit editor permission | `test_readinessResumesFocusButNeverRestoresUnsavedValues` |
+
+These checks establish detection of those five faults, not numeric line/branch
+coverage. Fault logs and restoration logs live beside `fault-results.json` in the
+ignored evidence directory; production source was never mutated for this check. A further socket-order fault
+moves route validation ahead of duplicate eligibility: the added retained-byte
+assertion fails when it incorrectly retires the healthy owner; restored source
+passes (`fault-socket-order.log`, `restored-socket-order.log`).
+
+Whole-tree strict lint, generated protocol checks, source-relative packaged import
+resolution, IP control checks (450), panel numeric/UI advisory (zero prompts), and
+both offscreen runtime smokes pass. This is source/runtime validation, not a Nix
+package build or a claim about live compositor rendering. Full serial Qt result:
+**731 passed, zero failures, one unchanged MediaChip renderer skip** in
+`full-qt-final.log` (595 behavioral passes and 136 lifecycle hooks). The first
+combined run reported 730 passes, one launcher
+mouse-action failure and the existing renderer skip; it is retained as
+`full-qt.log`, not counted as a passing run.
+
+Measurement uses Node 24.16.0 and the same frozen local evaluator fingerprint
+`857cd4a335adb086d1d37ba54350628048b261f17874d0b7f2867abb9399b159`.
+`measure-step.mjs` records each stage against `93c7894c` with execution disabled;
+real Qt/lint checks run separately. Final tracked snapshots can be compared with:
+
+```sh
+node /home/laufan/Projects/qmlqualitylens/scripts/compare-refactor.mjs \
+  "$PWD" 93c7894c HEAD qmlqualitylens.config.json \
+  "$PWD/target/quality-next-five-20261105/controlled-comparison"
+```
+
+Helpers remain included in authored totals (excluding `tests/`, `dev/` and generated
+functions): cognitive **7655 → 7653**, cyclomatic **10754 → 10761**, weighted effort
+**46907 → 46928**, functions **3645 → 3650**. Lens measured source lines **59023 → 59064**;
+raw tracked physical line changes are production +24 and existing tests +23. No registered tests were added or removed.
+Overall score remains **82**, locality **76**, leverage **31** and duplication **96**.
+Paired archived-source binding/cohesion reports keep 455 reachable and 8 unreachable
+components, 20 unresolved external types, 399 incomplete binding-graph files,
+and 1006 incomplete cohesion objects. Those graph/cohesion capabilities remain
+partial; they do not establish an improved architecture score.
+Clone analysis remains partial/capped at 100 groups; its changed omissions cannot
+establish clone reduction. No new suppression, dynamic escape hatch, generated
+code or policy exception is introduced. These are bounded ownership, allocation
+and entrypoint-readability gains; this batch does **not** claim lower total LOC,
+aggregate effort/cyclomatic complexity, or a measured leverage/locality score gain.

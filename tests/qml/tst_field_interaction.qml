@@ -232,7 +232,7 @@ TestCase {
         compare(surface.writes, data.preview ? 3 : 1);
         compare(surface.detailsNavigation.currentTarget, field(surface, "switch"));
         verify(surface.detailsNavigation.browsing);
-        surface.detailsNavigation.focusSessionLocation({target: "switch", editing: true});
+        surface.detailsNavigation.focusSessionLocation({target: "switch", editing: true}, true);
         verify(surface.detailsNavigation.browsing);
         verify(!surface.switched, "neither Tab nor restoration toggles a switch");
         keyClick(Qt.Key_Return);

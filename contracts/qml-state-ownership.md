@@ -54,3 +54,11 @@ Socket reply eligibility completes before disposition. Malformed correlation
 retires the socket; absent/unwritten or ineligible duplicate receipts are ignored.
 An eligible receipt must match its captured route and payload contract before it
 can deliver or change retained credit. Late cleanup receipts never regain credit.
+
+Chooser restoration passes saved presentation by reference. List selection restores
+independently of viewport permission; a changed selected key cancels queued
+viewport restoration. Editor intent remains in the captured location, while an
+explicit permission controls whether native editing may resume. Readiness grants
+that permission only after reconciliation; user navigation cancels pending work.
+Shared panel callers grant permission explicitly. Restoration never revives drafts
+or performs backend writes.

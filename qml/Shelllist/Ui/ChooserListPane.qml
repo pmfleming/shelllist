@@ -77,11 +77,11 @@ ColumnLayout {
     function sessionState(): var {
         return {selection: header.selectionState(), viewport: body.viewportState(), control: lastControlLocation};
     }
-    function restoreSession(state: var): void {
+    function restoreSession(state: var, viewportAllowed: bool): void {
         if (!state)
             return;
         header.restoreSelection(state.selection);
-        body.restoreViewport(state.viewport);
+        body.restoreViewport(viewportAllowed ? state.viewport : null);
     }
 
     function restoreControl(state: var): bool { return FocusLocations.restore(pane, state); }

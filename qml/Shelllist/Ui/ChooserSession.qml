@@ -80,15 +80,15 @@ Item {
         controller.viewMemory.synchronize();
         const saved = controller.focusMemory;
         restoring = true;
-        listItem.restoreSession(saved.clean ? {viewport: {top: true}} : saved.list ? {selection: saved.list.selection,
-            viewport: saved.selectedKey === selectedKey ? saved.list.viewport : null} : null);
+        listItem.restoreSession(saved.clean ? {viewport: {top: true}} : saved.list,
+            saved.clean || saved.selectedKey === selectedKey);
         const targetRegion = restorationRegion(saved);
         pending = targetRegion === "details" && !ready;
         switch (targetRegion) {
         case "details":
             // Browse while refresh validates capabilities; newer navigation
             // still cancels the pending editor resume.
-            navigation.focusSessionLocation(pending ? Object.assign({}, saved.location || ({}), {editing: false}) : saved.location);
+            navigation.focusSessionLocation(saved.location, !pending);
             break;
         case "results":
             listItem.focusList();

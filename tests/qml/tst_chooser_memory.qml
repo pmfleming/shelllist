@@ -258,10 +258,14 @@ DaemonTestCase {
         verify(field.value !== 50);
         compare(surface.edits, 0);
         closeInvocation(surface);
+        const saved = surface.chooserController.focusMemory.location;
+        verify(saved.editing);
         surface.sessionReady = false;
         reopenInvocation(surface);
         tryVerify(() => surface.detailsNavigation.browsing && surface.detailsNavigation.currentTarget === field);
         compare(field.value, 50, "closing discarded the unsaved preview");
+        verify(saved.editing, "browse-only restoration cannot rewrite the captured editor intent");
+        verify(!surface.detailsNavigation.resumeEditor, "readiness permission is independent of saved presentation");
         surface.sessionReady = true;
         tryVerify(() => surface.detailsNavigation.editing);
         compare(field.value, 50, "resuming restores focus, not the prior draft");

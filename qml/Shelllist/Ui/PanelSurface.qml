@@ -56,7 +56,7 @@ ChooserSurface {
             return;
         }
         if (saved.context === context())
-            navigation.focusSessionLocation(saved.location);
+            navigation.focusSessionLocation(saved.location, true);
         else
             navigation.focusContent(true);
     }

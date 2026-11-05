@@ -90,11 +90,11 @@ FocusScope {
         }
         resumeEditor = false;
     }
-    function focusSessionLocation(location: var): void {
+    function focusSessionLocation(location: var, editingAllowed: bool): void {
         cancelSessionRestore();
         sessionLocation = location || ({});
         pendingMemory = true;
-        resumeEditor = !!sessionLocation.editing;
+        resumeEditor = editingAllowed && !!sessionLocation.editing;
         browseCursor.forceActiveFocus(Qt.OtherFocusReason);
         Qt.callLater(restoreLocation);
     }
