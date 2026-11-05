@@ -30,6 +30,10 @@ for (const [method, contract] of Object.entries(app.contracts)) {
     assert.notEqual(app.responseError(method, moved), '', method);
 }
 const controls = fixture('bar-controls.json');
+for (const command of ['focus', 'move']) {
+    assert.equal(bar.requestError('workspace.command', {command, workspace_position:7}), '');
+    assert.notEqual(bar.requestError('workspace.command', {command, workspace_position:'7'}), '');
+}
 for (const method of Object.keys(bar.contracts)) {
     const example = controls[method];
     assert.equal(bar.requestError(method, example.params), '', method);

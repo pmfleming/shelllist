@@ -81,9 +81,11 @@ new contract, reject that routing explicitly rather than defaulting to Shell.
   captured windows; Super+Q keeps normal focused-window close. Add
   Super+Ctrl+PageUp/PageDown for previous/next in the monitor's logical strip,
   with wraparound, after checking all included bindings for collisions.
-- Super+1 through Super+9 focus those workspace IDs; Super+0 focuses workspace
-  10. Adding Shift moves the focused window to that destination and follows it.
-  Higher monotonically allocated IDs use the strip or previous/next commands.
+- Super+1 through Super+9 focus the first nine entries in the invoking monitor's
+  bar order; Super+0 focuses the tenth. Adding Shift moves the focused window to
+  that destination and follows it. Resolve positions in the serialized owner
+  using the bar's ordering; keep internal IDs stable and reject missing positions
+  without allocation. Later entries use the strip or previous/next commands.
 - Left-click only on workspaces and +. Right/middle presses, releases and
   double-clicks must have no effect. Keep + outside the scrolling viewport.
 

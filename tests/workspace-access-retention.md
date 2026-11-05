@@ -1,5 +1,9 @@
 # Workspace number shortcuts and manual retention
 
+The ID-based numeric binding behavior below is historical. Positional shortcuts
+now follow the monitor's bar order; see [current evidence](workspace-bar-positions.md)
+and the [workspace contract](../contracts/temporary-workspaces.md).
+
 2026-11-03. Investigation found two independent causes:
 
 - `/etc/nixos/config/hypr/hyprland.lua` registered focus and move shortcuts only

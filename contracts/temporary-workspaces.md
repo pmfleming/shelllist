@@ -74,20 +74,34 @@ Manually created workspaces remain logical destinations until an explicit
 workspace close, even after switching away, becoming empty or restarting the
 owner. Hyprland may reclaim the empty inactive object; the journal preserves
 its ID, generation, monitor and strip entry so focus/move can materialize it
-again. Numeric shortcuts address IDs 1–9 and 10 via 0 through the serialized
-workspace owner; Shift adds move and follow. Standard IDs 1–5 remain available.
-Higher destinations must already exist on the invoking monitor or be retained
-manual entries there. Missing extra destinations are rejected without allocation,
-movement, or focus changes. The compositor rechecks existence and monitor/focus
+again. Numeric shortcuts address the invoking monitor's first through tenth bar
+positions (1–9, then 0) through the serialized workspace owner; Shift adds move
+and follow. `bar-daemon workspace focus|move <position> --position` sends
+`workspace_position` instead of `workspace_id`. Exactly one selector is required
+for focus/move; other commands accept neither. The owner shares the bar's sorted,
+deduplicated order: the five standard categories, followed by local observed and
+retained extra destinations. Positions are one-based; removing an earlier entry
+shifts later shortcuts without changing any internal IDs. For example, IDs
+1–6 and 10 make Super+7 select ID 10. Without `--position`, the CLI and existing
+`workspace_id` callers retain ID-based selection. Replies identify the resolved ID.
+Standard IDs 1–5 remain available. Extra destinations must already exist on the
+invoking monitor or be retained manual entries there. Missing/invalid positions
+are rejected without allocation, movement, or focus changes; a standard category
+on another monitor is also rejected rather than migrated. The compositor rechecks
+existence and monitor/focus
 context immediately before dispatch; only standard and retained destinations may
 materialize an absent compositor object. Creating a new logical workspace remains
-an explicit create action. Higher IDs remain accessible through the strip and previous/next.
+an explicit create action. Later bar positions remain accessible through the strip
+and previous/next.
 
 The NixOS shortcut registration test verifies all ten focus/move bindings use
-`bar-daemon workspace focus|move <id>`. Bar's workspace unit tests cover admission;
+`bar-daemon workspace focus|move <position> --position`. Bar's workspace unit tests
+cover admission;
 `bar-daemon/tests/workspace_handoff.rs` exercises rejected missing destinations,
 standard selection, retained empty destinations, move-and-follow, and absence of
-an extra workspace using real Qt windows on an isolated compositor.
+an extra workspace using real Qt windows on an isolated compositor. Positional
+coverage includes gapped IDs, the native CLI, retained empty destinations,
+shifting positions after close, missing-position rejection and monitor ownership.
 
 Launch-created workspaces retain automatic retirement after their windows and
 leases settle. External workspaces retain compositor-owned lifetime rules.
