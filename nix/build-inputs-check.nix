@@ -84,6 +84,12 @@ let
     compiler = toolchain.actual;
     compilerPath = toString pkgs.rustc;
     cargoPath = toString pkgs.cargo;
+    quickshell = {
+      version = inputs.quickshell.packages.${system}.default.version;
+      revision = inputs.quickshell.rev;
+      nixpkgs = inputs.quickshell.inputs.nixpkgs.rev;
+      qt = pkgs.qt6.qtbase.version;
+    };
     native = {
       pipewire = pkgs.pipewire.version;
       systemd = pkgs.systemd.version;
@@ -114,6 +120,10 @@ assert pkgs.lib.assertMsg unsupportedPlatformsRejected
   "Shelllist must reject unsupported host platforms";
 assert pkgs.lib.assertMsg (
   report.nixpkgs == policy.nixpkgs.rev
+  && report.quickshell.version == policy.quickshell.version
+  && report.quickshell.revision == policy.quickshell.rev
+  && report.quickshell.nixpkgs == report.nixpkgs
+  && inputs.quickshell.inputs.nixpkgs.outPath == inputs.nixpkgs.outPath
   && toolchain.expected == policy.rust
   && builtins.elem system policy.systems
 ) "Shelllist evaluated build inputs differ from the approved product policy";

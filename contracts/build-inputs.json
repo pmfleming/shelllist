@@ -1,6 +1,10 @@
 {
   "schema": 1,
   "rust": "1.95.0",
+  "quickshell": {
+    "version": "0.3.2",
+    "rev": "4f508be500dea6e5732cc3d50382a0048b17e7b1"
+  },
   "systems": [
     "x86_64-linux"
   ],

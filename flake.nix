@@ -6,6 +6,10 @@
   # Never add local revision pins or private/vendored framework dependencies.
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    quickshell = {
+      url = "github:quickshell-mirror/quickshell/v0.3.2";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     daemon-framework = {
       url = "git+file:../daemon-framework";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -68,6 +72,7 @@
       packages = forAllSystems (
         system: pkgs:
         let
+          quickshell = inputs.quickshell.packages.${system}.default;
           rustPlatform = (inputs.daemon-framework.lib.toolchain pkgs).rustPlatform;
           shelllistSearch = rustPlatform.buildRustPackage {
             pname = "shelllist-search";
@@ -130,7 +135,7 @@
           materialGallery = pkgs.writeShellApplication {
             name = "shelllist-material-gallery";
             runtimeInputs = [
-              pkgs.quickshell
+              quickshell
               barDaemon
             ];
             text = ''
@@ -148,7 +153,7 @@
               pkgs.coreutils
               pkgs.gawk
               pkgs.jq
-              pkgs.quickshell
+              quickshell
               pkgs.hyprland # hyprctl: layer rules and live workspace placement
               self.packages.${system}.shelllistSearch
               self.packages.${system}.wifiQrScanner
@@ -467,6 +472,7 @@
       checks = forAllSystems (
         system: pkgs:
         let
+          quickshell = inputs.quickshell.packages.${system}.default;
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
           btDaemon = inputs."bt-daemon".packages.${system}.default;
           clipDaemon = inputs."clip-daemon".packages.${system}.default;
@@ -558,14 +564,14 @@
               {
                 nativeBuildInputs = [
                   pkgs.qt6.qtdeclarative
-                  pkgs.quickshell
+                  quickshell
                 ];
               }
               ''
                 run_qmllint() {
                   qmllint --max-warnings 0 \
                     -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
-                    -I "${pkgs.quickshell}/lib/qt-6/qml" \
+                    -I "${quickshell}/lib/qt-6/qml" \
                     -I ${./.}/qml \
                     "$@"
                 }
@@ -766,7 +772,7 @@
 
           nativeApplication = pkgs.runCommand "shelllist-native-application-journey" {
             FONTCONFIG_FILE = fontsConf pkgs;
-            nativeBuildInputs = [ pkgs.python3 pkgs.dbus pkgs.bash pkgs.quickshell pkgs.qt6.qtdeclarative pkgs.qt6.qtsvg ];
+            nativeBuildInputs = [ pkgs.python3 pkgs.dbus pkgs.bash quickshell pkgs.qt6.qtdeclarative pkgs.qt6.qtsvg ];
           } ''
             export QT_PLUGIN_PATH=${pkgs.qt6.qtsvg}/lib/qt-6/plugins
             export TZDIR=${pkgs.tzdata}/share/zoneinfo
@@ -869,7 +875,11 @@
       );
 
       devShells = forAllSystems (
-        system: pkgs: {
+        system: pkgs:
+        let
+          quickshell = inputs.quickshell.packages.${system}.default;
+        in
+        {
           default = pkgs.mkShell {
             FONTCONFIG_FILE = fontsConf pkgs;
             shellHook = ''
@@ -886,19 +896,19 @@
               pkgs.qt6.qtdeclarative # qmlformat, qmllint
               pkgs.qt6.qtsvg # QtTest loads real weather/timezone SVG assets
               pkgs.tzdata
-              pkgs.quickshell
+              quickshell
               pkgs.shellcheck
               (pkgs.writeShellApplication {
                 name = "shelllist-qmllint";
                 runtimeInputs = [
                   pkgs.qt6.qtdeclarative
-                  pkgs.quickshell
+                  quickshell
                 ];
                 text = ''
                   run_qmllint() {
                     qmllint --max-warnings 0 \
                       -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
-                      -I "${pkgs.quickshell}/lib/qt-6/qml" \
+                      -I "${quickshell}/lib/qt-6/qml" \
                       -I "$PWD/qml" \
                       "$@"
                   }
