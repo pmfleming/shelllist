@@ -15,6 +15,7 @@ ColumnLayout {
     property alias preserveViewportOnAppend: body.preserveViewportOnAppend
     readonly property bool listNearEnd: body.listNearEnd
     property alias resultModel: body.resultModel
+    property alias section: body.section
     property alias emptyText: body.emptyText
     property alias emptyIcon: body.emptyIcon
     property alias emptyState: body.emptyState

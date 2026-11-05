@@ -41,6 +41,13 @@ Ui.ChooserListPane {
     }
 
     preserveViewportOnAppend: true
+    section.property: "resultSection"
+    section.delegate: Ui.ListSectionDivider {
+        required property string section
+        objectName: "clipboardPinnedDivider"
+        width: ListView.view ? ListView.view.width : 0
+        height: section === "history" && !!pane.controller.filteredResults[0]?.payload.favorite ? implicitHeight : 0
+    }
     readonly property bool shouldLoadMore: visible && listNearEnd && controller.canAutoLoadMoreHistory
     onShouldLoadMoreChanged: if (shouldLoadMore)
         Qt.callLater(loadNextPage)

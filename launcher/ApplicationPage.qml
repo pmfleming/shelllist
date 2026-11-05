@@ -68,8 +68,8 @@ Ui.DetailFlickable {
         objectName: "applicationNoActions"
         visible: page.application.kind === "desktop-application" && (page.application.desktop_actions || []).length === 0
         width: parent.width
-        // Center the passive mark below the window/action collections.
-        height: Math.max(implicitHeight + Ui.Theme.spacingXxl, page.height - noActions.y)
+        // Applications reserves four shared rows for its empty actions section.
+        height: 4 * Ui.Theme.listRowHeight * page.uiScale
         compact: true
         uiScale: page.uiScale
         icon: "extension_off"

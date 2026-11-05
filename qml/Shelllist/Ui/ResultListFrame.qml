@@ -8,6 +8,7 @@ Rectangle {
     required property ChooserController controller
     property var resultModel: null
     property Component footerComponent: null
+    property alias section: list.section
     property bool preserveViewportOnAppend: false
     readonly property bool nearEnd: list.count > 0 && list.height > 0 && list.contentHeight - (list.contentY - list.originY + list.height) <= 4 * delegateHeight
     property int selectedIndex: 0

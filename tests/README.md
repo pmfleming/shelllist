@@ -1,5 +1,12 @@
 # Test scope
 
+The [clipboard pin-order contract](../contracts/clipboard-pin-order.md) is covered
+by `tst_clipboard_pins.qml` and the sibling clip-daemon's database/API tests:
+native paging order, passive group dividers, selection and copy identity.
+Validation: **729 Qt passes, 0 failures, 1 existing renderer skip**; strict QML
+lint passed. Clip-daemon passed 19 storage integration, 5 API and 8 storage unit
+tests; Rust formatting passed. No installed clipboard service was replaced.
+
 The [chooser reopening contract](../contracts/chooser-reopening.md) defines the
 Applications/Clipboard completion boundaries. Native cases in
 `tst_chooser_memory.qml`, `tst_application_actions.qml` and

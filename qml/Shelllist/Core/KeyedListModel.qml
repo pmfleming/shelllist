@@ -28,7 +28,8 @@ ListModel {
             const value = pendingValues[pendingIndex];
             insert(pendingOffset + pendingIndex++, {
                 resultKey: value.key,
-                resultData: value
+                resultData: value,
+                resultSection: value.metadata?.section || ""
             });
         }
         chunkApplied();
@@ -71,7 +72,8 @@ ListModel {
             if (found === undefined) {
                 insert(desiredIndex, {
                     resultKey: value.key,
-                    resultData: value
+                    resultData: value,
+                    resultSection: value.metadata?.section || ""
                 });
                 keys.splice(desiredIndex, 0, value.key);
                 refreshIndexes(keys, indexes, desiredIndex, keys.length - 1);
@@ -83,7 +85,7 @@ ListModel {
                 refreshIndexes(keys, indexes, found, desiredIndex);
             }
             if (!equivalent(get(desiredIndex).resultData, value))
-                setProperty(desiredIndex, "resultData", value);
+                set(desiredIndex, {resultData: value, resultSection: value.metadata?.section || ""});
         }
         if (count > values.length)
             remove(values.length, count - values.length);
@@ -114,7 +116,7 @@ ListModel {
             for (let index = 0; index < count; index++) {
                 const value = values[index < splice.index ? index : index + splice.inserted];
                 if (!equivalent(get(index).resultData, value))
-                    setProperty(index, "resultData", value);
+                    set(index, {resultData: value, resultSection: value.metadata?.section || ""});
             }
             pendingOffset = splice.index;
             pendingValues = values.slice(splice.index, splice.index + splice.inserted);

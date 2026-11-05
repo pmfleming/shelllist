@@ -61,7 +61,8 @@ Core.Provider {
                 active: false,
                 busy: false
             },
-            payload: entry
+            payload: entry,
+            metadata: {section: entry.favorite ? "pinned" : "history"}
         });
     }
     function resultsForEntries(entries, offset) {

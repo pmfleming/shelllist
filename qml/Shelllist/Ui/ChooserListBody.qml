@@ -9,6 +9,7 @@ Item {
     required property ChooserController chooserController
     required property Component rowDelegate
     property alias resultModel: listFrame.resultModel
+    property alias section: listFrame.section
     property alias listFooterComponent: listFrame.footerComponent
     property alias preserveViewportOnAppend: listFrame.preserveViewportOnAppend
     readonly property bool listNearEnd: listFrame.nearEnd
