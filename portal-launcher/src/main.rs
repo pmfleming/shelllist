@@ -1,6 +1,5 @@
 //! Frontend-owned browser/focus effects. No network identity, fallback or retry policy.
 use anyhow::{Context, Result, ensure};
-use serde::Deserialize;
 use shelllist_hyprland::Client;
 use std::{
     fs::File,
@@ -71,15 +70,9 @@ impl Intent {
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct Window {
-    address: String,
-    #[serde(default)]
-    class: String,
-    #[serde(default, rename = "initialClass")]
-    initial_class: String,
-}
-impl Window {
+type Window = shelllist_hyprland::workspace::Window;
+trait PortalWindow { fn portal(&self) -> bool; fn safe_address(&self) -> bool; }
+impl PortalWindow for Window {
     fn portal(&self) -> bool {
         self.class == CLASS || self.initial_class == CLASS
     }
@@ -185,14 +178,7 @@ async fn launch(intent: Intent, effect_started: &mut bool) -> Result<()> {
     client.capabilities().await?;
     let before = windows(&client).await?;
     let workspace = if intent.workspace.is_empty() {
-        #[derive(Deserialize)]
-        struct Workspace {
-            id: Option<i64>,
-        }
-        serde_json::from_str::<Workspace>(&client.request("j/activeworkspace").await?)?
-            .id
-            .context("active workspace has no number")?
-            .to_string()
+        client.active_workspace().await?.id.context("active workspace has no number")?.to_string()
     } else {
         intent.workspace.clone()
     };
@@ -303,7 +289,7 @@ mod tests {
             for (expected, reply) in [
                 (
                     "j/clients".into(),
-                    r#"[{"address":"0x123","class":"shelllist-captive-portal"}]"#.to_owned(),
+                    r#"[{"address":"0x123","pid":1,"workspace":{"id":3,"name":"3"},"class":"shelllist-captive-portal"}]"#.to_owned(),
                 ),
                 ("j/status".into(), r#"{"configProvider":"lua"}"#.into()),
                 ("j/version".into(), r#"{"version":"0.57.1"}"#.into()),
@@ -341,7 +327,7 @@ mod tests {
 
     #[test]
     fn native_client_parsing_filters_class_and_untrusted_addresses() {
-        let values: Vec<Window> = serde_json::from_str(r#"[{"address":"0x123","class":"shelllist-captive-portal"},{"address":"0x1'; exec x","initialClass":"shelllist-captive-portal"},{"address":"0x456","class":"other"}]"#).unwrap();
+        let values: Vec<Window> = serde_json::from_str(r#"[{"address":"0x123","pid":1,"workspace":{"id":3,"name":"3"},"class":"shelllist-captive-portal"},{"address":"0x1'; exec x","pid":1,"workspace":{"id":3,"name":"3"},"initialClass":"shelllist-captive-portal"},{"address":"0x456","pid":1,"workspace":{"id":3,"name":"3"},"class":"other"}]"#).unwrap();
         assert_eq!(
             values
                 .iter()
