@@ -31,7 +31,7 @@ DaemonTestCase {
         verify(!!id,"owned "+(purpose||"list")+" request");return {id:id,context:requests[id].context};
     }
     function respond(id,data,error) {
-        const session=Io.DaemonSessions.sessions["bar-daemon"];
+        const session=Io.DaemonSessions.sessions["bar-activity-daemon"];
         const call=calls.find(call=>call.route?.localId===id);verify(!!call);
         session.client.response(call.id,{protocol:"bar-api",version:2,ok:!error,data:data,error:error?{code:"fixture",message:error}:undefined},"",call.route);
     }

@@ -5,7 +5,7 @@ import "ActivityApi.js" as Api
 Io.DaemonBackend {
     id: owner
     required property TimeWeatherController controller
-    daemonName: "bar-daemon"
+    daemonName: "bar-activity-daemon"
     expectedProtocol: Api.protocol
     expectedVersion: Api.version
     active: controller.uiActive || mutationId.length > 0 || searchId.length > 0 || statusId.length > 0

@@ -2,6 +2,7 @@ import QtQuick
 import Shelllist.Io as Io
 import "BarApi.js" as BarApi
 import "BarProtocol.generated.js" as Contract
+import "BarDaemonRouting.js" as Routing
 
 Io.BarDaemonBackend {
     id: backend
@@ -11,7 +12,7 @@ Io.BarDaemonBackend {
     daemonName: "bar-daemon"
     expectedProtocol: BarApi.protocol
     expectedVersion: BarApi.version
-    streams: BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive, BarApi.streams.battery, BarApi.streams.powerProfile, BarApi.streams.powerSuspend, BarApi.streams.workspaces, BarApi.streams.displays].includes(stream))
+    streams: Routing.selectStreams(BarApi.subscribedStreams, daemonName)
     active: true
     validateRequest: Contract.requestError
     validateEvent: Contract.eventError
@@ -173,7 +174,7 @@ Io.BarDaemonBackend {
         daemonName: "bar-power-daemon"
         expectedProtocol: BarApi.protocol
         expectedVersion: BarApi.version
-        streams: [BarApi.streams.battery, BarApi.streams.powerProfile, BarApi.streams.powerSuspend]
+        streams: Routing.selectStreams(BarApi.subscribedStreams, daemonName)
         active: true
         validateRequest: Contract.requestError
         validateEvent: Contract.eventError
@@ -188,7 +189,22 @@ Io.BarDaemonBackend {
         daemonName: "bar-compositor-daemon"
         expectedProtocol: BarApi.protocol
         expectedVersion: BarApi.version
-        streams: [BarApi.streams.workspaces, BarApi.streams.displays]
+        streams: Routing.selectStreams(BarApi.subscribedStreams, daemonName)
+        active: true
+        validateRequest: Contract.requestError
+        validateEvent: Contract.eventError
+        onEventReceived: function(event) { controller.handleEvent(event); }
+        onResponseReceived: function(id, envelope, transportError) { backend.finish(id, envelope, transportError); }
+        onSendFailed: function(id, message) { backend.operationError = message; }
+        onTransportFailed: function(message, lostRequestIds) { backend.operationError = message; }
+    }
+
+    Io.BarDaemonBackend {
+        id: activityBackend
+        daemonName: "bar-activity-daemon"
+        expectedProtocol: BarApi.protocol
+        expectedVersion: BarApi.version
+        streams: Routing.selectStreams(BarApi.subscribedStreams, daemonName)
         active: true
         validateRequest: Contract.requestError
         validateEvent: Contract.eventError

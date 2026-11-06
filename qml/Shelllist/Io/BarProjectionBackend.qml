@@ -1,4 +1,5 @@
 import "../Bar/BarProtocol.generated.js" as Protocol
+import "../Bar/BarDaemonRouting.js" as Routing
 
 // Read-only snapshot/stream transport. Each consumer owns its projection's
 // validation, revision fencing and unavailable-state behavior.
@@ -10,7 +11,7 @@ BarDaemonBackend {
     signal received(var value)
     signal readFailed
 
-    daemonName: ["workarea", "workspaces", "compositor", "display_policy"].includes(projection) ? "bar-compositor-daemon" : "bar-daemon"
+    daemonName: Routing.daemonForProjection(projection)
     expectedProtocol: Protocol.protocol
     expectedVersion: Protocol.version
     streams: [Protocol.streams[projection + ".changed"]]

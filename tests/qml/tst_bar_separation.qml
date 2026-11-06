@@ -1,6 +1,7 @@
 import QtQuick
 import Shelllist.Bar as Bar
 import Shelllist.Io as Io
+import "../../bar/BarDaemonRouting.js" as Routing
 
 DaemonTestCase {
     id: tests
@@ -41,6 +42,30 @@ DaemonTestCase {
         const last = calls[calls.length - 1];
         compare(last.method, "workspace.focus");
         verify(!!Io.DaemonSessions.sessions["bar-compositor-daemon"].consumers[last.route.consumerId]);
+    }
+
+    function test_everySubscriptionTargetsItsOwner() {
+        const controller = createTemporaryObject(factory, tests);
+        verify(controller !== null);
+        Routing.daemons.forEach(daemon => {
+            const session = Io.DaemonSessions.sessions[daemon];
+            verify(session !== undefined);
+            Object.values(session.consumers).forEach(consumer => {
+                Array.from(consumer.backend.streams).forEach(stream => compare(Routing.daemonForStream(stream), daemon));
+            });
+        });
+    }
+    function test_powerLossLeavesAudioSubscriptionActive() {
+        const controller = createTemporaryObject(factory, tests);
+        seedBarDaemon("bar-power-daemon", null);
+        const bar = Io.DaemonSessions.sessions["bar-daemon"];
+        const client = bar.client;
+        const subscriptions = client.subscriptions.length;
+        Io.DaemonSessions.sessions["bar-power-daemon"].client.transportFailed("power exited");
+        compare(Io.DaemonSessions.sessions["bar-daemon"].client, client);
+        compare(client.subscriptions.length, subscriptions);
+        verify(controller.backend.ready);
+        compare(controller.battery.available, false);
     }
 
 }

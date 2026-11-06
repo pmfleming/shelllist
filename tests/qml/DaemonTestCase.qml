@@ -40,6 +40,23 @@ TestCase {
     }
     function clone(value) { return JSON.parse(JSON.stringify(value)); }
 
+    // Seed each consumer from the producer fixture on its actual process session.
+    function seedBarDaemon(daemon, patches) {
+        const session = Io.DaemonSessions.sessions[daemon];
+        verify(session !== undefined);
+        Object.values(session.consumers).forEach(consumer => {
+            const subscription = session.client.subscriptions.find(sub => sub.route.consumerId === consumer.backend.sharedConsumerId);
+            if (!subscription) return;
+            Array.from(consumer.backend.streams).forEach(stream => {
+                const event = readFixture("bar-reads").changed[stream];
+                verify(event !== undefined);
+                event.event = "subscribed";
+                event.data = Object.assign(event.data, patches && patches[stream] || {});
+                emitBaseEvent(daemon, subscription.route, event);
+            });
+        });
+    }
+
     Component {
         id: clientFactory
         QtObject {

@@ -20,7 +20,7 @@ Io.DaemonBackend {
     property string latestRead: ""
     property string latestRange: ""
 
-    daemonName: "bar-daemon"
+    daemonName: "bar-activity-daemon"
     expectedProtocol: ActivityApi.protocol
     expectedVersion: ActivityApi.version
     streams: [ActivityApi.streams.activity, ActivityApi.streams.timezone]

@@ -4,7 +4,7 @@ import "ActivityApi.js" as ActivityApi
 
 Io.BarDaemonBackend {
     required property ActivityController controller
-    daemonName: "bar-daemon"
+    daemonName: "bar-activity-daemon"
     expectedProtocol: ActivityApi.protocol
     expectedVersion: ActivityApi.version
     streams: [ActivityApi.streams.activity, ActivityApi.streams.timezone]

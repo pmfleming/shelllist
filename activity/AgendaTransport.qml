@@ -4,7 +4,7 @@ import "ActivityApi.js" as ActivityApi
 
 // Only the existing shared daemon bridge owns sockets and reconnects.
 Io.DaemonBackend {
-    daemonName: "bar-daemon"
+    daemonName: "bar-activity-daemon"
     expectedProtocol: ActivityApi.protocol
     expectedVersion: ActivityApi.version
     streams: [ActivityApi.streams.activity, ActivityApi.streams.timezone]

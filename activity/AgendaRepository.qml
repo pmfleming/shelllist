@@ -25,7 +25,7 @@ Item {
     function synchronizeTransportAuthority(): int {
         // Read the actual session object: Core advances this before notifying
         // consumers and only publishes its reactive revision after callbacks.
-        const generation = Io.DaemonSessions.sessions["bar-daemon"]?.generation ?? -1;
+        const generation = Io.DaemonSessions.sessions["bar-activity-daemon"]?.generation ?? -1;
         if (generation < 0 || generation === authorityGeneration) return generation;
         const previous = authorityGeneration;
         const pending = requests;

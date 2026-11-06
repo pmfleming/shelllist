@@ -15,9 +15,9 @@ QtObject {
     signal exited(int exitCode)
 
     function exec(command) {
-        // Generic ranking shares the bar transport. Tests inject authoritative
-        // replies; this inert transport never launches a daemon or helper.
-        if (command.length === 2 && command[0] === "bar-daemon" && command[1] === "client") {
+        // Session clients are inert in presentation tests. Domain tests inject
+        // authoritative replies through the recording session factory.
+        if (command.length === 2 && ["bar-daemon", "bar-notification-daemon", "bar-power-daemon", "bar-compositor-daemon", "bar-activity-daemon"].includes(command[0]) && command[1] === "client") {
             simulated = true;
             commands = commands.concat([command]);
             running = true;
