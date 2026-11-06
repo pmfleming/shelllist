@@ -609,7 +609,7 @@
             for attempt in {1..100}; do
               if dbus-send --session --print-reply --reply-timeout=1000 \
                 --dest=org.freedesktop.DBus /org/freedesktop/DBus \
-                org.freedesktop.DBus.GetNameOwner string:org.laufan.BarDaemon >/dev/null 2>&1; then
+                org.freedesktop.DBus.GetNameOwner string:org.laufan.BarStatusDaemon >/dev/null 2>&1; then
                 ready=1
                 break
               fi
