@@ -4,12 +4,13 @@ import "BarApi.js" as BarApi
 import "BarProtocol.generated.js" as Contract
 
 Io.BarDaemonBackend {
+    id: backend
     required property BarController controller
     property string operationError: ""
     daemonName: "bar-daemon"
     expectedProtocol: BarApi.protocol
     expectedVersion: BarApi.version
-    streams: controller.notificationState ? BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive].includes(stream)) : BarApi.subscribedStreams
+    streams: BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive].includes(stream))
     active: true
     validateRequest: Contract.requestError
     validateEvent: Contract.eventError
@@ -87,7 +88,7 @@ Io.BarDaemonBackend {
     }
 
     function toggleDnd(): bool {
-        return callSequenced("notifications-dnd", BarApi.methods.notificationsToggleDnd, {});
+        return notificationBackend.callSequenced("notifications-dnd", BarApi.methods.notificationsToggleDnd, {});
     }
 
     readonly property var osdByRequestKind: ({
@@ -151,4 +152,19 @@ Io.BarDaemonBackend {
             showRequestFailure(brightnessRequest);
     }
     onTransportReady: snapshot()
+    Io.BarDaemonBackend {
+        id: notificationBackend
+        daemonName: "bar-notification-daemon"
+        expectedProtocol: BarApi.protocol
+        expectedVersion: BarApi.version
+        streams: controller.notificationState ? [] : [BarApi.streams.notifications, BarApi.streams.notificationActive]
+        active: true
+        validateRequest: Contract.requestError
+        validateEvent: Contract.eventError
+        onEventReceived: function(event) { controller.handleEvent(event); }
+        onResponseReceived: function(id, envelope, transportError) { backend.finish(id, envelope, transportError); }
+        onSendFailed: function(id, message) { backend.operationError = message; }
+        onTransportFailed: function(message, lostRequestIds) { backend.operationError = message; }
+    }
+
 }

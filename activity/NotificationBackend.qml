@@ -8,7 +8,7 @@ Io.BarDaemonBackend {
     required property var store
     property var requests: ({})
 
-    daemonName: "bar-daemon"
+    daemonName: "bar-notification-daemon"
     expectedProtocol: Api.protocol
     expectedVersion: Api.version
     streams: [Api.streams.notifications, Api.streams.notificationActive]
