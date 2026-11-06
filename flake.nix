@@ -149,7 +149,6 @@
               quickshell
               pkgs.hyprland # hyprctl: layer rules and live workspace placement
               self.packages.${system}.wifiQrScanner
-              self.packages.${system}.portalLauncher
               nmDaemon
               btDaemon
               clipDaemon
@@ -428,21 +427,6 @@
           # services. The UI never installs daemon/system integration metadata.
           default = self.packages.${system}.shelllistApplication;
 
-          portalLauncher = rustPlatform.buildRustPackage {
-            pname = "shelllist-portal-launch";
-            version = "0.1.0";
-            src = pkgs.lib.fileset.toSource {
-              root = ./.;
-              fileset = ./portal-launcher;
-            };
-            postUnpack = ''
-              cp -R --no-preserve=mode ${inputs.daemon-framework} "$(dirname "$sourceRoot")/daemon-framework"
-              sourceRoot="$sourceRoot/portal-launcher"
-            '';
-            cargoLock.lockFile = ./portal-launcher/Cargo.lock;
-            meta = mkMeta "Frontend-owned portal browser and native compositor launcher" "shelllist-portal-launch";
-          };
-
           shelllistConfig = pkgs.stdenvNoCC.mkDerivation {
             pname = "shelllist-config";
             version = "0.2.0";
@@ -504,7 +488,6 @@
           '';
           toolchain = (inputs.daemon-framework.lib.toolchain pkgs).check;
           timezoneAssetsPackage = self.packages.${system}.shelllistTimezoneAssets;
-          portalLauncherPackage = self.packages.${system}.portalLauncher;
           updateWorkerPackage = inputs.update-worker.lib.mkPackage {
             inherit pkgs;
             hostName = "build-test";

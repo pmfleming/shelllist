@@ -26,3 +26,32 @@ extractions outside this migration (four new manifests plus their shared
 `chrono-tz`/`tzf-rs` dependency inventory). This is separate from search ownership.
 No desktop services, focus, browser or hardware configuration were changed by
 these checks. Live compositor acceptance remains separate from offscreen Qt.
+
+## Portal executable
+
+- The moved `nm-portal-launch` binary's five native tests pass unchanged in NM's
+  dependency graph. They cover literal browser arguments, bounded URL/workspace
+  and deadline handling, untrusted compositor addresses, named workspaces and
+  actual mock Unix-socket move/focus dispatch. Binary Clippy passes with warnings
+  denied.
+- The five NM portal policy/ledger tests pass, including owner/expiry/network
+  fences, fail-closed persistence and no replay after lost replies or restarts.
+- Actual Qt portal interaction tests: seven passes, including the new assertion
+  for the exact NM-owned executable/URL/workspace/deadline after claim. Existing
+  no-launch-on-navigation, Alt+I, changed claims, recovery and uncertain outcomes
+  remain covered. Wi-Fi backend strict QML lint passes; the panel-role review
+  reports zero numeric or new-wrapper prompts.
+- The real Quickshell 0.3.2 application journey passes with the new bar-backed
+  ranking transport, exercising search, settings acknowledgement, failed launch,
+  explicit retry and restored persistence against a packaged app backend.
+- Source, browser-profile/window-class identifiers and argument/outcome behavior
+  are preserved. The only Rust source edit changes the ownership module comment;
+  the executable name and its package/source/lock ownership change together.
+- The NM Nix package builds successfully from the tracked local NM/framework
+  snapshot. Its installed `nm-portal-launch` exists and rejects an invalid URL
+  with the expected JSON `failed` outcome before any browser/compositor effect.
+  The package test phase includes the moved executable's tests.
+- Both changed Nix files parse. All 17 xtask unit tests and three CLI tests pass.
+  The broader Shelllist snapshot gate remains blocked by unrelated untracked
+  bar power-daemon files from the concurrent extraction, and the build-input
+  audit still needs that extraction's manifest/dependency inventory update.

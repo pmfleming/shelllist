@@ -70,6 +70,9 @@ DaemonTestCase {
         compare(portalCalls().slice(-1)[0].method, "network.portalClaim");
         compare(panel.executor.commands.length, 0, "prepare alone cannot execute");
         reply(panel, {intent: value});
+        compare(panel.executor.commands.slice(-1)[0], ["nm-portal-launch", "--url", value.url,
+            "--workspace", panel.controller.portal.workspaceId, "--expires-at-ms", String(value.expires_at_ms)],
+            "only the claimed intent reaches the NM-packaged native executor");
     }
     function test_expiredAndChangedClaimsFailClosed_data() {
         return [

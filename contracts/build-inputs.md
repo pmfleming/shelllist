@@ -125,7 +125,7 @@ not become a blanket allowed-major-version range.
 | Canonical search | `daemon-framework/crates/shelllist-search`, MIT; shared matcher library in the framework workspace. `bar-daemon` owns transport-scoped generic ranking catalogs. Clipboard search is now owned by Turso/FTS and no longer builds a copy of this matcher. No Shelllist input or flake cycle is added to clipboard. |
 | Update-status contract | MIT serde-only crate inside update-worker's existing workspace/lock, also captured explicitly for bar. Never import privileged implementation to obtain a DTO. |
 | Update-worker | Separate finite privileged package and lock, configured by the host. Root Cargo manifest does not declare a license; resolve that metadata before any consolidation. Preserve test-support output, host configuration, transaction/state paths and separate deployment authority. |
-| Portal launcher | Shelllist-owned MIT root/lock; source capture includes the current framework Hyprland crate. Keep its separate executable and portal/process behavior. |
+| Portal launcher | `nm-daemon/src/bin/nm-portal-launch.rs`, built and tested in NM’s MIT package and lock. It consumes the framework Hyprland crate and keeps the same claimed-intent execution and outcome behavior. |
 | Timezone tooling | Shelllist-owned MIT root/lock; separate asset generator and generated-asset freshness gate. Its input data provenance/licenses remain separate from the executable license. |
 
 This is a build/feature/license-constraint inventory, not a transitive license

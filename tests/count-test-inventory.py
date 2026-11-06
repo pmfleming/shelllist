@@ -24,7 +24,7 @@ def source(name):
 
 
 names = (git("ls-tree", "-r", "--name-only", args.revision).splitlines() if args.revision
-         else [str(path.relative_to(root)) for directory in ("tests", "rust", "portal-launcher")
+         else [str(path.relative_to(root)) for directory in ("tests", "rust")
                for path in (root / directory).rglob("*")
                if path.is_file() and "target" not in path.relative_to(root).parts])
 # This expression is unchanged from the previous pruning inventory. Calls in
@@ -33,7 +33,8 @@ assertion = r"^\s*(?:assert\.\w+|expect|expectState|equal|near|ok|throws|compare
 javascript = sum(len(re.findall(assertion, source(name), re.M)) for name in names
                  if re.fullmatch(r"tests/check-.*\.js", name)
                  and name != "tests/check-packaged-imports.js")
-# Include the native portal executor and async tests added since the last census.
+# Historical revisions include the portal executor; current native execution
+# tests are owned by the nm-daemon package.
 rust = sum(len(re.findall(r"^\s*#\[(?:test|tokio::test)\]", source(name), re.M)) for name in names
            if name.startswith(("rust/", "portal-launcher/")) and name.endswith(".rs"))
 python = sum(len(re.findall(r"^\s*def test_\w+\(", source(name), re.M)) for name in names

@@ -53,7 +53,7 @@ Wi-Fi supports scanning, saved/hidden networks, personal and enterprise credenti
 
 **Security & Privacy → Cast discovery** applies per-network mDNS policy through `nm-daemon`, without reconnecting. It controls systemd-resolved discovery, not applications using their own mDNS sockets. The daemon-owned `nm-daemon.nixosModules.discovery` module enables resolve-only support, defaults inherited discovery off and permits UDP 5353 replies when `services.nm-daemon.discovery.enable` is set. Configure its `openFirewall`, `multicastDNS` and `defaultMdns` options explicitly for host policy. Shelllist does not configure the resolver or firewall. Home Manager alone does not configure them; changed system defaults require a rebuild and may need one reconnect.
 
-Automatic captive portals open only after `nm-daemon` validates the connection and grants a one-shot launch claim. Rust owns deduplication and fallback selection; the native `shelllist-portal-launch` helper executes browser/workspace focus. **Sign in** (`Alt+I`) and the bar fallback use that same transaction. Unknown outcomes require explicit retry, never automatic replay. See [portal ownership](docs/reviews/captive-portal-migration.md).
+Automatic captive portals open only after `nm-daemon` validates the connection and grants a one-shot launch claim. Rust owns deduplication and fallback selection; the `nm-daemon` package supplies `nm-portal-launch` to execute browser/workspace focus in the graphical caller’s environment. **Sign in** (`Alt+I`) and the bar fallback use that same transaction. Unknown outcomes require explicit retry, never automatic replay. See [portal ownership](docs/reviews/captive-portal-migration.md).
 
 ### Bluetooth
 

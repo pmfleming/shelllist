@@ -421,7 +421,7 @@ Io.DaemonBackend {
             return;
         }
         try {
-            portalExecutor.exec(["shelllist-portal-launch", "--url", intent.url, "--workspace", workspace, "--expires-at-ms", String(intent.expires_at_ms)]);
+            portalExecutor.exec(["nm-portal-launch", "--url", intent.url, "--workspace", workspace, "--expires-at-ms", String(intent.expires_at_ms)]);
         } catch (error) {
             failPortalStart();
         }
