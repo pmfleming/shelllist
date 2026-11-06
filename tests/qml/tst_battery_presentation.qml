@@ -78,7 +78,7 @@ DaemonTestCase {
         if (error) envelope.error = {code: "settings-failed", message: error};
         else if (call.method === "battery.operation.start") envelope = {protocol: Api.protocol, version: Api.version, ok: true,
             data: {operation: {id: "settings-test", state: "finished", response: envelope}}};
-        Io.DaemonSessions.sessions["bar-daemon"].client.response(call.id, envelope, "", call.route);
+        Io.DaemonSessions.sessions["bar-power-daemon"].client.response(call.id, envelope, "", call.route);
     }
     function test_historyRangeIsADeferredReadNotAPerKeyRequest() {
         const panel = make();

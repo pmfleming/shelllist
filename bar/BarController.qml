@@ -218,7 +218,7 @@ Item {
         return backend.adjustBrightness(deltaPercent);
     }
     function cyclePowerProfile(): bool {
-        if (!powerProfile.available || backend.requestRunning)
+        if (!powerProfile.available || backend.powerRequestRunning)
             return false;
         // Capture the native target once for this explicit command. A later
         // observation/error must not advance the cycle or retry the effect.

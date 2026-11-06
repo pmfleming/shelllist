@@ -7,10 +7,11 @@ Io.BarDaemonBackend {
     id: backend
     required property BarController controller
     property string operationError: ""
+    readonly property bool powerRequestRunning: powerBackend.requestRunning
     daemonName: "bar-daemon"
     expectedProtocol: BarApi.protocol
     expectedVersion: BarApi.version
-    streams: BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive].includes(stream))
+    streams: BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive, BarApi.streams.battery, BarApi.streams.powerProfile, BarApi.streams.powerSuspend].includes(stream))
     active: true
     validateRequest: Contract.requestError
     validateEvent: Contract.eventError
@@ -82,7 +83,7 @@ Io.BarDaemonBackend {
     }
 
     function setPowerProfile(profile: string): bool {
-        return callSequenced("power-profile", BarApi.methods.powerProfileSet, {
+        return powerBackend.callSequenced("power-profile", BarApi.methods.powerProfileSet, {
             profile: profile
         });
     }
@@ -158,6 +159,21 @@ Io.BarDaemonBackend {
         expectedProtocol: BarApi.protocol
         expectedVersion: BarApi.version
         streams: controller.notificationState ? [] : [BarApi.streams.notifications, BarApi.streams.notificationActive]
+        active: true
+        validateRequest: Contract.requestError
+        validateEvent: Contract.eventError
+        onEventReceived: function(event) { controller.handleEvent(event); }
+        onResponseReceived: function(id, envelope, transportError) { backend.finish(id, envelope, transportError); }
+        onSendFailed: function(id, message) { backend.operationError = message; }
+        onTransportFailed: function(message, lostRequestIds) { backend.operationError = message; }
+    }
+
+    Io.BarDaemonBackend {
+        id: powerBackend
+        daemonName: "bar-power-daemon"
+        expectedProtocol: BarApi.protocol
+        expectedVersion: BarApi.version
+        streams: [BarApi.streams.battery, BarApi.streams.powerProfile, BarApi.streams.powerSuspend]
         active: true
         validateRequest: Contract.requestError
         validateEvent: Contract.eventError
