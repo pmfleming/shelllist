@@ -18,7 +18,7 @@ pub fn test_and_build(repo: &Path, daemon: &str, nix: bool) -> Result<std::path:
         command.current_dir(repo);
         command
     };
-    super::run(cargo().args(["test", "--locked", "--lib", "contract"]))?;
+    super::run(cargo().args(["test", "--workspace", "--locked", "--lib", "contract"]))?;
     // Ask Cargo for the actual executable, honoring target-dir/profile/config.
     let name = format!("{daemon}-daemon");
     let output = cargo()
