@@ -237,6 +237,17 @@ pub fn check(root: &Path, daemon: &str, bin: &Path) -> Result<()> {
                 "clipboard/ClipApi.js"
             };
             let mut text = fs::read_to_string(root.join(path))?;
+            if daemon == "bar" {
+                let routing = Command::new(bin)
+                    .args(["debug", "routing-javascript"])
+                    .output()?;
+                ensure!(routing.status.success(), "bar routing generator failed");
+                ensure!(
+                    String::from_utf8(routing.stdout)?
+                        == fs::read_to_string(root.join("bar/BarDaemonRouting.js"))?,
+                    "bar ownership routing drift"
+                );
+            }
             if daemon == "app" {
                 // Catalog requests and demand-scoped subscriptions belong to
                 // Updates, not the launcher's always-subscribed API surface.
