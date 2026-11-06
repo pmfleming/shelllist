@@ -36,7 +36,6 @@ let
     ]
   ) productFlakes;
   ownedPackages = (map (flake: flake.packages.${system}.default) productFlakes) ++ [
-    inputs.self.packages.${system}.shelllistSearch
     inputs.self.packages.${system}.shelllistTimezoneAssets
     inputs.self.packages.${system}.portalLauncher
     inputs.self.packages.${system}.shelllistConfig

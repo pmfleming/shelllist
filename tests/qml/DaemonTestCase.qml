@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest
 import Shelllist.Io as Io
+import Shelllist.Core as Core
 
 // Domain tests share a recording transport; routing/generation behavior is
 // exercised separately by tst_daemon_sessions and tst_daemon_boundary (cargo xtask check-daemon-boundary).
@@ -13,6 +14,21 @@ TestCase {
     property var calls: []
     property var originalFactory
     property var originalSessions
+    property var originalSearchFactory
+
+    // Domain interaction tests inject accepted ranking windows where needed.
+    // Generic ranking has its own real Qt lifecycle and native matcher tests;
+    // it must not add read traffic to assertions about domain effects.
+    Component {
+        id: inertSearchBackend
+        QtObject {
+            property bool ready: false
+            signal transportReady
+            signal transportFailed(string message, var lostRequestIds)
+            signal responseReceived(string id, var envelope, string error)
+            signal sendFailed(string id, string message)
+        }
+    }
 
     // Resolve beside this shared owner; all consumers use the same fixture tree.
     // Return fresh data unless a consumer explicitly retains its fixture value.
@@ -88,12 +104,18 @@ TestCase {
     }
 
     function initTestCase() {
+        originalSearchFactory = Core.SearchService.backendFactory;
+        Core.SearchService.transportActive = false;
+        Core.SearchService.backendFactory = inertSearchBackend;
         originalFactory = Io.DaemonSessions.clientFactory;
         originalSessions = Io.DaemonSessions.sessions;
         Io.DaemonSessions.sessions = ({});
         Io.DaemonSessions.clientFactory = clientFactory;
     }
     function cleanupTestCase() {
+        Core.SearchService.transportActive = false;
+        Core.SearchService.resetTransport();
+        Core.SearchService.backendFactory = originalSearchFactory;
         for (const session of Object.values(Io.DaemonSessions.sessions))
             session.client.destroy();
         Io.DaemonSessions.sessions = originalSessions;

@@ -74,13 +74,6 @@
         let
           quickshell = inputs.quickshell.packages.${system}.default;
           rustPlatform = (inputs.daemon-framework.lib.toolchain pkgs).rustPlatform;
-          shelllistSearch = rustPlatform.buildRustPackage {
-            pname = "shelllist-search";
-            version = "0.1.0";
-            src = ./rust/shelllist-search;
-            cargoLock.lockFile = ./rust/shelllist-search/Cargo.lock;
-            meta = mkMeta "Fuzzy result ranking service for Shelllist" "shelllist-search";
-          };
           performanceLens = rustPlatform.buildRustPackage {
             pname = "shelllist-perf";
             version = "0.1.0";
@@ -127,7 +120,7 @@
         {
           connectParityProbe = nmDaemonConnectParityProbe;
 
-          inherit shelllistSearch shelllistTimezoneAssets performanceLens xtask;
+          inherit shelllistTimezoneAssets performanceLens xtask;
 
           wifiQrScanner = pkgs.callPackage ./nix/qrca.nix { inherit nmDaemon; };
 
@@ -155,7 +148,6 @@
               pkgs.jq
               quickshell
               pkgs.hyprland # hyprctl: layer rules and live workspace placement
-              self.packages.${system}.shelllistSearch
               self.packages.${system}.wifiQrScanner
               self.packages.${system}.portalLauncher
               nmDaemon
@@ -784,7 +776,7 @@
             python3 ${./tests/test-native-application.py} \
               --source-root ${./.} \
               --app-daemon ${appDaemon}/bin/.app-daemon-wrapped \
-              --search ${self.packages.${system}.shelllistSearch}/bin/shelllist-search
+              --bar-daemon ${inputs."bar-daemon".packages.${system}.default}/bin/bar-daemon
             touch $out
           '';
 
@@ -857,7 +849,6 @@
               '';
 
           wifiQrScanner = self.packages.${system}.wifiQrScanner;
-          fuzzySearch = self.packages.${system}.shelllistSearch;
 
         }
       );

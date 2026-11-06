@@ -7,12 +7,19 @@ Item {
     id: service
 
     property int ownerSequence: 0
+    property int requestSequence: 0
     property var queuedRequests: []
     property var catalogs: ({})
+    property var revisions: ({})
+    property var acceptedRevisions: ({})
     property var latestRequests: ({})
+    property var inFlight: ({})
+    property var busyOwners: ({})
+    property var pendingReleases: ({})
+    property bool transportActive: false
     property int rankDebounceMs: 35
-    readonly property Io.SearchProcess process: processLoader.item as Io.SearchProcess
-    readonly property bool ready: process?.ready ?? false
+    readonly property var backend: backendLoader.item
+    readonly property bool ready: backend?.ready ?? false
 
     signal ranked(string owner, int generation, var keys)
 
@@ -28,9 +35,14 @@ Item {
         delete nextRequests[owner];
         catalogs = nextCatalogs;
         latestRequests = nextRequests;
+        delete acceptedRevisions[owner];
         queuedRequests = queuedRequests.filter(request => request.owner !== owner);
-        if (ready)
-            writeMessage({type: "release", owner: owner});
+        if (ready) {
+            if (busyOwners[owner])
+                pendingReleases[owner] = true;
+            else
+                send("search.release", {owner: owner});
+        }
     }
 
     function compactItems(items: var): var {
@@ -46,126 +58,150 @@ Item {
         });
     }
 
-    function writeMessage(message: var): void {
-        if (process)
-            process.write(JSON.stringify(message) + "\n");
-    }
-
     function updateCatalog(owner: string, items: var): void {
-        const next = Object.assign({}, catalogs);
-        next[owner] = compactItems(items);
-        catalogs = next;
-        if (ready)
-            writeMessage({
-                type: "catalog",
-                owner: owner,
-                items: next[owner]
-            });
-    }
-
-    function sendCatalogs(): void {
-        Object.keys(catalogs).forEach(function (owner) {
-            writeMessage({
-                type: "catalog",
-                owner: owner,
-                items: catalogs[owner]
-            });
-        });
+        catalogs = Object.assign({}, catalogs, {[owner]: compactItems(items)});
+        revisions = Object.assign({}, revisions, {[owner]: (revisions[owner] || 0) + 1});
     }
 
     function rank(owner: string, generation: int, query: string): void {
-        const request = {
-            type: "query",
-            owner: owner,
-            generation: generation,
-            query: query || ""
-        };
-        const next = Object.assign({}, latestRequests);
-        next[owner] = request;
-        latestRequests = next;
-        // Keep only the latest query per owner during the typing debounce. The
-        // Rust worker also coalesces commands received behind in-flight work.
-        queuedRequests = queuedRequests.filter(function (queued) {
-            return queued.owner !== owner;
-        }).concat([request]);
+        const request = {owner: owner, generation: generation, query: query || ""};
+        latestRequests = Object.assign({}, latestRequests, {[owner]: request});
+        queue(request);
         rankDebounce.restart();
-        if (!processLoader.active)
-            processLoader.active = true;
-        else if (!ready)
-            start();
+        transportActive = true;
     }
 
-    function start(): void {
-        if (!process || process.running || restartTimer.running)
-            return;
-        try {
-            process.start();
-        } catch (error) {
-            console.error("shelllist fuzzy search failed to start: " + error);
-            restartTimer.restart();
-        }
+    function queue(request: var): void {
+        queuedRequests = queuedRequests.filter(queued => queued.owner !== request.owner).concat([request]);
+    }
+
+    function send(method: string, params: var): void {
+        const id = "search-" + (++requestSequence);
+        inFlight[id] = {method: method, params: params};
+        busyOwners[params.owner] = id;
+        backend.call(id, method, params);
     }
 
     function flush(): void {
-        if (!process)
+        if (!ready)
             return;
         const requests = queuedRequests;
         queuedRequests = [];
-        for (let index = 0; index < requests.length; index++)
-            writeMessage(requests[index]);
-    }
-
-    function handleLine(line: string): void {
-        try {
-            const response = JSON.parse(line);
-            if (response.error) {
-                console.warn("shelllist fuzzy search rejected a request: " + response.error);
+        requests.forEach(function (request) {
+            const owner = request.owner;
+            if (catalogs[owner] === undefined || latestRequests[owner] !== request)
+                return;
+            if (busyOwners[owner]) {
+                queue(request);
                 return;
             }
-            ranked(response.owner || "", Number(response.generation) || 0, response.keys || []);
-        } catch (error) {
-            console.warn("shelllist fuzzy search returned invalid JSON: " + error);
+            if (acceptedRevisions[owner] !== revisions[owner]) {
+                queue(request);
+                send("search.catalog", {owner: owner, revision: revisions[owner], items: catalogs[owner]});
+            } else {
+                send("search.query", Object.assign({}, request, {revision: revisions[owner]}));
+            }
+        });
+    }
+
+    function completed(id: string, envelope: var, transportError: string): void {
+        const request = inFlight[id];
+        if (!request)
+            return;
+        delete inFlight[id];
+        const params = request.params;
+        const owner = params.owner;
+        if (busyOwners[owner] === id)
+            delete busyOwners[owner];
+        if (pendingReleases[owner]) {
+            delete pendingReleases[owner];
+            send("search.release", {owner: owner});
+            return;
+        }
+        if (request.method === "search.release") {
+            if (!rankDebounce.running)
+                flush();
+            return;
+        }
+        if (catalogs[owner] === undefined)
+            return;
+        const error = backend.responseError(envelope, transportError, "Search failed");
+        if (error) {
+            // Busy reads may retry; transport recovery replays only live catalogs
+            // and their latest query. Invalid input never loops on a timer.
+            if (envelope?.error?.code === "busy") {
+                queue(latestRequests[owner]);
+                retryTimer.restart();
+            } else if (envelope?.error?.code === "catalog-not-found" || envelope?.error?.code === "stale-catalog") {
+                delete acceptedRevisions[owner];
+                queue(latestRequests[owner]);
+                retryTimer.restart();
+            } else if (!transportError) {
+                console.warn("shelllist search: " + error);
+            }
+            return;
+        }
+        const data = envelope.data || ({});
+        if (data.owner !== owner || data.revision !== params.revision)
+            return;
+        if (request.method === "search.catalog") {
+            acceptedRevisions[owner] = params.revision;
+        } else if (params.revision === revisions[owner]
+                && params.generation === latestRequests[owner]?.generation
+                && data.generation === params.generation && Array.isArray(data.keys)) {
+            ranked(owner, data.generation, data.keys);
+        }
+        if (!rankDebounce.running)
+            flush();
+    }
+
+    function resetTransport(): void {
+        acceptedRevisions = ({});
+        inFlight = ({});
+        busyOwners = ({});
+        pendingReleases = ({});
+        queuedRequests = Object.values(latestRequests);
+    }
+
+    property Component backendFactory: Component {
+        Io.DaemonBackend {
+            daemonName: "bar-daemon"
+            expectedProtocol: "bar-api"
+            expectedVersion: 2
+            active: true
+            streams: []
         }
     }
-
     Loader {
-        id: processLoader
-        active: false
-        source: "../Io/process/SearchProcess.qml"
-        onLoaded: service.start()
-    }
-
-    Connections {
-        target: service.process
-        function onProcessReady(): void {
-            service.sendCatalogs();
-            service.queuedRequests = Object.values(service.latestRequests);
+        id: backendLoader
+        active: service.transportActive
+        sourceComponent: service.backendFactory
+        onLoaded: if (service.ready) {
+            service.resetTransport();
             if (!rankDebounce.running)
                 service.flush();
         }
-        function onLineReceived(line: string): void {
-            service.handleLine(line);
+    }
+    Connections {
+        target: service.backend
+        function onTransportReady(): void {
+            service.resetTransport();
+            if (!rankDebounce.running)
+                service.flush();
         }
-        function onStopped(error: string): void {
-            if (error.length > 0)
-                console.warn("shelllist fuzzy search stopped: " + error);
-            if (Object.keys(service.latestRequests).length > 0)
-                restartTimer.restart();
-        }
+        function onTransportFailed(): void { service.resetTransport(); }
+        function onResponseReceived(id: string, envelope: var, error: string): void { service.completed(id, envelope, error); }
+        function onSendFailed(id: string, message: string): void { service.completed(id, null, message); }
     }
 
     Timer {
         id: rankDebounce
         interval: service.rankDebounceMs
-        repeat: false
-        onTriggered: if (service.ready)
-            service.flush()
+        onTriggered: service.flush()
     }
-
     Timer {
-        id: restartTimer
-        interval: 1000
-        repeat: false
-        onTriggered: service.start()
+        id: retryTimer
+        interval: 100
+        onTriggered: service.flush()
     }
 }

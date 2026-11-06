@@ -16,7 +16,7 @@ import unittest
 ROOT = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--app-daemon", required=True, type=Path)
-parser.add_argument("--search", required=True, type=Path)
+parser.add_argument("--bar-daemon", required=True, type=Path)
 parser.add_argument("--quickshell", default="quickshell")
 parser.add_argument("--source-root", type=Path, default=ROOT)
 args = parser.parse_args()
@@ -29,7 +29,7 @@ class NativeApplicationTests(unittest.TestCase):
             root = Path(directory)
             for name in ("bin", "data/applications", "config", "state", "cache", "run", "empty"):
                 (root / name).mkdir(parents=True, mode=0o700)
-            for name, source in (("app-daemon", args.app_daemon), ("shelllist-search", args.search)):
+            for name, source in (("app-daemon", args.app_daemon), ("bar-daemon", args.bar_daemon)):
                 source = source.resolve(strict=True)
                 (root / "bin" / name).symlink_to(source)
             launcher = root / "bin/uwsm-app"
@@ -96,6 +96,15 @@ class NativeApplicationTests(unittest.TestCase):
                                           env=environment, stdout=daemon_log, stderr=daemon_log,
                                           start_new_session=True)
                 children.append(daemon)
+                # A private bar service supplies generic ranking; the application
+                # provider still owns its native ranked application windows.
+                bar_log = (root / "bar.log").open("w+")
+                logs.append(bar_log)
+                environment["BAR_DAEMON_NOTIFICATION_BACKEND"] = "swaync"
+                bar = subprocess.Popen([str(args.bar_daemon.resolve()), "daemon"],
+                                       env=environment, stdout=bar_log, stderr=bar_log,
+                                       start_new_session=True)
+                children.append(bar)
                 native_log = (root / "native.log").open("w+")
                 logs.append(native_log)
                 native = subprocess.Popen([shutil.which(args.quickshell), "--no-color", "--path",

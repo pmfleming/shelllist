@@ -37,10 +37,10 @@
     "daemon-framework/crates/shelllist-daemon-core/Cargo.toml",
     "daemon-framework/crates/shelllist-daemon-tokio/Cargo.toml",
     "daemon-framework/crates/shelllist-hyprland/Cargo.toml",
+    "daemon-framework/crates/shelllist-search/Cargo.toml",
     "daemon-framework/crates/shelllist-local-build/Cargo.toml",
     "nm-daemon/Cargo.toml",
     "shelllist/portal-launcher/Cargo.toml",
-    "shelllist/rust/shelllist-search/Cargo.toml",
     "shelllist/rust/shelllist-timezone-assets/Cargo.toml",
     "update-daemon/Cargo.toml",
     "update-daemon/crates/shelllist-update-status/Cargo.toml"
@@ -56,7 +56,6 @@
     "nm-daemon/Cargo.lock",
     "update-daemon/Cargo.lock",
     "shelllist/portal-launcher/Cargo.lock",
-    "shelllist/rust/shelllist-search/Cargo.lock",
     "shelllist/rust/shelllist-timezone-assets/Cargo.lock"
   ],
   "independentCrates": {

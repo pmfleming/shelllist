@@ -6,7 +6,7 @@ struct Fixture {
     policy: Value,
 }
 const MANIFESTS: [&str; 2] = [
-    "shelllist/rust/shelllist-search/Cargo.toml",
+    "shelllist/rust/shelllist-timezone-assets/Cargo.toml",
     "clip-daemon/Cargo.toml",
 ];
 impl Fixture {
@@ -118,7 +118,7 @@ fn compiler_pins_requirements_msrv_and_sources() {
         ),
         (MANIFESTS[0], "1.85", "1.96", "MSRV exceeds"),
         (
-            "shelllist/rust/shelllist-search/Cargo.lock",
+            "shelllist/rust/shelllist-timezone-assets/Cargo.lock",
             "registry+https://github.com/rust-lang/crates.io-index",
             "git+https://example.invalid/serde",
             "source/checksum",
@@ -151,7 +151,7 @@ fn inventories_new_dependencies_paths_and_lock_drift() {
             "lock inventory changed",
         ),
         (
-            "shelllist/rust/shelllist-search/Cargo.lock",
+            "shelllist/rust/shelllist-timezone-assets/Cargo.lock",
             "version=4\npackage=[]",
             "declared dependency missing",
         ),
@@ -173,7 +173,7 @@ fn inventories_new_dependencies_paths_and_lock_drift() {
     );
     f.rejects("uncaptured path dependency");
     let f = Fixture::new();
-    let lock = "shelllist/rust/shelllist-search/Cargo.lock";
+    let lock = "shelllist/rust/shelllist-timezone-assets/Cargo.lock";
     f.replace(lock, "1.0.229", "1.0.228");
     f.rejects("resolution drift");
     let text = fs::read_to_string(f.temp.path().join(lock)).unwrap();
@@ -231,7 +231,7 @@ fn independent_exceptions_are_exact_and_cannot_hide_product_dependencies() {
 #[test]
 fn documented_requirement_and_resolution_exceptions_are_narrow() {
     let mut f = Fixture::new();
-    let lock = "shelllist/rust/shelllist-search/Cargo.lock";
+    let lock = "shelllist/rust/shelllist-timezone-assets/Cargo.lock";
     f.replace(lock, "1.0.229", "1.0.228");
     f.policy["shared"]["serde"]["lockExceptions"] =
         json!({lock:{"versions":["1.0.228"],"reason":"compatibility"}});

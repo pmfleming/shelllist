@@ -45,7 +45,7 @@ A shared OSD frame presents volume, microphone, brightness, power profile, lock 
 
 Applications groups standards-visible desktop entries with live Hyprland windows. **Shell, Browser, Code, Media, Text** categories map to workspaces 1–5. `Enter` focuses the most-recent instance or launches; `Shift+Enter` launches another instance. Details expose windows, desktop/close actions, resource graphs and the combined category/workspace setting. Launch-only shortcuts do not claim windows or resource usage. Application actions are asynchronous; a frontend recovery timeout handles a lost terminal backend event without treating an unacknowledged action as success.
 
-The bundled Rust search matcher supports substrings, ordered-character/acronym matches, diacritic folding, multiple terms and conservative typo correction. Exact/prefix matches rank ahead of fuzzy results. See [application behavior and ownership](docs/application-launcher.md).
+The shared Rust matcher in `daemon-framework`, served through `bar-daemon`, supports substrings, ordered-character/acronym matches, diacritic folding, multiple terms and conservative typo correction. Exact/prefix matches rank ahead of fuzzy results. See [application behavior and ownership](docs/application-launcher.md).
 
 ### Wi-Fi
 

@@ -190,7 +190,7 @@ Consumers: `shelllist/qml/Shelllist/Core/Provider.qml`,
 `shelllist/qml/Shelllist/Core/ProviderRegistry.qml`,
 `shelllist/qml/Shelllist/Core/ResultStore.qml`. The store deliberately separates
 normalized/raw construction and retains accepted rank windows.
-`shelllist/rust/shelllist-search/src/lib.rs` consumes only ranking items, not this
+`daemon-framework/crates/shelllist-search/src/lib.rs` consumes only ranking items, not this
 entire UI schema. App native `ApplicationSummary`/`ApplicationAction` and BT native
 capabilities are distinct types. **No duplicate producer schema was identified
 in Model.js.** CQ-14 closes this candidate as retain, with a bounded uncertainty

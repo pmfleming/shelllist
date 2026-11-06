@@ -5,6 +5,9 @@
 var protocol = "bar-api";
 var version = 2;
 var methods = ({
+    "search.catalog": "search.catalog",
+    "search.query": "search.query",
+    "search.release": "search.release",
     "theme.configure": "theme.configure",
     "theme.resolve": "theme.resolve",
     "bar.snapshot": "bar.snapshot",

@@ -260,6 +260,7 @@ pub fn check(root: &Path, daemon: &str, bin: &Path) -> Result<()> {
                 "activity/ActivityApi.js",
                 "battery/BatteryApi.js",
                 "displays/DisplayApi.js",
+                "qml/Shelllist/Core/SearchService.qml",
             ] {
                 text.push_str(&fs::read_to_string(root.join(path))?);
             }
@@ -269,6 +270,7 @@ pub fn check(root: &Path, daemon: &str, bin: &Path) -> Result<()> {
                 false,
                 &[
                     "bar",
+                    "search",
                     "activity",
                     "locations",
                     "location",

@@ -1,6 +1,7 @@
 /result
 /output/
 /target
+**/target/
 /.direnv
 /.quickshell-cache
 

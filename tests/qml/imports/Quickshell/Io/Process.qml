@@ -15,9 +15,9 @@ QtObject {
     signal exited(int exitCode)
 
     function exec(command) {
-        // Search now starts for empty queries too. UI tests inject authoritative
-        // rankings; exercise the worker separately rather than starting a process.
-        if (command.length === 1 && command[0] === "shelllist-search") {
+        // Generic ranking shares the bar transport. Tests inject authoritative
+        // replies; this inert transport never launches a daemon or helper.
+        if (command.length === 2 && command[0] === "bar-daemon" && command[1] === "client") {
             simulated = true;
             commands = commands.concat([command]);
             running = true;
