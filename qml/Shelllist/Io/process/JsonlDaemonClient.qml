@@ -299,7 +299,7 @@ Item {
         // Clipboard retains the bridge's 128 MiB escaped-record allowance.
         // The adapter reserves three bytes per UTF-16 unit until acknowledgement;
         // this is a bounded reservation budget, not a larger producer frame limit.
-        maximumPendingBytes: client.daemonName === "clip-daemon" ? 3 * (128 * 1024 * 1024 + 1) : 4 * 1024 * 1024
+        maximumPendingBytes: client.daemonName === "bar-daemon" ? 3 * (32 * 1024 * 1024 + 1) : client.daemonName === "clip-daemon" ? 3 * (128 * 1024 * 1024 + 1) : 4 * 1024 * 1024
         maximumCalls: client.daemonName === "clip-daemon" ? 4 : 64
         onStarted: client.transportStarted()
         onExited: function(exitCode) { client.transportExited(exitCode); }

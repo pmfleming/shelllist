@@ -66,7 +66,7 @@ TestCase {
                         compare(client.useSocket, flags[daemon] === enabled && value === "1");
                         compare(client.socketPath, "/isolated/" + daemon + ".sock");
                         const transport = findChild(client, "daemonSocketTransport");
-                        compare(transport.maximumPendingBytes, daemon === "clip-daemon" ? 3 * (128 * 1024 * 1024 + 1) : 4 * 1024 * 1024);
+                        compare(transport.maximumPendingBytes, daemon === "bar-daemon" ? 3 * (32 * 1024 * 1024 + 1) : daemon === "clip-daemon" ? 3 * (128 * 1024 * 1024 + 1) : 4 * 1024 * 1024);
                         compare(transport.maximumCalls, daemon === "clip-daemon" ? 4 : 64);
                     }
                 }
