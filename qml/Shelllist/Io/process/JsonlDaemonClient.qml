@@ -20,7 +20,7 @@ Item {
     property bool useSocket: (daemonName === "bt-daemon" && Quickshell.env("SHELLLIST_BT_SOCKET") === "1")
         || (daemonName === "nm-daemon" && Quickshell.env("SHELLLIST_NM_SOCKET") === "1")
         || (daemonName === "app-daemon" && Quickshell.env("SHELLLIST_APP_SOCKET") === "1")
-        || (["bar-daemon", "bar-notification-daemon", "bar-power-daemon"].includes(daemonName) && Quickshell.env("SHELLLIST_BAR_SOCKET") === "1")
+        || (["bar-daemon", "bar-notification-daemon", "bar-power-daemon", "bar-compositor-daemon"].includes(daemonName) && Quickshell.env("SHELLLIST_BAR_SOCKET") === "1")
         || (daemonName === "clip-daemon" && Quickshell.env("SHELLLIST_CLIP_SOCKET") === "1")
     property string socketPath: Quickshell.env("XDG_RUNTIME_DIR") ? Quickshell.env("XDG_RUNTIME_DIR") + "/" + daemonName + ".sock" : ""
     readonly property var transportBackend: useSocket ? socketTransport : process

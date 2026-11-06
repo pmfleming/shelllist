@@ -11,7 +11,7 @@ Io.BarDaemonBackend {
     daemonName: "bar-daemon"
     expectedProtocol: BarApi.protocol
     expectedVersion: BarApi.version
-    streams: BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive, BarApi.streams.battery, BarApi.streams.powerProfile, BarApi.streams.powerSuspend].includes(stream))
+    streams: BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive, BarApi.streams.battery, BarApi.streams.powerProfile, BarApi.streams.powerSuspend, BarApi.streams.workspaces, BarApi.streams.displays].includes(stream))
     active: true
     validateRequest: Contract.requestError
     validateEvent: Contract.eventError
@@ -25,15 +25,15 @@ Io.BarDaemonBackend {
     }
 
     function focusWorkspace(workspaceId: int): bool {
-        return callSequenced("workspace-focus", BarApi.methods.workspaceFocus, {
+        return compositorBackend.callSequenced("workspace-focus", BarApi.methods.workspaceFocus, {
             workspace_id: workspaceId,
             on_current_monitor: true
         });
     }
 
     function createWorkspace(monitor: string): bool {
-        const id = nextRequestId("workspace-create");
-        return call(id, "workspace.command", {command: "create", monitor: monitor, request_id: id});
+        const id = compositorBackend.nextRequestId("workspace-create");
+        return compositorBackend.call(id, "workspace.command", {command: "create", monitor: monitor, request_id: id});
     }
 
     function mediaOperation(operation: string): bool {
@@ -174,6 +174,21 @@ Io.BarDaemonBackend {
         expectedProtocol: BarApi.protocol
         expectedVersion: BarApi.version
         streams: [BarApi.streams.battery, BarApi.streams.powerProfile, BarApi.streams.powerSuspend]
+        active: true
+        validateRequest: Contract.requestError
+        validateEvent: Contract.eventError
+        onEventReceived: function(event) { controller.handleEvent(event); }
+        onResponseReceived: function(id, envelope, transportError) { backend.finish(id, envelope, transportError); }
+        onSendFailed: function(id, message) { backend.operationError = message; }
+        onTransportFailed: function(message, lostRequestIds) { backend.operationError = message; }
+    }
+
+    Io.BarDaemonBackend {
+        id: compositorBackend
+        daemonName: "bar-compositor-daemon"
+        expectedProtocol: BarApi.protocol
+        expectedVersion: BarApi.version
+        streams: [BarApi.streams.workspaces, BarApi.streams.displays]
         active: true
         validateRequest: Contract.requestError
         validateEvent: Contract.eventError

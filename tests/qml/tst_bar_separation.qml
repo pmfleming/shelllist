@@ -34,4 +34,13 @@ DaemonTestCase {
         verify(controller.backend.powerRequestRunning);
     }
 
+    function test_workspaceRequestsUseTheirOwnSession() {
+        const controller = createTemporaryObject(factory, tests);
+        verify(controller !== null);
+        verify(controller.backend.focusWorkspace(2));
+        const last = calls[calls.length - 1];
+        compare(last.method, "workspace.focus");
+        verify(!!Io.DaemonSessions.sessions["bar-compositor-daemon"].consumers[last.route.consumerId]);
+    }
+
 }

@@ -10,7 +10,7 @@ BarDaemonBackend {
     signal received(var value)
     signal readFailed
 
-    daemonName: "bar-daemon"
+    daemonName: ["workarea", "workspaces", "compositor", "display_policy"].includes(projection) ? "bar-compositor-daemon" : "bar-daemon"
     expectedProtocol: Protocol.protocol
     expectedVersion: Protocol.version
     streams: [Protocol.streams[projection + ".changed"]]
