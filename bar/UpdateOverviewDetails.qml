@@ -10,6 +10,14 @@ Column {
     readonly property var snapshot: controller.overview
     property bool informationOnly: true
     spacing: Ui.Theme.cardGap
+    Loader {
+        width: parent.width
+        active: details.controller.detailsTab === "system"
+        visible: active
+        sourceComponent: UpdateSystemVersions {
+            controller: details.controller
+        }
+    }
     Ui.ThemeText {
         width: parent.width
         visible: details.controller.detailsTab !== "applications" && details.controller.detailsTab !== "git"

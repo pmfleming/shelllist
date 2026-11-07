@@ -1256,6 +1256,47 @@ DaemonTestCase {
         compare(root.controller.overview.git, undefined, "older worker omits the optional evidence");
         verify(Presentation.toolFreshness(root.controller.overview.tools[0]).includes("not reported"));
     }
+    function test_systemVersionsUseActiveGenerationAndCachedStableReleases(): void {
+        const root = fixture();
+        reply(latest(), []);
+        const value = overviewValue();
+        value.applications = {available: true, active_system: "/nix/store/active-system", observed_at: 400,
+            total: 3, error: null, packages: [
+                {name: "linux", scope: "system", version: "6.18.9", release: {
+                    version: "6.19.2", source: "https://www.kernel.org/releases.json", checked_at: 390,
+                    attempted_at: 390, stale: false, error: null}},
+                {name: "hyprland", scope: "system", version: "0.53.0", release: {
+                    version: "0.54.0", source: "https://api.github.com/repos/hyprwm/Hyprland/releases/latest", checked_at: 380,
+                    attempted_at: 390, stale: true, error: "HTTP 429"}},
+                {name: "linux", scope: "user:test", version: "99.0"}
+            ]};
+        overviewReply(latestOverview(), value);
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        const reads = calls.length;
+        showPage(root, "system");
+        const kernel = findChild(root, "updateSystemVersion:linux");
+        const hyprland = findChild(root, "updateSystemVersion:hyprland");
+        verify(kernel.visible && hyprland.visible);
+        compare(findChild(kernel, "updateSystemInstalled").text, "Installed: 6.18.9");
+        compare(findChild(kernel, "updateSystemLatest").text, "Latest stable: 6.19.2");
+        compare(findChild(hyprland, "updateSystemInstalled").text, "Installed: 0.53.0");
+        compare(findChild(hyprland, "updateSystemLatest").text, "Last known stable: 0.54.0");
+        verify(hyprland.supportingText.includes("HTTP 429"));
+        verify(kernel.supportingText.includes("https://www.kernel.org/releases.json"));
+        keyClick(Qt.Key_Tab);
+        compare(root.content.detailsNavigation.highlightedControl, null);
+        keyClick(Qt.Key_PageDown);
+        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
+        compare(root.content.detailsNavigation.highlightedControl, null);
+        compare(calls.length, reads, "system versions are passive; navigation never checks or installs");
+        root.controller.requestOverview();
+        overviewReply(latestOverview(), overviewValue());
+        compare(findChild(kernel, "updateSystemInstalled").text, "Installed: Not reported");
+        compare(findChild(kernel, "updateSystemLatest").text, "Latest stable: Not reported");
+        compare(findChild(hyprland, "updateSystemInstalled").text, "Installed: Not reported");
+    }
     function test_applicationInventoryIsReadOnlyAndRejectsMalformedRefresh(): void {
         const root = fixture();
         reply(latest(), []);
