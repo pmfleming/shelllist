@@ -77,7 +77,7 @@ DaemonTestCase {
         const panel = makePanel();
         const controller = panel.controller;
         const button = findChild(panel, "keepAwakeButton");
-        const client = Io.DaemonSessions.sessions["bar-power-daemon"].client;
+        const client = Io.DaemonSessions.sessions["power-daemon"].client;
         controller.applyPowerSuspend({
             available: false,
             keep_awake: false,

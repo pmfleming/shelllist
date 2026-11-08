@@ -17,7 +17,7 @@ DaemonTestCase {
     function make() {
         const controller = createTemporaryObject(factory, tests);
         verify(controller !== null);
-        seedBarDaemon("bar-power-daemon", {"battery.changed": {available: true, percentage: 80}});
+        seedBarDaemon("power-daemon", {"battery.changed": {available: true, percentage: 80}});
         return controller;
     }
     function reads(backend) { return calls.filter(call => call.route.consumerId === backend.sharedConsumerId && call.method === "bar.snapshot"); }

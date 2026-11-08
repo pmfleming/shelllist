@@ -31,11 +31,11 @@ DaemonTestCase {
         return found[found.length - 1];
     }
     function reply(call, value) {
-        Io.DaemonSessions.sessions["bar-compositor-daemon"].client.response(call.id, clone(value), "", call.route);
+        Io.DaemonSessions.sessions["compositor-daemon"].client.response(call.id, clone(value), "", call.route);
     }
     function event(controller, state) {
         const route = Object.assign({}, lastCall(controller, "bar.snapshot").route, {kind: "base-subscription", localId: "session-subscribe"});
-        emitBaseEvent("bar-compositor-daemon", route, clone(contractFixture.events[state]));
+        emitBaseEvent("compositor-daemon", route, clone(contractFixture.events[state]));
         // Test the fixed fixture deadline against a fixed observation clock, not the wall date.
         controller.clock = contractFixture.events.preview.data.layout.trial.expires_at * 1000 - 20000;
     }
@@ -113,7 +113,7 @@ DaemonTestCase {
         foreign.data.layout.trial.id = "another-trial";
         foreign.data._publication.revision++;
         const route = Object.assign({}, preview.route, {kind:"base-subscription", localId:"session-subscribe"});
-        emitBaseEvent("bar-compositor-daemon", route, foreign);
+        emitBaseEvent("compositor-daemon", route, foreign);
         reply(preview, contractFixture.replies[preview.method].success);
         compare(controller.trial.id, "another-trial");
         compare(effects(controller).length, 1, "receipt identity cannot authorize rollback of newer live state");
@@ -124,7 +124,7 @@ DaemonTestCase {
         start(controller, "displayLayout.preview");
         controller.deactivateUi();
         clientReady = false;
-        Io.DaemonSessions.sessions["bar-compositor-daemon"].client.transportFailed("Preview outcome unknown");
+        Io.DaemonSessions.sessions["compositor-daemon"].client.transportFailed("Preview outcome unknown");
         verify(!controller.revertOnArrival);
         controller.uiActive = true;
         clientReady = true;
@@ -145,7 +145,7 @@ DaemonTestCase {
         compare(effects(controller).length, 2);
         verify(!controller.revertOnArrival);
         clientReady = false;
-        Io.DaemonSessions.sessions["bar-compositor-daemon"].client.transportFailed("Revert outcome unknown");
+        Io.DaemonSessions.sessions["compositor-daemon"].client.transportFailed("Revert outcome unknown");
         clientReady = true;
         reply(lastCall(controller, "bar.snapshot"), contractFixture.snapshots.preview);
         wait(0);

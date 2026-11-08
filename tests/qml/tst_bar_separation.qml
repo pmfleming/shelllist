@@ -16,15 +16,15 @@ DaemonTestCase {
         const controller = createTemporaryObject(factory, tests);
         verify(controller !== null);
         verify(Io.DaemonSessions.sessions["bar-daemon"] !== undefined);
-        verify(Io.DaemonSessions.sessions["bar-notification-daemon"] !== undefined);
-        const session = Io.DaemonSessions.sessions["bar-notification-daemon"];
+        verify(Io.DaemonSessions.sessions["notification-daemon"] !== undefined);
+        const session = Io.DaemonSessions.sessions["notification-daemon"];
         Object.values(session.consumers).forEach(consumer => {
             Array.from(consumer.backend.streams).forEach(stream => verify(stream.startsWith("notifications.")));
         });
         const before = calls.length;
         verify(controller.backend.toggleDnd());
         compare(calls.length, before + 1);
-        verify(!!Io.DaemonSessions.sessions["bar-notification-daemon"].consumers[calls[calls.length - 1].route.consumerId]);
+        verify(!!Io.DaemonSessions.sessions["notification-daemon"].consumers[calls[calls.length - 1].route.consumerId]);
     }
     function test_powerRequestsUseTheirOwnSession() {
         const controller = createTemporaryObject(factory, tests);
@@ -32,7 +32,7 @@ DaemonTestCase {
         verify(controller.backend.setPowerProfile("balanced"));
         const last = calls[calls.length - 1];
         compare(last.method, "powerProfile.set");
-        verify(!!Io.DaemonSessions.sessions["bar-power-daemon"].consumers[last.route.consumerId]);
+        verify(!!Io.DaemonSessions.sessions["power-daemon"].consumers[last.route.consumerId]);
         verify(controller.backend.powerRequestRunning);
     }
 
@@ -42,7 +42,7 @@ DaemonTestCase {
         verify(controller.backend.focusWorkspace(2));
         const last = calls[calls.length - 1];
         compare(last.method, "workspace.focus");
-        verify(!!Io.DaemonSessions.sessions["bar-compositor-daemon"].consumers[last.route.consumerId]);
+        verify(!!Io.DaemonSessions.sessions["compositor-daemon"].consumers[last.route.consumerId]);
     }
 
     function test_everySubscriptionTargetsItsOwner() {
@@ -58,11 +58,11 @@ DaemonTestCase {
     }
     function test_powerLossLeavesAudioSubscriptionActive() {
         const controller = createTemporaryObject(factory, tests);
-        seedBarDaemon("bar-power-daemon", null);
+        seedBarDaemon("power-daemon", null);
         const bar = Io.DaemonSessions.sessions["bar-daemon"];
         const client = bar.client;
         const subscriptions = client.subscriptions.length;
-        Io.DaemonSessions.sessions["bar-power-daemon"].client.transportFailed("power exited");
+        Io.DaemonSessions.sessions["power-daemon"].client.transportFailed("power exited");
         compare(Io.DaemonSessions.sessions["bar-daemon"].client, client);
         compare(client.subscriptions.length, subscriptions);
         verify(controller.backend.ready);

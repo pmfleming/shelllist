@@ -156,7 +156,7 @@ Io.BarDaemonBackend {
     onTransportReady: snapshot()
     Io.BarDaemonBackend {
         id: notificationBackend
-        daemonName: "bar-notification-daemon"
+        daemonName: "notification-daemon"
         expectedProtocol: BarApi.protocol
         expectedVersion: BarApi.version
         streams: controller.notificationState ? [] : [BarApi.streams.notifications, BarApi.streams.notificationActive]
@@ -171,7 +171,7 @@ Io.BarDaemonBackend {
 
     Io.BarDaemonBackend {
         id: powerBackend
-        daemonName: "bar-power-daemon"
+        daemonName: "power-daemon"
         expectedProtocol: BarApi.protocol
         expectedVersion: BarApi.version
         streams: Routing.selectStreams(BarApi.subscribedStreams, daemonName)
@@ -186,7 +186,7 @@ Io.BarDaemonBackend {
 
     Io.BarDaemonBackend {
         id: compositorBackend
-        daemonName: "bar-compositor-daemon"
+        daemonName: "compositor-daemon"
         expectedProtocol: BarApi.protocol
         expectedVersion: BarApi.version
         streams: Routing.selectStreams(BarApi.subscribedStreams, daemonName)
@@ -201,7 +201,7 @@ Io.BarDaemonBackend {
 
     Io.BarDaemonBackend {
         id: activityBackend
-        daemonName: "bar-activity-daemon"
+        daemonName: "activity-daemon"
         expectedProtocol: BarApi.protocol
         expectedVersion: BarApi.version
         streams: Routing.selectStreams(BarApi.subscribedStreams, daemonName)

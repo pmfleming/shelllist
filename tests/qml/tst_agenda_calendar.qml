@@ -97,7 +97,7 @@ DaemonTestCase {
         const current=calls.filter(call=>call.method==="agenda.markers").slice(-1)[0];
         verify(current !== undefined && current.id !== old.id);
         const data={days:[{date:"2026-10-27",event:true,task:true}],catalog_revision:1,today:"2026-10-27",timezone:"UTC"};
-        const session=Io.DaemonSessions.sessions["bar-activity-daemon"];
+        const session=Io.DaemonSessions.sessions["activity-daemon"];
         const reader=controller.markerWindow;
         const consumer=session.consumers[reader.sharedConsumerId];
         compare(consumer.active,true,"extracted reader retains native subscription lifecycle");
@@ -115,7 +115,7 @@ DaemonTestCase {
         verify(eventInvalidated.id !== invalidated.id);
         const subscription=session.client.subscriptions.find(item=>item.route.consumerId===reader.sharedConsumerId);
         verify(subscription !== undefined);
-        emitBaseEvent("bar-activity-daemon",subscription.route,{protocol:"bar-api",version:2,stream:"activity.changed",event:"changed",data:{}});
+        emitBaseEvent("activity-daemon",subscription.route,{protocol:"bar-api",version:2,stream:"activity.changed",event:"changed",data:{}});
         compare(reader.latestRead,"","native events also fence the pending read immediately");
         wait(100);
         const late=calls.filter(call=>call.method==="agenda.markers").slice(-1)[0];
@@ -128,7 +128,7 @@ DaemonTestCase {
     }
     function markerCalls() { return calls.filter(call=>call.method==="agenda.markers"); }
     function replyMarkers(request, revision, days) {
-        Io.DaemonSessions.sessions["bar-activity-daemon"].client.response(request.id,
+        Io.DaemonSessions.sessions["activity-daemon"].client.response(request.id,
             {protocol:"bar-api",version:2,ok:true,data:{days:days,catalog_revision:revision,today:"2026-10-27",timezone:"UTC"}},"",request.route);
     }
     function test_markerBridgeBoundsStaleRecoveryAndPolling() {
@@ -155,10 +155,10 @@ DaemonTestCase {
         replyMarkers(markerCalls().slice(-1)[0],10,[{date:"2026-10-27",event:true,task:1}]);
         reader.poll();wait(100);
         compare(markerCalls().length-episodeStart,3,"malformed replies pause instead of retrying");
-        const session=Io.DaemonSessions.sessions["bar-activity-daemon"];
+        const session=Io.DaemonSessions.sessions["activity-daemon"];
         const subscription=session.client.subscriptions.find(item=>item.route.consumerId===reader.sharedConsumerId);
         verify(subscription !== undefined);
-        emitBaseEvent("bar-activity-daemon",subscription.route,{protocol:"bar-api",version:2,stream:"activity.changed",event:"gap",data:{}});
+        emitBaseEvent("activity-daemon",subscription.route,{protocol:"bar-api",version:2,stream:"activity.changed",event:"gap",data:{}});
         wait(100);
         compare(markerCalls().length-episodeStart,4,"an acknowledged stream gap invalidates and re-enables reading");
         replyMarkers(markerCalls().slice(-1)[0],10,presence);
@@ -168,7 +168,7 @@ DaemonTestCase {
     function test_markerReconnectResetsAuthorityNotPresentation() {
         const controller=owner();controller.activateUi("");
         const reader=controller.markerWindow;
-        const session=Io.DaemonSessions.sessions["bar-activity-daemon"];
+        const session=Io.DaemonSessions.sessions["activity-daemon"];
         const presence=[{date:"2026-10-27",event:true,task:true}];
         wait(100);replyMarkers(markerCalls().slice(-1)[0],9,presence);
         const repositoryConsumer=Object.values(session.consumers).find(consumer=>consumer.backend instanceof Activity.AgendaTransport);
@@ -304,7 +304,7 @@ DaemonTestCase {
         const request=markerCalls().slice(-1)[0];
         const sourceError="unsupported iCalendar recurrence; previous import retained: "+"旅行".repeat(40);
         const presence=[{date:"2026-10-27",event:true,task:false}];
-        Io.DaemonSessions.sessions["bar-activity-daemon"].client.response(request.id,
+        Io.DaemonSessions.sessions["activity-daemon"].client.response(request.id,
             {protocol:"bar-api",version:2,ok:true,data:{days:presence,catalog_revision:1,today:"2026-10-27",timezone:"UTC",failing_source_count:1,source_error:sourceError}},"",request.route);
         compare(controller.selectedDate,"");compare(controller.agendaController.uiActive,false);
         const feedback=findChild(content.calendarGrid,"panelFeedback");
@@ -353,7 +353,7 @@ DaemonTestCase {
         controller.refresh();
         tryVerify(()=>markerCalls().slice(-1)[0]?.id !== previous);
         const healthy=markerCalls().slice(-1)[0];
-        Io.DaemonSessions.sessions["bar-activity-daemon"].client.response(healthy.id,
+        Io.DaemonSessions.sessions["activity-daemon"].client.response(healthy.id,
             {protocol:"bar-api",version:2,ok:true,data:{days:presence,catalog_revision:2,today:"2026-10-27",timezone:"UTC",failing_source_count:0,source_error:null}},"",healthy.route);
         compare(controller.markerWindow.sourceError,"");compare(controller.markerWindow.failingSourceCount,0);
         compare(feedback.visible,false);compare(agenda.items.length,1);

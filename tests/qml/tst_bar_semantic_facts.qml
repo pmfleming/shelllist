@@ -21,16 +21,16 @@ DaemonTestCase {
         const read = calls.find(call => call.method === "bar.snapshot");
         const envelope = readFixture("bar-reads").snapshot;
         Io.DaemonSessions.sessions["bar-daemon"].client.response(read.id, envelope, "", read.route);
-        seedBarDaemon("bar-power-daemon", null);
+        seedBarDaemon("power-daemon", null);
         return controller;
     }
     function powerEvent(profile: var, revision: int): void {
         const event = readFixture("bar-reads").changed["power-profile.changed"];
         event.data = Object.assign(event.data, profile);
         event.data._publication.revision = revision;
-        const session = Io.DaemonSessions.sessions["bar-power-daemon"];
+        const session = Io.DaemonSessions.sessions["power-daemon"];
         const subscription = session.client.subscriptions.find(sub => sub.streams.includes("power-profile.changed"));
-        emitBaseEvent("bar-power-daemon", subscription.route, event);
+        emitBaseEvent("power-daemon", subscription.route, event);
     }
     function sets() { return calls.filter(call => call.method === "powerProfile.set"); }
 
@@ -112,7 +112,7 @@ DaemonTestCase {
         powerEvent({profile: "power-saver", next_manual_profile: "balanced"}, 11);
         compare(sets()[0].params, {profile: "performance"}, "Observation cannot retarget the captured request");
         const submitted = sets()[0];
-        Io.DaemonSessions.sessions["bar-power-daemon"].client.response(submitted.id,
+        Io.DaemonSessions.sessions["power-daemon"].client.response(submitted.id,
             {protocol: "bar-api", version: 2, ok: false, error: {code: "failed", message: "Target removed"}}, "", submitted.route);
         wait(0);
         compare(sets().length, 1, "Failure never retries or cycles automatically");

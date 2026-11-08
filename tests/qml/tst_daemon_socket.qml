@@ -56,7 +56,7 @@ TestCase {
     function test_optInsAreExplicitAndDaemonScoped() {
         const original = QuickshellFixture.Quickshell.environment;
         try {
-            const flags = {"nm-daemon":"SHELLLIST_NM_SOCKET", "bt-daemon":"SHELLLIST_BT_SOCKET", "app-daemon":"SHELLLIST_APP_SOCKET", "bar-daemon":"SHELLLIST_BAR_SOCKET", "bar-notification-daemon":"SHELLLIST_BAR_SOCKET", "bar-power-daemon":"SHELLLIST_BAR_SOCKET", "bar-compositor-daemon":"SHELLLIST_BAR_SOCKET", "bar-activity-daemon":"SHELLLIST_BAR_SOCKET", "clip-daemon":"SHELLLIST_CLIP_SOCKET"};
+            const flags = {"nm-daemon":"SHELLLIST_NM_SOCKET", "bt-daemon":"SHELLLIST_BT_SOCKET", "app-daemon":"SHELLLIST_APP_SOCKET", "bar-daemon":"SHELLLIST_BAR_SOCKET", "notification-daemon":"SHELLLIST_BAR_SOCKET", "power-daemon":"SHELLLIST_BAR_SOCKET", "compositor-daemon":"SHELLLIST_BAR_SOCKET", "activity-daemon":"SHELLLIST_BAR_SOCKET", "clip-daemon":"SHELLLIST_CLIP_SOCKET"};
             for (const enabled of [""].concat(Object.values(flags))) {
                 for (const value of ["", "0", "true", "1"]) {
                     QuickshellFixture.Quickshell.environment = Object.assign({XDG_RUNTIME_DIR: "/isolated"}, enabled ? {[enabled]: value} : {});

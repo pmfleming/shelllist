@@ -17,11 +17,11 @@ DaemonTestCase {
         verify(found.length > 0, "Missing " + method); return found[found.length - 1];
     }
     function reply(call, envelope, error) {
-        Io.DaemonSessions.sessions["bar-power-daemon"].client.response(call.id, clone(envelope), error || "", call.route);
+        Io.DaemonSessions.sessions["power-daemon"].client.response(call.id, clone(envelope), error || "", call.route);
     }
     function event(c, value) {
         const route = Object.assign({}, lastCall(c, "bar.snapshot").route, {kind:"base-subscription", localId:"session-subscribe"});
-        emitBaseEvent("bar-power-daemon", route, clone(value));
+        emitBaseEvent("power-daemon", route, clone(value));
     }
     function make(method) {
         const c = createTemporaryObject(factory, tests); verify(c !== null);
@@ -74,7 +74,7 @@ DaemonTestCase {
         const c = make(data.method); const call = start(c, data.method);
         if (data.disconnect) {
             clientReady = false;
-            Io.DaemonSessions.sessions["bar-power-daemon"].client.transportFailed("Outcome unknown");
+            Io.DaemonSessions.sessions["power-daemon"].client.transportFailed("Outcome unknown");
             clientReady = true;
             reply(lastCall(c, "bar.snapshot"), contractFixture.snapshot);
         } else reply(call, null, "Outcome unknown");

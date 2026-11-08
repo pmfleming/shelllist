@@ -4,7 +4,7 @@ import "DisplayApi.js" as Api
 
 Io.BarDaemonBackend {
     required property DisplayController controller
-    daemonName: "bar-compositor-daemon"
+    daemonName: "compositor-daemon"
     expectedProtocol: Api.protocol
     expectedVersion: Api.version
     streams: Api.subscribedStreams

@@ -22,11 +22,11 @@ DaemonTestCase {
         return found[found.length - 1];
     }
     function reply(call, value) {
-        Io.DaemonSessions.sessions["bar-notification-daemon"].client.response(call.id, clone(value), "", call.route);
+        Io.DaemonSessions.sessions["notification-daemon"].client.response(call.id, clone(value), "", call.route);
     }
     function event(state, name) {
         const route = Object.assign({}, lastCall(state, "bar.snapshot").route, {kind: "base-subscription", localId: "session-subscribe"});
-        emitBaseEvent("bar-notification-daemon", route, clone(contractFixture.events[name]));
+        emitBaseEvent("notification-daemon", route, clone(contractFixture.events[name]));
         state.flushEvents();
     }
     function make() {

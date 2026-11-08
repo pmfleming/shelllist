@@ -8,7 +8,7 @@ Io.BarDaemonBackend {
     BatteryInteractiveOperations { id: interactive; backend: batteryBackendRoot }
 
     required property BatteryController controller
-    daemonName: "bar-power-daemon"
+    daemonName: "power-daemon"
     expectedProtocol: BatteryApi.protocol
     expectedVersion: BatteryApi.version
     streams: BatteryApi.subscribedStreams

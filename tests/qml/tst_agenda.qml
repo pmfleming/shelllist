@@ -18,7 +18,7 @@ DaemonTestCase {
     Component {
         id: earlierConsumerFactory
         Io.DaemonBackend {
-            daemonName: "bar-activity-daemon"
+            daemonName: "activity-daemon"
             active: false
             property int synchronizedEpoch: -1
             property int synchronizedGeneration: -1
@@ -98,7 +98,7 @@ DaemonTestCase {
         return control;
     }
     function respond(call,data,error) {
-        const session=Io.DaemonSessions.sessions["bar-activity-daemon"];
+        const session=Io.DaemonSessions.sessions["activity-daemon"];
         session.client.response(call.id,{protocol:"bar-api",version:2,ok:!error,data:data,error:error?{message:error,code:"fixture"}:undefined},"",call.route);
     }
     function test_transportAuthorityEarlierConsumerResetPreservesDraftAndAcceptsLowerBackup() {
@@ -112,7 +112,7 @@ DaemonTestCase {
         const uncertain=other.operation.request_id;
         const observer=createTemporaryObject(responseObserverFactory,testCase,{owner:other.ownerId});
         const early=createTemporaryObject(earlierConsumerFactory,testCase);
-        const session=Io.DaemonSessions.sessions["bar-activity-daemon"];
+        const session=Io.DaemonSessions.sessions["activity-daemon"];
         // Model a calendar consumer registered before the repository. Exercise
         // Core.failSession's real generation advance/consumer callback order.
         const reordered={[early.sharedConsumerId]:session.consumers[early.sharedConsumerId]};
@@ -244,7 +244,7 @@ DaemonTestCase {
         respond(current,windowData([item("accepted")],2));tryCompare(s.owner.selectedItem,"id","accepted");
         s.view.listItem.focusList();keyClick(Qt.Key_Return);compare(mutations().length,1);
         const mutation=mutations()[0];
-        const session=Io.DaemonSessions.sessions["bar-activity-daemon"];
+        const session=Io.DaemonSessions.sessions["activity-daemon"];
         session.client.transportFailed("Connection lost after send");
         tryCompare(s.owner,"operation",null);verify(s.owner.failedOperation!==null);
         s.owner.refresh();wait(150);compare(mutations().length,1,"reconnect/refresh never replays mutation");
