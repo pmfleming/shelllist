@@ -9,7 +9,7 @@ Rectangle {
     anchors.right: parent.right
     height: parent.height
     radius: Ui.Theme.panelRadius + 4
-    color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.97)
+    color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.80)
     border.width: 1
     border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.38)
     opacity: surface.controller.osdVisible ? 1 : 0
@@ -19,6 +19,8 @@ Rectangle {
         anchors.fill: parent
         radius: surface.radius
         level: 3
+        // Keep the shadow behind the translucent surface from making it opaque.
+        shadowColor: Ui.Theme.withAlpha("#000000", Ui.Theme.dark ? 0.20 : 0.12)
         z: -1
     }
 
