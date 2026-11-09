@@ -14,7 +14,7 @@ Ui.DetailColumnCard {
     readonly property var software: application.software || null
     objectName: "applicationDataDetails"
     title: qsTr("App data")
-    helpText: (software ? Ui.SoftwarePresentation.summary(software) + "\n\n" : "")
+    helpText: (software ? Ui.SoftwarePresentation.summary(software) + "\n" + Ui.SoftwarePresentation.details(software) + "\n\n" : "")
         + qsTr("Identified app data only. Installation and shared dependencies are not measured. Referenced files may overlap and are not added. Temporary data is not necessarily safe to delete. Stopped applications use retained observations when available.")
 
     Ui.DetailGrid {
@@ -26,18 +26,29 @@ Ui.DetailColumnCard {
             {label: qsTr("Latest version"), value: Ui.SoftwarePresentation.latest(card.software)}
         ] : []
     }
-    Ui.FieldRow {
+    ColumnLayout {
+        objectName: "applicationDataMetadata"
+        Layout.fillWidth: true
         visible: card.software !== null
-        label: qsTr("Source")
-        Ui.ThemeText {
-            objectName: "applicationDataSource"
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            text: card.software ? Ui.SoftwarePresentation.details(card.software) || qsTr("No package version reported") : ""
-            font.pixelSize: Ui.Theme.fontSizeLabel
-            textFormat: Text.PlainText
-            wrapMode: Text.WrapAnywhere
-            Accessible.name: qsTr("Source: %1").arg(text)
+        spacing: 0
+        Repeater {
+            model: card.software ? Ui.SoftwarePresentation.installationRows(card.software) : []
+            Ui.FieldRow {
+                id: metadataRow
+                required property var modelData
+                label: modelData.label
+                Ui.ThemeText {
+                    objectName: "applicationData:" + metadataRow.modelData.key
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    text: metadataRow.modelData.value
+                    font.pixelSize: Ui.Theme.fontSizeLabel
+                    textFormat: Text.PlainText
+                    wrapMode: Text.Wrap
+                    Accessible.name: metadataRow.modelData.label + ": " + text
+                    Accessible.description: metadataRow.modelData.description
+                }
+            }
         }
     }
     Ui.DetailField {

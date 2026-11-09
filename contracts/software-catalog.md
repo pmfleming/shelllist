@@ -61,11 +61,25 @@ share version formatting and keep unsupported, unchecked, stale and failed evide
 distinct. A missing release source still cannot produce a latest version.
 
 The launcher's Settings tab contains one **App data** card: local/latest versions
-share a compact grid, source details wrap in a shared FieldRow, and identified
+share a compact grid, installation facts use labeled shared FieldRows, and identified
 storage sits above the persistent/temporary pair. The Application tab keeps window
 and desktop-action collections. Shortcut and unmatched-window entries retain a
 read-only Settings tab; category and launch preferences are shown only for desktop
 applications. Metadata, storage values and Help add no editable Tab stops.
+
+Package, Installed for, Release source and Last checked come directly from the
+structured installation/release fields. Known GitHub latest-release API URLs
+display as `GitHub · owner/repository`; other source strings remain intact.
+The full source URL remains in the value's accessible description and the card's
+disclosed details. Check times use local `d MMM yyyy, HH:mm` presentation, with
+the full local timestamp in the accessible description. Missing source/check
+values remain explicitly unconfigured/unchecked. Different active and declared
+versions, cached observations and release errors retain separate labeled rows.
+Multiple installations keep their own package, scope and version associations.
+All values wrap in the existing label-left/value-right composition; none become
+editors, links or additional keyboard stops. The UI owner uses zero spacing
+between these shared rows because their built-in height/padding and separators
+already provide the vertical rhythm; card group spacing remains theme-owned.
 
 Storage availability and attribution are unchanged: a measured zero stays zero,
 unknown stays unavailable, and a stopped app can use retained observations only
@@ -104,7 +118,8 @@ category persistence through the owner API after restarting the private daemon;
 backend transaction tests own storage-failure injection.
 
 `tst_application_settings.qml` verifies the combined App data card, narrow-width
-source wrapping, unchanged editable-field traversal, unavailable/zero readings,
+metadata wrapping, compact sources/timestamps with full accessible provenance,
+multiple installations and missing/failed checks, unchanged editable-field traversal, unavailable/zero readings,
 target-scoped history and read-only entries. `tst_application_actions.qml` verifies
 keyboard navigation to its single home in Settings.
 The Settings suite also checks real label/editor/card/switch clicks, status-bar

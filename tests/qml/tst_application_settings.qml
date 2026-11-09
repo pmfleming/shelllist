@@ -114,8 +114,9 @@ DaemonTestCase {
         const app = Object.assign(application("code", "3"), {
             running: true, disk_space_total_bytes: 4096, disk_space_permanent_bytes: 4096, disk_space_temporary_bytes: 0,
             metric_availability: {disk_space_total_bytes: true, disk_space_permanent_bytes: true, disk_space_temporary_bytes: true},
-            software: {name: "Example", installations: [{scope: "user:example", package_name: "example-application-with-a-long-package-name",
-                active_version: "1.3.1", declared_version: "1.3.0", release: {version: "1.4.0", source: "https://example.test/releases/long/source/description"}}]}
+            software: {name: "Example", installations: [{scope: "user:example", package_name: "example-application-with-a-very-long-package-name-that-must-wrap-within-the-details-column",
+                active_version: "1.3.1", declared_version: "1.3.0", release: {version: "1.4.0",
+                    source: "https://api.github.com/repos/zen-browser/desktop/releases/latest", checked_at: Date.UTC(2026, 10, 9, 15, 17, 53) / 1000}}]}
         });
         controller.replaceProviderResults([controller.provider.resultFor(app)], false);
         const card = findChild(surface, "applicationDataDetails");
@@ -124,20 +125,47 @@ DaemonTestCase {
         compare(findChild(card, "applicationDataVersions").entries.map(entry => entry.value), ["1.3.1", "1.4.0"]);
         compare(findChild(card, "applicationDataTotal").value, "4.0 KiB");
         compare(findChild(card, "applicationDataStorage").entries.map(entry => entry.value), ["4.0 KiB", "0 B"]);
-        const source = findChild(card, "applicationDataSource");
-        verify(source.text.includes("user:example"));
-        verify(source.text.includes("active 1.3.1"));
+        const packageName = findChild(card, "applicationData:0:package");
+        compare(packageName.text, "example-application-with-a-very-long-package-name-that-must-wrap-within-the-details-column");
+        compare(findChild(card, "applicationData:0:scope").text, "User · example");
+        compare(findChild(card, "applicationData:0:declared").text, "1.3.0");
+        const source = findChild(card, "applicationData:0:source");
+        compare(source.text, "GitHub · zen-browser/desktop");
+        compare(source.Accessible.description, app.software.installations[0].release.source);
+        compare(findChild(card, "applicationData:0:checked").text, "9 Nov 2026, 15:17");
         surface.width = 600;
         verify(waitForRendering(surface));
-        verify(source.lineCount > 1, "Long package identities wrap in the card");
-        const sourcePosition = source.mapToItem(card, 0, 0);
-        verify(sourcePosition.x >= 0 && sourcePosition.x + source.width <= card.width);
+        verify(packageName.lineCount > 1, "Long package identities wrap at word boundaries where possible");
+        for (const name of ["package", "scope", "declared", "source", "checked"]) {
+            const value = findChild(card, "applicationData:0:" + name);
+            const position = value.mapToItem(card, 0, 0);
+            verify(position.x >= 0 && position.x + value.width <= card.width);
+            verify(value.height >= value.contentHeight, "Metadata must not clip vertically");
+        }
         const fields = surface.detailsNavigation.availableFields();
         compare(fields.length, 3);
         verify(fields.includes(choice(surface)));
         verify(fields.includes(findChild(surface, "applicationNewWorkspace")));
         verify(fields.includes(findChild(surface, "applicationAutostart")));
         compare(updates().length, 0);
+
+        const updated = Object.assign({}, app, {software: {name: "Example", installations: [
+            {scope: "system", package_name: "system-package", declared_version: "1.2", stale: true,
+                release: {version: "1.3", source: "https://example.test/releases", error: "Check failed"}},
+            {scope: "user:example", package_name: "user-package", active_version: "1.4", declared_version: "1.4"}
+        ]}});
+        controller.replaceProviderResults([controller.provider.resultFor(updated)], false);
+        tryVerify(() => findChild(card, "applicationData:0:package").text === "system-package");
+        compare(findChild(card, "applicationData:0:scope").text, "System");
+        compare(findChild(card, "applicationData:0:local").text, "1.2");
+        compare(findChild(card, "applicationData:0:observation").text, "Cached; source unavailable");
+        compare(findChild(card, "applicationData:0:source").text, "https://example.test/releases");
+        compare(findChild(card, "applicationData:0:status").text, "Check failed");
+        compare(findChild(card, "applicationData:1:package").text, "user-package");
+        compare(findChild(card, "applicationData:1:local").text, "1.4");
+        compare(findChild(card, "applicationData:1:source").text, "Not configured");
+        compare(findChild(card, "applicationData:1:checked").text, "Not checked");
+        compare(findChild(card, "applicationData:1:declared"), null, "Do not repeat the same local/declared version");
     }
     function test_appDataRetainsUnavailableAndTargetScopedHistory() {
         const surface = make("code", "3");

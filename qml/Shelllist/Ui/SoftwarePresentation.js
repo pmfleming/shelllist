@@ -44,3 +44,42 @@ function details(record) {
         return text;
     }).join("\n");
 }
+
+function releaseSourceLabel(source) {
+    const value = String(source || "");
+    const github = /^https:\/\/api\.github\.com\/repos\/([^/]+)\/([^/]+)\/releases\/latest\/?$/.exec(value);
+    return github ? qsTr("GitHub · %1/%2").arg(github[1]).arg(github[2]) : value || qsTr("Not configured");
+}
+
+// Passive facts, built from catalog fields rather than parsing diagnostic prose.
+function installationRows(record) {
+    const installations = record.installations || [];
+    const rows = [];
+    installations.forEach((installation, index) => {
+        function add(key, label, value, description) {
+            rows.push({key: index + ":" + key, label: label, value: value || "—", description: description || ""});
+        }
+        add("package", qsTr("Package"), installation.package_name);
+        const scope = String(installation.scope || "");
+        add("scope", qsTr("Installed for"), scope === "system" ? qsTr("System")
+            : scope.startsWith("user:") ? qsTr("User · %1").arg(scope.slice(5)) : scope);
+        if (installations.length > 1)
+            add("local", qsTr("Local version"), installation.active_version || installation.declared_version);
+        if (installation.declared_version && installation.active_version && installation.declared_version !== installation.active_version)
+            add("declared", qsTr("Declared version"), installation.declared_version);
+        if (installation.stale)
+            add("observation", qsTr("Observation"), qsTr("Cached; source unavailable"));
+        const release = installation.release || {};
+        if (installations.length > 1)
+            add("latest", qsTr("Latest version"), release.version);
+        add("source", qsTr("Release source"), releaseSourceLabel(release.source), release.source);
+        const checked = release.checked_at ? new Date(release.checked_at * 1000) : null;
+        add("checked", qsTr("Last checked"), checked ? Qt.formatDateTime(checked, "d MMM yyyy, HH:mm") : qsTr("Not checked"),
+            checked ? checked.toLocaleString() : "");
+        if (release.error)
+            add("status", qsTr("Release check"), release.error);
+        else if (release.stale)
+            add("status", qsTr("Release check"), qsTr("Cached release information"));
+    });
+    return rows.length ? rows : [{key: "missing", label: qsTr("Package"), value: qsTr("No package information reported"), description: ""}];
+}
