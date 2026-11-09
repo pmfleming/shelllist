@@ -28,7 +28,7 @@ Ui.DetailFlickable {
     readonly property bool mappingNeedsAttention: !!application.default_workspace_id && !selectedCategory
     readonly property var feedback: controller.settingsFeedback.targetId === application.id ? controller.settingsFeedback : ({})
     readonly property var requestedCategory: Preferences.categories.find(category => category.value === page.feedback.category)
-    readonly property string categoryError: feedback.error
+    readonly property string categoryError: feedback.error && feedback.field === "category"
         ? qsTr("Couldn’t save %1. %2 Choose again to retry.").arg(requestedCategory ? requestedCategory.label : qsTr("category")).arg(feedback.error) : ""
     readonly property var categoryOptions: Preferences.categories.map(function (category) {
         return {value: category.value, label: category.label, icon: category.icon};
@@ -82,6 +82,20 @@ Ui.DetailFlickable {
             page.controller.updateApplicationPreferences({new_workspace: !checked});
         }
     }
+    Ui.ToggleRow {
+        id: autostart
+        objectName: "applicationAutostart"
+        width: parent.width
+        title: qsTr("Autostart")
+        subtitle: qsTr("Start this application when you log in. Desktop-session launch conditions still apply.")
+        showSubtitle: false
+        checked: page.application.autostart === true
+        interactive: typeof page.application.autostart === "boolean" && !page.controller.settingsInFlight
+        onClicked: {
+            autostartInformation.disclose();
+            page.controller.updateApplicationPreferences({autostart: !checked});
+        }
+    }
     }
     ApplicationDataDetails {
         id: appData
@@ -90,6 +104,11 @@ Ui.DetailFlickable {
         application: page.application
         showHelpButton: false
         contentSpacing: Ui.Theme.spacingMd
+    }
+    Ui.FeedbackSource {
+        text: page.feedback.field !== "category" && page.feedback.error
+            ? qsTr("Couldn’t save application settings. %1 Toggle again to retry.").arg(page.feedback.error) : ""
+        tone: "error"
     }
     Ui.FeedbackSource {
         id: settingsInformation
@@ -106,6 +125,12 @@ Ui.DetailFlickable {
         parent: newWorkspace
         feedback: settingsInformation
         feedbackText: newWorkspace.subtitle
+    }
+    Ui.FeedbackTapHandler {
+        id: autostartInformation
+        parent: autostart
+        feedback: settingsInformation
+        feedbackText: autostart.subtitle
     }
     Ui.FeedbackTapHandler {
         parent: appData

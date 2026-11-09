@@ -60,6 +60,17 @@ ShellRoot {
                 panel.listItem.focusList();
                 keyClick(Qt.Key_F5);
                 tryVerify(() => !controller.refreshInFlight && controller.selectedApplication.category === "text");
+                stage = "autostart settings";
+                const autostart = findChild(panel, "applicationAutostart");
+                verify(autostart !== null && autostart.interactive);
+                compare(autostart.checked, false);
+                mouseClick(autostart, autostart.width - 16, autostart.height / 2);
+                tryVerify(() => !controller.settingsInFlight && controller.selectedApplication.autostart === true, 10000);
+                compare(autostart.checked, true);
+                compare(controller.selectedApplication.category, "text");
+                panel.listItem.focusList();
+                keyClick(Qt.Key_F5);
+                tryVerify(() => !controller.refreshInFlight && controller.selectedApplication.autostart === true);
                 stage = "failed launch";
                 keyClick(Qt.Key_Return, Qt.ShiftModifier);
                 tryVerify(() => !controller.actionInFlight && controller.selectedActionMessage.length > 0, 15000);

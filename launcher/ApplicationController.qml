@@ -146,7 +146,10 @@ Ui.ProviderChooserController {
     function updateApplicationPreferences(patch: var): bool {
         if (!selectedResult || operationBlocked || operations.busy(selectedResult.id))
             return false;
-        settingsFeedback = {targetId: selectedResult.id, category: patch.category, error: ""};
+        settingsFeedback = {targetId: selectedResult.id, category: patch.category,
+            field: Object.prototype.hasOwnProperty.call(patch, "category") ? "category"
+                : Object.prototype.hasOwnProperty.call(patch, "autostart") ? "autostart" : "new_workspace",
+            error: ""};
         const requestId = backend.nextRequestId("settings");
         activeSettingsRequestId = requestId;
         status = "Saving application settings…";

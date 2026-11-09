@@ -43,7 +43,7 @@ DaemonTestCase {
     function application(category, workspace, id) {
         return {id: id || "example.desktop", name: "Example", kind: "desktop-application",
             category: category, default_workspace_id: workspace, instances: [], desktop_actions: [],
-            running: false, focused: false, new_workspace: false};
+            running: false, focused: false, new_workspace: false, autostart: false};
     }
     function setApplication(surface, category, workspace, id) {
         const controller = surface.chooserController;
@@ -98,7 +98,7 @@ DaemonTestCase {
         verify(status.fullText.includes("Temporary data is not necessarily safe to delete."));
         setApplication(surface, "code", "3");
         compare(information.text, card.helpText, "Refreshing the same app keeps disclosed context");
-        compare(surface.detailsNavigation.availableFields().length, 2);
+        compare(surface.detailsNavigation.availableFields().length, 3);
         mouseClick(toggle, toggle.width - Ui.Theme.spacingLg, toggle.height / 2);
         compare(updates().length, 1);
         compare(updates()[0].params.new_workspace, true);
@@ -133,9 +133,10 @@ DaemonTestCase {
         const sourcePosition = source.mapToItem(card, 0, 0);
         verify(sourcePosition.x >= 0 && sourcePosition.x + source.width <= card.width);
         const fields = surface.detailsNavigation.availableFields();
-        compare(fields.length, 2);
+        compare(fields.length, 3);
         verify(fields.includes(choice(surface)));
         verify(fields.includes(findChild(surface, "applicationNewWorkspace")));
+        verify(fields.includes(findChild(surface, "applicationAutostart")));
         compare(updates().length, 0);
     }
     function test_appDataRetainsUnavailableAndTargetScopedHistory() {
@@ -171,6 +172,58 @@ DaemonTestCase {
         compare(updates()[0].params.new_workspace, true);
         verify(!Object.prototype.hasOwnProperty.call(updates()[0].params, "category"));
         compare(choice(surface).value, "code");
+    }
+    function test_autostartTraversalAcknowledgementAndRetry() {
+        const surface = make("code", "3");
+        const controller = surface.chooserController;
+        const toggle = findChild(surface, "applicationAutostart");
+        keyClick(Qt.Key_Backtab);
+        compare(surface.detailsNavigation.currentTarget, toggle);
+        compare(updates().length, 0, "Reverse wrap must not toggle");
+        keyClick(Qt.Key_Tab);
+        compare(surface.detailsNavigation.currentTarget, choice(surface));
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Tab);
+        compare(surface.detailsNavigation.currentTarget, toggle);
+        keyClick(Qt.Key_Return);
+        compare(updates().length, 1);
+        compare(updates()[0].params, {target_id: "example.desktop", autostart: true});
+        verify(!toggle.checked, "Submission is not acknowledgement");
+        verify(!toggle.interactive);
+        keyClick(Qt.Key_Return);
+        compare(updates().length, 1);
+        const first = controller.activeSettingsRequestId;
+        controller.handleFailure(first, "Permission denied.");
+        verify(toggle.interactive);
+        verify(!toggle.checked);
+        compare(choice(surface).errorText, "", "Autostart failure must not mark category invalid");
+        verify(controller.settingsFeedback.error.includes("Permission denied"));
+        mouseClick(toggle, toggle.width - Ui.Theme.spacingLg, toggle.height / 2);
+        compare(updates().length, 2);
+        const retry = controller.activeSettingsRequestId;
+        controller.applyApplicationSettings(first, {autostart: true});
+        compare(controller.activeSettingsRequestId, retry);
+        controller.applyApplicationSettings(retry, {autostart: true});
+        verify(!toggle.checked, "The refreshed application supplies the saved value");
+        const saved = Object.assign(application("code", "3"), {autostart: true});
+        controller.replaceProviderResults([controller.provider.resultFor(saved)], false);
+        tryCompare(toggle, "checked", true);
+        mouseClick(toggle, toggle.width - Ui.Theme.spacingLg, toggle.height / 2);
+        compare(updates().length, 3);
+        compare(updates()[2].params, {target_id: "example.desktop", autostart: false});
+    }
+    function test_unavailableAutostartIsNotAnEditableStop() {
+        const surface = make("code", "3");
+        const controller = surface.chooserController;
+        const app = application("code", "3");
+        delete app.autostart;
+        controller.replaceProviderResults([controller.provider.resultFor(app)], false);
+        const toggle = findChild(surface, "applicationAutostart");
+        verify(toggle.visible);
+        verify(!toggle.interactive);
+        compare(surface.detailsNavigation.availableFields().length, 2);
+        mouseClick(toggle, toggle.width - Ui.Theme.spacingLg, toggle.height / 2);
+        compare(updates().length, 0);
     }
     function open(surface) {
         keyClick(Qt.Key_Return);

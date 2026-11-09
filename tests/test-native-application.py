@@ -60,7 +60,7 @@ class NativeApplicationTests(unittest.TestCase):
                 "FONTCONFIG_FILE", "QT_PLUGIN_PATH", "TZDIR", "LLVM_PROFILE_FILE"
             ) if key in os.environ}
             environment.update({"HOME": str(root), "PATH": str(root / "bin"),
-                                "XDG_DATA_DIRS": str(root / "empty"), "RUST_LOG": "error",
+                                "XDG_DATA_DIRS": str(root / "empty"), "XDG_CONFIG_DIRS": str(root / "empty"), "RUST_LOG": "error",
                                 "QT_QPA_PLATFORM": "offscreen", "QT_QUICK_BACKEND": "software",
                                 "QML2_IMPORT_PATH": str(ROOT / "qml"), "TZ": "UTC",
                                 "SHELLLIST_MODE": "floating"})
@@ -138,14 +138,14 @@ class NativeApplicationTests(unittest.TestCase):
                     client = subprocess.Popen([str(args.app_daemon.resolve()), "client"], env=environment,
                                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
                     try:
-                        client.stdin.write((json.dumps({"op": "call", "id": "verify-catalog", "method": "applications.catalog", "params": {}}) + "\n").encode())
+                        client.stdin.write((json.dumps({"op": "call", "id": "verify-catalog", "method": "applications.query", "params": {}}) + "\n").encode())
                         client.stdin.flush()
                         with selectors.DefaultSelector() as selector:
                             selector.register(client.stdout, selectors.EVENT_READ)
                             if selector.select(2):
                                 line = client.stdout.readline()
                                 reply = json.loads(line) if line else {}
-                                restored = reply.get("response", {}).get("data", {}).get("catalog")
+                                restored = reply.get("response", {}).get("data", {}).get("applications")
                     finally:
                         client.kill()
                         client.wait(timeout=5)
@@ -154,8 +154,14 @@ class NativeApplicationTests(unittest.TestCase):
                     if restored is None:
                         time.sleep(0.05)
                 self.assertIsNotNone(restored, "catalog unavailable after restart")
-                journey = next(row for row in restored["entries"] if row["id"] == "journey.desktop")
+                journey = next(row for row in restored["applications"] if row["id"] == "journey.desktop")
                 self.assertEqual(journey["category"], "text")
+                self.assertEqual(journey["software"]["category"], "text")
+                self.assertTrue(journey["autostart"])
+                autostart = (root / "config/autostart/journey.desktop").read_text()
+                self.assertIn("Hidden=false\n", autostart)
+                self.assertIn("Exec=true\n", autostart)
+                self.assertFalse((root / "config/autostart/unrelated.desktop").exists())
                 self.assertTrue((root / "state/app-daemon/software-catalog-turso-v1.db").is_file())
             finally:
                 for child in reversed(children):

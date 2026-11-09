@@ -88,6 +88,7 @@
         "applications": [
           {
             "attributed_fraction": 0.0,
+            "autostart": false,
             "battery_percent": 0.0,
             "battery_percent_per_hour": 0.0,
             "cancelled_write_bytes": 0,
@@ -242,6 +243,7 @@
         "applications": [
           {
             "attributed_fraction": 0.0,
+            "autostart": false,
             "battery_percent": 0.0,
             "battery_percent_per_hour": 0.0,
             "cancelled_write_bytes": 0,
@@ -401,6 +403,7 @@
   "applications.settings.update": {
     "data": {
       "settings": {
+        "autostart": false,
         "category": "code",
         "new_workspace": false,
         "target_id": "Alpha",
