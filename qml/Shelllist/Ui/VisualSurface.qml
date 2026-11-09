@@ -1,6 +1,6 @@
 import QtQuick
 
-Item {
+EscapeDismissalScope {
     id: surface
 
     required property real contentWidth

@@ -39,6 +39,7 @@ ScreenshotShortcut 1.0 ScreenshotShortcut.qml
 ProviderChooserController 1.0 ProviderChooserController.qml
 ProviderChooserSurface 1.0 ProviderChooserSurface.qml
 ChooserSurface 1.0 ChooserSurface.qml
+EscapeDismissalScope 1.0 EscapeDismissalScope.qml
 PanelSurface 1.0 PanelSurface.qml
 DateGridNavigation 1.0 DateGridNavigation.qml
 DateField 1.0 DateField.qml

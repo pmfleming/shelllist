@@ -133,6 +133,11 @@ Item {
     }
 
     function closeRequested() {
+        const surface = popoverMode ? popoverVisualSurface : floatingVisualSurface;
+        surface.requestDismissal();
+    }
+
+    function finishClose() {
         if (popoverMode) {
             hidePopover();
             return;
@@ -294,6 +299,8 @@ Item {
 
         VisualSurface {
             id: popoverVisualSurface
+            onDismissalDeferred: host.uiDeactivating()
+            onDismissalReady: host.finishClose()
             horizontalOverflowAllowed: host.geometry.horizontalOverflowAllowed
             contentWidth: host.renderContentWidth
             canvasWidth: host.currentWindowWidth
@@ -330,6 +337,8 @@ Item {
 
         VisualSurface {
             id: floatingVisualSurface
+            onDismissalDeferred: host.uiDeactivating()
+            onDismissalReady: host.finishClose()
             horizontalOverflowAllowed: host.geometry.horizontalOverflowAllowed
             contentWidth: host.renderContentWidth
             canvasWidth: host.currentWindowWidth

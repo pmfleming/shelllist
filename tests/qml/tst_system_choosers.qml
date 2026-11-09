@@ -17,13 +17,26 @@ DaemonTestCase {
     height: 720
     Component {
         id: fixtureFactory
-        Item {
+        Ui.EscapeDismissalScope {
+            id: scope
             anchors.fill: parent
+            property int dismissals: 0
             property alias desktop: desktop
             property alias chooser: chooser
             property alias content: content
             Bar.BarController { id: desktop; surfaceRegistry: null }
-            Bar.SystemChooserController { id: chooser; kind: "media"; barController: desktop }
+            onDismissalDeferred: chooser.prepareUiDeactivation()
+            onDismissalReady: {
+                dismissals++;
+                chooser.deactivateUi();
+                visible = false;
+            }
+            Bar.SystemChooserController {
+                id: chooser
+                kind: "media"
+                barController: desktop
+                onCloseWindowRequested: scope.requestDismissal()
+            }
             Bar.SystemChooserContent { id: content; anchors.fill: parent; controller: chooser }
         }
     }
@@ -66,6 +79,37 @@ DaemonTestCase {
     function mediaPlayer(id, status) {
         return {id: id, identity: id, title: id, playback_status: status,
             can_control: true, can_play: true, can_pause: true, control_mode: "automatic"};
+    }
+    function test_finalMediaEscapeWaitsForRelease_data() {
+        return [{tag: "search", list: false}, {tag: "results", list: true}];
+    }
+    function test_finalMediaEscapeWaitsForRelease(data): void {
+        const root = fixture();
+        root.desktop.media = {players: [mediaPlayer("playing", "Playing")], active_player: "playing", pinned_player: ""};
+        root.chooser.activateUi("");
+        tryVerify(() => root.content.listItem !== null);
+        root.content.listItem.focusSearch();
+        if (data.list) {
+            keyClick(Qt.Key_Down);
+            keyClick(Qt.Key_Right);
+            verify(root.chooser.detailsOpen);
+            keyPress(Qt.Key_Escape);
+            verify(!root.chooser.detailsOpen, "inner back-navigation still runs on press");
+            verify(!root.dismissalPending);
+            keyRelease(Qt.Key_Escape);
+            verify(!root.escapeDown);
+        }
+        wait(0);
+        keyPress(Qt.Key_Escape);
+        verify(root.dismissalPending);
+        verify(root.visible, "native window must stay mapped while Escape is held");
+        compare(root.dismissals, 0);
+        wait(50);
+        compare(root.dismissals, 0, "dismissal waits for release, not a timer");
+        keyRelease(Qt.Key_Escape);
+        compare(root.dismissals, 1);
+        verify(!root.visible);
+        verify(!root.escapeDown);
     }
     function mediaIndicator(root, id) {
         const row = findChild(root.content, "systemResult:" + id);
