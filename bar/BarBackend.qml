@@ -159,11 +159,11 @@ Io.BarDaemonBackend {
         daemonName: "notification-daemon"
         expectedProtocol: BarApi.protocol
         expectedVersion: BarApi.version
-        streams: controller.notificationState ? [] : [BarApi.streams.notifications, BarApi.streams.notificationActive]
+        streams: backend.controller.notificationState ? [] : [BarApi.streams.notifications, BarApi.streams.notificationActive]
         active: true
         validateRequest: Contract.requestError
         validateEvent: Contract.eventError
-        onEventReceived: function(event) { controller.handleEvent(event); }
+        onEventReceived: function(event) { backend.controller.handleEvent(event); }
         onResponseReceived: function(id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onSendFailed: function(id, message) { backend.operationError = message; }
         onTransportFailed: function(message, lostRequestIds) { backend.operationError = message; }
@@ -178,7 +178,7 @@ Io.BarDaemonBackend {
         active: true
         validateRequest: Contract.requestError
         validateEvent: Contract.eventError
-        onEventReceived: function(event) { controller.handleEvent(event); }
+        onEventReceived: function(event) { backend.controller.handleEvent(event); }
         onResponseReceived: function(id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onSendFailed: function(id, message) { backend.operationError = message; }
         onTransportFailed: function(message, lostRequestIds) { backend.operationError = message; }
@@ -193,7 +193,7 @@ Io.BarDaemonBackend {
         active: true
         validateRequest: Contract.requestError
         validateEvent: Contract.eventError
-        onEventReceived: function(event) { controller.handleEvent(event); }
+        onEventReceived: function(event) { backend.controller.handleEvent(event); }
         onResponseReceived: function(id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onSendFailed: function(id, message) { backend.operationError = message; }
         onTransportFailed: function(message, lostRequestIds) { backend.operationError = message; }
@@ -208,7 +208,7 @@ Io.BarDaemonBackend {
         active: true
         validateRequest: Contract.requestError
         validateEvent: Contract.eventError
-        onEventReceived: function(event) { controller.handleEvent(event); }
+        onEventReceived: function(event) { backend.controller.handleEvent(event); }
         onResponseReceived: function(id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onSendFailed: function(id, message) { backend.operationError = message; }
         onTransportFailed: function(message, lostRequestIds) { backend.operationError = message; }
