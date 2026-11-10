@@ -29,15 +29,12 @@ function begin(current, request) {
 // changes it; requests, bounded restarts and publication remain controller-owned.
 function continuationValid(window, page, length) {
     const end = (window.offset || 0) + length;
-    if (page.total < end || window.pages >= 128)
-        return false;
-    if (window.total >= 0 && window.total !== page.total)
-        return false;
-    if (window.retainThrough >= 0 && window.retainThrough !== (page.retain_through || 0))
-        return false;
-    return page.cursor
-        ? page.entries.length > 0 && page.cursor !== window.cursor && end < page.total
-        : end === page.total;
+    return page.total >= end && window.pages < 128
+        && (window.total < 0 || window.total === page.total)
+        && (window.retainThrough < 0 || window.retainThrough === (page.retain_through || 0))
+        && (page.cursor
+            ? page.entries.length > 0 && page.cursor !== window.cursor && end < page.total
+            : end === page.total);
 }
 function advance(window, page) {
     if (window.revision && window.revision !== page.revision)

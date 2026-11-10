@@ -274,6 +274,13 @@ DaemonTestCase {
         compare(latest().params.cursor, null);
         compare(latest().params.anchor_ids.length, 0);
         compare(latest().params.query, "yesterday");
+        const pending = latest();
+        for (const id of ["", "../escape", "-leading", "a".repeat(161)]) {
+            root.controller.openRun(id);
+            compare(latest().id, pending.id, "Invalid exact links must not issue reads");
+            compare(root.controller.filterText, "yesterday");
+            compare(root.controller.runId, "");
+        }
         root.controller.openRun("history-799");
         compare(latest().params.cursor, null);
         compare(latest().params.run_id, "history-799");
@@ -284,6 +291,12 @@ DaemonTestCase {
         compare(root.controller.entries.length, 1);
         compare(root.controller.selectedRun.job.id, "history-799");
         verify(root.controller.detailsOpen);
+        root.controller.deactivateUi();
+        compare(root.controller.selectedRun, null);
+        root.controller.activateUi("");
+        compare(latest().params.run_id, "history-799");
+        reply(latest(), [runs[799]]);
+        compare(root.controller.selectedRun.job.id, "history-799");
     }
     function test_historyCacheCloseDropsPublishedAndStagedPayloads(): void {
         const root = fixture();
@@ -463,14 +476,6 @@ DaemonTestCase {
         reply(latest(), [], null, true, null, 120, {revision: "bad-end"});
         verify(root.controller.errorText.includes("continuation"));
         compare(root.controller.entries.length, 50);
-        root.controller.refresh();
-        reply(latest(), runs.slice(0, 25), "v4:25", true, null, 120, {revision: "v4", retain_through: 50});
-        const late = latest();
-        root.controller.deactivateUi();
-        reply(late, runs.slice(25, 50), "v4:50", true, null, 120, {revision: "v4", retain_through: 50});
-        compare(root.controller.publishedRevision, "");
-        compare(root.controller.entries.length, 0);
-        compare(root.controller.historyWindow, null);
     }
     function test_continuationRejectsChangedMetadata_data(): var {
         return [
@@ -694,17 +699,20 @@ DaemonTestCase {
         compare(root.controller.selectedLogError, "Journal access denied");
         tryVerify(() => root.content.detailsNavigation.contentReady);
         compare(findChild(root, "updateRunLogText").text, "Journal access denied");
-        keyClick(Qt.Key_V, Qt.AltModifier);
-        verify(root.controller.selectedLogLoading);
-        compare(root.controller.selectedLogError, "");
-        const retry = calls.filter(call => call.method === "updates.readLog").slice(-1)[0];
-        Io.DaemonSessions.sessions["bar-daemon"].client.response(retry.id, {
-            protocol: Contract.protocol, version: Contract.version, ok: true,
-            data: {log: {run_id: "another-run", text: "Not ours", truncated: false}}
-        }, "", retry.route);
-        compare(root.controller.selectedLogError, "Invalid update log reply");
-        compare(root.controller.errorText, "History read failed");
-        verify(!root.controller.selectedLogLoading);
+        for (const data of [null, {},
+            {log: {run_id: "another-run", text: "Not ours", truncated: false}},
+            {log: {run_id: "one", text: "x".repeat(32769), truncated: false}}]) {
+            keyClick(Qt.Key_V, Qt.AltModifier);
+            verify(root.controller.selectedLogLoading);
+            compare(root.controller.selectedLogError, "");
+            const retry = logCalls().slice(-1)[0];
+            Io.DaemonSessions.sessions["bar-daemon"].client.response(retry.id, {
+                protocol: Contract.protocol, version: Contract.version, ok: true, data
+            }, "", retry.route);
+            compare(root.controller.selectedLogError, "Invalid update log reply");
+            compare(root.controller.errorText, "History read failed");
+            verify(!root.controller.selectedLogLoading);
+        }
     }
     function test_presentationPreservesOutcomeAndTimeSemantics(): void {
         const outcomes = ["activated", "staged", "ready", "running", "queued", "current", "blocked", "failed", "partial", "interrupted", "available", "skipped", "approved", "completed"];
@@ -1628,24 +1636,5 @@ DaemonTestCase {
         compare(Presentation.systemSummary(null, null), "Release comparison not reported");
         const tool = {freshness: {comparison: "newer", stale: false}};
         compare(Presentation.toolsSummary([tool, {}]), "1 of 2 tools have updates · 1 unknown");
-    }
-    function test_exactRunAndCloseFenceTheRead(): void {
-        const root = fixture();
-        root.controller.openRun("run-42");
-        const request = latest();
-        compare(request.params.run_id, "run-42");
-        reply(request, [entry("run-42", "staged")]);
-        compare(root.controller.selectedRun.job.id, "run-42");
-        verify(root.controller.detailsOpen);
-        root.controller.refresh();
-        const late = latest();
-        root.controller.deactivateUi();
-        reply(late, [entry("late", "failed")]);
-        compare(root.controller.entries.length, 0);
-        compare(root.controller.selectedRun, null);
-        root.controller.activateUi("");
-        compare(latest().params.run_id, "run-42");
-        reply(latest(), [entry("run-42", "staged")]);
-        compare(root.controller.selectedRun.job.id, "run-42");
     }
 }

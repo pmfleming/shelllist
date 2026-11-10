@@ -184,7 +184,7 @@ Ui.ProviderChooserController {
         onTriggered: controller.nowMs = Date.now()
     }
     function openRun(id: string): void {
-        if (!/^[A-Za-z0-9][A-Za-z0-9-]{0,159}$/.test(id)) return;
+        if (!Validation.runId(id)) return;
         filterText = "";
         runId = id;
         missingRun = false;
@@ -296,7 +296,7 @@ Ui.ProviderChooserController {
         if (overviewRefreshPending) { overviewRefreshPending = false; Qt.callLater(requestOverview); }
         overviewError = backend.responseError(envelope, transportError, qsTr("Update overview unavailable"));
         if (overviewError) return;
-        const value = envelope.data ? envelope.data.overview : null;
+        const value = envelope.data?.overview;
         if (!Validation.overview(value)) { overviewError = qsTr("Invalid update overview reply"); return; }
         overview = value;
     }
@@ -304,7 +304,7 @@ Ui.ProviderChooserController {
         logRequest = "";
         const failure = backend.responseError(envelope, transportError, qsTr("Update log unavailable"));
         if (failure) { cacheLog("", failure, false); return; }
-        const log = envelope.data ? envelope.data.log : null;
+        const log = envelope.data?.log;
         if (!log || log.run_id !== logRun || typeof log.text !== "string" || log.text.length > 32768 || typeof log.truncated !== "boolean") {
             cacheLog("", qsTr("Invalid update log reply"), false); return;
         }
@@ -319,10 +319,10 @@ Ui.ProviderChooserController {
         ownedRequest = "";
         const failure = backend.responseError(envelope, transportError, qsTr("Update history unavailable"));
         if (failure) {
-            if (envelope && envelope.error && envelope.error.code === "update-history-cursor-stale" && restartHistoryWindow()) return;
-            failHistory(failure); return;
+            if (envelope?.error?.code !== "update-history-cursor-stale" || !restartHistoryWindow()) failHistory(failure);
+            return;
         }
-        const page = envelope.data ? envelope.data.history : null;
+        const page = envelope.data?.history;
         if (!Validation.historyPage(page)) {
             failHistory(qsTr("Invalid update history reply")); return;
         }
@@ -359,16 +359,14 @@ Ui.ProviderChooserController {
     }
     function stageHistoryPage(page: var): void {
         const transition = HistoryWindow.advance(historyWindow, page);
-        switch (transition.error) {
-        case "revision":
+        if (transition.error === "revision") {
             if (restartHistoryWindow()) return;
             failHistory(qsTr("Update history kept changing; refresh again")); return;
-        case "duplicate":
-            failHistory(qsTr("Duplicate update history identities")); return;
-        case "continuation":
-            failHistory(qsTr("Invalid update history continuation")); return;
-        case "limit":
-            failHistory(qsTr("Update history exceeded the cache limit")); return;
+        }
+        if (transition.error) {
+            const errors = {duplicate: qsTr("Duplicate update history identities"),
+                continuation: qsTr("Invalid update history continuation"), limit: qsTr("Update history exceeded the cache limit")};
+            failHistory(errors[transition.error]); return;
         }
         historyWindow = transition.window;
         if (HistoryWindow.needsMore(historyWindow)) { sendHistoryPage(); return; }
