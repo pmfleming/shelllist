@@ -57,9 +57,12 @@ function setEnabled(draft, name, enabled) {
     }
     return next;
 }
-function draft(outputs) {
+function draft(outputs, configured) {
     return outputs.map(function (o) {
+        const saved = (configured || []).find(s => s.name === o.name) || {};
         return {
+            relative: saved.relative || null,
+            match_connector: saved.match_connector === true,
             name: o.name,
             mode: o.current_mode || "",
             modes: modes(o),
@@ -234,4 +237,27 @@ function rates(output, mode) {
             label: m.rate + " Hz"
         };
     });
+}
+
+// Preview geometry only; Rust independently validates and resolves the graph.
+function relativeLayout(values) {
+    const next = values.map(o => Object.assign({}, o));
+    const visiting = {}, done = {};
+    function visit(o) {
+        if (done[o.name] || visiting[o.name]) return;
+        visiting[o.name] = true;
+        const r = o.relative;
+        const anchor = r && next.find(a => a.name === r.reference && isIndependent(a));
+        if (r && anchor && isIndependent(o)) {
+            visit(anchor);
+            const a = placementRect(anchor), own = placementRect(o);
+            const offset = n => r.alignment === "end" ? n : r.alignment === "center" ? Math.trunc(n / 2) : 0;
+            const gap = Number(r.gap) || 0;
+            o.x = r.side === "left" ? a.x - own.width - gap : r.side === "right" ? a.x + a.width + gap : a.x + offset(a.width - own.width);
+            o.y = r.side === "above" ? a.y - own.height - gap : r.side === "below" ? a.y + a.height + gap : a.y + offset(a.height - own.height);
+        }
+        visiting[o.name] = false; done[o.name] = true;
+    }
+    next.forEach(visit);
+    return next;
 }

@@ -95,8 +95,8 @@ Ui.ProviderChooserController {
     function reloadDraft(): void {
         if (actionInFlight || trial)
             return;
-        baselineDraft = Model.draft(outputs);
-        draft = Model.draft(outputs);
+        baselineDraft = Model.draft(outputs, displayPolicyState.configured_outputs);
+        draft = Model.draft(outputs, displayPolicyState.configured_outputs);
         baselineFingerprint = Model.fingerprint(outputs);
         baselineToken = displayPolicyState.baseline || "";
         baselineTopology = Model.topology(outputs);
@@ -193,12 +193,12 @@ Ui.ProviderChooserController {
         if (!source) {
             draft = Model.extend(draft, name);
         } else if (Model.mirrorSources(draft, name).some(o => o.name === source)) {
-            draft = draft.map(o => o.name === name ? Object.assign({}, o, {mirror_of: source}) : o);
+            draft = draft.map(o => o.name === name ? Object.assign({}, o, {mirror_of: source, relative: null}) : o);
         }
         updateReference();
     }
     function edit(name: string, key: string, value: var): void {
-        if (!canEdit || !["mode", "x", "y", "scale", "transform", "enabled"].includes(key))
+        if (!canEdit || !["mode", "x", "y", "scale", "transform", "enabled", "match_connector"].includes(key))
             return;
         if (key === "enabled") {
             if (value === false && !canToggleEnabled(name))
@@ -209,7 +209,14 @@ Ui.ProviderChooserController {
         if (["x", "y"].includes(key) && draft.some(o => o.name === name && !!o.mirror_of))
             return;
         const normalized = ["x", "y", "scale", "transform"].includes(key) && Model.number(value) ? Number(value) : value;
-        draft = draft.map(o => o.name === name ? Object.assign({}, o, {[key]: normalized}) : o);
+        draft = Model.relativeLayout(draft.map(o => o.name === name ? Object.assign({}, o, {[key]: normalized}, ["x", "y"].includes(key) ? {relative: null} : {}) : o));
+    }
+    function setRelative(name: string, patch: var): void {
+        if (!canEdit) return;
+        const own = draft.find(o => o.name === name);
+        if (!own || !Model.isIndependent(own)) return;
+        const relative = patch === null ? null : Object.assign({reference: referenceName, side: "right", alignment: "start", gap: 0}, own.relative || {}, patch);
+        draft = Model.relativeLayout(draft.map(o => o.name === name ? Object.assign({}, o, {relative: relative}) : o));
     }
     function placeDisplay(name: string, reference: string, side: string): bool {
         if (!canEdit || discardPrompt || layoutDragging)
@@ -219,7 +226,7 @@ Ui.ProviderChooserController {
             return false;
         const own = draft.find(o => o.name === name);
         if (own.x !== candidate.x || own.y !== candidate.y)
-            draft = draft.map(o => o.name === name ? Object.assign({}, o, { x: candidate.x, y: candidate.y }) : o);
+            draft = draft.map(o => o.name === name ? Object.assign({}, o, { x: candidate.x, y: candidate.y, relative: null }) : o);
         if (name === selectedName)
             referenceName = reference;
         return true;

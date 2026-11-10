@@ -180,6 +180,11 @@ ColumnLayout {
         }
     }
 
+    DisplayPlacementSettings {
+        Layout.fillWidth: true
+        controller: inspector.controller
+    }
+
     DisplayPolicyPane {
         Layout.fillWidth: true
         Layout.minimumWidth: 0

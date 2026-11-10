@@ -58,6 +58,29 @@ DaemonTestCase {
         tryCompare(panel.detailsItem.parent, "status", Loader.Ready);
         verify(waitForPolish(panel.Window.window));
     }
+    function test_relativePlacementFieldsRemainDraftOnly() {
+        const panel = makePanel(), c = panel.controller;
+        c.uiActive = true;
+        const state = displayState(); state.outputs[0].disabled = false;
+        c.applyDisplayPolicy(state); c.selectOutput("DP-1"); c.openDetails(); waitForDetails(panel);
+        const mode = findChild(panel, "displayPositionMode"); verify(mode !== null);
+        mode.selected("relative");
+        compare(c.selectedDraft.relative.reference, "eDP-1");
+        compare(c.selectedDraft.x, 1536);
+        c.edit("eDP-1", "scale", 2);
+        compare(c.selectedDraft.x, 960);
+        compare(calls.length, 0);
+        const gap = findChild(panel, "displayRelativeGap");
+        gap.focusInput(true); keyClick(Qt.Key_2); keyClick(Qt.Key_4); keyClick(Qt.Key_Escape);
+        compare(c.selectedDraft.relative.gap, 0);
+        gap.focusInput(true); keyClick(Qt.Key_2); keyClick(Qt.Key_4); keyClick(Qt.Key_Return);
+        compare(c.selectedDraft.relative.gap, 24);
+        compare(c.selectedDraft.x, 984);
+        compare(calls.length, 0);
+        findChild(panel, "displayIdentityMatch").selected("connector");
+        verify(c.selectedDraft.match_connector);
+        verify(c.preview()); compare(calls.length, 1);
+    }
     function test_lastActiveDisplayCannotBeDisabledThroughUi() {
         const panel = makePanel();
         const c = panel.controller;

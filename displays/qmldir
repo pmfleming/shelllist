@@ -17,3 +17,4 @@ internal DisplayCanvas DisplayCanvas.qml
 internal DisplayArrangementControls DisplayArrangementControls.qml
 internal DisplayInspector DisplayInspector.qml
 internal DisplayTrialDialog DisplayTrialDialog.qml
+internal DisplayPlacementSettings DisplayPlacementSettings.qml
