@@ -198,6 +198,10 @@ ColumnLayout {
             }
         }
     }
+    DisplayAdvancedSettings {
+        controller: inspector.controller
+        Layout.fillWidth: true
+    }
     DisplayPlacementSettings {
         Layout.fillWidth: true
         controller: inspector.controller

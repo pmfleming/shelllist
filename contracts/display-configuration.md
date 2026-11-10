@@ -28,3 +28,13 @@ DisplayPlacementSettings and DisplayProfilesPane compose domain fields with the
 shared Ui controls; they introduce no alternative setting/editor wrapper or key
 model. The Displays maintainer owns these compositions. No numeric style override
 was added (panel-review advisory reviewed).
+
+Advanced display attributes stay in the selected display's expansion card.
+The daemon supplies observed values and allowed choices; unknown capabilities
+produce inactive controls. VRR off/on, color/HDR and bit depth remain local drafts
+until the whole-layout Preview. HDR exposes SDR brightness and saturation through
+shared TextField transactions (Escape discards, Enter/Tab save locally). Keep
+requires daemon readback; a driver accepting a command is insufficient.
+`DisplayAdvancedSettings` is domain composition of shared FormField editors,
+with no new keyboard behavior or numeric styling. Qt interaction coverage checks
+field discard/save, unknown capability gating and the submitted whole-layout DTO.

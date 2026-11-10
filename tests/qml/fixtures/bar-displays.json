@@ -36,6 +36,7 @@
           "saved": {
             "outputs": [
               {
+                "advanced": {},
                 "enabled": true,
                 "match_connector": false,
                 "mirror_of": "",
@@ -52,12 +53,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -77,9 +94,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 2.0,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -145,6 +165,7 @@
             "previous": {
               "outputs": [
                 {
+                  "advanced": {},
                   "enabled": true,
                   "match_connector": false,
                   "mirror_of": "",
@@ -161,6 +182,7 @@
             "proposed": {
               "outputs": [
                 {
+                  "advanced": {},
                   "enabled": true,
                   "match_connector": false,
                   "mirror_of": "",
@@ -177,12 +199,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -202,9 +240,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 2.0,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -267,12 +308,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -292,9 +349,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -355,12 +415,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -380,9 +456,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -445,12 +524,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -470,9 +565,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -535,12 +633,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -560,9 +674,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -628,6 +745,7 @@
             "previous": {
               "outputs": [
                 {
+                  "advanced": {},
                   "enabled": true,
                   "match_connector": false,
                   "mirror_of": "",
@@ -644,6 +762,7 @@
             "proposed": {
               "outputs": [
                 {
+                  "advanced": {},
                   "enabled": true,
                   "match_connector": false,
                   "mirror_of": "",
@@ -660,12 +779,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -685,9 +820,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 2.0,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -750,12 +888,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -775,9 +929,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -843,6 +1000,7 @@
             "previous": {
               "outputs": [
                 {
+                  "advanced": {},
                   "enabled": true,
                   "match_connector": false,
                   "mirror_of": "",
@@ -859,6 +1017,7 @@
             "proposed": {
               "outputs": [
                 {
+                  "advanced": {},
                   "enabled": true,
                   "match_connector": false,
                   "mirror_of": "",
@@ -875,12 +1034,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -900,9 +1075,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 2.0,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -965,12 +1143,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -990,9 +1184,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -1055,12 +1252,28 @@
         },
         "outputs": [
           {
+            "advanced_observed": {},
+            "advanced_options": {
+              "bit_depth": [],
+              "color": [],
+              "sdr_brightness": false,
+              "sdr_saturation": false,
+              "vrr": []
+            },
             "availableModes": [
               "1920x1200@60.00Hz"
             ],
+            "colorManagementPreset": null,
+            "currentFormat": null,
             "current_mode": "1920x1200@60.00Hz",
             "disabled": false,
             "focused": false,
+            "hardwareDetails": {
+              "bt2020": null,
+              "chroma": null,
+              "hdr": null,
+              "vrrCapable": null
+            },
             "height": 1200,
             "id": 0,
             "internal": true,
@@ -1080,9 +1293,12 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.5,
+            "sdrBrightness": null,
+            "sdrSaturation": null,
             "serial": "",
             "supported": true,
             "transform": 0,
+            "vrr": null,
             "width": 1920,
             "x": 0,
             "y": 0
@@ -1111,6 +1327,7 @@
       "baseline": "baseline-initial",
       "outputs": [
         {
+          "advanced": {},
           "enabled": true,
           "height": 1200,
           "internal": true,
@@ -1206,12 +1423,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -1231,9 +1464,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -1288,12 +1524,28 @@
               },
               "outputs": [
                 {
+                  "advanced_observed": {},
+                  "advanced_options": {
+                    "bit_depth": [],
+                    "color": [],
+                    "sdr_brightness": false,
+                    "sdr_saturation": false,
+                    "vrr": []
+                  },
                   "availableModes": [
                     "1920x1200@60.00Hz"
                   ],
+                  "colorManagementPreset": null,
+                  "currentFormat": null,
                   "current_mode": "1920x1200@60.00Hz",
                   "disabled": false,
                   "focused": false,
+                  "hardwareDetails": {
+                    "bt2020": null,
+                    "chroma": null,
+                    "hdr": null,
+                    "vrrCapable": null
+                  },
                   "height": 1200,
                   "id": 0,
                   "internal": true,
@@ -1313,9 +1565,12 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 1.25,
+                  "sdrBrightness": null,
+                  "sdrSaturation": null,
                   "serial": "",
                   "supported": true,
                   "transform": 0,
+                  "vrr": null,
                   "width": 1920,
                   "x": 0,
                   "y": 0
@@ -1413,12 +1668,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -1438,9 +1709,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -1497,12 +1771,28 @@
               },
               "outputs": [
                 {
+                  "advanced_observed": {},
+                  "advanced_options": {
+                    "bit_depth": [],
+                    "color": [],
+                    "sdr_brightness": false,
+                    "sdr_saturation": false,
+                    "vrr": []
+                  },
                   "availableModes": [
                     "1920x1200@60.00Hz"
                   ],
+                  "colorManagementPreset": null,
+                  "currentFormat": null,
                   "current_mode": "1920x1200@60.00Hz",
                   "disabled": false,
                   "focused": false,
+                  "hardwareDetails": {
+                    "bt2020": null,
+                    "chroma": null,
+                    "hdr": null,
+                    "vrrCapable": null
+                  },
                   "height": 1200,
                   "id": 0,
                   "internal": true,
@@ -1522,9 +1812,12 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 1.25,
+                  "sdrBrightness": null,
+                  "sdrSaturation": null,
                   "serial": "",
                   "supported": true,
                   "transform": 0,
+                  "vrr": null,
                   "width": 1920,
                   "x": 0,
                   "y": 0
@@ -1616,6 +1909,7 @@
               "saved": {
                 "outputs": [
                   {
+                    "advanced": {},
                     "enabled": true,
                     "match_connector": false,
                     "mirror_of": "",
@@ -1632,12 +1926,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -1657,9 +1967,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 2.0,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -1712,6 +2025,7 @@
                 "saved": {
                   "outputs": [
                     {
+                      "advanced": {},
                       "enabled": true,
                       "match_connector": false,
                       "mirror_of": "",
@@ -1728,12 +2042,28 @@
               },
               "outputs": [
                 {
+                  "advanced_observed": {},
+                  "advanced_options": {
+                    "bit_depth": [],
+                    "color": [],
+                    "sdr_brightness": false,
+                    "sdr_saturation": false,
+                    "vrr": []
+                  },
                   "availableModes": [
                     "1920x1200@60.00Hz"
                   ],
+                  "colorManagementPreset": null,
+                  "currentFormat": null,
                   "current_mode": "1920x1200@60.00Hz",
                   "disabled": false,
                   "focused": false,
+                  "hardwareDetails": {
+                    "bt2020": null,
+                    "chroma": null,
+                    "hdr": null,
+                    "vrrCapable": null
+                  },
                   "height": 1200,
                   "id": 0,
                   "internal": true,
@@ -1753,9 +2083,12 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 2.0,
+                  "sdrBrightness": null,
+                  "sdrSaturation": null,
                   "serial": "",
                   "supported": true,
                   "transform": 0,
+                  "vrr": null,
                   "width": 1920,
                   "x": 0,
                   "y": 0
@@ -1805,6 +2138,7 @@
         "baseline": "baseline-initial",
         "outputs": [
           {
+            "advanced": {},
             "enabled": true,
             "height": 1200,
             "internal": true,
@@ -1880,6 +2214,7 @@
                 "previous": {
                   "outputs": [
                     {
+                      "advanced": {},
                       "enabled": true,
                       "match_connector": false,
                       "mirror_of": "",
@@ -1896,6 +2231,7 @@
                 "proposed": {
                   "outputs": [
                     {
+                      "advanced": {},
                       "enabled": true,
                       "match_connector": false,
                       "mirror_of": "",
@@ -1912,12 +2248,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -1937,9 +2289,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 2.0,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -1999,6 +2354,7 @@
                   "previous": {
                     "outputs": [
                       {
+                        "advanced": {},
                         "enabled": true,
                         "match_connector": false,
                         "mirror_of": "",
@@ -2015,6 +2371,7 @@
                   "proposed": {
                     "outputs": [
                       {
+                        "advanced": {},
                         "enabled": true,
                         "match_connector": false,
                         "mirror_of": "",
@@ -2031,12 +2388,28 @@
               },
               "outputs": [
                 {
+                  "advanced_observed": {},
+                  "advanced_options": {
+                    "bit_depth": [],
+                    "color": [],
+                    "sdr_brightness": false,
+                    "sdr_saturation": false,
+                    "vrr": []
+                  },
                   "availableModes": [
                     "1920x1200@60.00Hz"
                   ],
+                  "colorManagementPreset": null,
+                  "currentFormat": null,
                   "current_mode": "1920x1200@60.00Hz",
                   "disabled": false,
                   "focused": false,
+                  "hardwareDetails": {
+                    "bt2020": null,
+                    "chroma": null,
+                    "hdr": null,
+                    "vrrCapable": null
+                  },
                   "height": 1200,
                   "id": 0,
                   "internal": true,
@@ -2056,9 +2429,12 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 2.0,
+                  "sdrBrightness": null,
+                  "sdrSaturation": null,
                   "serial": "",
                   "supported": true,
                   "transform": 0,
+                  "vrr": null,
                   "width": 1920,
                   "x": 0,
                   "y": 0
@@ -2154,12 +2530,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -2179,9 +2571,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -2238,12 +2633,28 @@
               },
               "outputs": [
                 {
+                  "advanced_observed": {},
+                  "advanced_options": {
+                    "bit_depth": [],
+                    "color": [],
+                    "sdr_brightness": false,
+                    "sdr_saturation": false,
+                    "vrr": []
+                  },
                   "availableModes": [
                     "1920x1200@60.00Hz"
                   ],
+                  "colorManagementPreset": null,
+                  "currentFormat": null,
                   "current_mode": "1920x1200@60.00Hz",
                   "disabled": false,
                   "focused": false,
+                  "hardwareDetails": {
+                    "bt2020": null,
+                    "chroma": null,
+                    "hdr": null,
+                    "vrrCapable": null
+                  },
                   "height": 1200,
                   "id": 0,
                   "internal": true,
@@ -2263,9 +2674,12 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 1.25,
+                  "sdrBrightness": null,
+                  "sdrSaturation": null,
                   "serial": "",
                   "supported": true,
                   "transform": 0,
+                  "vrr": null,
                   "width": 1920,
                   "x": 0,
                   "y": 0
@@ -2361,12 +2775,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -2386,9 +2816,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -2445,12 +2878,28 @@
               },
               "outputs": [
                 {
+                  "advanced_observed": {},
+                  "advanced_options": {
+                    "bit_depth": [],
+                    "color": [],
+                    "sdr_brightness": false,
+                    "sdr_saturation": false,
+                    "vrr": []
+                  },
                   "availableModes": [
                     "1920x1200@60.00Hz"
                   ],
+                  "colorManagementPreset": null,
+                  "currentFormat": null,
                   "current_mode": "1920x1200@60.00Hz",
                   "disabled": false,
                   "focused": false,
+                  "hardwareDetails": {
+                    "bt2020": null,
+                    "chroma": null,
+                    "hdr": null,
+                    "vrrCapable": null
+                  },
                   "height": 1200,
                   "id": 0,
                   "internal": true,
@@ -2470,9 +2919,12 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 1.25,
+                  "sdrBrightness": null,
+                  "sdrSaturation": null,
                   "serial": "",
                   "supported": true,
                   "transform": 0,
+                  "vrr": null,
                   "width": 1920,
                   "x": 0,
                   "y": 0
@@ -2719,6 +3171,7 @@
               "saved": {
                 "outputs": [
                   {
+                    "advanced": {},
                     "enabled": true,
                     "match_connector": false,
                     "mirror_of": "",
@@ -2735,12 +3188,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -2760,9 +3229,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 2.0,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -3239,12 +3711,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -3264,9 +3752,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -3741,12 +4232,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -3766,9 +4273,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -4245,12 +4755,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -4270,9 +4796,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -4749,12 +5278,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -4774,9 +5319,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -5256,6 +5804,7 @@
                 "previous": {
                   "outputs": [
                     {
+                      "advanced": {},
                       "enabled": true,
                       "match_connector": false,
                       "mirror_of": "",
@@ -5272,6 +5821,7 @@
                 "proposed": {
                   "outputs": [
                     {
+                      "advanced": {},
                       "enabled": true,
                       "match_connector": false,
                       "mirror_of": "",
@@ -5288,12 +5838,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -5313,9 +5879,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 2.0,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0
@@ -5792,12 +6361,28 @@
             },
             "outputs": [
               {
+                "advanced_observed": {},
+                "advanced_options": {
+                  "bit_depth": [],
+                  "color": [],
+                  "sdr_brightness": false,
+                  "sdr_saturation": false,
+                  "vrr": []
+                },
                 "availableModes": [
                   "1920x1200@60.00Hz"
                 ],
+                "colorManagementPreset": null,
+                "currentFormat": null,
                 "current_mode": "1920x1200@60.00Hz",
                 "disabled": false,
                 "focused": false,
+                "hardwareDetails": {
+                  "bt2020": null,
+                  "chroma": null,
+                  "hdr": null,
+                  "vrrCapable": null
+                },
                 "height": 1200,
                 "id": 0,
                 "internal": true,
@@ -5817,9 +6402,12 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "sdrBrightness": null,
+                "sdrSaturation": null,
                 "serial": "",
                 "supported": true,
                 "transform": 0,
+                "vrr": null,
                 "width": 1920,
                 "x": 0,
                 "y": 0

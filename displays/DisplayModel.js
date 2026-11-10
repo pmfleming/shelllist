@@ -62,6 +62,7 @@ function draft(outputs, configured) {
         const saved = (configured || []).find(s => s.name === o.name) || {};
         return {
             relative: saved.relative || null,
+            advanced: Object.assign({}, saved.advanced || {}),
             match_connector: saved.match_connector === true,
             name: o.name,
             mode: o.current_mode || "",

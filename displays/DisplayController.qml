@@ -241,6 +241,15 @@ Ui.ProviderChooserController {
         const relative = patch === null ? null : Object.assign({reference: referenceName, side: "right", alignment: "start", gap: 0}, own.relative || {}, patch);
         draft = Model.relativeLayout(draft.map(o => o.name === name ? Object.assign({}, o, {relative: relative}) : o));
     }
+    function editAdvanced(name: string, key: string, value: var): void {
+        if (!canEdit || !["vrr", "bit_depth", "color", "sdr_brightness", "sdr_saturation"].includes(key)) return;
+        draft = draft.map(o => {
+            if (o.name !== name) return o;
+            const advanced = Object.assign({}, o.advanced || {});
+            if (value === null) delete advanced[key]; else advanced[key] = value;
+            return Object.assign({}, o, {advanced: advanced});
+        });
+    }
     function placeDisplay(name: string, reference: string, side: string): bool {
         if (!canEdit || discardPrompt || layoutDragging)
             return false;

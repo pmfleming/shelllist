@@ -103,6 +103,36 @@ DaemonTestCase {
         verify(c.selectedDraft.match_connector);
         verify(c.preview()); compare(calls.length, 1);
     }
+    function test_advancedSettingsUseObservedChoicesAndTheWholeLayoutTrial() {
+        const panel = makePanel(), c = panel.controller;
+        c.uiActive = true;
+        const state = displayState();
+        state.outputs[1].advanced_observed = {vrr: false, bit_depth: 8, color: "srgb", sdr_brightness: 1, sdr_saturation: 1};
+        state.outputs[1].advanced_options = {vrr: [false, true], bit_depth: [8, 10], color: ["srgb", "hdr"], sdr_brightness: true, sdr_saturation: true};
+        c.applyDisplayPolicy(state); c.selectOutput("DP-1"); c.openDetails(); waitForDetails(panel);
+        compare(Object.keys(c.selectedDraft.advanced).length, 0);
+        findChild(panel, "displayAdvanced-vrr").selected("true");
+        findChild(panel, "displayAdvanced-bit_depth").selected("10");
+        findChild(panel, "displayAdvanced-color").selected("hdr");
+        const brightness = findChild(panel, "displayAdvanced-sdr_brightness");
+        tryVerify(() => brightness.visible);
+        brightness.focusInput(true); keyClick(Qt.Key_2); keyClick(Qt.Key_Escape);
+        verify(c.selectedDraft.advanced.sdr_brightness === undefined);
+        brightness.focusInput(true); keyClick(Qt.Key_2); keyClick(Qt.Key_Return);
+        compare(c.selectedDraft.advanced.sdr_brightness, 2);
+        compare(calls.length, 0);
+        verify(c.preview()); compare(calls.length, 1);
+        const submitted = calls[0].params.outputs.find(o => o.name === "DP-1");
+        compare(submitted.advanced, {vrr: true, bit_depth: 10, color: "hdr", sdr_brightness: 2});
+    }
+    function test_unknownAdvancedCapabilitiesStayUnavailable() {
+        const panel = makePanel(), c = panel.controller;
+        c.uiActive = true; c.selectOutput("DP-1"); c.openDetails(); waitForDetails(panel);
+        verify(!findChild(panel, "displayAdvanced-vrr").interactive);
+        verify(!findChild(panel, "displayAdvanced-color").interactive);
+        verify(!findChild(panel, "displayAdvanced-bit_depth").interactive);
+        compare(calls.length, 0);
+    }
     function test_lastActiveDisplayCannotBeDisabledThroughUi() {
         const panel = makePanel();
         const c = panel.controller;
