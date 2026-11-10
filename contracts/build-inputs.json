@@ -56,7 +56,8 @@
     "nm-daemon/Cargo.toml",
     "shelllist/rust/shelllist-timezone-assets/Cargo.toml",
     "update-daemon/Cargo.toml",
-    "update-daemon/crates/shelllist-update-status/Cargo.toml"
+    "update-daemon/crates/shelllist-update-status/Cargo.toml",
+    "update-daemon/crates/shelllist-update-session/Cargo.toml"
   ],
   "locks": [
     "daemon-framework/Cargo.lock",
@@ -76,6 +77,10 @@
   },
   "nonOwningLocks": {},
   "shared": {
+    "ksni": {
+      "requirement": "0.3",
+      "version": "0.3.7"
+    },
     "schemars": {
       "requirement": "1.2.3",
       "version": "1.2.3"
