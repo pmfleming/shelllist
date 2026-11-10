@@ -34,7 +34,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
     };
-    update-worker.url = "git+file:../update-daemon";
+    update-worker = {
+      url = "git+file:../update-daemon";
+      inputs.daemonFramework.follows = "daemon-framework";
+    };
     bar-daemon = {
       url = "git+file:../bar-daemon";
       inputs.nixpkgs.follows = "nixpkgs";
