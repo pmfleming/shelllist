@@ -8,6 +8,7 @@
         },
         "available": true,
         "baseline": "baseline-preview",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -23,10 +24,20 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": [
               {
                 "enabled": true,
+                "match_connector": false,
                 "mirror_of": "",
                 "mode": "1920x1200@60.00Hz",
                 "name": "eDP-1",
@@ -50,8 +61,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -64,6 +77,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 2.0,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -74,6 +88,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "internal"
       },
       "event": "changed",
@@ -90,6 +110,7 @@
         },
         "available": true,
         "baseline": "baseline-preview",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -105,16 +126,27 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
           "trial": {
+            "automatic": false,
             "expires_at": 1,
             "id": "trial-example",
             "previous": {
               "outputs": [
                 {
                   "enabled": true,
+                  "match_connector": false,
                   "mirror_of": "",
                   "mode": "1920x1200@60.00Hz",
                   "name": "eDP-1",
@@ -125,10 +157,12 @@
                 }
               ]
             },
+            "profile": null,
             "proposed": {
               "outputs": [
                 {
                   "enabled": true,
+                  "match_connector": false,
                   "mirror_of": "",
                   "mode": "1920x1200@60.00Hz",
                   "name": "eDP-1",
@@ -152,8 +186,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -166,6 +202,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 2.0,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -176,6 +213,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "internal"
       },
       "event": "changed",
@@ -192,6 +235,7 @@
         },
         "available": true,
         "baseline": "baseline-initial",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -207,6 +251,15 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
@@ -223,8 +276,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -237,6 +292,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -247,6 +303,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "internal"
       },
       "event": "changed",
@@ -263,6 +325,7 @@
         },
         "available": true,
         "baseline": "baseline-initial",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -276,6 +339,15 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
@@ -292,8 +364,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -306,6 +380,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -316,6 +391,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "internal"
       },
       "event": "changed",
@@ -332,6 +413,7 @@
         },
         "available": true,
         "baseline": "baseline-initial",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -347,6 +429,15 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
@@ -363,8 +454,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -377,6 +470,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -387,6 +481,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "internal"
       },
       "event": "changed",
@@ -403,6 +503,7 @@
         },
         "available": true,
         "baseline": "baseline-policy",
+        "configured_outputs": [],
         "docking_state": "applying",
         "error": null,
         "focus": {
@@ -418,6 +519,15 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
@@ -434,8 +544,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -448,6 +560,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -458,6 +571,12 @@
         "policy": {
           "prefer_external": false
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "pending"
       },
       "event": "changed",
@@ -474,6 +593,7 @@
         },
         "available": true,
         "baseline": "baseline-preview",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -489,16 +609,27 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
           "trial": {
+            "automatic": false,
             "expires_at": 2147483647,
             "id": "trial-example",
             "previous": {
               "outputs": [
                 {
                   "enabled": true,
+                  "match_connector": false,
                   "mirror_of": "",
                   "mode": "1920x1200@60.00Hz",
                   "name": "eDP-1",
@@ -509,10 +640,12 @@
                 }
               ]
             },
+            "profile": null,
             "proposed": {
               "outputs": [
                 {
                   "enabled": true,
+                  "match_connector": false,
                   "mirror_of": "",
                   "mode": "1920x1200@60.00Hz",
                   "name": "eDP-1",
@@ -536,8 +669,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -550,6 +685,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 2.0,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -560,6 +696,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "internal"
       },
       "event": "changed",
@@ -576,6 +718,7 @@
         },
         "available": true,
         "baseline": "baseline-initial",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -591,6 +734,15 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
@@ -607,8 +759,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -621,6 +775,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -631,6 +786,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "internal"
       },
       "event": "changed",
@@ -647,6 +808,7 @@
         },
         "available": true,
         "baseline": "baseline-preview",
+        "configured_outputs": [],
         "docking_state": "failed",
         "error": "Layout rollback failed: compositor unavailable",
         "focus": {
@@ -662,16 +824,27 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
           "trial": {
+            "automatic": false,
             "expires_at": 2147483647,
             "id": "trial-example",
             "previous": {
               "outputs": [
                 {
                   "enabled": true,
+                  "match_connector": false,
                   "mirror_of": "",
                   "mode": "1920x1200@60.00Hz",
                   "name": "eDP-1",
@@ -682,10 +855,12 @@
                 }
               ]
             },
+            "profile": null,
             "proposed": {
               "outputs": [
                 {
                   "enabled": true,
+                  "match_connector": false,
                   "mirror_of": "",
                   "mode": "1920x1200@60.00Hz",
                   "name": "eDP-1",
@@ -709,8 +884,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -723,6 +900,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 2.0,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -733,6 +911,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "error"
       },
       "event": "changed",
@@ -749,6 +933,7 @@
         },
         "available": true,
         "baseline": "baseline-policy",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -764,6 +949,15 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
@@ -780,8 +974,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -794,6 +990,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -804,6 +1001,12 @@
         "policy": {
           "prefer_external": false
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "internal"
       },
       "event": "changed",
@@ -820,6 +1023,7 @@
         },
         "available": true,
         "baseline": "baseline-external-change",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -835,6 +1039,15 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
@@ -851,8 +1064,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -865,6 +1080,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.5,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -875,6 +1091,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "internal"
       },
       "event": "changed",
@@ -892,6 +1114,7 @@
           "enabled": true,
           "height": 1200,
           "internal": true,
+          "match_connector": false,
           "mirror_of": "",
           "mode": "1920x1200@60.00Hz",
           "modes": [
@@ -904,6 +1127,7 @@
             }
           ],
           "name": "eDP-1",
+          "relative": null,
           "scale": "",
           "transform": 0,
           "width": 1920,
@@ -952,6 +1176,7 @@
           "display_policy": {
             "available": true,
             "baseline": "baseline-initial",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -965,6 +1190,15 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
@@ -981,8 +1215,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -995,6 +1231,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -1005,6 +1242,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "snapshot": {
@@ -1015,6 +1258,7 @@
               },
               "available": true,
               "baseline": "baseline-initial",
+              "configured_outputs": [],
               "docking_state": "settled",
               "error": null,
               "focus": {
@@ -1028,6 +1272,15 @@
               },
               "layout": {
                 "manual_enablement": false,
+                "profiles": {
+                  "active": null,
+                  "attempted": null,
+                  "automatic": false,
+                  "error": null,
+                  "fallback": null,
+                  "items": [],
+                  "revision": 0
+                },
                 "saved": {
                   "outputs": []
                 },
@@ -1044,8 +1297,10 @@
                   "height": 1200,
                   "id": 0,
                   "internal": true,
+                  "make": "",
                   "mirrorOf": "",
                   "mirror_of": "",
+                  "model": "",
                   "modes": [
                     {
                       "height": 1200,
@@ -1058,6 +1313,7 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 1.25,
+                  "serial": "",
                   "supported": true,
                   "transform": 0,
                   "width": 1920,
@@ -1068,6 +1324,12 @@
               "policy": {
                 "prefer_external": true
               },
+              "profile_bindings": {},
+              "profile_context": {
+                "lid_closed": null,
+                "plugged": null
+              },
+              "profile_reason": "",
               "status": "internal"
             }
           }
@@ -1119,6 +1381,7 @@
           "display_policy": {
             "available": true,
             "baseline": "baseline-initial",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -1134,6 +1397,15 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
@@ -1150,8 +1422,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -1164,6 +1438,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -1174,6 +1449,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "snapshot": {
@@ -1184,6 +1465,7 @@
               },
               "available": true,
               "baseline": "baseline-initial",
+              "configured_outputs": [],
               "docking_state": "settled",
               "error": null,
               "focus": {
@@ -1199,6 +1481,15 @@
               },
               "layout": {
                 "manual_enablement": false,
+                "profiles": {
+                  "active": null,
+                  "attempted": null,
+                  "automatic": false,
+                  "error": null,
+                  "fallback": null,
+                  "items": [],
+                  "revision": 0
+                },
                 "saved": {
                   "outputs": []
                 },
@@ -1215,8 +1506,10 @@
                   "height": 1200,
                   "id": 0,
                   "internal": true,
+                  "make": "",
                   "mirrorOf": "",
                   "mirror_of": "",
+                  "model": "",
                   "modes": [
                     {
                       "height": 1200,
@@ -1229,6 +1522,7 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 1.25,
+                  "serial": "",
                   "supported": true,
                   "transform": 0,
                   "width": 1920,
@@ -1239,6 +1533,12 @@
               "policy": {
                 "prefer_external": true
               },
+              "profile_bindings": {},
+              "profile_context": {
+                "lid_closed": null,
+                "plugged": null
+              },
+              "profile_reason": "",
               "status": "internal"
             }
           }
@@ -1288,6 +1588,7 @@
           "display_policy": {
             "available": true,
             "baseline": "baseline-preview",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -1303,10 +1604,20 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": [
                   {
                     "enabled": true,
+                    "match_connector": false,
                     "mirror_of": "",
                     "mode": "1920x1200@60.00Hz",
                     "name": "eDP-1",
@@ -1330,8 +1641,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -1344,6 +1657,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 2.0,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -1354,6 +1668,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "snapshot": {
@@ -1364,6 +1684,7 @@
               },
               "available": true,
               "baseline": "baseline-preview",
+              "configured_outputs": [],
               "docking_state": "settled",
               "error": null,
               "focus": {
@@ -1379,10 +1700,20 @@
               },
               "layout": {
                 "manual_enablement": false,
+                "profiles": {
+                  "active": null,
+                  "attempted": null,
+                  "automatic": false,
+                  "error": null,
+                  "fallback": null,
+                  "items": [],
+                  "revision": 0
+                },
                 "saved": {
                   "outputs": [
                     {
                       "enabled": true,
+                      "match_connector": false,
                       "mirror_of": "",
                       "mode": "1920x1200@60.00Hz",
                       "name": "eDP-1",
@@ -1406,8 +1737,10 @@
                   "height": 1200,
                   "id": 0,
                   "internal": true,
+                  "make": "",
                   "mirrorOf": "",
                   "mirror_of": "",
+                  "model": "",
                   "modes": [
                     {
                       "height": 1200,
@@ -1420,6 +1753,7 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 2.0,
+                  "serial": "",
                   "supported": true,
                   "transform": 0,
                   "width": 1920,
@@ -1430,6 +1764,12 @@
               "policy": {
                 "prefer_external": true
               },
+              "profile_bindings": {},
+              "profile_context": {
+                "lid_closed": null,
+                "plugged": null
+              },
+              "profile_reason": "",
               "status": "internal"
             }
           }
@@ -1468,6 +1808,7 @@
             "enabled": true,
             "height": 1200,
             "internal": true,
+            "match_connector": false,
             "mirror_of": "",
             "mode": "1920x1200@60.00Hz",
             "modes": [
@@ -1480,6 +1821,7 @@
               }
             ],
             "name": "eDP-1",
+            "relative": null,
             "scale": 2.0,
             "transform": 0,
             "width": 1920,
@@ -1503,6 +1845,7 @@
           "display_policy": {
             "available": true,
             "baseline": "baseline-preview",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -1518,16 +1861,27 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
               "trial": {
+                "automatic": false,
                 "expires_at": 2147483647,
                 "id": "trial-example",
                 "previous": {
                   "outputs": [
                     {
                       "enabled": true,
+                      "match_connector": false,
                       "mirror_of": "",
                       "mode": "1920x1200@60.00Hz",
                       "name": "eDP-1",
@@ -1538,10 +1892,12 @@
                     }
                   ]
                 },
+                "profile": null,
                 "proposed": {
                   "outputs": [
                     {
                       "enabled": true,
+                      "match_connector": false,
                       "mirror_of": "",
                       "mode": "1920x1200@60.00Hz",
                       "name": "eDP-1",
@@ -1565,8 +1921,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -1579,6 +1937,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 2.0,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -1589,6 +1948,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "snapshot": {
@@ -1599,6 +1964,7 @@
               },
               "available": true,
               "baseline": "baseline-preview",
+              "configured_outputs": [],
               "docking_state": "settled",
               "error": null,
               "focus": {
@@ -1614,16 +1980,27 @@
               },
               "layout": {
                 "manual_enablement": false,
+                "profiles": {
+                  "active": null,
+                  "attempted": null,
+                  "automatic": false,
+                  "error": null,
+                  "fallback": null,
+                  "items": [],
+                  "revision": 0
+                },
                 "saved": {
                   "outputs": []
                 },
                 "trial": {
+                  "automatic": false,
                   "expires_at": 2147483647,
                   "id": "trial-example",
                   "previous": {
                     "outputs": [
                       {
                         "enabled": true,
+                        "match_connector": false,
                         "mirror_of": "",
                         "mode": "1920x1200@60.00Hz",
                         "name": "eDP-1",
@@ -1634,10 +2011,12 @@
                       }
                     ]
                   },
+                  "profile": null,
                   "proposed": {
                     "outputs": [
                       {
                         "enabled": true,
+                        "match_connector": false,
                         "mirror_of": "",
                         "mode": "1920x1200@60.00Hz",
                         "name": "eDP-1",
@@ -1661,8 +2040,10 @@
                   "height": 1200,
                   "id": 0,
                   "internal": true,
+                  "make": "",
                   "mirrorOf": "",
                   "mirror_of": "",
+                  "model": "",
                   "modes": [
                     {
                       "height": 1200,
@@ -1675,6 +2056,7 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 2.0,
+                  "serial": "",
                   "supported": true,
                   "transform": 0,
                   "width": 1920,
@@ -1685,6 +2067,12 @@
               "policy": {
                 "prefer_external": true
               },
+              "profile_bindings": {},
+              "profile_context": {
+                "lid_closed": null,
+                "plugged": null
+              },
+              "profile_reason": "",
               "status": "internal"
             }
           }
@@ -1734,6 +2122,7 @@
           "display_policy": {
             "available": true,
             "baseline": "baseline-initial",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -1749,6 +2138,15 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
@@ -1765,8 +2163,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -1779,6 +2179,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -1789,6 +2190,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "snapshot": {
@@ -1799,6 +2206,7 @@
               },
               "available": true,
               "baseline": "baseline-initial",
+              "configured_outputs": [],
               "docking_state": "settled",
               "error": null,
               "focus": {
@@ -1814,6 +2222,15 @@
               },
               "layout": {
                 "manual_enablement": false,
+                "profiles": {
+                  "active": null,
+                  "attempted": null,
+                  "automatic": false,
+                  "error": null,
+                  "fallback": null,
+                  "items": [],
+                  "revision": 0
+                },
                 "saved": {
                   "outputs": []
                 },
@@ -1830,8 +2247,10 @@
                   "height": 1200,
                   "id": 0,
                   "internal": true,
+                  "make": "",
                   "mirrorOf": "",
                   "mirror_of": "",
+                  "model": "",
                   "modes": [
                     {
                       "height": 1200,
@@ -1844,6 +2263,7 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 1.25,
+                  "serial": "",
                   "supported": true,
                   "transform": 0,
                   "width": 1920,
@@ -1854,6 +2274,12 @@
               "policy": {
                 "prefer_external": true
               },
+              "profile_bindings": {},
+              "profile_context": {
+                "lid_closed": null,
+                "plugged": null
+              },
+              "profile_reason": "",
               "status": "internal"
             }
           }
@@ -1903,6 +2329,7 @@
           "display_policy": {
             "available": true,
             "baseline": "baseline-policy",
+            "configured_outputs": [],
             "docking_state": "applying",
             "error": null,
             "focus": {
@@ -1918,6 +2345,15 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
@@ -1934,8 +2370,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -1948,6 +2386,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -1958,6 +2397,12 @@
             "policy": {
               "prefer_external": false
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "pending"
           },
           "snapshot": {
@@ -1968,6 +2413,7 @@
               },
               "available": true,
               "baseline": "baseline-policy",
+              "configured_outputs": [],
               "docking_state": "applying",
               "error": null,
               "focus": {
@@ -1983,6 +2429,15 @@
               },
               "layout": {
                 "manual_enablement": false,
+                "profiles": {
+                  "active": null,
+                  "attempted": null,
+                  "automatic": false,
+                  "error": null,
+                  "fallback": null,
+                  "items": [],
+                  "revision": 0
+                },
                 "saved": {
                   "outputs": []
                 },
@@ -1999,8 +2454,10 @@
                   "height": 1200,
                   "id": 0,
                   "internal": true,
+                  "make": "",
                   "mirrorOf": "",
                   "mirror_of": "",
+                  "model": "",
                   "modes": [
                     {
                       "height": 1200,
@@ -2013,6 +2470,7 @@
                   "name": "eDP-1",
                   "refreshRate": 60.0,
                   "scale": 1.25,
+                  "serial": "",
                   "supported": true,
                   "transform": 0,
                   "width": 1920,
@@ -2023,6 +2481,12 @@
               "policy": {
                 "prefer_external": false
               },
+              "profile_bindings": {},
+              "profile_context": {
+                "lid_closed": null,
+                "plugged": null
+              },
+              "profile_reason": "",
               "status": "pending"
             }
           }
@@ -2227,6 +2691,7 @@
             },
             "available": true,
             "baseline": "baseline-preview",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -2242,10 +2707,20 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": [
                   {
                     "enabled": true,
+                    "match_connector": false,
                     "mirror_of": "",
                     "mode": "1920x1200@60.00Hz",
                     "name": "eDP-1",
@@ -2269,8 +2744,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -2283,6 +2760,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 2.0,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -2293,6 +2771,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "media": {
@@ -2421,6 +2905,7 @@
             "last_error": null,
             "lid": {
               "available": false,
+              "closed": null,
               "error": null,
               "managed": false
             },
@@ -2722,6 +3207,7 @@
             },
             "available": true,
             "baseline": "baseline-initial",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -2737,6 +3223,15 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
@@ -2753,8 +3248,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -2767,6 +3264,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -2777,6 +3275,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "media": {
@@ -2905,6 +3409,7 @@
             "last_error": null,
             "lid": {
               "available": false,
+              "closed": null,
               "error": null,
               "managed": false
             },
@@ -3206,6 +3711,7 @@
             },
             "available": true,
             "baseline": "baseline-initial",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -3219,6 +3725,15 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
@@ -3235,8 +3750,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -3249,6 +3766,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -3259,6 +3777,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "media": {
@@ -3387,6 +3911,7 @@
             "last_error": null,
             "lid": {
               "available": false,
+              "closed": null,
               "error": null,
               "managed": false
             },
@@ -3688,6 +4213,7 @@
             },
             "available": true,
             "baseline": "baseline-initial",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -3703,6 +4229,15 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
@@ -3719,8 +4254,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -3733,6 +4270,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -3743,6 +4281,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "media": {
@@ -3871,6 +4415,7 @@
             "last_error": null,
             "lid": {
               "available": false,
+              "closed": null,
               "error": null,
               "managed": false
             },
@@ -4172,6 +4717,7 @@
             },
             "available": true,
             "baseline": "baseline-policy",
+            "configured_outputs": [],
             "docking_state": "applying",
             "error": null,
             "focus": {
@@ -4187,6 +4733,15 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
@@ -4203,8 +4758,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -4217,6 +4774,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -4227,6 +4785,12 @@
             "policy": {
               "prefer_external": false
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "pending"
           },
           "media": {
@@ -4355,6 +4919,7 @@
             "last_error": null,
             "lid": {
               "available": false,
+              "closed": null,
               "error": null,
               "managed": false
             },
@@ -4656,6 +5221,7 @@
             },
             "available": true,
             "baseline": "baseline-preview",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -4671,16 +5237,27 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
               "trial": {
+                "automatic": false,
                 "expires_at": 2147483647,
                 "id": "trial-example",
                 "previous": {
                   "outputs": [
                     {
                       "enabled": true,
+                      "match_connector": false,
                       "mirror_of": "",
                       "mode": "1920x1200@60.00Hz",
                       "name": "eDP-1",
@@ -4691,10 +5268,12 @@
                     }
                   ]
                 },
+                "profile": null,
                 "proposed": {
                   "outputs": [
                     {
                       "enabled": true,
+                      "match_connector": false,
                       "mirror_of": "",
                       "mode": "1920x1200@60.00Hz",
                       "name": "eDP-1",
@@ -4718,8 +5297,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -4732,6 +5313,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 2.0,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -4742,6 +5324,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "media": {
@@ -4870,6 +5458,7 @@
             "last_error": null,
             "lid": {
               "available": false,
+              "closed": null,
               "error": null,
               "managed": false
             },
@@ -5171,6 +5760,7 @@
             },
             "available": true,
             "baseline": "baseline-initial",
+            "configured_outputs": [],
             "docking_state": "settled",
             "error": null,
             "focus": {
@@ -5186,6 +5776,15 @@
             },
             "layout": {
               "manual_enablement": false,
+              "profiles": {
+                "active": null,
+                "attempted": null,
+                "automatic": false,
+                "error": null,
+                "fallback": null,
+                "items": [],
+                "revision": 0
+              },
               "saved": {
                 "outputs": []
               },
@@ -5202,8 +5801,10 @@
                 "height": 1200,
                 "id": 0,
                 "internal": true,
+                "make": "",
                 "mirrorOf": "",
                 "mirror_of": "",
+                "model": "",
                 "modes": [
                   {
                     "height": 1200,
@@ -5216,6 +5817,7 @@
                 "name": "eDP-1",
                 "refreshRate": 60.0,
                 "scale": 1.25,
+                "serial": "",
                 "supported": true,
                 "transform": 0,
                 "width": 1920,
@@ -5226,6 +5828,12 @@
             "policy": {
               "prefer_external": true
             },
+            "profile_bindings": {},
+            "profile_context": {
+              "lid_closed": null,
+              "plugged": null
+            },
+            "profile_reason": "",
             "status": "internal"
           },
           "media": {
@@ -5354,6 +5962,7 @@
             "last_error": null,
             "lid": {
               "available": false,
+              "closed": null,
               "error": null,
               "managed": false
             },

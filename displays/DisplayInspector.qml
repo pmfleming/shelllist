@@ -180,6 +180,24 @@ ColumnLayout {
         }
     }
 
+    Ui.DetailColumnCard {
+        Layout.fillWidth: true
+        visible: !!inspector.controller.activeProfile
+        title: inspector.controller.activeProfile ? qsTr("Profile: %1").arg(inspector.controller.activeProfile.name) : ""
+        Ui.FormField {
+            Layout.fillWidth: true
+            label: qsTr("Required for matching")
+            Ui.DropDownList {
+                objectName: "displayProfileRequired"
+                Layout.fillWidth: true
+                readonly property string bindingName: (inspector.controller.displayPolicyState.profile_bindings || {})[inspector.controller.selectedName] || ""
+                interactive: inspector.controller.canChange && !inspector.controller.dirty && !inspector.controller.dockingApplying && bindingName.length > 0
+                options: [{value: "yes", label: qsTr("Required")}, {value: "no", label: qsTr("Optional")}]
+                value: inspector.controller.activeProfile && inspector.controller.activeProfile.required.includes(bindingName) ? "yes" : "no"
+                onSelected: value => inspector.controller.requireDisplay(value === "yes")
+            }
+        }
+    }
     DisplayPlacementSettings {
         Layout.fillWidth: true
         controller: inspector.controller

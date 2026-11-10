@@ -26,6 +26,16 @@ Ui.DetailFlickable {
         summaryText: page.controller.focusState.error ? qsTr("Focus settings need attention") : qsTr("Finish layout changes first")
         tone: page.controller.focusState.error ? "warning" : "info"
     }
+    DisplaySettingsLink {
+        width: parent.width
+        visible: page.overview
+        objectName: "displayProfilesLink"
+        title: qsTr("Display profiles")
+        subtitle: qsTr("Saved layouts and automatic switching")
+        icon: "monitor"
+        accessKey: "L"
+        onClicked: page.controller.selectFocusPage("profiles")
+    }
     Ui.DetailColumnCard {
         objectName: "displayCommonFocus"
         visible: page.overview

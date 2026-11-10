@@ -18,3 +18,4 @@ internal DisplayArrangementControls DisplayArrangementControls.qml
 internal DisplayInspector DisplayInspector.qml
 internal DisplayTrialDialog DisplayTrialDialog.qml
 internal DisplayPlacementSettings DisplayPlacementSettings.qml
+internal DisplayProfilesPane DisplayProfilesPane.qml

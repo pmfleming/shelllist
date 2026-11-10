@@ -16,3 +16,15 @@ manufacturer/model/serial values remain in Information, outside field traversal.
 
 Coverage: `tests/qml/tst_displays.qml` exercises relative resizing, native gap
 save/discard, matching selection and one whole-layout preview without early writes.
+
+Profiles are a subpage behind the global cog: capture the current layout, rename,
+select a profile for Preview, edit priority and AC/lid conditions, choose fallback,
+and enable automatic switching. Each display expansion card marks its membership
+as required/optional for matching the active profile. These metadata edits are
+acknowledged by the daemon; pending operations disable conflicting controls.
+Closing a pending profile preview reverts only its own returned trial identity.
+
+DisplayPlacementSettings and DisplayProfilesPane compose domain fields with the
+shared Ui controls; they introduce no alternative setting/editor wrapper or key
+model. The Displays maintainer owns these compositions. No numeric style override
+was added (panel-review advisory reviewed).

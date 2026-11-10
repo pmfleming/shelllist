@@ -42,8 +42,29 @@ Ui.ProviderChooserController {
     property bool identifyActive: false
     property string identifyName: ""
     property bool changingDetailsContext: false
-    readonly property list<string> focusTabs: ["focus", "focus-pointer", "focus-keyboard", "focus-applications", "focus-cursor", "focus-diagnostics"]
+    readonly property list<string> focusTabs: ["profiles", "focus", "focus-pointer", "focus-keyboard", "focus-applications", "focus-cursor", "focus-diagnostics"]
     property bool globalSettingsOpen: false
+    property string profileEditorName: ""
+    property string newProfileName: ""
+    readonly property var profiles: (displayPolicyState.layout || {}).profiles || ({items: [], automatic: false, active: null, fallback: null})
+    readonly property var editingProfile: (profiles.items || []).find(p => p.name === profileEditorName) || null
+    readonly property var activeProfile: (profiles.items || []).find(p => p.name === profiles.active) || null
+    readonly property bool pendingPreview: pendingAction === "preview" || pendingAction === "profilePreview"
+    function profileRequest(params: var): bool {
+        return canChange && !dockingApplying && !dirty && send(params.operation === "preview" ? "profilePreview" : "profiles", params);
+    }
+    function updateProfile(profile: var, patch: var): bool {
+        if (!profile) return false;
+        return profileRequest(Object.assign({operation: "update", name: profile.name, renamed: profile.name, required: profile.required, priority: profile.priority, plugged: profile.plugged, lid_closed: profile.lid_closed}, patch));
+    }
+    function requireDisplay(required: bool): bool {
+        if (!activeProfile || !selectedOutput) return false;
+        const name = (displayPolicyState.profile_bindings || {})[selectedName];
+        if (!name) return false;
+        const names = activeProfile.required.filter(n => n !== name);
+        if (required) names.push(name);
+        return updateProfile(activeProfile, {required: names});
+    }
     property string detailsTab: "settings"
     readonly property DisplayProvider displayProvider: DisplayProvider {
         controller: controller
@@ -110,9 +131,11 @@ Ui.ProviderChooserController {
         displayPolicyState = Object.assign({}, value || ({
                 available: false
             }));
+        if (!(profiles.items || []).some(p => p.name === profileEditorName))
+            profileEditorName = profiles.active || ((profiles.items || [])[0] || {}).name || "";
         replaceProviderResults(displayProvider.resultsFor(outputs), false);
         observedTrialId = trial ? trial.id : "";
-        if (!trial && pendingAction !== "preview")
+        if (!trial && !pendingPreview)
             revertOnArrival = false;
         stateReady = true;
         clock = Date.now();
@@ -125,7 +148,7 @@ Ui.ProviderChooserController {
                 stale = true;
             return;
         }
-        const changedOutsidePreview = pendingAction !== "preview" && ((displayPolicyState.baseline || "") !== baselineToken || Model.fingerprint(outputs) !== baselineFingerprint || !!(displayPolicyState.policy || {}).prefer_external !== baselinePreference);
+        const changedOutsidePreview = !pendingPreview && ((displayPolicyState.baseline || "") !== baselineToken || Model.fingerprint(outputs) !== baselineFingerprint || !!(displayPolicyState.policy || {}).prefer_external !== baselinePreference);
         if (previousTrial || (!dirty && changedOutsidePreview)) {
             // A trial ended authoritatively; the new observed layout is the baseline.
             baselineDraft = [];
@@ -342,7 +365,7 @@ Ui.ProviderChooserController {
         identifyTimer.restart();
     }
     function acceptPreviewReceipt(id: string, data: var): void {
-        if (id.startsWith("display-preview-") && pendingAction === "preview" && revertOnArrival)
+        if ((id.startsWith("display-preview-") || id.startsWith("display-profilePreview-")) && pendingPreview && revertOnArrival)
             revertTrialId = data.observations?.display_policy?.layout?.trial?.id || "";
     }
     function requestFinished(id: string): void {
@@ -393,8 +416,8 @@ Ui.ProviderChooserController {
     }
     function deactivateUi() {
         identifyActive = false;
-        revertOnArrival = !!trial || pendingAction === "preview";
-        revertTrialId = pendingAction === "preview" ? "" : trial?.id || "";
+        revertOnArrival = !!trial || pendingPreview;
+        revertTrialId = pendingPreview ? "" : trial?.id || "";
         settleHiddenTrial();
         deactivateUiState();
     }

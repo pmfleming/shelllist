@@ -666,6 +666,7 @@
         },
         "available": true,
         "baseline": "",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -679,6 +680,15 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
@@ -695,8 +705,10 @@
             "height": 1200,
             "id": 0,
             "internal": true,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 1200,
@@ -709,6 +721,7 @@
             "name": "eDP-1",
             "refreshRate": 60.0,
             "scale": 1.25,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 1920,
@@ -727,8 +740,10 @@
             "height": 2160,
             "id": 1,
             "internal": false,
+            "make": "",
             "mirrorOf": "",
             "mirror_of": "",
+            "model": "",
             "modes": [
               {
                 "height": 2160,
@@ -755,6 +770,7 @@
             "name": "DP-1",
             "refreshRate": 59.94,
             "scale": 1.5,
+            "serial": "",
             "supported": true,
             "transform": 0,
             "width": 3840,
@@ -765,6 +781,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": "external"
       },
       "event": "changed",
@@ -1035,6 +1057,7 @@
         "last_error": null,
         "lid": {
           "available": true,
+          "closed": null,
           "error": null,
           "managed": true
         },
@@ -2100,6 +2123,7 @@
           },
           "available": true,
           "baseline": "",
+          "configured_outputs": [],
           "docking_state": "settled",
           "error": null,
           "focus": {
@@ -2113,6 +2137,15 @@
           },
           "layout": {
             "manual_enablement": false,
+            "profiles": {
+              "active": null,
+              "attempted": null,
+              "automatic": false,
+              "error": null,
+              "fallback": null,
+              "items": [],
+              "revision": 0
+            },
             "saved": {
               "outputs": []
             },
@@ -2129,8 +2162,10 @@
               "height": 1200,
               "id": 0,
               "internal": true,
+              "make": "",
               "mirrorOf": "",
               "mirror_of": "",
+              "model": "",
               "modes": [
                 {
                   "height": 1200,
@@ -2143,6 +2178,7 @@
               "name": "eDP-1",
               "refreshRate": 60.0,
               "scale": 1.25,
+              "serial": "",
               "supported": true,
               "transform": 0,
               "width": 1920,
@@ -2161,8 +2197,10 @@
               "height": 2160,
               "id": 1,
               "internal": false,
+              "make": "",
               "mirrorOf": "",
               "mirror_of": "",
+              "model": "",
               "modes": [
                 {
                   "height": 2160,
@@ -2189,6 +2227,7 @@
               "name": "DP-1",
               "refreshRate": 59.94,
               "scale": 1.5,
+              "serial": "",
               "supported": true,
               "transform": 0,
               "width": 3840,
@@ -2199,6 +2238,12 @@
           "policy": {
             "prefer_external": true
           },
+          "profile_bindings": {},
+          "profile_context": {
+            "lid_closed": null,
+            "plugged": null
+          },
+          "profile_reason": "",
           "status": "external"
         },
         "media": {
@@ -2420,6 +2465,7 @@
           "last_error": null,
           "lid": {
             "available": true,
+            "closed": null,
             "error": null,
             "managed": true
           },
@@ -2811,6 +2857,7 @@
         },
         "available": false,
         "baseline": "",
+        "configured_outputs": [],
         "docking_state": "settled",
         "error": null,
         "focus": {
@@ -2821,6 +2868,15 @@
         },
         "layout": {
           "manual_enablement": false,
+          "profiles": {
+            "active": null,
+            "attempted": null,
+            "automatic": false,
+            "error": null,
+            "fallback": null,
+            "items": [],
+            "revision": 0
+          },
           "saved": {
             "outputs": []
           },
@@ -2830,6 +2886,12 @@
         "policy": {
           "prefer_external": true
         },
+        "profile_bindings": {},
+        "profile_context": {
+          "lid_closed": null,
+          "plugged": null
+        },
+        "profile_reason": "",
         "status": ""
       },
       "event": "subscribed",
@@ -3007,6 +3069,7 @@
         "last_error": null,
         "lid": {
           "available": false,
+          "closed": null,
           "error": null,
           "managed": false
         },

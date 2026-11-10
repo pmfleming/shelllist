@@ -4,6 +4,8 @@
 var protocol = Protocol.protocol;
 var version = Protocol.version;
 var methods = {
+    profiles: Protocol.methods["displayProfiles.set"],
+    profilePreview: Protocol.methods["displayProfiles.set"],
     snapshot: Protocol.methods["bar.snapshot"],
     policy: Protocol.methods["displayPolicy.set"],
     focus: Protocol.methods["displayFocus.set"],

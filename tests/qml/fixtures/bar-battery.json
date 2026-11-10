@@ -5120,6 +5120,7 @@
           },
           "available": false,
           "baseline": "",
+          "configured_outputs": [],
           "docking_state": "settled",
           "error": null,
           "focus": {
@@ -5130,6 +5131,15 @@
           },
           "layout": {
             "manual_enablement": false,
+            "profiles": {
+              "active": null,
+              "attempted": null,
+              "automatic": false,
+              "error": null,
+              "fallback": null,
+              "items": [],
+              "revision": 0
+            },
             "saved": {
               "outputs": []
             },
@@ -5139,6 +5149,12 @@
           "policy": {
             "prefer_external": true
           },
+          "profile_bindings": {},
+          "profile_context": {
+            "lid_closed": null,
+            "plugged": null
+          },
+          "profile_reason": "",
           "status": ""
         },
         "media": {
@@ -5267,6 +5283,7 @@
           "last_error": null,
           "lid": {
             "available": false,
+            "closed": null,
             "error": null,
             "managed": false
           },

@@ -58,6 +58,28 @@ DaemonTestCase {
         tryCompare(panel.detailsItem.parent, "status", Loader.Ready);
         verify(waitForPolish(panel.Window.window));
     }
+    function test_profilesUseGlobalCogAndPerDisplayRequirements() {
+        const panel = makePanel(), c = panel.controller;
+        const state = displayState();
+        const profile = {name: "Home", layout: {outputs: []}, required: ["DP-1"], priority: 0, plugged: null, lid_closed: null};
+        state.layout.profiles = {items: [profile], automatic: false, active: "Home", fallback: null};
+        state.profile_bindings = {"DP-1": "DP-1"};
+        c.applyDisplayPolicy(state); c.uiActive = true;
+        c.openGlobalSettings(); c.selectFocusPage("profiles"); waitForDetails(panel);
+        const power = findChild(panel, "displayProfile-plugged"); verify(power !== null && power.visible);
+        power.selected("no");
+        compare(calls.length, 1); compare(calls[0].method, "displayProfiles.set");
+        compare(calls[0].params.plugged, false); compare(calls[0].params.operation, "update");
+        c.requestFinished(calls[0].id);
+        c.selectOutput("DP-1"); c.openDetails(); waitForDetails(panel);
+        const required = findChild(panel, "displayProfileRequired"); verify(required.visible);
+        required.selected("no"); compare(calls[1].params.required.length, 0);
+        c.requestFinished(calls[1].id);
+        c.openGlobalSettings(); c.selectFocusPage("profiles");
+        verify(c.profileRequest({operation: "preview", name: "Home"}));
+        compare(c.pendingAction, "profilePreview");
+        c.deactivateUi(); verify(c.revertOnArrival, "closing a pending profile preview must revert its receipt");
+    }
     function test_relativePlacementFieldsRemainDraftOnly() {
         const panel = makePanel(), c = panel.controller;
         c.uiActive = true;

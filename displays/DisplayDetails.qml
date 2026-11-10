@@ -13,7 +13,7 @@ Ui.ActionDetailsPane {
     icon: controller.globalSettingsOpen ? "󰒓" : controller.selectedResult ? controller.selectedResult.icon : "󰍹"
     iconColor: controller.globalSettingsOpen ? Ui.Theme.accent : controller.selectedOutput && !controller.selectedOutput.disabled ? Ui.Theme.active : Ui.Theme.mutedText
     title: controller.globalSettingsOpen ? qsTr("Display settings") : controller.selectedResult ? controller.selectedResult.title : qsTr("Displays")
-    subtitle: controller.globalSettingsOpen ? qsTr("Focus · all monitors") : controller.selectedResult ? controller.selectedResult.subtitle : ""
+    subtitle: controller.globalSettingsOpen ? qsTr("Profiles and focus · all monitors") : controller.selectedResult ? controller.selectedResult.subtitle : ""
     actions: controller.globalSettingsOpen ? [] : controller.detailActions
     subtitleWeight: Ui.Theme.fontWeightMedium
     enabled: !controller.trial && !controller.discardPrompt && !controller.actionInFlight
@@ -75,7 +75,13 @@ Ui.ActionDetailsPane {
         DisplayFocusPane {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: pane.controller.globalSettingsOpen
+            visible: pane.controller.globalSettingsOpen && pane.controller.detailsTab !== "profiles"
+            controller: pane.controller
+        }
+        DisplayProfilesPane {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: pane.controller.globalSettingsOpen && pane.controller.detailsTab === "profiles"
             controller: pane.controller
         }
         Ui.TabbedDetailsStack {

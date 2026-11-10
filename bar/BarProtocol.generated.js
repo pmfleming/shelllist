@@ -67,6 +67,7 @@ var methods = ({
     "powerSleep.idle": "powerSleep.idle",
     "powerSleep.cancelCritical": "powerSleep.cancelCritical",
     "powerSleep.setCriticalPolicy": "powerSleep.setCriticalPolicy",
+    "displayProfiles.set": "displayProfiles.set",
     "displayPolicy.set": "displayPolicy.set",
     "displayFocus.set": "displayFocus.set",
     "displayFocus.reset": "displayFocus.reset",
