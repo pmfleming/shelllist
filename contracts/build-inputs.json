@@ -57,7 +57,8 @@
     "shelllist/rust/shelllist-timezone-assets/Cargo.toml",
     "update-daemon/Cargo.toml",
     "update-daemon/crates/shelllist-update-status/Cargo.toml",
-    "update-daemon/crates/shelllist-update-session/Cargo.toml"
+    "update-daemon/crates/shelllist-update-session/Cargo.toml",
+    "update-daemon/crates/shelllist-update-store/Cargo.toml"
   ],
   "locks": [
     "daemon-framework/Cargo.lock",
@@ -237,8 +238,12 @@
           "reason": "Preserve the vendored upstream Tantivy patch's standalone test/benchmark dependencies."
         },
         "update-daemon/Cargo.lock": {
-          "versions": ["0.10.3"],
-          "reason": "Preserve the independent updater's existing transitive rand resolution."
+          "versions": [
+            "0.10.3",
+            "0.8.8",
+            "0.9.5"
+          ],
+          "reason": "Update Turso 0.8.3 adds the same antithesis/shuttle, turso_core and twox-hash dependency families as the qualified sibling databases; preserve the worker rand 0.10.3 resolution."
         }
       }
     },
@@ -250,6 +255,13 @@
       "requirement": "1",
       "version": "1.1.4",
       "lockExceptions": {
+        "update-daemon/Cargo.lock": {
+          "versions": [
+            "0.38.44",
+            "1.1.4"
+          ],
+          "reason": "Turso 0.8.3 SDK bindgen/which uses rustix 0.38.44 alongside the shared direct 1.1.4 API. Exact worker lock exception only."
+        },
         "app-daemon/Cargo.lock": {
           "versions": ["0.38.44", "1.1.4"],
           "reason": "The app-daemon Turso 0.8.3 SDK build dependencies require bindgen/which's rustix 0.38.44; the direct runtime dependency remains at the shared 1.1.4 resolution."
