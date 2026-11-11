@@ -114,6 +114,8 @@ Ui.PanelSurface {
                 label: content.controller.viewTab === "history" ? new Date(modelData.started_at * 1000).toLocaleString() : modelData.path
                 subtitle: content.controller.viewTab === "history" ? modelData.trigger + (modelData.cancelled ? qsTr(" · interrupted") : "")
                     : content.controller.viewTab === "cleanup" ? modelData.reason : modelData.category
+                        + (modelData.partial ? qsTr(" · partial measurement") : "")
+                        + (modelData.unreadable ? qsTr(" · %1 private paths excluded").arg(modelData.unreadable) : "")
                 Ui.ThemeText {
                     Layout.fillWidth: true
                     text: content.controller.bytes(content.controller.viewTab === "history" ? row.modelData.reclaimed : row.modelData.bytes)
