@@ -10,8 +10,6 @@ cargo xtask surfaces                 # regenerate QML metadata
 cargo xtask surfaces --check         # reject stale/missing output
 cargo xtask build-inputs             # audit current sibling worktrees
 cargo xtask build-inputs --sources sources.json --policy contracts/build-inputs.json
-cargo xtask trim-cache               # dry-run, 4 GiB per target
-cargo xtask trim-cache --apply --max-gib 8
 cargo xtask check-daemon-boundary
 cargo xtask check-ip-validation
 cargo xtask contracts --nix          # producer tests/builds in each sibling dev shell

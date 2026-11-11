@@ -1,5 +1,4 @@
 mod build_inputs;
-mod cache;
 mod contracts;
 mod surfaces;
 
@@ -31,15 +30,6 @@ enum Task {
         sources: Option<PathBuf>,
         #[arg(long)]
         policy: Option<PathBuf>,
-    },
-    /// Report cache cleanup; deletion requires --apply. Never runs cargo clean.
-    TrimCache {
-        #[arg(long, conflicts_with = "dry_run")]
-        apply: bool,
-        #[arg(long)]
-        dry_run: bool,
-        #[arg(long)]
-        max_gib: Option<String>,
     },
     /// Compare a producer's offline fixture/registry with the frontend contract.
     Contract {
@@ -103,7 +93,6 @@ fn main() -> Result<()> {
         Task::BuildInputs { sources, policy } => {
             build_inputs::check(&cli.root, sources.as_deref(), policy.as_deref())
         }
-        Task::TrimCache { apply, max_gib, .. } => cache::check(&cli.root, max_gib, !apply),
         Task::Contract { daemon, bin } => contracts::check(&cli.root, &daemon, &bin),
         Task::Contracts { nix } => {
             let parent = cli

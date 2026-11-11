@@ -36,34 +36,6 @@ fn surface_cli_freshness_and_unknown_command_fail_closed() {
     );
 }
 #[test]
-fn cache_cli_disabled_invalid_limits_and_explicit_consent() {
-    for bad in ["-1", "1.5", "", "abc", "４", "18446744073709551615"] {
-        assert!(
-            !command()
-                .args(["trim-cache", "--max-gib", bad])
-                .output()
-                .unwrap()
-                .status
-                .success()
-        );
-    }
-    let out = command()
-        .current_dir("/")
-        .args(["trim-cache", "--max-gib", "0"])
-        .output()
-        .unwrap();
-    assert!(out.status.success());
-    assert!(out.stdout.is_empty());
-    assert!(
-        !command()
-            .args(["trim-cache", "--apply", "--dry-run"])
-            .output()
-            .unwrap()
-            .status
-            .success()
-    );
-}
-#[test]
 fn incomplete_capture_fails_without_panicking() {
     let dir = tempfile::tempdir().unwrap();
     let policy = dir.path().join("policy.json");
