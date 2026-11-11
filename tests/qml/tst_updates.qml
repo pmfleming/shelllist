@@ -1305,6 +1305,59 @@ DaemonTestCase {
         compare(findChild(kernel, "updateSystemLatest").text, "Latest stable: Not reported");
         compare(findChild(hyprland, "updateSystemInstalled").text, "Installed: Not reported");
     }
+    function test_vendorCurrentDoesNotHideFallbackPinsOrBlockedUpdates(): void {
+        const root = fixture();
+        reply(latest(), []);
+        const value = overviewValue();
+        value.system.staged_for_next_boot = false;
+        value.system.queued = true;
+        value.baseline.valid = false;
+        value.baseline.reasons = ["configuration has unapproved edits"];
+        value.tools = [{name: "t3", installed_version: "0.1.8", phase: "current", error: null,
+            last_successful_check: 390, last_activation: 380,
+            fallbacks: [{scope: "system", version: "0.0.33"}],
+            freshness: {latest_version: "0.1.8", source: "vendor", published_at: null, origin: "vendor",
+                comparison: "current", stale: false, held: false, hold_since: null, hold_reason: null}}];
+        value.inputs = {available: true, error: null, queue_error: null, inputs: [
+            {name: "nixpkgs-unstable", reference: "nixpkgs-unstable", revision: "august-revision", revision_at: 100, policy: "at-build"},
+            {name: "fixed-source", reference: null, revision: "fixed-revision", revision_at: null, policy: "fixed-revision"}],
+            queue: {first_seen: 300, eligible_at: 259500, configuration_matches: false}};
+        overviewReply(latestOverview(), value);
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        const reads = calls.length;
+        verify(findChild(root, "updateArea:system").modelData.value.includes("Automatic updates blocked"));
+        compare(findChild(root, "updateBaselineFeedback").text, value.baseline.reasons[0]);
+        verify(findChild(root, "updateBaselineFeedback").active);
+        showPage(root, "ai");
+        const tool = findChild(root, "updateInstalledTool:t3");
+        compare(findChild(tool, "updateToolComparison").text, "0.1.8 → 0.1.8");
+        compare(findChild(tool, "updateToolFallback").text, "System fallback: 0.0.33");
+        verify(tool.rows.find(row => row.label === "Comparison").value.includes("Current in reported source"));
+        showPage(root, "system");
+        const pins = findChild(root, "updateLockedInputs");
+        verify(pins.rows[0].value.includes("august-revision"));
+        verify(pins.rows[0].value.includes("Refreshed when the system candidate builds"));
+        verify(pins.rows[1].value.includes("Revision fixed in configuration"));
+        const queue = findChild(root, "updateQueueTiming");
+        compare(queue.rows[2].value, "Configuration changed; queue will restart");
+        keyClick(Qt.Key_Tab);
+        verify(!root.content.detailsNavigation.editing, "Version evidence must remain passive");
+        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
+        compare(calls.length, reads, "Browsing evidence must not fetch upstream or mutate state");
+        root.controller.requestOverview();
+        const invalid = JSON.parse(JSON.stringify(value));
+        invalid.inputs.queue.eligible_at = 1;
+        overviewReply(latestOverview(), invalid);
+        compare(root.controller.overviewError, "Invalid update overview reply");
+        compare(root.controller.overview.inputs.queue.eligible_at, 259500);
+        root.controller.requestOverview();
+        overviewReply(latestOverview(), overviewValue());
+        compare(root.controller.overviewError, "");
+        verify(!findChild(root, "updateBaselineFeedback").active);
+        compare(findChild(root, "updateLockedInputs").rows[0].value, "Not reported");
+    }
     function test_applicationInventoryIsReadOnlyAndRejectsMalformedRefresh(): void {
         const root = fixture();
         reply(latest(), []);
@@ -1420,7 +1473,7 @@ DaemonTestCase {
         const list = findChild(root, "updateApplicationsList");
         compare(list.model.rows.map(r => r.payload.group), ["Applications · Development", "Local helpers"]);
         const row = findChild(root, "updateApplication:editor.desktop");
-        compare(findChild(row, "updateApplicationLocal").text, "2.0");
+        compare(findChild(row, "updateApplicationLocal").text, "Active: 2.0\nSystem: 1.0");
         compare(findChild(row, "updateApplicationLatest").text, "2.1");
         verify(Ui.SoftwarePresentation.details(row.record).includes("declared 1.0"));
         const backend = root.controller.catalogBackend;

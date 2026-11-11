@@ -42,6 +42,15 @@ Ui.ProviderChooserSurface {
         briefText: qsTr("Worker overview unavailable")
         tone: "error"
     }
+    Ui.FeedbackSource {
+        objectName: "updateBaselineFeedback"
+        readonly property var baselineRecord: content.controller.overview ? content.controller.overview.baseline : null
+        active: content.controller.uiActive && content.controller.selectedIsOverview && !!baselineRecord && baselineRecord.valid === false
+        text: active ? [baselineRecord.error, ...baselineRecord.reasons].filter(Boolean).join("\n") || qsTr("Configuration is not approved") : ""
+        summaryText: qsTr("Automatic system updates blocked")
+        briefText: summaryText
+        tone: "warning"
+    }
     listComponent: Ui.ChooserListPane {
         id: pane
         chooserController: content.controller

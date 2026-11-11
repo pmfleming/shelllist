@@ -4,6 +4,16 @@ function unique(values) { return [...new Set(values.filter(Boolean))]; }
 function local(record) {
     return unique((record.installations || []).map(i => i.active_version || i.declared_version)).join(" / ") || "—";
 }
+// Keep alternate installed versions visible in the software inventory.
+function localWithOrigins(record) {
+    const installations = record.installations || [];
+    if (!installations.some(i => i.active_version && i.declared_version && i.active_version !== i.declared_version))
+        return local(record);
+    return unique(installations.map(i => [
+        i.active_version ? qsTr("Active: %1").arg(i.active_version) : "",
+        i.declared_version ? (i.scope === "system" ? qsTr("System: %1") : qsTr("%1 package: %2").arg(i.scope)).arg(i.declared_version) : ""
+    ].filter(Boolean).join("\n"))).join("\n");
+}
 function latest(record) {
     return unique((record.installations || []).map(i => i.release && i.release.version)).join(" / ") || "—";
 }

@@ -58,7 +58,18 @@ function freshness(value) {
 }
 function tool(value) {
     return !!value && [value.name, value.installed_version, value.phase, value.error].every(optionalText)
-        && [value.last_successful_check, value.last_activation].every(observedTime) && optional(value.freshness, freshness);
+        && [value.last_successful_check, value.last_activation].every(observedTime) && optional(value.freshness, freshness)
+        && optional(value.fallbacks, values => list(values, 512, item => !!item && field(item.scope, 80) && nullable(item.version, version)));
+}
+function inputs(value) {
+    return !!value && flag(value.available) && [value.error, value.queue_error].every(optionalText)
+        && list(value.inputs, 64, input => !!input && field(input.name, 160)
+            && nullable(input.reference, v => field(v, 512)) && nullable(input.revision, v => field(v, 160))
+            && observedTime(input.revision_at) && ["manual", "fixed-revision", "at-build", "delayed"].includes(input.policy))
+        && (value.available || value.inputs.length === 0)
+        && nullable(value.queue, q => !!q && q.first_seen !== null && q.eligible_at !== null
+            && [q.first_seen, q.eligible_at].every(observedTime) && q.eligible_at >= q.first_seen
+            && optionalFlag(q.configuration_matches));
 }
 function timer(value) { return !!value && optionalText(value.unit) && [value.next_at, value.last_at].every(observedTime); }
 function overviewIssue(value) {
@@ -71,6 +82,7 @@ function overview(value) {
         && list(value.issues, 50, overviewIssue) && integer(value.issue_total, value.issues.length, Number.MAX_SAFE_INTEGER)
         && (!value.available || (!!value.system && !!value.baseline && value.observed_at !== null))
         && system(value.system) && baseline(value.baseline) && optional(value.git, git) && optional(value.applications, applications)
+        && optional(value.inputs, inputs)
         && list(value.tools, 32, tool) && list(value.timers, 64, timer);
 }
 function incident(value) { return text(value) && value.trim().length > 0 && value.length <= 2048 && !/[\u0000-\u001f\u007f]/.test(value); }

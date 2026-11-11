@@ -8,8 +8,8 @@ Ui.DetailColumnCard {
     id: card
     required property UpdateController controller
     property bool informationOnly: true
-    title: qsTr("Installed → latest known")
-    helpText: qsTr("Only managed AI tools are counted. A release check, an installation attempt and the installed artifact are separate observations. Release distance is not inferred by subtracting version numbers. Help and Copy retain each tool's full source, timestamps and diagnostics.")
+    title: qsTr("Active tool → latest known")
+    helpText: qsTr("Active refers to the managed installation, not proof of which executable each startup entry runs. Generation packages remain listed separately, including older fallbacks. A release check, an installation attempt and the installed artifact are separate observations. Help and Copy retain each tool's full source, timestamps and diagnostics.")
     Ui.ThemeText {
         Layout.fillWidth: true
         visible: !card.controller.overview || !card.controller.overview.tools.length
@@ -33,12 +33,24 @@ Ui.DetailColumnCard {
                 Layout.fillWidth: true
                 spacing: Ui.Theme.spacingXs
                 Ui.ThemeText {
+                    objectName: "updateToolComparison"
                     Layout.fillWidth: true
                     text: (tool.modelData.installed_version || qsTr("Unknown")) + " → " + (tool.freshness.latest_version || qsTr("Not reported"))
                     font.pixelSize: Ui.Theme.formValueSize
                     wrapMode: Text.WrapAnywhere
                     textFormat: Text.PlainText
                     Accessible.name: qsTr("%1: installed %2, latest known %3").arg(tool.label).arg(tool.modelData.installed_version || qsTr("Unknown")).arg(tool.freshness.latest_version || qsTr("Not reported"))
+                }
+                Repeater {
+                    model: Presentation.fallbackRows(tool.modelData)
+                    Ui.ThemeText {
+                        required property var modelData
+                        objectName: "updateToolFallback"
+                        Layout.fillWidth: true
+                        text: modelData.label + ": " + modelData.value
+                        wrapMode: Text.Wrap
+                        textFormat: Text.PlainText
+                    }
                 }
                 Ui.ThemeText {
                     Layout.fillWidth: true

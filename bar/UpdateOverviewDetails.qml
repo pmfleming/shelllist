@@ -14,6 +14,28 @@ Column {
         width: parent.width
         active: details.controller.detailsTab === "system"
         visible: active
+        sourceComponent: Column {
+            spacing: Ui.Theme.cardGap
+            Ui.DetailRows {
+                width: parent.width
+                objectName: "updateLockedInputs"
+                title: qsTr("Configuration version locks")
+                helpText: qsTr("These are remote inputs in the current configuration lockfile, not proof of the active system's inputs or the latest upstream versions. Revision dates describe source commits, not installation dates. A normal lock is distinct from a revision fixed in configuration or a manual-update policy. Local worktrees and follows aliases have no independent remote pin here.")
+                rows: Presentation.inputRows(details.snapshot ? details.snapshot.inputs : null)
+            }
+            Ui.DetailRows {
+                width: parent.width
+                objectName: "updateQueueTiming"
+                title: qsTr("System update queue")
+                helpText: qsTr("The end of quarantine is not an installation promise: approval, AC power, successful checks and staging still apply. A changed configuration revision restarts the queue. Refresh only reads existing evidence.")
+                rows: Presentation.queueRows(details.snapshot ? details.snapshot.inputs : null)
+            }
+        }
+    }
+    Loader {
+        width: parent.width
+        active: details.controller.detailsTab === "system"
+        visible: active
         sourceComponent: UpdateSystemVersions {
             controller: details.controller
         }

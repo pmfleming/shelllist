@@ -219,6 +219,7 @@ function toolRows(tool) {
     const f = tool.freshness || {};
     return [
         {label: qsTr("Installed"), value: tool.installed_version || qsTr("Not recorded")},
+        ...fallbackRows(tool),
         {label: qsTr("Latest known"), value: f.latest_version || qsTr("Not reported")},
         {label: qsTr("Comparison"), value: toolFreshness(tool)},
         {label: qsTr("Source"), value: f.source || qsTr("Not reported")},
@@ -229,6 +230,37 @@ function toolRows(tool) {
         ...(f.published_at ? [{label: qsTr("Target published"), value: f.published_at}] : []),
         ...(f.held ? [{label: qsTr("Hold"), value: f.hold_reason || qsTr("On hold")}, {label: qsTr("Held since"), value: absoluteTime(f.hold_since)}] : []),
         ...(tool.error ? [{label: qsTr("Diagnostics"), value: tool.error}] : [])
+    ];
+}
+function fallbackRows(tool) {
+    if (!tool.fallbacks) return [{label: qsTr("Generation packages"), value: qsTr("Not reported")}];
+    const vendor = tool.freshness && tool.freshness.origin === "vendor";
+    return tool.fallbacks.map(item => ({
+        label: item.scope === "system" ? (vendor ? qsTr("System fallback") : qsTr("System package"))
+            : (vendor ? qsTr("Fallback · %1") : qsTr("Package · %1")).arg(item.scope),
+        value: item.version || qsTr("Not reported")
+    }));
+}
+function inputPolicy(policy) {
+    return ({manual: qsTr("Manual updates only"), "fixed-revision": qsTr("Revision fixed in configuration"),
+        "at-build": qsTr("Refreshed when the system candidate builds"), delayed: qsTr("Follows delayed system updates")})[policy] || qsTr("Not reported");
+}
+function inputRows(inputs) {
+    if (!inputs || !inputs.available) return [{label: qsTr("Locked inputs"), value: inputs && inputs.error || qsTr("Not reported")}];
+    return inputs.inputs.map(input => ({label: input.name, value: [input.reference,
+        input.revision || qsTr("Revision not reported"),
+        qsTr("Revision date: %1").arg(absoluteTime(input.revision_at)), inputPolicy(input.policy)].filter(Boolean).join("\n")}));
+}
+function queueRows(inputs) {
+    if (!inputs) return [{label: qsTr("Queue timing"), value: qsTr("Not reported")}];
+    if (inputs.queue_error) return [{label: qsTr("Queue timing"), value: inputs.queue_error}];
+    const q = inputs.queue;
+    if (!q) return [{label: qsTr("Queue timing"), value: inputs.available ? qsTr("No queued candidate") : qsTr("Not reported")}];
+    return [
+        {label: qsTr("Queued since"), value: absoluteTime(q.first_seen)},
+        {label: qsTr("Quarantine ends"), value: absoluteTime(q.eligible_at)},
+        {label: qsTr("Configuration match"), value: q.configuration_matches === true ? qsTr("Matches queued configuration")
+            : q.configuration_matches === false ? qsTr("Configuration changed; queue will restart") : qsTr("Not reported")}
     ];
 }
 function toolsSummary(tools) {
@@ -254,10 +286,13 @@ function gitSummary(git) {
 }
 function systemSummary(overview, state) {
     const system = overview ? overview.system : null;
-    if (system && system.staged_for_next_boot === true) return qsTr("Target staged for next boot");
     if (system && system.pending_transaction === true) return qsTr("Recovery pending");
+    const baseline = overview ? overview.baseline : null;
+    if (baseline && baseline.valid === false) return qsTr("Automatic updates blocked · configuration approval required");
+    if (system && system.staged_for_next_boot === true) return qsTr("Target staged for next boot");
     const candidate = deferredCandidate(state);
     if (candidate && candidate.ready) return qsTr("Target ready · not proof of deployment");
+    if (system && system.queued === true) return qsTr("System update queued");
     return qsTr("Release comparison not reported");
 }
 

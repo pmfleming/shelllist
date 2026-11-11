@@ -9,7 +9,7 @@ Rectangle {
     required property UpdateController controller
     readonly property var catalog: controller.applicationCatalog
     readonly property bool available: !!catalog
-    readonly property string helpText: qsTr("Shared with the launcher. Local uses active installations when known, otherwise declared package versions; latest known upstream releases. Refresh only reads.")
+    readonly property string helpText: qsTr("Local shows active and generation package versions separately; Latest shows latest known upstream releases. Shared with the launcher. Refresh only reads.")
     objectName: "updateApplicationsOverview"
     color: Ui.Theme.surface
     radius: Ui.Theme.cardRadius
@@ -126,7 +126,7 @@ Rectangle {
                         objectName: "updateApplicationLocal"
                         Layout.fillWidth: true
                         Layout.preferredWidth: 1
-                        text: Ui.SoftwarePresentation.local(row.record)
+                        text: Ui.SoftwarePresentation.localWithOrigins(row.record)
                         font.pixelSize: Ui.Theme.formValueSize
                         wrapMode: Text.WrapAnywhere
                         textFormat: Text.PlainText
