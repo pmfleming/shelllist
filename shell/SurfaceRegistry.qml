@@ -185,8 +185,18 @@ Item {
         owner: registry
         sourceComponent: SurfaceBundle {
             controller: updateController
-            content: Bar.UpdateContent { controller: updateController }
+            content: Bar.UpdateContent { controller: updateController; onStorageRequested: registry.surfaceRequested("storage") }
             Bar.UpdateController { id: updateController; barController: registry.barController }
+        }
+    }
+
+    SurfaceSlot {
+        surfaceId: "storage"
+        owner: registry
+        sourceComponent: SurfaceBundle {
+            controller: storageController
+            content: Bar.StorageContent { controller: storageController }
+            Bar.StorageController { id: storageController }
         }
     }
 

@@ -6,12 +6,14 @@ import "UpdatePresentation.js" as Presentation
 Ui.ProviderChooserSurface {
     id: content
     required property UpdateController controller
+    signal storageRequested
     chooserController: controller
     feedbackScope: content
     sessionContext: JSON.stringify([controller.viewMemory.key, controller.pageKey])
     detailsTabEnabled: controller.detailsOpen && !controller.settingsOpen && controller.detailTabs.length > 1
     Connections {
         target: content.controller
+        function onStorageRequested(): void { content.storageRequested(); }
         function onSettingsFieldRequested(field: string): void {
             Qt.callLater(function() {
                 if (content.controller.uiActive && content.controller.settingsOpen && content.controller.detailsOpen)
@@ -63,6 +65,11 @@ Ui.ProviderChooserSurface {
         searchActionEnabled: !content.controller.navigationBlocked
         onSearchActionRequested: content.controller.toggleSettings()
         Ui.CommandGroup {
+            Ui.ActionControl {
+                accessibleName: qsTr("Open storage and cleanup")
+                accessKey: "S"
+                onClicked: content.storageRequested()
+            }
             Ui.ActionControl {
                 accessibleName: qsTr("Filter update job")
                 accessKey: "T"

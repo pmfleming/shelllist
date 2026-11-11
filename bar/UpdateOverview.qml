@@ -11,6 +11,19 @@ Column {
     readonly property var candidate: Presentation.deferredCandidate(snapshot)
     spacing: Ui.Theme.spacingMd
 
+    Ui.FieldRow {
+        width: parent.width
+        visible: overview.controller.detailsTab === "overview"
+        label: qsTr("Storage and cleanup")
+        subtitle: qsTr("Disk usage, cache policy and cleanup history")
+        Ui.ActionButton {
+            objectName: "updateOpenStorage"
+            label: qsTr("Open storage and cleanup")
+            icon: "storage"
+            onClicked: overview.controller.storageRequested()
+        }
+    }
+
     UpdateFreshness {
         width: parent.width
         controller: overview.controller

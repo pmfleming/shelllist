@@ -34,6 +34,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
     };
+    storage-daemon = {
+      url = "git+file:../storage-daemon";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.daemonFramework.follows = "daemon-framework";
+    };
     update-worker = {
       url = "git+file:../update-daemon";
       inputs.daemonFramework.follows = "daemon-framework";
@@ -52,14 +57,16 @@
       systems = [ "x86_64-linux" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
       surfaceCatalog = import ./nix/surface-catalog.nix { lib = nixpkgs.lib; };
-      fontsConf = pkgs: pkgs.makeFontsConf {
-        fontDirectories = [
-          pkgs.roboto-flex
-          pkgs.material-symbols
-          pkgs.noto-fonts
-          pkgs.nerd-fonts.jetbrains-mono
-        ];
-      };
+      fontsConf =
+        pkgs:
+        pkgs.makeFontsConf {
+          fontDirectories = [
+            pkgs.roboto-flex
+            pkgs.material-symbols
+            pkgs.noto-fonts
+            pkgs.nerd-fonts.jetbrains-mono
+          ];
+        };
     in
     {
       homeManagerModules = {
@@ -90,8 +97,13 @@
             src = pkgs.lib.fileset.toSource {
               root = ./.;
               fileset = pkgs.lib.fileset.unions [
-                (pkgs.lib.fileset.fileFilter (file:
-                  file.hasExt "rs" || builtins.elem file.name [ "Cargo.toml" "Cargo.lock" ]
+                (pkgs.lib.fileset.fileFilter (
+                  file:
+                  file.hasExt "rs"
+                  || builtins.elem file.name [
+                    "Cargo.toml"
+                    "Cargo.lock"
+                  ]
                 ) ./tools/xtask)
                 ./contracts/surface-catalog.json
               ];
@@ -142,289 +154,294 @@
             '';
           };
 
-          shelllistApplication = (pkgs.writeShellApplication {
-            name = "shelllist";
-            meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
-            runtimeInputs = [
-              pkgs.coreutils
-              pkgs.gawk
-              pkgs.jq
-              quickshell
-              pkgs.hyprland # hyprctl: layer rules and live workspace placement
-              self.packages.${system}.wifiQrScanner
-              nmDaemon
-              btDaemon
-              clipDaemon
-              appDaemon
-              barDaemon
-              pkgs.pavucontrol
-              pkgs.libnotify # background application-action failures
-              pkgs.ghostty
-            ];
-            text = ''
-              config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/shell
-              export FONTCONFIG_FILE=${fontsConf pkgs}
-              export QML_IMPORT_PATH=${
-                self.packages.${system}.shelllistConfig
-              }/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
-              export QML2_IMPORT_PATH=${
-                self.packages.${system}.shelllistConfig
-              }/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
+          shelllistApplication =
+            (pkgs.writeShellApplication {
+              name = "shelllist";
+              meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
+              runtimeInputs = [
+                pkgs.coreutils
+                pkgs.gawk
+                pkgs.jq
+                quickshell
+                pkgs.hyprland # hyprctl: layer rules and live workspace placement
+                self.packages.${system}.wifiQrScanner
+                nmDaemon
+                btDaemon
+                clipDaemon
+                appDaemon
+                barDaemon
+                inputs.storage-daemon.packages.${system}.default
+                pkgs.pavucontrol
+                pkgs.libnotify # background application-action failures
+                pkgs.ghostty
+              ];
+              text = ''
+                config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/shell
+                export FONTCONFIG_FILE=${fontsConf pkgs}
+                export QML_IMPORT_PATH=${
+                  self.packages.${system}.shelllistConfig
+                }/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
+                export QML2_IMPORT_PATH=${
+                  self.packages.${system}.shelllistConfig
+                }/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
 
-              usage() {
-                cat <<'EOF'
-              Usage: shelllist [COMMAND]
+                usage() {
+                  cat <<'EOF'
+                Usage: shelllist [COMMAND]
 
-              Surface commands:
-                shelllist                         Toggle ${surfaceCatalog.defaultName}
-                shelllist <surface> [open|toggle] Open or toggle a surface
-                shelllist open [surface]          Open a surface (default: ${surfaceCatalog.defaultId})
-                shelllist toggle [surface]        Toggle a surface (default: ${surfaceCatalog.defaultId})
-                shelllist floating [surface]      Run a one-shot floating host
-                shelllist hide                    Hide the active surface
-                shelllist quit                    Stop the resident host
-                shelllist status                  Print host status as JSON
-                shelllist updates run RUN_ID      Review one retained update run
-                shelllist responsiveness          Print latest interaction timings as JSON
-                shelllist list                    List surfaces as JSON
-                shelllist daemon                  Ensure the resident host is running
-                shelllist run                     Run the resident host in the foreground
+                Surface commands:
+                  shelllist                         Toggle ${surfaceCatalog.defaultName}
+                  shelllist <surface> [open|toggle] Open or toggle a surface
+                  shelllist open [surface]          Open a surface (default: ${surfaceCatalog.defaultId})
+                  shelllist toggle [surface]        Toggle a surface (default: ${surfaceCatalog.defaultId})
+                  shelllist floating [surface]      Run a one-shot floating host
+                  shelllist hide                    Hide the active surface
+                  shelllist quit                    Stop the resident host
+                  shelllist status                  Print host status as JSON
+                  shelllist updates run RUN_ID      Review one retained update run
+                  shelllist responsiveness          Print latest interaction timings as JSON
+                  shelllist list                    List surfaces as JSON
+                  shelllist daemon                  Ensure the resident host is running
+                  shelllist run                     Run the resident host in the foreground
 
-              Surfaces: ${builtins.concatStringsSep ", " surfaceCatalog.ids}
-              Legacy alias: activity opens Agenda (no separate scheduling surface).
+                Surfaces: ${builtins.concatStringsSep ", " surfaceCatalog.ids}
+                Legacy alias: activity opens Agenda (no separate scheduling surface).
 
-              Clipboard settings:
-                shelllist clipboard pause
-                shelllist clipboard private
-                shelllist clipboard resume
-                shelllist clipboard kept COUNT
-              EOF
-              }
+                Clipboard settings:
+                  shelllist clipboard pause
+                  shelllist clipboard private
+                  shelllist clipboard resume
+                  shelllist clipboard kept COUNT
+                EOF
+                }
 
-              valid_surface() {
-                case "$1" in
-                  ${builtins.concatStringsSep "|" surfaceCatalog.ids}) return 0 ;;
-                  *) return 1 ;;
-                esac
-              }
+                valid_surface() {
+                  case "$1" in
+                    ${builtins.concatStringsSep "|" surfaceCatalog.ids}) return 0 ;;
+                    *) return 1 ;;
+                  esac
+                }
 
-              popover_ipc() {
-                quickshell ipc --path "$config_path" --newest call shelllist "$@"
-              }
+                popover_ipc() {
+                  quickshell ipc --path "$config_path" --newest call shelllist "$@"
+                }
 
-              current_daemon_running() {
-                quickshell list --all 2>/dev/null \
-                  | awk -v expected="$config_path/shell.qml" '
-                      /^  Config path:/ {
-                        path = $0
-                        sub(/^  Config path: /, "", path)
-                        if (path == expected) found = 1
-                      }
-                      END { exit(found ? 0 : 1) }
-                    '
-              }
+                current_daemon_running() {
+                  quickshell list --all 2>/dev/null \
+                    | awk -v expected="$config_path/shell.qml" '
+                        /^  Config path:/ {
+                          path = $0
+                          sub(/^  Config path: /, "", path)
+                          if (path == expected) found = 1
+                        }
+                        END { exit(found ? 0 : 1) }
+                      '
+                }
 
-              stop_stale_hosts() {
-                quickshell list --all 2>/dev/null \
-                  | awk '
-                      /^Instance / { pid = ""; shelllist = 0 }
-                      /Process ID:/ { pid = $3 }
-                      /Config path: .*share\/shelllist\/(shell|wifi|bluetooth|clipboard|launcher|battery|activity)\/shell.qml/ { shelllist = 1 }
-                      shelllist && pid != "" { print pid; pid = ""; shelllist = 0 }
-                    ' \
-                  | while read -r pid; do
-                      [ -n "$pid" ] && quickshell kill --pid "$pid" >/dev/null 2>&1 || true
-                    done \
-                  || true
-              }
+                stop_stale_hosts() {
+                  quickshell list --all 2>/dev/null \
+                    | awk '
+                        /^Instance / { pid = ""; shelllist = 0 }
+                        /Process ID:/ { pid = $3 }
+                        /Config path: .*share\/shelllist\/(shell|wifi|bluetooth|clipboard|launcher|battery|activity)\/shell.qml/ { shelllist = 1 }
+                        shelllist && pid != "" { print pid; pid = ""; shelllist = 0 }
+                      ' \
+                    | while read -r pid; do
+                        [ -n "$pid" ] && quickshell kill --pid "$pid" >/dev/null 2>&1 || true
+                      done \
+                    || true
+                }
 
-              ensure_daemon() {
-                if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then
-                  return 0
-                fi
-
-                stop_stale_hosts
-                SHELLLIST_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
-                attempts=0
-                while [ "$attempts" -lt 30 ]; do
-                  if popover_ipc ping >/dev/null 2>&1; then
+                ensure_daemon() {
+                  if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then
                     return 0
                   fi
-                  attempts=$((attempts + 1))
-                  sleep 0.05
-                done
-                echo "Shelllist host did not become ready" >&2
-                return 1
-              }
 
-              surface_call() {
-                action=$1
-                surface=$2
-                [ "$surface" != activity ] || surface=agenda
-                valid_surface "$surface" || {
-                  echo "Unknown Shelllist surface: $surface" >&2
-                  return 2
-                }
-                ensure_daemon || return 1
-                result=$(popover_ipc "$action" "$surface")
-                [ "$result" = ok ] || {
-                  echo "Shelllist rejected $action for $surface: $result" >&2
-                  return 1
-                }
-              }
-
-              clip_call() {
-                request=$1
-                response=
-                coproc CLIP_CLIENT { clip-daemon client; }
-                client_out=''${CLIP_CLIENT[0]}
-                client_in=''${CLIP_CLIENT[1]}
-                client_pid=$CLIP_CLIENT_PID
-                printf '%s\n' "$request" >&"$client_in"
-                while IFS= read -r line <&"$client_out"; do
-                  if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli"' >/dev/null; then
-                    response=$line
-                    break
-                  fi
-                done
-                printf '%s\n' '{"op":"shutdown","id":"shelllist-cli-shutdown"}' >&"$client_in" || true
-                while IFS= read -r line <&"$client_out"; do
-                  if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli-shutdown"' >/dev/null; then
-                    break
-                  fi
-                done
-                wait "$client_pid" || true
-
-                if [ -z "$response" ]; then
-                  echo "clip-daemon did not return a response" >&2
-                  return 1
-                fi
-                if ! printf '%s\n' "$response" | jq -e '.ok == true and .response.ok == true' >/dev/null; then
-                  printf '%s\n' "$response" | jq -r '.response.error.message // .error // "Clipboard setting update failed"' >&2
-                  return 1
-                fi
-              }
-
-              clipboard_setting() {
-                setting=$1
-                case "$setting" in
-                  pause|private|resume)
-                    paused=true
-                    private=false
-                    [ "$setting" = private ] && private=true
-                    [ "$setting" = resume ] && paused=false
-                    request=$(jq -cn --argjson paused "$paused" --argjson private "$private" \
-                      '{op:"call", id:"shelllist-cli", method:"clipboard.capture.setPaused", params:{paused:$paused, private_mode:$private}}')
-                    clip_call "$request"
-                    ;;
-                  kept)
-                    count=''${2:-}
-                    case "$count" in
-                      ""|*[!0-9]*) echo "Clipboard retention must be a non-negative integer" >&2; return 2 ;;
-                    esac
-                    request=$(jq -cn --argjson kept "$count" \
-                      '{op:"call", id:"shelllist-cli", method:"clipboard.settings.update", params:{max_entries:$kept}}')
-                    clip_call "$request"
-                    ;;
-                  *) return 2 ;;
-                esac
-              }
-
-              command=''${1:-}
-              case "$command" in
-                "") surface_call toggle ${surfaceCatalog.defaultId} ;;
-                -h|--help|help) usage ;;
-                daemon) [ "$#" -eq 1 ] || { usage >&2; exit 2; }; ensure_daemon ;;
-                run)
-                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
                   stop_stale_hosts
-                  SHELLLIST_MODE=popover exec quickshell --path "$config_path" --no-duplicate
-                  ;;
-                open|toggle)
-                  surface=''${2:-${surfaceCatalog.defaultId}}
-                  [ "$#" -le 2 ] || { usage >&2; exit 2; }
-                  surface_call "$command" "$surface"
-                  ;;
-                hide)
-                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
-                  if current_daemon_running; then popover_ipc hide >/dev/null; fi
-                  ;;
-                quit)
-                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
-                  if current_daemon_running; then popover_ipc quit >/dev/null; fi
-                  ;;
-                status)
-                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
-                  if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then
-                    popover_ipc status
-                  else
-                    printf '%s\n' '{"running":false,"visible":false}'
-                  fi
-                  ;;
-                responsiveness)
-                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
-                  ensure_daemon && popover_ipc responsiveness
-                  ;;
-                list)
-                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
-                  ensure_daemon && popover_ipc listSurfaces
-                  ;;
-                floating)
-                  surface=''${2:-${surfaceCatalog.defaultId}}
+                  SHELLLIST_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
+                  attempts=0
+                  while [ "$attempts" -lt 30 ]; do
+                    if popover_ipc ping >/dev/null 2>&1; then
+                      return 0
+                    fi
+                    attempts=$((attempts + 1))
+                    sleep 0.05
+                  done
+                  echo "Shelllist host did not become ready" >&2
+                  return 1
+                }
+
+                surface_call() {
+                  action=$1
+                  surface=$2
                   [ "$surface" != activity ] || surface=agenda
-                  [ "$#" -le 2 ] || { usage >&2; exit 2; }
-                  valid_surface "$surface" || { echo "Unknown Shelllist surface: $surface" >&2; exit 2; }
-                  if current_daemon_running; then
-                    echo "Run 'shelllist quit' before starting floating mode" >&2
-                    exit 1
+                  valid_surface "$surface" || {
+                    echo "Unknown Shelllist surface: $surface" >&2
+                    return 2
+                  }
+                  ensure_daemon || return 1
+                  result=$(popover_ipc "$action" "$surface")
+                  [ "$result" = ok ] || {
+                    echo "Shelllist rejected $action for $surface: $result" >&2
+                    return 1
+                  }
+                }
+
+                clip_call() {
+                  request=$1
+                  response=
+                  coproc CLIP_CLIENT { clip-daemon client; }
+                  client_out=''${CLIP_CLIENT[0]}
+                  client_in=''${CLIP_CLIENT[1]}
+                  client_pid=$CLIP_CLIENT_PID
+                  printf '%s\n' "$request" >&"$client_in"
+                  while IFS= read -r line <&"$client_out"; do
+                    if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli"' >/dev/null; then
+                      response=$line
+                      break
+                    fi
+                  done
+                  printf '%s\n' '{"op":"shutdown","id":"shelllist-cli-shutdown"}' >&"$client_in" || true
+                  while IFS= read -r line <&"$client_out"; do
+                    if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli-shutdown"' >/dev/null; then
+                      break
+                    fi
+                  done
+                  wait "$client_pid" || true
+
+                  if [ -z "$response" ]; then
+                    echo "clip-daemon did not return a response" >&2
+                    return 1
                   fi
-                  SHELLLIST_INITIAL_SURFACE="$surface" SHELLLIST_MODE=floating \
-                    exec quickshell --path "$config_path"
-                  ;;
-                clipboard)
-                  operation=''${2:-toggle}
-                  case "$operation" in
+                  if ! printf '%s\n' "$response" | jq -e '.ok == true and .response.ok == true' >/dev/null; then
+                    printf '%s\n' "$response" | jq -r '.response.error.message // .error // "Clipboard setting update failed"' >&2
+                    return 1
+                  fi
+                }
+
+                clipboard_setting() {
+                  setting=$1
+                  case "$setting" in
                     pause|private|resume)
-                      [ "$#" -eq 2 ] || { usage >&2; exit 2; }
-                      clipboard_setting "$operation"
+                      paused=true
+                      private=false
+                      [ "$setting" = private ] && private=true
+                      [ "$setting" = resume ] && paused=false
+                      request=$(jq -cn --argjson paused "$paused" --argjson private "$private" \
+                        '{op:"call", id:"shelllist-cli", method:"clipboard.capture.setPaused", params:{paused:$paused, private_mode:$private}}')
+                      clip_call "$request"
                       ;;
                     kept)
-                      [ "$#" -eq 3 ] || { usage >&2; exit 2; }
-                      clipboard_setting kept "$3"
+                      count=''${2:-}
+                      case "$count" in
+                        ""|*[!0-9]*) echo "Clipboard retention must be a non-negative integer" >&2; return 2 ;;
+                      esac
+                      request=$(jq -cn --argjson kept "$count" \
+                        '{op:"call", id:"shelllist-cli", method:"clipboard.settings.update", params:{max_entries:$kept}}')
+                      clip_call "$request"
                       ;;
-                    open|toggle)
-                      [ "$#" -le 2 ] || { usage >&2; exit 2; }
-                      surface_call "$operation" clipboard
-                      ;;
-                    *) usage >&2; exit 2 ;;
+                    *) return 2 ;;
                   esac
-                  ;;
-                updates)
-                  action=''${2:-toggle}
-                  if [ "$action" = run ]; then
-                    [ "$#" -eq 3 ] && [[ "$3" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,159}$ ]] || { usage >&2; exit 2; }
-                    ensure_daemon
-                    result=$(popover_ipc openUpdateRun "$3")
-                    [ "$result" = ok ] || { echo "Cannot open update run: $result" >&2; exit 1; }
-                  else
+                }
+
+                command=''${1:-}
+                case "$command" in
+                  "") surface_call toggle ${surfaceCatalog.defaultId} ;;
+                  -h|--help|help) usage ;;
+                  daemon) [ "$#" -eq 1 ] || { usage >&2; exit 2; }; ensure_daemon ;;
+                  run)
+                    [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                    stop_stale_hosts
+                    SHELLLIST_MODE=popover exec quickshell --path "$config_path" --no-duplicate
+                    ;;
+                  open|toggle)
+                    surface=''${2:-${surfaceCatalog.defaultId}}
                     [ "$#" -le 2 ] || { usage >&2; exit 2; }
-                    case "$action" in open|toggle) surface_call "$action" updates ;; *) usage >&2; exit 2 ;; esac
-                  fi
-                  ;;
-                activity|${builtins.concatStringsSep "|" (builtins.filter (id: id != "updates") surfaceCatalog.directIds)})
-                  action=''${2:-toggle}
-                  [ "$#" -le 2 ] || { usage >&2; exit 2; }
-                  case "$action" in open|toggle) surface_call "$action" "$command" ;; *) usage >&2; exit 2 ;; esac
-                  ;;
-                *) usage >&2; exit 2 ;;
-              esac
-            '';
-          }).overrideAttrs (old: {
-            buildCommand = old.buildCommand + ''
-              install -Dm644 ${./bar/assets/shelllist-updates.desktop} $out/share/applications/shelllist-updates.desktop
-              install -Dm644 ${./bar/assets/shelllist-updates.svg} $out/share/icons/hicolor/scalable/apps/shelllist-updates.svg
-            '';
-          });
+                    surface_call "$command" "$surface"
+                    ;;
+                  hide)
+                    [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                    if current_daemon_running; then popover_ipc hide >/dev/null; fi
+                    ;;
+                  quit)
+                    [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                    if current_daemon_running; then popover_ipc quit >/dev/null; fi
+                    ;;
+                  status)
+                    [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                    if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then
+                      popover_ipc status
+                    else
+                      printf '%s\n' '{"running":false,"visible":false}'
+                    fi
+                    ;;
+                  responsiveness)
+                    [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                    ensure_daemon && popover_ipc responsiveness
+                    ;;
+                  list)
+                    [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                    ensure_daemon && popover_ipc listSurfaces
+                    ;;
+                  floating)
+                    surface=''${2:-${surfaceCatalog.defaultId}}
+                    [ "$surface" != activity ] || surface=agenda
+                    [ "$#" -le 2 ] || { usage >&2; exit 2; }
+                    valid_surface "$surface" || { echo "Unknown Shelllist surface: $surface" >&2; exit 2; }
+                    if current_daemon_running; then
+                      echo "Run 'shelllist quit' before starting floating mode" >&2
+                      exit 1
+                    fi
+                    SHELLLIST_INITIAL_SURFACE="$surface" SHELLLIST_MODE=floating \
+                      exec quickshell --path "$config_path"
+                    ;;
+                  clipboard)
+                    operation=''${2:-toggle}
+                    case "$operation" in
+                      pause|private|resume)
+                        [ "$#" -eq 2 ] || { usage >&2; exit 2; }
+                        clipboard_setting "$operation"
+                        ;;
+                      kept)
+                        [ "$#" -eq 3 ] || { usage >&2; exit 2; }
+                        clipboard_setting kept "$3"
+                        ;;
+                      open|toggle)
+                        [ "$#" -le 2 ] || { usage >&2; exit 2; }
+                        surface_call "$operation" clipboard
+                        ;;
+                      *) usage >&2; exit 2 ;;
+                    esac
+                    ;;
+                  updates)
+                    action=''${2:-toggle}
+                    if [ "$action" = run ]; then
+                      [ "$#" -eq 3 ] && [[ "$3" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,159}$ ]] || { usage >&2; exit 2; }
+                      ensure_daemon
+                      result=$(popover_ipc openUpdateRun "$3")
+                      [ "$result" = ok ] || { echo "Cannot open update run: $result" >&2; exit 1; }
+                    else
+                      [ "$#" -le 2 ] || { usage >&2; exit 2; }
+                      case "$action" in open|toggle) surface_call "$action" updates ;; *) usage >&2; exit 2 ;; esac
+                    fi
+                    ;;
+                  activity|${
+                    builtins.concatStringsSep "|" (builtins.filter (id: id != "updates") surfaceCatalog.directIds)
+                  })
+                    action=''${2:-toggle}
+                    [ "$#" -le 2 ] || { usage >&2; exit 2; }
+                    case "$action" in open|toggle) surface_call "$action" "$command" ;; *) usage >&2; exit 2 ;; esac
+                    ;;
+                  *) usage >&2; exit 2 ;;
+                esac
+              '';
+            }).overrideAttrs
+              (old: {
+                buildCommand = old.buildCommand + ''
+                  install -Dm644 ${./bar/assets/shelllist-updates.desktop} $out/share/applications/shelllist-updates.desktop
+                  install -Dm644 ${./bar/assets/shelllist-updates.svg} $out/share/icons/hicolor/scalable/apps/shelllist-updates.svg
+                '';
+              });
 
           # Client executables remain runtime adapters, not exported backend
           # services. The UI never installs daemon/system integration metadata.
@@ -465,7 +482,8 @@
               ) commands}
               touch $out
             '';
-          apiContract = label: daemon:
+          apiContract =
+            label: daemon:
             pkgs.runCommand "shelllist-${label}-daemon-contract" { } ''
               ${self.packages.${system}.xtask}/bin/shelllist-xtask --root ${./.} \
                 contract ${label} --bin ${daemon}/bin/${label}-daemon
@@ -481,14 +499,26 @@
             test '${toString (import ./tests/surface-catalog.nix { inherit pkgs; })}' = 1
             touch $out
           '';
-          surfaceCli = pkgs.runCommand "shelllist-surface-cli" {
-            nativeBuildInputs = [ pkgs.python3 pkgs.desktop-file-utils ];
-          } ''
-            desktop-file-validate ${self.packages.${system}.shelllistApplication}/share/applications/shelllist-updates.desktop
-            test -f ${self.packages.${system}.shelllistApplication}/share/icons/hicolor/scalable/apps/shelllist-updates.svg
-            python3 ${./tests/test-surface-cli.py} ${self.packages.${system}.shelllistApplication}/bin/shelllist ${./contracts/surface-catalog.json}
-            touch $out
-          '';
+          surfaceCli =
+            pkgs.runCommand "shelllist-surface-cli"
+              {
+                nativeBuildInputs = [
+                  pkgs.python3
+                  pkgs.desktop-file-utils
+                ];
+              }
+              ''
+                desktop-file-validate ${
+                  self.packages.${system}.shelllistApplication
+                }/share/applications/shelllist-updates.desktop
+                test -f ${
+                  self.packages.${system}.shelllistApplication
+                }/share/icons/hicolor/scalable/apps/shelllist-updates.svg
+                python3 ${./tests/test-surface-cli.py} ${
+                  self.packages.${system}.shelllistApplication
+                }/bin/shelllist ${./contracts/surface-catalog.json}
+                touch $out
+              '';
           toolchain = (inputs.daemon-framework.lib.toolchain pkgs).check;
           timezoneAssetsPackage = self.packages.${system}.shelllistTimezoneAssets;
           updateWorkerPackage = inputs.update-worker.lib.mkPackage {
@@ -590,53 +620,56 @@
                 touch $out
               '';
 
-          materialGallery = pkgs.runCommand "shelllist-material-gallery-smoke" {
-            nativeBuildInputs = [ pkgs.dbus ];
-            # Quickshell 0.3.2 logs Qt's C-locale fallback as a warning. Keep the
-            # smoke's warning gate strict by supplying the UTF-8 locale Qt needs.
-            LC_ALL = "C.UTF-8";
-          } ''
-            export HOME="$TMPDIR/home"
-            export XDG_RUNTIME_DIR="$TMPDIR/runtime"
-            mkdir -p "$HOME" "$XDG_RUNTIME_DIR"
-            chmod 700 "$XDG_RUNTIME_DIR"
-            export QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software WAYLAND_DISPLAY=
-            export SHELLLIST_GALLERY_SMOKE=1
-            # Theme generation now lives in bar-daemon. Use a private session so
-            # the gallery exercises the real producer without desktop services.
-            dbus-run-session --config-file=${pkgs.dbus}/share/dbus-1/session.conf -- bash -euo pipefail <<'SESSION'
-            ${barDaemon}/bin/bar-daemon daemon > daemon.log 2>&1 &
-            daemon_pid=$!
-            trap 'kill "$daemon_pid" 2>/dev/null || true; wait "$daemon_pid" || true' EXIT
-            ready=0
-            for attempt in {1..100}; do
-              if dbus-send --session --print-reply --reply-timeout=1000 \
-                --dest=org.freedesktop.DBus /org/freedesktop/DBus \
-                org.freedesktop.DBus.GetNameOwner string:org.laufan.BarStatusDaemon >/dev/null 2>&1; then
-                ready=1
-                break
-              fi
-              if ! kill -0 "$daemon_pid" 2>/dev/null; then break; fi
-              sleep 0.05
-            done
-            if [ "$ready" -ne 1 ]; then
-              cat daemon.log
-              exit 1
-            fi
-            for scheme in light dark; do
-              status=0
-              SHELLLIST_GALLERY_SCHEME="$scheme" timeout 30 ${
-                self.packages.${system}.materialGallery
-              }/bin/shelllist-material-gallery > log 2>&1 || status=$?
-              cat log
-              if [ "$status" -ne 0 ]; then exit "$status"; fi
-              if grep -Ei 'TypeError|ReferenceError|Binding loop|failed to load|WARN|ERROR' log; then
-                exit 1
-              fi
-            done
-            SESSION
-            touch $out
-          '';
+          materialGallery =
+            pkgs.runCommand "shelllist-material-gallery-smoke"
+              {
+                nativeBuildInputs = [ pkgs.dbus ];
+                # Quickshell 0.3.2 logs Qt's C-locale fallback as a warning. Keep the
+                # smoke's warning gate strict by supplying the UTF-8 locale Qt needs.
+                LC_ALL = "C.UTF-8";
+              }
+              ''
+                export HOME="$TMPDIR/home"
+                export XDG_RUNTIME_DIR="$TMPDIR/runtime"
+                mkdir -p "$HOME" "$XDG_RUNTIME_DIR"
+                chmod 700 "$XDG_RUNTIME_DIR"
+                export QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software WAYLAND_DISPLAY=
+                export SHELLLIST_GALLERY_SMOKE=1
+                # Theme generation now lives in bar-daemon. Use a private session so
+                # the gallery exercises the real producer without desktop services.
+                dbus-run-session --config-file=${pkgs.dbus}/share/dbus-1/session.conf -- bash -euo pipefail <<'SESSION'
+                ${barDaemon}/bin/bar-daemon daemon > daemon.log 2>&1 &
+                daemon_pid=$!
+                trap 'kill "$daemon_pid" 2>/dev/null || true; wait "$daemon_pid" || true' EXIT
+                ready=0
+                for attempt in {1..100}; do
+                  if dbus-send --session --print-reply --reply-timeout=1000 \
+                    --dest=org.freedesktop.DBus /org/freedesktop/DBus \
+                    org.freedesktop.DBus.GetNameOwner string:org.laufan.BarStatusDaemon >/dev/null 2>&1; then
+                    ready=1
+                    break
+                  fi
+                  if ! kill -0 "$daemon_pid" 2>/dev/null; then break; fi
+                  sleep 0.05
+                done
+                if [ "$ready" -ne 1 ]; then
+                  cat daemon.log
+                  exit 1
+                fi
+                for scheme in light dark; do
+                  status=0
+                  SHELLLIST_GALLERY_SCHEME="$scheme" timeout 30 ${
+                    self.packages.${system}.materialGallery
+                  }/bin/shelllist-material-gallery > log 2>&1 || status=$?
+                  cat log
+                  if [ "$status" -ne 0 ]; then exit "$status"; fi
+                  if grep -Ei 'TypeError|ReferenceError|Binding loop|failed to load|WARN|ERROR' log; then
+                    exit 1
+                  fi
+                done
+                SESSION
+                touch $out
+              '';
 
           typescript =
             pkgs.runCommand "shelllist-typescript-current"
@@ -746,25 +779,38 @@
           '';
 
           generatedContracts = nodeCheck "generated-contracts" [
-            [ ./tests/check-generated-contracts.js ./. ]
+            [
+              ./tests/check-generated-contracts.js
+              ./.
+            ]
           ];
 
           daemonBoundary = self.checks.${system}.qmlTests;
 
-          nativeApplication = pkgs.runCommand "shelllist-native-application-journey" {
-            FONTCONFIG_FILE = fontsConf pkgs;
-            nativeBuildInputs = [ pkgs.python3 pkgs.dbus pkgs.bash quickshell pkgs.qt6.qtdeclarative pkgs.qt6.qtsvg ];
-          } ''
-            export QT_PLUGIN_PATH=${pkgs.qt6.qtsvg}/lib/qt-6/plugins
-            export TZDIR=${pkgs.tzdata}/share/zoneinfo
-            # Exercise the packaged ELF with the runner's controlled launcher PATH.
-            # The public wrapper prepends real uwsm/systemd executables instead.
-            python3 ${./tests/test-native-application.py} \
-              --source-root ${./.} \
-              --app-daemon ${appDaemon}/bin/.app-daemon-wrapped \
-              --bar-daemon ${inputs."bar-daemon".packages.${system}.default}/bin/bar-daemon
-            touch $out
-          '';
+          nativeApplication =
+            pkgs.runCommand "shelllist-native-application-journey"
+              {
+                FONTCONFIG_FILE = fontsConf pkgs;
+                nativeBuildInputs = [
+                  pkgs.python3
+                  pkgs.dbus
+                  pkgs.bash
+                  quickshell
+                  pkgs.qt6.qtdeclarative
+                  pkgs.qt6.qtsvg
+                ];
+              }
+              ''
+                export QT_PLUGIN_PATH=${pkgs.qt6.qtsvg}/lib/qt-6/plugins
+                export TZDIR=${pkgs.tzdata}/share/zoneinfo
+                # Exercise the packaged ELF with the runner's controlled launcher PATH.
+                # The public wrapper prepends real uwsm/systemd executables instead.
+                python3 ${./tests/test-native-application.py} \
+                  --source-root ${./.} \
+                  --app-daemon ${appDaemon}/bin/.app-daemon-wrapped \
+                  --bar-daemon ${inputs."bar-daemon".packages.${system}.default}/bin/bar-daemon
+                touch $out
+              '';
 
           qmlTests =
             pkgs.runCommand "shelllist-qml-tests"

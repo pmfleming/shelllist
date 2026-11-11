@@ -1,4 +1,6 @@
 module Shelllist.Bar
+StorageController 1.0 StorageController.qml
+StorageContent 1.0 StorageContent.qml
 UpdateController 1.0 UpdateController.qml
 UpdateContent 1.0 UpdateContent.qml
 internal UpdateDetails UpdateDetails.qml

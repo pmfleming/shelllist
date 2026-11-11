@@ -14,6 +14,7 @@ let
     clip-daemon = inputs.clip-daemon.outPath;
     nm-daemon = inputs.nm-daemon.outPath;
     update-daemon = inputs.update-worker.outPath;
+    storage-daemon = inputs.storage-daemon.outPath;
   };
   sourceMap = pkgs.writeText "shelllist-build-sources.json" (builtins.toJSON sources);
   toolchain = inputs.daemon-framework.lib.toolchain pkgs;
@@ -25,6 +26,7 @@ let
     inputs.bt-daemon
     inputs.clip-daemon
     inputs.nm-daemon
+    inputs.storage-daemon
   ];
   platformOutputsMatch = builtins.all (
     flake:
@@ -125,13 +127,11 @@ assert pkgs.lib.assertMsg (
   && toolchain.expected == policy.rust
   && builtins.elem system policy.systems
 ) "Shelllist evaluated build inputs differ from the approved product policy";
-pkgs.runCommand "shelllist-build-inputs-${system}"
-  { }
-  ''
-    ${inputs.self.packages.${system}.xtask}/bin/shelllist-xtask --root ${../.} build-inputs \
-      --policy ${../contracts/build-inputs.json} --sources ${sourceMap}
-    mkdir -p $out
-    printf '%s\n' '${builtins.toJSON report}' > $out/build-inputs.json
-    cp ${sourceMap} $out/sources.json
-    cp -R ${toolchain.check} $out/toolchain
-  ''
+pkgs.runCommand "shelllist-build-inputs-${system}" { } ''
+  ${inputs.self.packages.${system}.xtask}/bin/shelllist-xtask --root ${../.} build-inputs \
+    --policy ${../contracts/build-inputs.json} --sources ${sourceMap}
+  mkdir -p $out
+  printf '%s\n' '${builtins.toJSON report}' > $out/build-inputs.json
+  cp ${sourceMap} $out/sources.json
+  cp -R ${toolchain.check} $out/toolchain
+''

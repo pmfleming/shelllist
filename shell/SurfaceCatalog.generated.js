@@ -36,6 +36,11 @@ var descriptors = [
         "icon": "󰂂"
     },
     {
+        "id": "storage",
+        "name": "Storage",
+        "icon": "storage"
+    },
+    {
         "id": "agenda",
         "name": "Agenda",
         "icon": "view_list"
@@ -110,6 +115,10 @@ var shortcuts = [
     {
         "id": "battery",
         "description": "Toggle Shelllist Battery"
+    },
+    {
+        "id": "storage",
+        "description": "Toggle Shelllist Storage"
     },
     {
         "id": "agenda",

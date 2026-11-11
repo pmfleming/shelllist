@@ -8,6 +8,7 @@
     { "id": "clipboard", "name": "Clipboard", "icon": "󰅇", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
     { "id": "displays", "name": "Displays", "icon": "󰍹", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
     { "id": "battery", "name": "Battery", "icon": "󰂂", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
+    { "id": "storage", "name": "Storage", "icon": "storage", "loading": "lazy", "resident_state": null, "home_manager_shortcut": null },
     {
       "id": "agenda", "name": "Agenda", "icon": "view_list", "loading": "lazy", "resident_state": null,
       "home_manager_shortcut": {

@@ -10,6 +10,7 @@ import "UpdateHistoryWindow.js" as HistoryWindow
 
 Ui.ProviderChooserController {
     id: controller
+    signal storageRequested
     property BarController barController: null
     property string errorText: ""
     property string copyError: ""
