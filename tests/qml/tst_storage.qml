@@ -98,4 +98,20 @@ DaemonTestCase {
         pins.editingFinished();
         compare(last("storage.setPolicy").params.excluded_projects[0], "/Projects/keep");
     }
+    function test_cleanup_history_discloses_visible_skip_reasons(): void {
+        const root = fixture();
+        root.controller.storageState = Object.assign({}, root.controller.storageState, {history: [
+            {started_at: 1000, trigger: "shutdown", reclaimed: 0, skipped: 1, cancelled: false, details: ["/Projects/p: Active Cargo lock"]}
+        ]});
+        root.controller.viewTab = "history";
+        const list = findChild(root, "storageList");
+        tryCompare(list, "count", 1);
+        const details = findChild(root, "storageHistoryDetails");
+        tryVerify(() => details && details.visible);
+        mouseClick(details);
+        tryCompare(root.content, "feedbackText", "/Projects/p: Active Cargo lock");
+        verify(findChild(root, "feedbackText").visible);
+        root.controller.viewTab = "usage";
+        compare(root.content.feedbackText, "");
+    }
 }

@@ -36,8 +36,9 @@ Rectangle {
         let previous = "";
         const entries = (available ? catalog.entries : []).filter(entry => {
             const installations = entry.installations || [];
-            return (!controller.softwareRoute || installations.some(i => i.update_route === controller.softwareRoute))
-                && (!controller.softwareState || installations.some(i => i.release_state === controller.softwareState));
+            return (!controller.softwareRoute && !controller.softwareState) || installations.some(i =>
+                (!controller.softwareRoute || i.update_route === controller.softwareRoute)
+                && (!controller.softwareState || i.release_state === controller.softwareState));
         });
         const counts = new Map();
         for (const entry of entries) {
@@ -114,7 +115,9 @@ Rectangle {
                     value: page.controller.softwareState
                     options: [{value: "", label: qsTr("All statuses")}, {value: "newer", label: qsTr("Newer upstream")},
                         {value: "current", label: qsTr("Current")}, {value: "failed", label: qsTr("Check failed")},
-                        {value: "cached", label: qsTr("Cached")}, {value: "unsupported", label: qsTr("Unsupported")}]
+                        {value: "cached", label: qsTr("Cached")}, {value: "unsupported", label: qsTr("Unsupported")},
+                        {value: "different", label: qsTr("Version differs")}, {value: "not-checked", label: qsTr("Not checked")},
+                        {value: "local", label: qsTr("Local build")}]
                     onSelected: function(value) { page.controller.softwareState = value; }
                 }
             }

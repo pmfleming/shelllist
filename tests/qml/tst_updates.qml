@@ -1493,6 +1493,33 @@ DaemonTestCase {
         Io.DaemonSessions.sessions["app-daemon"].client.response(pending.id, {protocol: "app-api", version: 2, ok: true, data: {catalog: snapshot}}, "", pending.route);
         compare(root.controller.applicationCatalog.revision, 2, "closed panel ignores late response");
     }
+    function test_release_filters_include_every_domain_state_and_match_one_installation(): void {
+        const root = fixture();
+        reply(latest(), []);
+        const states = ["current", "newer", "different", "cached", "failed", "not-checked", "local", "unsupported"];
+        catalogReply({revision: 1, observed_at: 400, inventory_available: true, inventory_total: states.length, inventory_included: states.length, error: null,
+            entries: states.map(state => ({id: state, name: state, icon: "", kind: "local-helper", category: "", installations: [
+                {stale: false, scope: "system", package_name: state, store_path: null, declared_version: "1.2", active_version: null,
+                    version_origin: "generation", update_route: "nixos", release_state: state, release: null},
+                {stale: false, scope: "user:test", package_name: state, store_path: null, declared_version: "1.2", active_version: null,
+                    version_origin: "generation", update_route: "vendor", release_state: "current", release: null}
+            ]}))});
+        root.controller.openDetails();
+        tryVerify(() => root.content.detailsNavigation.contentReady);
+        showPage(root, "applications");
+        const filter = findChild(root, "softwareStateFilter");
+        const list = findChild(root, "updateApplicationsList");
+        compare(filter.options.map(o => o.value).filter(Boolean).sort(), states.slice().sort());
+        root.controller.softwareRoute = "nixos";
+        for (const state of states) {
+            filter.selected(state);
+            tryCompare(list, "count", 1);
+            compare(list.model.rows[0].payload.record.id, state);
+        }
+        root.controller.softwareRoute = "vendor";
+        filter.selected("newer");
+        tryCompare(list, "count", 0);
+    }
     function applicationRows(item): var {
         let rows = item.objectName.startsWith("updateApplication:") ? [item] : [];
         for (const child of item.children || []) rows = rows.concat(applicationRows(child));

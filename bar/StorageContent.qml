@@ -9,8 +9,13 @@ Ui.PanelSurface {
     chooserController: controller
     navigationContent: list
     feedbackEnabled: true
-    feedbackText: controller.errorText || (controller.snapshot && controller.snapshot.errors.length ? controller.snapshot.errors.join("\n") : "")
-    feedbackSummary: qsTr("Storage inventory needs attention")
+    feedbackText: controller.errorText || historyExplanation.text || (controller.snapshot && controller.snapshot.errors.length ? controller.snapshot.errors.join("\n") : "")
+    feedbackSummary: historyExplanation.text ? qsTr("Cleanup details") : qsTr("Storage inventory needs attention")
+    Ui.FeedbackSource {
+        id: historyExplanation
+        active: content.controller.viewTab === "history"
+        onActiveChanged: if (!active) text = ""
+    }
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Ui.Theme.contentMargin
@@ -111,9 +116,10 @@ Ui.PanelSurface {
                 id: row
                 required property var modelData
                 width: list.rowWidth
-                label: content.controller.viewTab === "history" ? new Date(modelData.started_at * 1000).toLocaleString() : modelData.path
-                subtitle: content.controller.viewTab === "history" ? modelData.trigger + (modelData.cancelled ? qsTr(" · interrupted") : "")
-                    : content.controller.viewTab === "cleanup" ? modelData.reason : modelData.category
+                label: content.controller.viewTab === "history" ? new Date((modelData.started_at || 0) * 1000).toLocaleString() : modelData.path || ""
+                subtitle: content.controller.viewTab === "history" ? (modelData.trigger || "") + (modelData.cancelled ? qsTr(" · interrupted") : "")
+                        + (modelData.skipped ? qsTr(" · %1 skipped").arg(modelData.skipped) : "")
+                    : content.controller.viewTab === "cleanup" ? modelData.reason || "" : (modelData.category || "")
                         + (modelData.partial ? qsTr(" · partial measurement") : "")
                         + (modelData.unreadable ? qsTr(" · %1 private paths excluded").arg(modelData.unreadable) : "")
                 Ui.ThemeText {
@@ -121,7 +127,16 @@ Ui.PanelSurface {
                     text: content.controller.bytes(content.controller.viewTab === "history" ? row.modelData.reclaimed : row.modelData.bytes)
                         + (content.controller.viewTab === "cleanup" ? (row.modelData.eligible ? qsTr(" · eligible") : qsTr(" · preserved")) : "")
                     wrapMode: Text.Wrap
-                    Accessible.description: content.controller.viewTab === "history" ? row.modelData.details.join("\n") : row.modelData.path
+                    Accessible.description: content.controller.viewTab === "history" ? (row.modelData.details || []).join("\n") : row.modelData.path || ""
+                }
+                accessories: Ui.FeedbackButton {
+                    objectName: "storageHistoryDetails"
+                    visible: content.controller.viewTab === "history" && !!row.modelData.details && row.modelData.details.length > 0
+                    icon: "info"
+                    accessibleName: qsTr("Cleanup skip reasons")
+                    feedback: historyExplanation
+                    feedbackText: (row.modelData.details || []).join("\n")
+                    feedbackBrief: qsTr("Cleanup details")
                 }
             }
         }

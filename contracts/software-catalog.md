@@ -125,3 +125,9 @@ keyboard navigation to its single home in Settings.
 The Settings suite also checks real label/editor/card/switch clicks, status-bar
 disclosure, stable row geometry, absent help icons, error priority and clearing
 context when the selected application changes.
+
+Release-status filtering offers all eight domain states, including local builds,
+unchecked and differing versions. Combined route/status filters must match one
+installation, rather than borrowing a route from a different installation.
+Storage cleanup history exposes skip counts and a shared information command;
+the full reasons appear in the fixed visible feedback slot and accessible text.
