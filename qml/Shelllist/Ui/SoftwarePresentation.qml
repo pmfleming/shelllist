@@ -1,11 +1,14 @@
-.pragma library
+pragma Singleton
+import QtQuick
 
-function unique(values) { return [...new Set(values.filter(Boolean))]; }
-function local(record) {
+QtObject {
+
+function unique(values: var): var { return [...new Set(values.filter(Boolean))]; }
+function local(record: var): var {
     return unique((record.installations || []).map(i => i.active_version || i.declared_version)).join(" / ") || "—";
 }
 // Keep alternate installed versions visible in the software inventory.
-function localWithOrigins(record) {
+function localWithOrigins(record: var): var {
     const installations = record.installations || [];
     if (!installations.some(i => i.active_version && i.declared_version && i.active_version !== i.declared_version))
         return local(record);
@@ -14,10 +17,16 @@ function localWithOrigins(record) {
         i.declared_version ? (i.scope === "system" ? qsTr("System: %1") : qsTr("%1 package: %2").arg(i.scope)).arg(i.declared_version) : ""
     ].filter(Boolean).join("\n"))).join("\n");
 }
-function latest(record) {
-    return unique((record.installations || []).map(i => i.release && i.release.version)).join(" / ") || "—";
+function latest(record: var): var {
+    const versions = unique((record.installations || []).map(i => i.release && i.release.version)).join(" / ");
+    if (versions) return versions;
+    const installations = record.installations || [];
+    if (installations.some(i => i.release && i.release.error)) return qsTr("Check failed");
+    if (installations.some(i => i.release_state === "local" || i.update_route === "local")) return qsTr("Local build");
+    if (installations.some(i => i.release)) return qsTr("Not checked");
+    return record.kind === "desktop-shortcut" ? qsTr("Not applicable") : qsTr("Unsupported");
 }
-function group(record) {
+function group(record: var): var {
     if (record.kind === "desktop-application") {
         const categories = {shell: qsTr("Terminal"), browser: qsTr("Browsers"), code: qsTr("Development"), media: qsTr("Media"), text: qsTr("Documents")};
         return qsTr("Applications · %1").arg(categories[record.category] || qsTr("Uncategorized"));
@@ -25,7 +34,7 @@ function group(record) {
     return ({"desktop-shortcut": qsTr("Shortcuts"), "command-line": qsTr("Command-line tools"),
         "system": qsTr("System packages"), "local-helper": qsTr("Local helpers")})[record.kind] || qsTr("Other software");
 }
-function summary(record) {
+function summary(record: var): var {
     const releases = (record.installations || []).map(i => i.release).filter(Boolean);
     if (!releases.length) return qsTr("%1: no release source configured.").arg(record.name);
     return unique(releases.map(r => !r.version
@@ -34,13 +43,13 @@ function summary(record) {
         : r.stale ? qsTr("%1: last known release %2.").arg(record.name).arg(r.version)
         : qsTr("%1: latest release %2.").arg(record.name).arg(r.version))).join(" ");
 }
-function icon(record) {
+function icon(record: var): var {
     const releases = (record.installations || []).map(i => i.release).filter(Boolean);
     if (releases.some(r => r.error)) return "warning";
     if (releases.some(r => r.stale && r.version)) return "history";
     return releases.some(r => r.version) ? "info" : "help_outline";
 }
-function details(record) {
+function details(record: var): var {
     return (record.installations || []).map(i => {
         let text = i.scope + ": " + i.package_name;
         if (i.stale) text += qsTr(" · cached observation; source unavailable");
@@ -55,14 +64,14 @@ function details(record) {
     }).join("\n");
 }
 
-function releaseSourceLabel(source) {
+function releaseSourceLabel(source: var): var {
     const value = String(source || "");
     const github = /^https:\/\/api\.github\.com\/repos\/([^/]+)\/([^/]+)\/releases\/latest\/?$/.exec(value);
     return github ? qsTr("GitHub · %1/%2").arg(github[1]).arg(github[2]) : value || qsTr("Not configured");
 }
 
 // Passive facts, built from catalog fields rather than parsing diagnostic prose.
-function installationRows(record) {
+function installationRows(record: var): var {
     const installations = record.installations || [];
     const rows = [];
     installations.forEach((installation, index) => {
@@ -70,6 +79,8 @@ function installationRows(record) {
             rows.push({key: index + ":" + key, label: label, value: value || "—", description: description || ""});
         }
         add("package", qsTr("Package"), installation.package_name);
+        add("route", qsTr("Updated by"), route({installations: [installation]}));
+        add("channel", qsTr("Channel"), installation.channel || qsTr("Not reported"));
         const scope = String(installation.scope || "");
         add("scope", qsTr("Installed for"), scope === "system" ? qsTr("System")
             : scope.startsWith("user:") ? qsTr("User · %1").arg(scope.slice(5)) : scope);
@@ -92,4 +103,17 @@ function installationRows(record) {
             add("status", qsTr("Release check"), qsTr("Cached release information"));
     });
     return rows.length ? rows : [{key: "missing", label: qsTr("Package"), value: qsTr("No package information reported"), description: ""}];
+}
+
+function route(record: var): string {
+    const labels = {nixos: qsTr("NixOS rebuild"), vendor: qsTr("Vendor releases · independent updater"),
+        "self-updater": qsTr("Application updater"), local: qsTr("Local development")};
+    return unique((record.installations || []).map(i => labels[i.update_route] || qsTr("Update route not reported"))).join(" / ") || qsTr("Update route not reported");
+}
+function status(record: var): string {
+    const labels = {current: qsTr("Current"), newer: qsTr("Newer upstream release"), different: qsTr("Upstream version differs"),
+        cached: qsTr("Cached release"), failed: qsTr("Check failed"), "not-checked": qsTr("Not checked"),
+        local: qsTr("Local build"), unsupported: qsTr("Unsupported")};
+    return unique((record.installations || []).map(i => labels[i.release_state]).filter(Boolean)).join(" / ");
+}
 }

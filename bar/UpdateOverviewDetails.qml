@@ -106,15 +106,18 @@ Column {
                 return [
                     {
                         label: qsTr("Booted"),
-                        value: system.booted || qsTr("Unknown")
+                        value: system.booted ? system.booted.split("/").pop().replace(/^[a-z0-9]{32}-/, "") : qsTr("Unknown"),
+                        description: system.booted || ""
                     },
                     {
                         label: qsTr("Active"),
-                        value: system.active || qsTr("Unknown")
+                        value: system.active ? system.active.split("/").pop().replace(/^[a-z0-9]{32}-/, "") : qsTr("Unknown"),
+                        description: system.active || ""
                     },
                     {
                         label: qsTr("System profile / next boot"),
-                        value: system.profile || qsTr("Unknown")
+                        value: system.profile ? system.profile.split("/").pop().replace(/^[a-z0-9]{32}-/, "") : qsTr("Unknown"),
+                        description: system.profile || ""
                     },
                     {
                         label: qsTr("Staging"),

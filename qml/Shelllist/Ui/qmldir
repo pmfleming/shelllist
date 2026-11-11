@@ -1,6 +1,6 @@
 module Shelllist.Ui
 DetailScrollBar 1.0 DetailScrollBar.qml
-SoftwarePresentation 1.0 SoftwarePresentation.js
+singleton SoftwarePresentation 1.0 SoftwarePresentation.qml
 IpField 1.0 IpField.qml
 AddressListField 1.0 AddressListField.qml
 IpValidation 1.0 IpValidation.js

@@ -8,6 +8,7 @@ DetailColumnCard {
     id: card
     property bool informationOnly: true
     property var rows: []
+    FeedbackSource { id: explanation }
     Repeater {
         model: card.rows || []
         FieldRow {
@@ -23,6 +24,14 @@ DetailColumnCard {
                 textFormat: Text.PlainText
                 wrapMode: Text.WrapAnywhere
                 Accessible.name: row.modelData.label + ": " + text
+                Accessible.description: row.modelData.description || ""
+            }
+            accessories: FeedbackButton {
+                visible: !!row.modelData.description
+                accessibleName: row.modelData.label
+                icon: "info"
+                feedback: explanation
+                feedbackText: row.modelData.description || ""
             }
         }
     }

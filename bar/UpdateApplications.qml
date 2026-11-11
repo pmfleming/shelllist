@@ -24,12 +24,21 @@ Rectangle {
     }
     onVisibleChanged: if (!visible) explanation.text = ""
     onCatalogChanged: { explanation.text = ""; updatePackages(); }
+    Connections {
+        target: page.controller
+        function onSoftwareRouteChanged(): void { page.updatePackages(); }
+        function onSoftwareStateChanged(): void { page.updatePackages(); }
+    }
     Component.onCompleted: updatePackages()
     function updatePackages(): void {
         if (!list || !packagesModel) return;
         list.captureAnchor();
         let previous = "";
-        const entries = available ? catalog.entries : [];
+        const entries = (available ? catalog.entries : []).filter(entry => {
+            const installations = entry.installations || [];
+            return (!controller.softwareRoute || installations.some(i => i.update_route === controller.softwareRoute))
+                && (!controller.softwareState || installations.some(i => i.release_state === controller.softwareState));
+        });
         const counts = new Map();
         for (const entry of entries) {
             const group = Ui.SoftwarePresentation.group(entry);
@@ -83,14 +92,42 @@ Rectangle {
             }
             Ui.FieldRow {
                 width: parent.width
+                label: qsTr("Updated by")
+                Ui.DropDownList {
+                    objectName: "softwareRouteFilter"
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Filter update route")
+                    value: page.controller.softwareRoute
+                    options: [{value: "", label: qsTr("All routes")}, {value: "nixos", label: qsTr("NixOS rebuild")},
+                        {value: "vendor", label: qsTr("Independent vendor updater")}, {value: "self-updater", label: qsTr("Application updater")},
+                        {value: "local", label: qsTr("Local development")}]
+                    onSelected: function(value) { page.controller.softwareRoute = value; }
+                }
+            }
+            Ui.FieldRow {
+                width: parent.width
+                label: qsTr("Release status")
+                Ui.DropDownList {
+                    objectName: "softwareStateFilter"
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Filter release status")
+                    value: page.controller.softwareState
+                    options: [{value: "", label: qsTr("All statuses")}, {value: "newer", label: qsTr("Newer upstream")},
+                        {value: "current", label: qsTr("Current")}, {value: "failed", label: qsTr("Check failed")},
+                        {value: "cached", label: qsTr("Cached")}, {value: "unsupported", label: qsTr("Unsupported")}]
+                    onSelected: function(value) { page.controller.softwareState = value; }
+                }
+            }
+            Ui.FieldRow {
+                width: parent.width
                 height: implicitHeight
                 visible: page.available
                 label: qsTr("Name")
                 separatorVisible: false
                 RowLayout {
                     Layout.fillWidth: true
-                    Ui.ThemeText { Layout.fillWidth: true; Layout.preferredWidth: 1; text: qsTr("Local"); color: Ui.Theme.mutedText }
-                    Ui.ThemeText { Layout.fillWidth: true; Layout.preferredWidth: 1; text: qsTr("Latest"); color: Ui.Theme.mutedText }
+                    Ui.ThemeText { Layout.fillWidth: true; Layout.preferredWidth: 1; text: qsTr("Installed"); color: Ui.Theme.mutedText }
+                    Ui.ThemeText { Layout.fillWidth: true; Layout.preferredWidth: 1; text: qsTr("Latest upstream"); color: Ui.Theme.mutedText }
                 }
             }
         }
@@ -120,6 +157,7 @@ Rectangle {
                 width: parent.width
                 height: implicitHeight
                 label: row.record.name
+                subtitle: Ui.SoftwarePresentation.route(row.record)
                 RowLayout {
                     Layout.fillWidth: true
                     Ui.ThemeText {

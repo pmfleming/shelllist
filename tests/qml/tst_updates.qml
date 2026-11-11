@@ -1042,7 +1042,7 @@ DaemonTestCase {
         const system = findChild(root, "updateSystemOverview");
         verify(system.visible);
         verify(system.rows.find(field => field.label === "Staging").value.startsWith("Staged for next boot since"));
-        compare(system.rows.find(field => field.label === "Active").value, "/nix/store/active");
+        compare(system.rows.find(field => field.label === "Active").value, "active");
         compare(findChild(root, "updateTimer:nixos-update.timer").modelData.next_at, 500);
         showPage(root, "ai");
         compare(findChild(root, "updateInstalledTool:pi").modelData.last_successful_check, 280);
@@ -1380,7 +1380,7 @@ DaemonTestCase {
         const versionless = findChild(inventory, "updateApplication:user:test:local-tool");
         compare(findChild(editor, "updateApplicationLocal").text, "1.2.3");
         compare(findChild(versionless, "updateApplicationLocal").text, "—");
-        compare(findChild(editor, "updateApplicationLatest").text, "—");
+        compare(findChild(editor, "updateApplicationLatest").text, "Unsupported");
         const feedback = findChild(root.content.listItem, "feedbackText");
         let explanation = findChild(inventory, "updateApplicationExplanation");
         compare(explanation.text, "");
@@ -1525,7 +1525,7 @@ DaemonTestCase {
         verify(applicationRows(root).length < 40, "delegate creation is viewport-bounded, not inventory-sized");
         compare(findChild(root, "updateOpenIssues"), null);
         keyClick(Qt.Key_Tab);
-        compare(root.content.detailsNavigation.highlightedControl, null);
+        compare(root.content.detailsNavigation.highlightedControl, findChild(root, "softwareRouteFilter"));
         compare(root.content.detailsNavigation.currentPage, list);
         const scrollBar = findChild(list, "detailListScrollBar");
         verify(scrollBar.visible && scrollBar.opacity > 0);
@@ -1616,7 +1616,7 @@ DaemonTestCase {
         compare(findChild(editor, "updateApplicationLocal").text, "1.0");
         compare(findChild(editor, "updateApplicationLatest").text, "2.0");
         compare(findChild(stale, "updateApplicationLatest").text, "2.0");
-        compare(findChild(unchecked, "updateApplicationLatest").text, "—");
+        compare(findChild(unchecked, "updateApplicationLatest").text, "Not checked");
         const feedback = findChild(root.content.listItem, "feedbackText");
         mouseClick(findChild(editor, "updateApplicationStatus"));
         tryCompare(feedback, "text", "editor: latest release 2.0.");

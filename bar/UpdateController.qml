@@ -27,6 +27,8 @@ Ui.ProviderChooserController {
     property string outcomeFilter: ""
     property bool collapseRoutine: true
     property bool settingsOpen: false
+    property string softwareRoute: ""
+    property string softwareState: ""
     property string detailsTab: "overview"
     signal settingsFieldRequested(string field)
     readonly property var detailTabs: settingsOpen ? [] : selectedIsOverview ? [
