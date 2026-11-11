@@ -104,7 +104,7 @@ Ui.PanelSurface {
                             onEditingFinished: content.controller.savePolicy("excluded_projects", text.split(";").map(p => p.trim()).filter(Boolean))
                         }
                     }
-                    Ui.ThemeText { width: parent.width; text: qsTr("Budgets are soft when data is protected. Policy changes require a new scan before manual cleanup. Nix garbage collection and temporary-file retention remain managed by NixOS."); wrapMode: Text.Wrap }
+                    Ui.ThemeText { width: parent.width; text: qsTr("Budgets are soft when data is protected. Policy changes update the cleanup preview using the last measurement. Nix garbage collection and temporary-file retention remain managed by NixOS."); wrapMode: Text.Wrap }
                 }
             }
             delegate: Ui.FieldRow {

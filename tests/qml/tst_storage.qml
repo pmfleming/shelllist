@@ -83,4 +83,19 @@ DaemonTestCase {
         compare(root.controller.policy.project_budget_gib, 64);
         verify(!field.interactive);
     }
+    function test_unchanged_pins_do_not_write_policy_on_focus_loss(): void {
+        const root = fixture();
+        root.controller.viewTab = "policy";
+        const pins = findChild(root, "storagePins");
+        tryVerify(() => pins.visible);
+        pins.forceActiveFocus();
+        findChild(root, "storagePolicy:project_budget_gib").forceActiveFocus();
+        wait(20);
+        verify(!last("storage.setPolicy"));
+        pins.editingFinished();
+        verify(!last("storage.setPolicy"));
+        pins.text = "/Projects/keep";
+        pins.editingFinished();
+        compare(last("storage.setPolicy").params.excluded_projects[0], "/Projects/keep");
+    }
 }

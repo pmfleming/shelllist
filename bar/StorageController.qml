@@ -33,7 +33,8 @@ Ui.ChooserController {
     function clean(): void { if (canAct && snapshot && eligibleBytes > 0) backend.call("clean", "storage.clean", {revision: snapshot.revision}); }
     function cancel(): void { if (backend.ready && busy) backend.call("cancel", "storage.cancel", {}); }
     function savePolicy(key: string, value: var): void {
-        if (canAct && policy) backend.call("policy", "storage.setPolicy", Object.assign({}, policy, {[key]: value}));
+        if (canAct && policy && JSON.stringify(policy[key]) !== JSON.stringify(value))
+            backend.call("policy", "storage.setPolicy", Object.assign({}, policy, {[key]: value}));
     }
     function receive(id: string, envelope: var, transportError: string): void {
         const error = backend.responseError(envelope, transportError, qsTr("Storage request failed"));
